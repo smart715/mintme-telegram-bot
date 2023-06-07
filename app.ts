@@ -1,9 +1,18 @@
 import {By, Builder} from "selenium-webdriver";
+import {localStorage} from "./config/storage";
 
 async function init() {
-    let driver = await new Builder().forBrowser('firefox').build();
+    let driver = await new Builder().forBrowser('chrome').build();
 
-    await driver.get('https://www.selenium.dev/selenium/web/web-form.html');
+    await driver.get('https://web.telegram.org/');
+    await driver.sleep(5000)
+
+    for (const item in localStorage) {
+        // @ts-ignore
+        await driver.executeScript("localStorage.setItem(arguments[0], arguments[1])", item, localStorage[item]);
+    }
+
+    await driver.navigate().refresh()
 
     let title = await driver.getTitle();
     console.log("Web form title: ", title);
@@ -24,3 +33,7 @@ async function init() {
 }
 
 init().then(() => console.log('finished'))
+
+
+
+
