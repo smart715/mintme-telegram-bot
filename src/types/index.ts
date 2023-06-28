@@ -1,0 +1,1 @@
+export { CMCCryptocurrency } from "./Coinmarketcap"
