@@ -6,8 +6,7 @@
   "scripts": {
     "start": "npx tsc && node build/src/main.js",
     "watch": "nodemon -x 'ts-node -C ttypescript' src/main.ts",
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "tsc": "tsc"
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
