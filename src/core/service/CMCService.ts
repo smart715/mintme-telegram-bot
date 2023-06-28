@@ -5,7 +5,7 @@ import { CMCApiGeneralResponse, CMCCryptocurrency, CMCTokenInfoResponse } from "
 
 @singleton()
 export class CMCService {
-    API_KEY: string = config.get('coinmarketcap_api_key');
+    API_KEY: string = config.get('coinmarketcap_api_key')
 
     public async getLastTokens(start: number, limit: number): Promise<CMCApiGeneralResponse<CMCCryptocurrency[]>> {
         const response = await axios.get('https://pro-api.coinmarketcap.com/v1/cryptocurrency/map', {
@@ -15,9 +15,9 @@ export class CMCService {
                 limit,
                 sort: "id",
             },
-        });
+        })
 
-        return response.data;
+        return response.data
     }
 
     public async getTokenInfo(slug: string): Promise<CMCApiGeneralResponse<CMCTokenInfoResponse>> {
@@ -26,8 +26,8 @@ export class CMCService {
                 CMC_PRO_API_KEY: this.API_KEY,
                 slug,
             },
-        });
+        })
 
-        return response.data;
+        return response.data
     }
 }

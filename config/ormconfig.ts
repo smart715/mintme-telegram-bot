@@ -1,6 +1,6 @@
-import path from "path";
-import { DataSourceOptions } from "typeorm";
-import { SnakeNamingStrategy } from "typeorm-naming-strategies";
+import path from "path"
+import { ConnectionOptions } from "typeorm"
+// import { SnakeNamingStrategy } from "typeorm-naming-strategies"
 
 export default {
     type: 'mariadb',
@@ -15,5 +15,5 @@ export default {
         'migrationsDir': path.join(__dirname, '../migrations'),
         'entitiesDir': path.join(__dirname, '../src/core/entity'),
     },
-    namingStrategy: new SnakeNamingStrategy(),
-} as DataSourceOptions
+    // namingStrategy: new SnakeNamingStrategy(),
+} as ConnectionOptions

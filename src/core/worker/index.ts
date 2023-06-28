@@ -1,1 +1,1 @@
-export { CMCWorker } from './CMCWorker';
+export { CMCWorker } from './CMCWorker'

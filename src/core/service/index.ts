@@ -1,1 +1,2 @@
-export { CMCService } from './CMCService';
+export { CMCService } from './CMCService'
+export { TokensService } from './TokensService'

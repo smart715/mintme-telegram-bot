@@ -1,24 +1,22 @@
-import { singleton } from "tsyringe";
-import { DataSource } from "typeorm";
-import ormconfig from "../../config/ormconfig";
+import { singleton } from "tsyringe"
+import ormconfig from "../../config/ormconfig"
+import { Connection, createConnection, getConnection } from "typeorm"
 
 @singleton()
 export class Database {
-    private static connection: DataSource;
+    private static connection: Connection
 
-    public async createConnection(): Promise<DataSource> {
+    public async createConnection(): Promise<Connection> {
         if (Database.connection) {
             return Database.connection
         }
 
-        Database.connection = new DataSource(ormconfig)
-
-        await Database.connection.initialize()
+        Database.connection = await createConnection(ormconfig)
 
         return Database.connection
     }
 
-    public getConnection(): DataSource {
-        return Database.connection
+    public getConnection(): Connection {
+        return getConnection()
     }
 }

@@ -1,6 +1,6 @@
-import "reflect-metadata";
+import "reflect-metadata"
 import { Application, container } from "./app"
-import { Database } from "./utils";
+import { Database } from "./utils"
 
 (async (): Promise<void> => {
     if (!await databaseHealthCheck()) {

@@ -23,4 +23,4 @@ export interface CMCCryptocurrency {
         slug: string,
         token_address: string,
     }
-};
+}

@@ -8,7 +8,7 @@
     "start": "node build/src/main.js",
     "watch": "nodemon -x 'ts-node' src/main.ts",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "typeorm": "ts-node ./node_modules/typeorm/cli.js -d ./src/utils/datasource.ts"
+    "typeorm": "ts-node ./node_modules/typeorm/cli.js -f ./config/ormconfig.ts"
   },
   "repository": {
     "type": "git",
@@ -30,7 +30,7 @@
     "reflect-metadata": "^0.1.13",
     "selenium-webdriver": "^4.10.0",
     "tsyringe": "^4.8.0",
-    "typeorm": "^0.3.17",
+    "typeorm": "^0.2.41",
     "typeorm-naming-strategies": "^4.1.0"
   }
 }
