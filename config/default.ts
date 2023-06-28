@@ -1,3 +1,3 @@
 export default {
-    "coinmarketcap_api_key": "a70f599e-237d-4306-850e-32b9602da07b",
+    "coinmarketcap_api_key": "0da9b092-fee6-4c91-875a-e93fbb6b78e0",
 }
