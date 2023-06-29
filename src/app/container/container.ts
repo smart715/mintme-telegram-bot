@@ -3,6 +3,8 @@ import { CMCService, CMCWorker, TokensService } from "../../core"
 import { Application } from "../"
 import { BnbTokensRepository, CroTokensRepository, EtherscanTokensRepository } from "../../core/repository"
 import { getConnection } from "typeorm"
+import {AdvnWorker} from "../../core/worker/AdvnWorker";
+import {AdvnService} from "../../core/service/AdvnService";
 
 container.register(BnbTokensRepository, {
     useFactory: instanceCachingFactory(() => getConnection().getCustomRepository(BnbTokensRepository)),
@@ -18,6 +20,10 @@ container.register(CroTokensRepository, {
 
 container.register(CMCService, {
     useFactory: instanceCachingFactory(() => new CMCService()),
+})
+
+container.register(AdvnService, {
+    useFactory: instanceCachingFactory(() => new AdvnService()),
 })
 
 container.register(TokensService, {
@@ -39,9 +45,20 @@ container.register(CMCWorker, {
     )
 })
 
+container.register(AdvnWorker, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new AdvnWorker(
+            dependencyContainer.resolve(AdvnService),
+        )
+    )
+})
+
 container.register(Application, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
-        new Application(dependencyContainer.resolve(CMCWorker))
+        new Application(
+            dependencyContainer.resolve(CMCWorker),
+            dependencyContainer.resolve(AdvnWorker),
+        )
     )
 })
 

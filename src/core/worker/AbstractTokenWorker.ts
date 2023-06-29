@@ -1,3 +1,3 @@
 export abstract class AbstractTokenWorker {
-    protected abstract async run(): Promise<any>
+    protected abstract run(): Promise<any>
 }
