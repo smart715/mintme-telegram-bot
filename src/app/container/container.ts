@@ -1,5 +1,5 @@
 import { container, instanceCachingFactory } from "tsyringe"
-import { CMCService, CMCWorker, TokensService } from "../../core"
+import { CMCService, CMCWorker, CoinLoreService, CoinLoreWorker, TokensService } from "../../core"
 import { Application } from "../"
 import { BnbTokensRepository, CroTokensRepository, EtherscanTokensRepository } from "../../core/repository"
 import { getConnection } from "typeorm"
@@ -18,6 +18,10 @@ container.register(CroTokensRepository, {
 
 container.register(CMCService, {
     useFactory: instanceCachingFactory(() => new CMCService()),
+})
+
+container.register(CoinLoreService, {
+    useFactory: instanceCachingFactory(() => new CoinLoreService()),
 })
 
 container.register(TokensService, {
@@ -39,9 +43,21 @@ container.register(CMCWorker, {
     )
 })
 
+container.register(CoinLoreWorker, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new CoinLoreWorker(
+            dependencyContainer.resolve(CoinLoreService),
+            dependencyContainer.resolve(TokensService),
+        )
+    )
+})
+
 container.register(Application, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
-        new Application(dependencyContainer.resolve(CMCWorker))
+        new Application(
+            dependencyContainer.resolve(CMCWorker),
+            dependencyContainer.resolve(CoinLoreWorker),
+        )
     )
 })
 

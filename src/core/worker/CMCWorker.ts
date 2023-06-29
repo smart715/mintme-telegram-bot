@@ -4,6 +4,7 @@ import { AbstractTokenWorker } from "./AbstractTokenWorker"
 
 @singleton()
 export class CMCWorker extends AbstractTokenWorker {
+    public readonly workerName: string = "CMC"
 
     public constructor(
         private readonly cmcService: CMCService,
@@ -33,33 +34,33 @@ export class CMCWorker extends AbstractTokenWorker {
             const tokenInfo = tokenInfos.data[token.id]
 
             const tokenAddress = token.platform.token_address
-            const tokenName = token.name
+            const tokenName = `${token.name} (${token.symbol})`
             const website = tokenInfo.urls.website?.length ? tokenInfo.urls.website[0] : ""
             const email = ""
             const links = this.getUsefulLinks(tokenInfo.urls)
-            const workerSource = "CMC"
+            const workerSource = this.workerName
             const blockchain = token.platform.slug
 
-            const foundToken = await this.tokensService.findByAddress(tokenAddress, token.platform.symbol.toLowerCase())
-
-            if (foundToken) {
-                console.log(` ${token.name} already added. Skipping`)
-
-                return
-            } else {
-                await this.tokensService.add(tokenAddress, tokenName, website, email, links, workerSource, blockchain)
-                console.log("Added to DB: ", tokenAddress, tokenName, website, email, links, workerSource, blockchain)
-            }
+            await this.tokensService.addOrUpdateToken(
+                tokenAddress,
+                tokenName,
+                [website],
+                email,
+                links,
+                workerSource,
+                blockchain,
+            )
+            console.log("Added to DB: ", tokenAddress, tokenName, website, email, links, workerSource, blockchain)
         })
     }
 
-    private getUsefulLinks(linksObj: {[type: string] : string[]}): string {
+    private getUsefulLinks(linksObj: {[type: string] : string[]}): string[] {
         const links: string[] = []
 
         Object.values(linksObj).forEach((links: string[]) => {
-            links.push(links.join('\r\n'))
+            links.push(...links)
         })
 
-        return links.join('\r\n')
+        return links
     }
 }
