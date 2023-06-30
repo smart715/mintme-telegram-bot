@@ -44,17 +44,14 @@ export class AdvnWorker extends AbstractTokenWorker {
                     continue
                 }
 
-                const parser = new DOMParser()
-                const document = parser.parseFromString(tokenInfo, 'text/html')
+                const parsedWebsiteSection = tokenInfo.match(/<tr title="Official Website(.+?)<\/td>(.+?)<\/tr>/)
+                let website = '';
 
-                const trTags = document.body.getElementsByTagName('tr')
-                const a = [...asd]
+                if (parsedWebsiteSection) {
+                    parsedWebsiteSection[2]
+                }
 
-                a.f
-
-
-                const website = tokenInfo.match('<tr title="Official Website(.+?)</td>(.+?)</tr>')
-
+                console.log(website);
             }
 
             count = tokens.data.length

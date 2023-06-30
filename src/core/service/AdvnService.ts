@@ -14,6 +14,6 @@ export class AdvnService {
     public async getTokenInfo(id: string): Promise<string> {
         const response = await axios.get(`https://www.advfn.com/crypto/${id}/fundamentals`)
 
-        return response.data
+        return response.data.replace(/(\r\n|\n|\r)/gm, "")
     }
 }
