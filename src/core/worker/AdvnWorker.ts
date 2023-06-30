@@ -1,7 +1,8 @@
 // @ts-nocheck
-import {singleton} from "tsyringe"
-import {AbstractTokenWorker} from "./AbstractTokenWorker"
-import {AdvnService} from "../service/AdvnService";
+import { singleton } from "tsyringe"
+import { AbstractTokenWorker } from "./AbstractTokenWorker"
+import { AdvnService } from "../service/AdvnService";
+import { findContractAddress } from "../../utils";
 
 @singleton()
 export class AdvnWorker extends AbstractTokenWorker {
@@ -35,8 +36,25 @@ export class AdvnWorker extends AbstractTokenWorker {
                 const nameSymbolArr = advnToken.name_symbol;
                 const name = nameSymbolArr[0] + "(" + nameSymbolArr[nameSymbolArr.length - 1] + ")"
                 const id = name.replace(" ", "-").replace("(", "-").replace(")", "")
+                const tokenInfo = await this.advnService.getTokenInfo(id);
 
-                await this.advnService.getTokenInfo(id);
+                const tokenAddress = findContractAddress(tokenInfo);
+
+                if (!tokenAddress || !tokenAddress.startsWith("0x")) {
+                    continue
+                }
+
+                const parser = new DOMParser()
+                const document = parser.parseFromString(tokenInfo, 'text/html')
+
+                const trTags = document.body.getElementsByTagName('tr')
+                const a = [...asd]
+
+                a.f
+
+
+                const website = tokenInfo.match('<tr title="Official Website(.+?)</td>(.+?)</tr>')
+
             }
 
             count = tokens.data.length
