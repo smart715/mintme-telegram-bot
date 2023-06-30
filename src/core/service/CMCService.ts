@@ -25,6 +25,7 @@ export class CMCService {
             params: {
                 CMC_PRO_API_KEY: this.API_KEY,
                 slug,
+                aux: "urls,platform"
             },
         })
 

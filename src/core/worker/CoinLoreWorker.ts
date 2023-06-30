@@ -2,6 +2,7 @@ import { singleton } from "tsyringe";
 import { AbstractTokenWorker } from "./AbstractTokenWorker";
 import { CoinLoreService, TokensService } from "../service";
 import { Builder, By, WebDriver } from "selenium-webdriver";
+import { Blockchain, logger } from "../../utils";
 
 @singleton()
 export class CoinLoreWorker extends AbstractTokenWorker {
@@ -19,14 +20,14 @@ export class CoinLoreWorker extends AbstractTokenWorker {
     public async run(): Promise<void> {
         let coinsCount = await this.coinLoreService.getCoinsCount()
 
-        console.log("Creating selenium builder")
+        logger.info("Creating selenium builder")
 
         let driver = await new Builder()
             .forBrowser('chrome')
             .usingServer('http://selenium-hub:4444')
             .build()
 
-        console.log("Selenium builder created")
+        logger.info("Selenium builder created")
 
         while (coinsCount > 0) {
             const coins = await this.coinLoreService.loadTokensList(coinsCount - this.BATCH_SIZE, this.BATCH_SIZE)
@@ -43,7 +44,7 @@ export class CoinLoreWorker extends AbstractTokenWorker {
         let coin
         for (let i = 0; i < coins.length; i++) {
             coin = coins[i]
-            console.log(`Fetching :: ${coin.name} (${coin.symbol})`)
+            logger.info(`Fetching :: ${coin.name} (${coin.symbol})`)
             await driver.get(this.coinLoreService.getTokenPageLink(coin.nameid))
 
             try {
@@ -55,17 +56,17 @@ export class CoinLoreWorker extends AbstractTokenWorker {
                     links.push(await linksElements[j].getAttribute('href'))
                 }
 
-                let coinBlockchain = null
+                let coinBlockchain
                 links.forEach((link) => {
                     if (link.includes("bscscan.com")) {
-                        coinBlockchain = "bnb"
+                        coinBlockchain = Blockchain.BSC
                     } else if (link.includes("etherscan.io")) {
-                        coinBlockchain = "eth"
+                        coinBlockchain = Blockchain.ETH
                     }
                 })
 
                 if (!coinBlockchain) {
-                    console.log(`${coin.name} (${coin.symbol}) :: didn't added :: wrong blockchain`)
+                    logger.info(`${coin.name} (${coin.symbol}) :: didn't added :: wrong blockchain`)
                     continue
                 }
 
@@ -78,10 +79,10 @@ export class CoinLoreWorker extends AbstractTokenWorker {
                     "coinlore",
                     coinBlockchain
                 )
-                console.log(`${coin.name} (${coin.symbol}) :: added :: ${tokenAddress}`)
+                logger.info(`${coin.name} (${coin.symbol}) :: added :: ${tokenAddress}`)
             } catch (err: any) {
-                console.log(`${coin.name} (${coin.symbol}) :: didn't added :: something went wrong`)
-                console.log(err.message)
+                logger.warn(`${coin.name} (${coin.symbol}) :: didn't added :: something went wrong`)
+                logger.warn(err.message)
             }
         }
     }

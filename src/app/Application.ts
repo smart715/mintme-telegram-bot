@@ -1,5 +1,6 @@
 import { singleton } from "tsyringe"
 import { CMCWorker, CoinLoreWorker } from "../core"
+import { Blockchain } from "../utils"
 
 @singleton()
 export class Application {
@@ -10,7 +11,7 @@ export class Application {
     ) {}
 
     public run(): void {
-        //this.cmcWorker.run()
-        this.coinLoreWorker.run()
+        this.cmcWorker.run(Blockchain.BSC)
+        //this.coinLoreWorker.run()
     }
 }

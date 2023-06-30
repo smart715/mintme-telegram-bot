@@ -1,6 +1,7 @@
 import { singleton } from "tsyringe"
 import { BnbTokensRepository, CroTokensRepository } from "../repository"
 import { BnbToken, CroToken, EtherscanToken } from "../entity"
+import { Blockchain } from "../../utils"
 
 @singleton()
 export class TokensService {
@@ -15,13 +16,13 @@ export class TokensService {
 
     public async findByAddress(
         address: string,
-        blockchain: string,
+        blockchain: Blockchain,
     ): Promise<BnbToken | EtherscanToken | CroToken | undefined> {
-        if (blockchain === "eth") {
+        if (Blockchain.ETH === blockchain) {
             return this.etherscanTokensRepository.findByAddress(address)
-        } else if (blockchain === "bnb") {
+        } else if (Blockchain.BSC === blockchain) {
             return this.bnbTokensRepository.findByAddress(address)
-        } else if (blockchain === "cro") {
+        } else if (Blockchain.CRO === blockchain) {
             return this.croTokensRepository.findByAddress(address)
         }
 
@@ -35,7 +36,7 @@ export class TokensService {
         email: string,
         links: string[],
         workerSource: string,
-        blockchain: string
+        blockchain: Blockchain
     ): Promise<void> {
         websites = this.normalizeLinks(websites)
 
@@ -61,18 +62,18 @@ export class TokensService {
         email: string,
         normalizedLinks: string[],
         workerSource: string,
-        blockchain: string
+        blockchain: Blockchain
     ): Promise<void> {
         let token
 
-        if (blockchain === "eth") {
+        if (Blockchain.ETH === blockchain) {
             token = new EtherscanToken()
-        } else if (blockchain === "bnb") {
+        } else if (Blockchain.BSC === blockchain) {
             token = new BnbToken()
-        } else if (blockchain === "cro") {
+        } else if (Blockchain.CRO === blockchain) {
             token = new CroToken()
         } else {
-            return
+            throw new Error("Unknown blockchain")
         }
 
         token.tokenAddress = tokenAddress.toLowerCase()
@@ -83,11 +84,11 @@ export class TokensService {
         token.source = workerSource
         token.DateAdded = new Date()
 
-        if (blockchain === "eth") {
+        if (Blockchain.ETH === blockchain) {
             await this.etherscanTokensRepository.save(token)
-        } else if (blockchain === "bnb") {
+        } else if (Blockchain.BSC === blockchain) {
             await this.bnbTokensRepository.save(token)
-        } else if (blockchain === "cro") {
+        } else if (Blockchain.CRO === blockchain) {
             await this.croTokensRepository.save(token)
         }
     }
@@ -96,7 +97,7 @@ export class TokensService {
         normalizedWebsites: string[],
         email: string,
         normalizedLinks: string[],
-        blockchain: string,
+        blockchain: Blockchain,
         token: BnbToken | EtherscanToken | CroToken
     ): Promise<void> {
         const currentEmail = token.email.trim().replace("N/A", "")
@@ -139,12 +140,14 @@ export class TokensService {
 
         token.lastUpdate = new Date()
 
-        if (blockchain === "eth") {
+        if (Blockchain.ETH === blockchain) {
             await this.etherscanTokensRepository.save(token)
-        } else if (blockchain === "bnb") {
+        } else if (Blockchain.BSC === blockchain) {
             await this.bnbTokensRepository.save(token)
-        } else if (blockchain === "cro") {
+        } else if (Blockchain.CRO === blockchain) {
             await this.croTokensRepository.save(token)
+        } else {
+            throw new Error("Unknown blockchain")
         }
     }
 
