@@ -1,11 +1,8 @@
 import axios from "axios"
-import config from "config"
 import { singleton } from "tsyringe"
 
 @singleton()
 export class CoinLoreService {
-    API_KEY: string = config.get('coinmarketcap_api_key')
-
     public async getCoinsCount(): Promise<number> {
         const response = await axios.get('https://api.coinlore.net/api/global/')
 

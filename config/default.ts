@@ -4,4 +4,7 @@ export default {
     // coinmarketcap worker settings
     "cmc_request_start": 10000,
     "cmc_request_limit": 5000,
+
+    // coinlore worker settings
+    "coinlore_request_batch_size": 100
 }

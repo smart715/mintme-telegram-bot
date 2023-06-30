@@ -3,12 +3,13 @@ import { AbstractTokenWorker } from "./AbstractTokenWorker";
 import { CoinLoreService, TokensService } from "../service";
 import { Builder, By, WebDriver } from "selenium-webdriver";
 import { Blockchain, logger } from "../../utils";
+import config from "config";
 
 @singleton()
 export class CoinLoreWorker extends AbstractTokenWorker {
     public readonly workerName: string = "coinlore"
     
-    readonly BATCH_SIZE: number = 10
+    readonly BATCH_SIZE: number = config.get("coinlore_request_batch_size")
 
     public constructor(
         private coinLoreService: CoinLoreService,
