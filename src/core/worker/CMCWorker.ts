@@ -16,7 +16,7 @@ export class CMCWorker extends AbstractTokenWorker {
         super()
     }
 
-    public async run(currentBlockchain: Blockchain): Promise<any> {
+    public async run(currentBlockchain: Blockchain): Promise<void> {
         logger.info(`${CMCWorker.name} started for ${currentBlockchain} blockchain`)
 
         const requestLimit = config.get<number>("cmc_request_limit")
