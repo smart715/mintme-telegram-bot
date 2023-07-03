@@ -1,25 +1,36 @@
 // @ts-nocheck
-import { singleton } from "tsyringe"
-import { AbstractTokenWorker } from "./AbstractTokenWorker"
-import { AdvnService } from "../service/AdvnService";
-import { findContractAddress } from "../../utils";
+import {singleton} from "tsyringe"
+import {AbstractTokenWorker} from "./AbstractTokenWorker"
+import {AdvnService} from "../service/AdvnService";
+import {findContractAddress, getHrefFromTagString, getHrefValuesFromTagString} from "../../utils";
+import {TokensService} from "../service";
+import {Crypto} from "../../../config/blockchains";
 
 @singleton()
 export class AdvnWorker extends AbstractTokenWorker {
-    private readonly allowedBlockchains: string[] = [
-        "BSC",
-        "Binance",
-        "Ethereum",
+    private readonly unsupportedBlockchain: Crypto[] = [
+        Crypto.CRO,
     ]
 
     public constructor(
         private readonly advnService: AdvnService,
+        private readonly tokenService: TokensService,
     ) {
         super()
     }
 
-    public async run(): Promise<any> {
+    public async run(currentBlockchain: Crypto): Promise<any> {
         console.log(`${AdvnWorker.name} started`)
+
+        if (this.unsupportedBlockchain.includes(currentBlockchain)) {
+            console.log(`[AdvnWorker] Unsupported blockchain: ${currentBlockchain}`)
+
+            return
+        }
+
+        const target = Crypto.BNB === currentBlockchain
+            ? "Binance"
+            : "Ethereum"
 
         let count = 3000
         let start = 0
@@ -29,7 +40,7 @@ export class AdvnWorker extends AbstractTokenWorker {
             const tokens = await this.advnService.getTokens(start)
 
             for (const advnToken of tokens.data) {
-                if (!this.allowedBlockchains.includes(advnToken.platform?.toString())) {
+                if (!advnToken.platform?.toString().includes(target)) {
                     continue;
                 }
 
@@ -44,19 +55,29 @@ export class AdvnWorker extends AbstractTokenWorker {
                     continue
                 }
 
-                const parsedWebsiteSection = tokenInfo.match(/<tr title="Official Website(.+?)<\/td>(.+?)<\/tr>/)
-                let website = '';
+                const website = getHrefFromTagString(
+                    tokenInfo.match(/<tr title="Official Website(.+?)<\/td>(.+?)<\/tr>/).join(' ')
+                )
 
-                if (parsedWebsiteSection) {
-                    parsedWebsiteSection[2]
-                }
+                const links = getHrefValuesFromTagString(
+                    tokenInfo.match(/<table class=\"table table-hover fundamentals social\">(.+?)<\/table>/).join(' ')
+                );
 
-                console.log(website);
+                await this.tokenService.add(
+                    tokenAddress,
+                    name,
+                    website,
+                    "",
+                    links.join('\n'),
+                    "ADVN",
+                    currentBlockchain,
+                )
             }
 
             count = tokens.data.length
             start += 3000
         } while (count > 0)
 
+        console.log('[ADVN] Finished')
     }
 }

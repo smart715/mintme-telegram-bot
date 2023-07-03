@@ -49,6 +49,7 @@ container.register(AdvnWorker, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new AdvnWorker(
             dependencyContainer.resolve(AdvnService),
+            dependencyContainer.resolve(TokensService),
         )
     )
 })
