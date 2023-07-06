@@ -1,9 +1,7 @@
 
-import { singleton } from "tsyringe"
 import { Builder, ThenableWebDriver } from "selenium-webdriver";
 import { Options } from "selenium-webdriver/chrome";
 
-@singleton()
 export class SeleniumDriver {
     driver: ThenableWebDriver;
 
