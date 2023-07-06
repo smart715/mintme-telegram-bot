@@ -1,6 +1,9 @@
 node_modules
 build
-src/core/driver/profile/DawnCache/
-src/core/driver/profile/Cache/
-src/core/driver/profile/Code Cache/
-src/core/driver/profile/GPUCache/
+src/core/driver/Profile/Default/DawnCache/
+src/core/driver/Profile/Default/Cache/
+src/core/driver/Profile/Default/Code Cache/
+src/core/driver/Profile/Default/GPUCache/
+!src/core/driver/Profile/
+src/core/driver/Profile/**
+!src/core/driver/Profile/Default/
