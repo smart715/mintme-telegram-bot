@@ -1,2 +1,6 @@
 node_modules
 build
+src/core/driver/profile/DawnCache/
+src/core/driver/profile/Cache/
+src/core/driver/profile/Code Cache/
+src/core/driver/profile/GPUCache/
