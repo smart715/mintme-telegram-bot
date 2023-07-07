@@ -1,5 +1,5 @@
 import { container, instanceCachingFactory } from "tsyringe"
-import { CMCService, CMCWorker, TokensService } from "../../core"
+import { CMCService, CMCWorker, TokensService, SeleniumService } from "../../core"
 import { Application } from "../"
 import { BnbTokensRepository, CroTokensRepository, EtherscanTokensRepository } from "../../core/repository"
 import { getConnection } from "typeorm"
@@ -29,6 +29,11 @@ container.register(TokensService, {
         )
     )
 })
+
+container.register(SeleniumService, {
+    useFactory: instanceCachingFactory(() => new SeleniumService()),
+})
+
 
 container.register(CMCWorker, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
