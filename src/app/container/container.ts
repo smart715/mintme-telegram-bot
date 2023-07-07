@@ -34,7 +34,6 @@ container.register(SeleniumService, {
     useFactory: instanceCachingFactory(() => new SeleniumService()),
 })
 
-
 container.register(CMCWorker, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new CMCWorker(
