@@ -1,6 +1,6 @@
-import { singleton } from "tsyringe"
-import { Builder } from "selenium-webdriver";
-import { Options } from "selenium-webdriver/chrome";
+import { singleton } from 'tsyringe'
+import { Builder } from 'selenium-webdriver';
+import { Options } from 'selenium-webdriver/chrome';
 
 @singleton()
 export class SeleniumService {

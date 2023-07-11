@@ -1,3 +1,7 @@
 export { CMCService } from './CMCService'
 export { TokensService } from './TokensService'
+export { MintmeService } from './MintmeService'
+export { ContactHistoryService } from './ContactHistoryService'
+export { ChannelStatusService } from './ChannelStatusService'
 export { SeleniumService } from './SeleniumService'
+export { ContactQueueService } from './ContactQueueService'

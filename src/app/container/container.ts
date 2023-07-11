@@ -1,31 +1,43 @@
-import { container, instanceCachingFactory } from "tsyringe"
-import { CMCService, CMCWorker, TokensService, SeleniumService } from "../../core"
-import { Application } from "../"
-import { BnbTokensRepository, CroTokensRepository, EtherscanTokensRepository } from "../../core/repository"
-import { getConnection } from "typeorm"
+import { container, instanceCachingFactory } from 'tsyringe'
+import { CMCService, CMCWorker, ChannelStatusService, ContactHistoryService, ContactQueueService, EnqueueTokensWorker, MintmeService, QueueWorker, SeleniumService, TokensService } from '../../core'
+import { Application } from '../'
+import { CliDependency } from './types'
+import { ChannelStatusRepository, ContactHistoryRepository, ContactMessageRepository, QueuedContactRepository, TokenRepository } from '../../core/repository'
+import { getConnection } from 'typeorm'
+import { RunEnqueueTokenWorker, RunQueueWorker } from '../../command'
 
-container.register(BnbTokensRepository, {
-    useFactory: instanceCachingFactory(() => getConnection().getCustomRepository(BnbTokensRepository)),
+container.register(TokenRepository, {
+    useFactory: instanceCachingFactory(() => getConnection().getCustomRepository(TokenRepository)),
 })
 
-container.register(EtherscanTokensRepository, {
-    useFactory: instanceCachingFactory(() => getConnection().getCustomRepository(EtherscanTokensRepository)),
+container.register(ContactHistoryRepository, {
+    useFactory: instanceCachingFactory(() => getConnection().getCustomRepository(ContactHistoryRepository)),
 })
 
-container.register(CroTokensRepository, {
-    useFactory: instanceCachingFactory(() => getConnection().getCustomRepository(CroTokensRepository)),
+container.register(ContactMessageRepository, {
+    useFactory: instanceCachingFactory(() => getConnection().getCustomRepository(ContactMessageRepository)),
+})
+
+container.register(QueuedContactRepository, {
+    useFactory: instanceCachingFactory(() => getConnection().getCustomRepository(QueuedContactRepository)),
+})
+
+container.register(ChannelStatusRepository, {
+    useFactory: instanceCachingFactory(() => getConnection().getCustomRepository(ChannelStatusRepository)),
 })
 
 container.register(CMCService, {
     useFactory: instanceCachingFactory(() => new CMCService()),
 })
 
+container.register(MintmeService, {
+    useFactory: instanceCachingFactory(() => new MintmeService()),
+})
+
 container.register(TokensService, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new TokensService(
-            dependencyContainer.resolve(BnbTokensRepository),
-            dependencyContainer.resolve(EtherscanTokensRepository),
-            dependencyContainer.resolve(CroTokensRepository),
+            dependencyContainer.resolve(TokenRepository),
         )
     )
 })
@@ -43,9 +55,70 @@ container.register(CMCWorker, {
     )
 })
 
-container.register(Application, {
+container.register(ChannelStatusService, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
-        new Application(dependencyContainer.resolve(CMCWorker))
+        new ChannelStatusService(
+            dependencyContainer.resolve(ChannelStatusRepository),
+        )
+    )
+})
+
+container.register(ContactQueueService, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new ContactQueueService(
+            dependencyContainer.resolve(QueuedContactRepository),
+        )
+    )
+})
+
+container.register(ContactHistoryService, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new ContactHistoryService(
+            dependencyContainer.resolve(ContactHistoryRepository),
+        )
+    )
+})
+
+container.register(EnqueueTokensWorker, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new EnqueueTokensWorker(
+            dependencyContainer.resolve(TokensService),
+            dependencyContainer.resolve(MintmeService),
+            dependencyContainer.resolve(ChannelStatusService),
+            dependencyContainer.resolve(ContactQueueService),
+        )
+    )
+})
+
+container.register(QueueWorker, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new QueueWorker(
+            dependencyContainer.resolve(ContactQueueService),
+            dependencyContainer.resolve(ChannelStatusService),
+            dependencyContainer.resolve(TokensService),
+            dependencyContainer.resolve(ContactHistoryService),
+            dependencyContainer.resolve(EnqueueTokensWorker),
+        )
+    )
+})
+
+container.register(Application, {
+    useFactory: instanceCachingFactory(() => new Application())
+})
+
+container.register(CliDependency.COMMAND, {
+    useFactory: instanceCachingFactory((dependencyContainer) => 
+        new RunEnqueueTokenWorker(
+            dependencyContainer.resolve(EnqueueTokensWorker),
+        )
+    )
+})
+
+container.register(CliDependency.COMMAND, {
+    useFactory: instanceCachingFactory((dependencyContainer) => 
+        new RunQueueWorker(
+            dependencyContainer.resolve(QueueWorker),
+        )
     )
 })
 
