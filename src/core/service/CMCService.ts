@@ -1,7 +1,7 @@
-import axios from "axios"
-import config from "config"
-import { singleton } from "tsyringe"
-import { CMCApiGeneralResponse, CMCCryptocurrency, CMCTokenInfoResponse } from "../../types/Coinmarketcap"
+import axios from 'axios'
+import config from 'config'
+import { singleton } from 'tsyringe'
+import { CMCApiGeneralResponse, CMCCryptocurrency, CMCTokenInfoResponse } from '../../types/Coinmarketcap'
 
 @singleton()
 export class CMCService {

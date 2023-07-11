@@ -1,12 +1,10 @@
-import { singleton } from "tsyringe"
-import { CMCWorker } from "../core"
+import { singleton } from 'tsyringe'
 
 @singleton()
 export class Application {
 
-    public constructor(private cmcWorker: CMCWorker) {}
+    public constructor() {}
 
     public run(): void {
-        this.cmcWorker.run()
     }
 }

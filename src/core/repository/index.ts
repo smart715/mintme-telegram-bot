@@ -1,3 +1,5 @@
-export { BnbTokensRepository } from "./BnbTokensRepository"
-export { CroTokensRepository } from "./CroTokensRepository"
-export { EtherscanTokensRepository } from "./EtherscanTokensRepository"
+export { QueuedContactRepository } from './QueuedContactRepository'
+export { TokenRepository } from './TokenRepository'
+export { ChannelStatusRepository } from './ChannelStatusRepository'
+export { ContactHistoryRepository } from './ContactHistoryRepository'
+export { ContactMessageRepository } from './ContactMessageRepository'

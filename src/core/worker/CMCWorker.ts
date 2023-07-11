@@ -1,6 +1,7 @@
-import { singleton } from "tsyringe"
-import { CMCService, TokensService } from "../service"
-import { AbstractTokenWorker } from "./AbstractTokenWorker"
+import { singleton } from 'tsyringe'
+import { CMCService, TokensService } from '../service'
+import { AbstractTokenWorker } from './AbstractTokenWorker'
+import { parseBlockchainName } from '../../utils'
 
 @singleton()
 export class CMCWorker extends AbstractTokenWorker {
@@ -34,32 +35,35 @@ export class CMCWorker extends AbstractTokenWorker {
 
             const tokenAddress = token.platform.token_address
             const tokenName = token.name
-            const website = tokenInfo.urls.website?.length ? tokenInfo.urls.website[0] : ""
-            const email = ""
+            const website = tokenInfo.urls.website?.length ? tokenInfo.urls.website[0] : ''
+            const email = ''
             const links = this.getUsefulLinks(tokenInfo.urls)
-            const workerSource = "CMC"
-            const blockchain = token.platform.slug
+            const workerSource = 'CMC'
+            const blockchain = parseBlockchainName(token.platform.slug)
 
-            const foundToken = await this.tokensService.findByAddress(tokenAddress, token.platform.symbol.toLowerCase())
+            const foundToken = await this.tokensService.findByAddress(
+                tokenAddress,
+                blockchain,
+            )
 
             if (foundToken) {
                 console.log(` ${token.name} already added. Skipping`)
 
                 return
             } else {
-                await this.tokensService.add(tokenAddress, tokenName, website, email, links, workerSource, blockchain)
-                console.log("Added to DB: ", tokenAddress, tokenName, website, email, links, workerSource, blockchain)
+                await this.tokensService.add(tokenAddress, tokenName, [website], [email], links, workerSource, blockchain)
+                console.log('Added to DB: ', tokenAddress, tokenName, website, email, links.join(','), workerSource, blockchain)
             }
         })
     }
 
-    private getUsefulLinks(linksObj: {[type: string] : string[]}): string {
+    private getUsefulLinks(linksObj: {[type: string] : string[]}): string[] {
         const links: string[] = []
 
         Object.values(linksObj).forEach((links: string[]) => {
-            links.push(links.join('\r\n'))
+            links.push(...links)
         })
 
-        return links.join('\r\n')
+        return links
     }
 }
