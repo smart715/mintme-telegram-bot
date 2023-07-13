@@ -1,4 +1,4 @@
-import { Column, Entity, Index, PrimaryGeneratedColumn } from 'typeorm'
+import { Column, CreateDateColumn, Entity, Index, PrimaryGeneratedColumn } from 'typeorm'
 import { Blockchain } from '../../utils'
 
 @Entity()
@@ -7,21 +7,21 @@ export class QueuedContact {
     @PrimaryGeneratedColumn()
     public id: string
 
-    @Column()
+    @Column({ length: 80 })
     public address: string
 
-    @Column()
+    @Column({ length: 32 })
     public blockchain: Blockchain
 
-    @Column()
+    @Column( { length: 512 })
     public channel: string
 
-    @Column()
+    @Column({ default: false })
     public isPlanned: boolean
 
-    @Column()
+    @Column({ default: false })
     public isProcessing: boolean
 
-    @Column()
+    @CreateDateColumn()
     public createdAt: Date
 }

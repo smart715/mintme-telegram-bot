@@ -5,9 +5,6 @@ import { Blockchain, isValidEmail, isValidTgLink, isValidTwitterLink } from '../
 
 @singleton()
 export class TokensService {
-    public static readonly LINKS_DELIMITER: string = ','
-    public static readonly EMAIL_DELIMITER: string = ','
-
     public constructor(
         private tokenRepository: TokenRepository,
     ) {}
@@ -33,9 +30,9 @@ export class TokensService {
         token.address = tokenAddress
         token.blockchain = blockchain
         token.name = tokenName
-        token.websites = websites.join(TokensService.LINKS_DELIMITER)
-        token.emails = emails.join(TokensService.EMAIL_DELIMITER)
-        token.links = links.join(TokensService.LINKS_DELIMITER)
+        token.websites = websites
+        token.emails = emails
+        token.links = links
         token.source = workerSource
 
         await this.tokenRepository.insert(token)
@@ -61,20 +58,14 @@ export class TokensService {
     }
 
     public getEmails(token: Token): string[] {
-        return token.emails && token.emails.includes('@')
-            ? token.emails.split(TokensService.EMAIL_DELIMITER).filter((email) => isValidEmail(email))
-            : []
+        return token.emails.filter(email => isValidEmail(email))
     }
 
     public getTwitterAccounts(token: Token): string[] {
-        return token.links && token.links.includes('twitter.com')
-            ? token.links.split(TokensService.LINKS_DELIMITER).filter((link) => isValidTwitterLink(link))
-            : []
+        return token.links.filter(link => isValidTwitterLink(link))
     }
 
     public getTelegramAccounts(token: Token): string[] {
-        return token.links && token.links.includes('t.me')
-            ? token.links.split(TokensService.LINKS_DELIMITER).filter((link) => isValidTgLink(link))
-            : []
+        return token.links.filter(link => isValidTgLink(link))
     }
 }
