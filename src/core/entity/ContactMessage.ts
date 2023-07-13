@@ -5,15 +5,15 @@ export class ContactMessage {
     @PrimaryGeneratedColumn()
     public id: number
 
-    @Column()
+    @Column({ length: 512 })
     public title: string
 
-    @Column()
+    @Column('text')
     public content: string
 
-    @Column()
+    @Column({ nullable: true })
     public allowedBlockchains: string
 
-    @Column()
+    @Column({ default: false })
     public isTgOnly: boolean
 }

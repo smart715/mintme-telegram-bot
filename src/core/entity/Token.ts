@@ -1,4 +1,11 @@
-import { BeforeUpdate, Column, Entity, Index, PrimaryGeneratedColumn } from 'typeorm';
+import {
+    Column,
+    CreateDateColumn,
+    Entity,
+    Index,
+    PrimaryGeneratedColumn,
+    UpdateDateColumn,
+} from 'typeorm'
 import { ContactMethod, TokenContactStatusType } from '../types';
 import { Blockchain } from '../../utils';
 
@@ -8,59 +15,60 @@ export class Token {
     @PrimaryGeneratedColumn()
     public id: string
 
-    @Column()
+    @Column({ length: 80 })
     public address: string
 
-    @Column()
+    @Column({ length: 32 })
     public blockchain: Blockchain
 
-    @Column()
+    @Column({ nullable: true })
     public name: string
 
-    @Column()
-    public emails: string
+    @Column('simple-array', { nullable: true })
+    public emails: string[]
 
-    @Column()
-    public websites: string
+    @Column('simple-array', { nullable: true })
+    public websites: string[]
 
-    @Column()
-    public links: string
+    @Column('simple-array', { nullable: true })
+    public links: string[]
 
-    @Column()
+    @Column({ default: false })
     public avoidContacting: boolean
 
-    @Column()
+    @Column({ nullable: true })
     public lastContactAttempt: Date
 
-    @Column()
+    @Column({ length: 32, nullable: true })
     public lastContactMethod: ContactMethod
 
-    @Column({default: 0})
-    public emailAttempts: number = 0
+    @Column({ width: 4, default: 0 })
+    public emailAttempts: number
 
-    @Column({default: 0})
-    public twitterAttempts: number = 0
+    @Column({ width: 4, default: 0 })
+    public twitterAttempts: number
 
-    @Column({default: 0})
-    public telegramAttempts: number = 0
-    
-    @Column()
+    @Column({ width: 4, default: 0 })
+    public telegramAttempts: number
+
+    @Column({ width: 4, default: 0 })
+    public duplicatedTimes: number
+
+    @Column({ length: 64, nullable: true})
     public source: string
 
-    @Column()
+    @Column({ default: false })
+    public isAddedToSheet: boolean
+
+    @Column({ length: 32, default: TokenContactStatusType.NOT_CONTACTED })
     public contactStatus: TokenContactStatusType
 
-    @Column()
+    @CreateDateColumn()
     public createdAt: Date
 
-    @Column()
+    @UpdateDateColumn()
     public updatedAt: Date
 
-    @Column()
+    @Column({ nullable: true })
     public lastTxDate: Date
-
-    @BeforeUpdate()
-    protected setUpdatedAt() {
-        this.updatedAt = new Date()
-    }
 }

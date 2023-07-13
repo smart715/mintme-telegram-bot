@@ -1,4 +1,4 @@
-import { Column, Entity, Index, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, CreateDateColumn, Entity, Index, PrimaryGeneratedColumn } from 'typeorm'
 import { ContactHistoryStatusType, ContactMethod } from '../types';
 import { Blockchain } from '../../utils';
 
@@ -8,28 +8,28 @@ export class ContactHistory {
     @PrimaryGeneratedColumn()
     public id: number
 
-    @Column()
+    @Column({ length: 80 })
     public address: string
 
-    @Column()
+    @Column({ length: 32 })
     public blockchain: Blockchain
 
-    @Column()
+    @Column({ length: 64 })
     public contactMethod: ContactMethod
 
-    @Column()
+    @Column({ default: false })
     public isSuccess: boolean
 
-    @Column()
+    @Column({ length: 512, nullable: true })
     public channel: string
 
-    @Column()
+    @Column({ nullable: true })
     public messageId: number
-    
-    @Column()
+
+    @Column({ length: 32, nullable: true })
     public status: ContactHistoryStatusType
 
-    @Column()
+    @CreateDateColumn()
     public createdAt: Date
 
     public constructor(

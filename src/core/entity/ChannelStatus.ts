@@ -1,4 +1,13 @@
-import { BeforeInsert, BeforeUpdate, Column, Entity, Index, PrimaryGeneratedColumn } from 'typeorm'
+import {
+    BeforeInsert,
+    BeforeUpdate,
+    Column,
+    CreateDateColumn,
+    Entity,
+    Index,
+    PrimaryGeneratedColumn,
+    UpdateDateColumn
+} from 'typeorm'
 import { ChannelStatusType } from '../types'
 import { Blockchain } from '../../utils'
 
@@ -8,25 +17,25 @@ export class ChannelStatus {
     @PrimaryGeneratedColumn()
     public id: string
 
-    @Column()
+    @Column({ length: 80 })
     public address: string
 
-    @Column()
+    @Column({ length: 32 })
     public blockchain: Blockchain
 
-    @Column()
+    @Column({ length: 512 })
     public channel: string
 
-    @Column({default: 0})
-    public attemptsAmount: number = 0
+    @Column('tinyint', { width: 4, default: 0})
+    public attemptsAmount: number
 
-    @Column()
+    @Column({ length: 32 })
     public status: ChannelStatusType
 
-    @Column()
+    @CreateDateColumn()
     public createdAt: Date
 
-    @Column()
+    @UpdateDateColumn()
     public lastAttempt: Date
 
     public constructor(address: string, blockchain: Blockchain, channel: string, status: ChannelStatusType) {
