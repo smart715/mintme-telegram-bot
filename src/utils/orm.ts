@@ -1,6 +1,6 @@
-import { singleton } from "tsyringe"
-import ormconfig from "../../config/ormconfig"
-import { Connection, createConnection, getConnection } from "typeorm"
+import { singleton } from 'tsyringe'
+import ormconfig from '../../config/ormconfig'
+import { Connection, createConnection, getConnection } from 'typeorm'
 
 @singleton()
 export class Database {

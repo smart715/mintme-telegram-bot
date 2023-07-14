@@ -1,20 +1,10 @@
-import { singleton } from "tsyringe"
-import { CMCWorker } from "../core"
-import { AdvnWorker } from "../core/worker/AdvnWorker";
-import { Crypto } from "../../config/blockchains";
+import { singleton } from 'tsyringe'
 
 @singleton()
 export class Application {
 
-    public constructor(
-        private cmcWorker: CMCWorker,
-        private advnWorker: AdvnWorker,
-    ) {}
+    public constructor() {}
 
-    public async run(): Promise<void> {
-        this.cmcWorker.run()
-
-        this.advnWorker.run(Crypto.BNB)
-        this.advnWorker.run(Crypto.ETH)
+    public run(): void {
     }
 }
