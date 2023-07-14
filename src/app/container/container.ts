@@ -5,6 +5,8 @@ import { CliDependency } from './types'
 import { ChannelStatusRepository, ContactHistoryRepository, ContactMessageRepository, QueuedContactRepository, TokenRepository } from '../../core/repository'
 import { getConnection } from 'typeorm'
 import { RunEnqueueTokenWorker, RunQueueWorker } from '../../command'
+import {AdvnService} from "../../core/service/AdvnService";
+import {AdvnWorker} from "../../core/worker/AdvnWorker";
 
 container.register(TokenRepository, {
     useFactory: instanceCachingFactory(() => getConnection().getCustomRepository(TokenRepository)),
