@@ -1,13 +1,16 @@
 // @ts-nocheck
 import {singleton} from "tsyringe"
 import {AbstractTokenWorker} from "./AbstractTokenWorker";
-import axios from "axios";
 import {TokensService} from "../service";
 import {Blockchain} from "../../utils";
+import {CoinGeckoService} from "../service/CoinGeckoService";
 
 @singleton()
 export class CoinGeckoWorker extends AbstractTokenWorker {
-    public constructor(private readonly tokenService: TokensService) {
+    public constructor(
+        private readonly tokenService: TokensService,
+        private readonly coinGeckoService: CoinGeckoService,
+    ) {
         super()
     }
 
@@ -32,9 +35,8 @@ export class CoinGeckoWorker extends AbstractTokenWorker {
                     break
             }
 
-            const response = await axios.get(link)
-            const data = response.data
-            const tokens = data.tokens
+            const response = await this.coinGeckoService.getAll(link)
+            const tokens = response.tokens
 
             for (const token of tokens) {
                 const tokenId: string = token.name.toString().replace(" ", "-")
@@ -49,8 +51,7 @@ export class CoinGeckoWorker extends AbstractTokenWorker {
                     continue
                 }
 
-                const coinInfoResponse = await axios.get("https://api.coingecko.com/api/v3/coins/" + tokenId)
-                const coinInfo = coinInfoResponse.data
+                const coinInfo = await this.coinGeckoService.getCoinInfo(tokenId)
 
                 if ("" === coinInfo) {
                     continue
