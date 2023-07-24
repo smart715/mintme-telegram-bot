@@ -1,8 +1,8 @@
-import { singleton } from 'tsyringe';
-import { CommandInterface, RunQueueWorkerCmdArgv } from './types';
-import { Arguments, Argv } from 'yargs';
-import { Blockchain, logger } from '../utils';
-import { QueueWorker } from '../core';
+import { singleton } from 'tsyringe'
+import { CommandInterface, RunQueueWorkerCmdArgv } from './types'
+import { Arguments, Argv } from 'yargs'
+import { Blockchain, logger } from '../utils'
+import { QueueWorker } from '../core'
 
 @singleton()
 export class RunQueueWorker implements CommandInterface {

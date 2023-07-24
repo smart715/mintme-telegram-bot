@@ -2,7 +2,7 @@ import { Column, CreateDateColumn, Entity, Index, PrimaryGeneratedColumn } from 
 import { Blockchain } from '../../utils'
 
 @Entity()
-@Index('UQ_ADDRESS_BLOCKCHAIN', ['address', 'blockchain'], {unique: true})
+@Index('UQ_ADDRESS_BLOCKCHAIN', [ 'address', 'blockchain' ], { unique: true })
 export class QueuedContact {
     @PrimaryGeneratedColumn()
     public id: string
@@ -13,7 +13,7 @@ export class QueuedContact {
     @Column({ length: 32 })
     public blockchain: Blockchain
 
-    @Column( { length: 512 })
+    @Column({ length: 512 })
     public channel: string
 
     @Column({ default: false })

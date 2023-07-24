@@ -2,9 +2,7 @@ import { singleton } from 'tsyringe'
 
 @singleton()
 export class Application {
+    public constructor() { }
 
-    public constructor() {}
-
-    public run(): void {
-    }
+    public run(): void { }
 }

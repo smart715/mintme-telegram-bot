@@ -25,7 +25,7 @@ export class TokensService {
         workerSource: string,
         blockchain: Blockchain
     ): Promise<Token> {
-        let token = new Token()
+        const token = new Token()
 
         token.address = tokenAddress
         token.blockchain = blockchain

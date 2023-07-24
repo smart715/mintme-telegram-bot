@@ -1,8 +1,7 @@
 import { container, instanceCachingFactory } from 'tsyringe'
-import { CMCService, CMCWorker, ChannelStatusService, ContactHistoryService, ContactQueueService, EnqueueTokensWorker, MintmeService, QueueWorker, SeleniumService, TokensService } from '../../core'
+import { CMCService, CMCWorker, ChannelStatusRepository, ChannelStatusService, ContactHistoryRepository, ContactHistoryService, ContactMessageRepository, ContactQueueService, EnqueueTokensWorker, MintmeService, QueueWorker, QueuedContactRepository, SeleniumService, TokenRepository, TokensService } from '../../core'
 import { Application } from '../'
 import { CliDependency } from './types'
-import { ChannelStatusRepository, ContactHistoryRepository, ContactMessageRepository, QueuedContactRepository, TokenRepository } from '../../core/repository'
 import { getConnection } from 'typeorm'
 import { RunEnqueueTokenWorker, RunQueueWorker } from '../../command'
 
@@ -39,7 +38,7 @@ container.register(TokensService, {
         new TokensService(
             dependencyContainer.resolve(TokenRepository),
         )
-    )
+    ),
 })
 
 container.register(SeleniumService, {
@@ -51,32 +50,32 @@ container.register(CMCWorker, {
         new CMCWorker(
             dependencyContainer.resolve(CMCService),
             dependencyContainer.resolve(TokensService),
-        )
-    )
+        ),
+    ),
 })
 
 container.register(ChannelStatusService, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new ChannelStatusService(
             dependencyContainer.resolve(ChannelStatusRepository),
-        )
-    )
+        ),
+    ),
 })
 
 container.register(ContactQueueService, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new ContactQueueService(
             dependencyContainer.resolve(QueuedContactRepository),
-        )
-    )
+        ),
+    ),
 })
 
 container.register(ContactHistoryService, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new ContactHistoryService(
             dependencyContainer.resolve(ContactHistoryRepository),
-        )
-    )
+        ),
+    ),
 })
 
 container.register(EnqueueTokensWorker, {
@@ -86,8 +85,8 @@ container.register(EnqueueTokensWorker, {
             dependencyContainer.resolve(MintmeService),
             dependencyContainer.resolve(ChannelStatusService),
             dependencyContainer.resolve(ContactQueueService),
-        )
-    )
+        ),
+    ),
 })
 
 container.register(QueueWorker, {
@@ -98,28 +97,28 @@ container.register(QueueWorker, {
             dependencyContainer.resolve(TokensService),
             dependencyContainer.resolve(ContactHistoryService),
             dependencyContainer.resolve(EnqueueTokensWorker),
-        )
-    )
+        ),
+    ),
 })
 
 container.register(Application, {
-    useFactory: instanceCachingFactory(() => new Application())
+    useFactory: instanceCachingFactory(() => new Application()),
 })
 
 container.register(CliDependency.COMMAND, {
-    useFactory: instanceCachingFactory((dependencyContainer) => 
+    useFactory: instanceCachingFactory((dependencyContainer) =>
         new RunEnqueueTokenWorker(
             dependencyContainer.resolve(EnqueueTokensWorker),
-        )
-    )
+        ),
+    ),
 })
 
 container.register(CliDependency.COMMAND, {
-    useFactory: instanceCachingFactory((dependencyContainer) => 
+    useFactory: instanceCachingFactory((dependencyContainer) =>
         new RunQueueWorker(
             dependencyContainer.resolve(QueueWorker),
-        )
-    )
+        ),
+    ),
 })
 
 export { container }
