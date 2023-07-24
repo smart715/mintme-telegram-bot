@@ -19,7 +19,7 @@ export class ChannelStatusService {
         channels: string[],
         channelStatuses: ChannelStatus[],
         address: string,
-        blockchain: string,
+        blockchain: Blockchain,
     ): string {
         const activeChannelMap = channelStatuses.reduce((acc: {[key: string]: boolean}, channelStatus) => {
             if (false === acc[channelStatus.channel]) {

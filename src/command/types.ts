@@ -19,3 +19,18 @@ export interface RunQueueWorkerCmdArgv {
     blockchain: Blockchain,
     repeat: number,
 }
+
+export interface RunExplorerWorkerCmdArgv {
+    name: ExplorerWorkerNames,
+    blockchain: Blockchain,
+}
+
+export enum ExplorerWorkerNames {
+    HOLDINGS = 'token-holdings-worker',
+    TRANSACTIONS = 'token-transactions-fetcher',
+    TOP_ACCOUNTS = 'top-accounts-fetcher',
+    TOP_TOKENS = 'top-tokens-fetcher',
+    VALIDATORS = 'validators-fetcher',
+    TOKEN_CHECKER = 'check-token-worker',
+    EXPLORER_SEARCH = 'explorer-search-api-worker',
+}

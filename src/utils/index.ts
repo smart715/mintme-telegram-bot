@@ -5,6 +5,8 @@ export { Database } from './orm'
 export { default as logger, Loggable } from './logger'
 export * from './regexp'
 export * from './blockchains'
+export * from './constants'
+export { TokenNamesGenerator } from './TokenNamesGenerator'
 
 export function parseContactMethod(channel: string): ContactMethod|undefined {
     if (channel.includes('@')) {
@@ -29,4 +31,8 @@ export function getMaxAttemptsPerMethod(method: ContactMethod): number {
         default:
             return 0
     }
+}
+
+export async function sleep(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms))
 }

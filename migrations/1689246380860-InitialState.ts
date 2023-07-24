@@ -29,7 +29,7 @@ export class InitialState1689246380860 implements MigrationInterface {
                 UNIQUE INDEX \`UQ_ADDRESS_BLOCKCHAIN\` (\`address\`, \`blockchain\`),
                 PRIMARY KEY (\`id\`)
             ) ENGINE = InnoDB
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE \`contact_history\` (
                  \`id\` int NOT NULL AUTO_INCREMENT,
@@ -44,7 +44,7 @@ export class InitialState1689246380860 implements MigrationInterface {
                  INDEX \`IDX_ADDRESS_BLOCKCHAIN\` (\`address\`, \`blockchain\`),
                  PRIMARY KEY (\`id\`)
             ) ENGINE = InnoDB
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE \`queued_contact\` (
                 \`id\` int NOT NULL AUTO_INCREMENT,
@@ -57,7 +57,7 @@ export class InitialState1689246380860 implements MigrationInterface {
                 UNIQUE INDEX \`UQ_ADDRESS_BLOCKCHAIN\` (\`address\`, \`blockchain\`),
                 PRIMARY KEY (\`id\`)
             ) ENGINE = InnoDB
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE \`channel_status\` (
                 \`id\` int NOT NULL AUTO_INCREMENT,
@@ -71,7 +71,7 @@ export class InitialState1689246380860 implements MigrationInterface {
                 UNIQUE INDEX \`UQ_ADDRESS_BLOCKCHAIN_CHANNEL\` (\`address\`, \`blockchain\`, \`channel\`),
                 PRIMARY KEY (\`id\`)
             ) ENGINE = InnoDB
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE \`contact_message\` (
                 \`id\` int NOT NULL AUTO_INCREMENT,
@@ -81,15 +81,15 @@ export class InitialState1689246380860 implements MigrationInterface {
                 \`is_tg_only\` tinyint NOT NULL DEFAULT 0,
                 PRIMARY KEY (\`id\`)
             ) ENGINE = InnoDB
-        `);
+        `)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`DROP TABLE \`contact_message\``);
-        await queryRunner.query(`DROP TABLE \`channel_status\``);
-        await queryRunner.query(`DROP TABLE \`queued_contact\``);
-        await queryRunner.query(`DROP TABLE \`contact_history\``);
-        await queryRunner.query(`DROP TABLE \`token\``);
+        await queryRunner.query(`DROP TABLE \`contact_message\``)
+        await queryRunner.query(`DROP TABLE \`channel_status\``)
+        await queryRunner.query(`DROP TABLE \`queued_contact\``)
+        await queryRunner.query(`DROP TABLE \`contact_history\``)
+        await queryRunner.query(`DROP TABLE \`token\``)
     }
 
 }

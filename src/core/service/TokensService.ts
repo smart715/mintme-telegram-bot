@@ -40,6 +40,10 @@ export class TokensService {
         return token
     }
 
+    public async update(token: Token): Promise<void> {
+        await this.tokenRepository.save(token)
+    }
+
     public async saveTokenContactInfo(token: Token): Promise<void> {
         await this.tokenRepository
             .save({
