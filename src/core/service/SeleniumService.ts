@@ -20,6 +20,10 @@ export class SeleniumService {
             options.addArguments(`--user-data-dir=${profile}`)
         }
 
-        return new Builder().forBrowser('chrome').setChromeOptions(options).build()
+        return new Builder()
+            .forBrowser('chrome')
+            .usingServer('http://selenium-hub:4444')
+            .setChromeOptions(options)
+            .build()
     }
 }
