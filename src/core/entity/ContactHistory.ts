@@ -1,9 +1,9 @@
 import { Column, CreateDateColumn, Entity, Index, PrimaryGeneratedColumn } from 'typeorm'
-import { ContactHistoryStatusType, ContactMethod } from '../types';
-import { Blockchain } from '../../utils';
+import { ContactHistoryStatusType, ContactMethod } from '../types'
+import { Blockchain } from '../../utils'
 
 @Entity()
-@Index('IDX_ADDRESS_BLOCKCHAIN', ['address', 'blockchain'])
+@Index('IDX_ADDRESS_BLOCKCHAIN', [ 'address', 'blockchain' ])
 export class ContactHistory {
     @PrimaryGeneratedColumn()
     public id: number

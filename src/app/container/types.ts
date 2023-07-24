@@ -1,3 +1,3 @@
 export enum CliDependency {
-    COMMAND = 'COMMAND'
+    COMMAND = 'COMMAND',
 }

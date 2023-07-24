@@ -1,1 +1,1 @@
-export { CMCCryptocurrency } from "./Coinmarketcap"
+export * from './Coinmarketcap'

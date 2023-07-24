@@ -6,13 +6,13 @@ import {
     Entity,
     Index,
     PrimaryGeneratedColumn,
-    UpdateDateColumn
+    UpdateDateColumn,
 } from 'typeorm'
 import { ChannelStatusType } from '../types'
 import { Blockchain } from '../../utils'
 
 @Entity()
-@Index('UQ_ADDRESS_BLOCKCHAIN_CHANNEL', ['address', 'blockchain', 'channel'], { unique: true })
+@Index('UQ_ADDRESS_BLOCKCHAIN_CHANNEL', [ 'address', 'blockchain', 'channel' ], { unique: true })
 export class ChannelStatus {
     @PrimaryGeneratedColumn()
     public id: string
@@ -26,7 +26,7 @@ export class ChannelStatus {
     @Column({ length: 512 })
     public channel: string
 
-    @Column('tinyint', { width: 4, default: 0})
+    @Column('tinyint', { width: 4, default: 0 })
     public attemptsAmount: number
 
     @Column({ length: 32 })
@@ -47,7 +47,7 @@ export class ChannelStatus {
 
     @BeforeInsert()
     @BeforeUpdate()
-    protected beforeUpdate() {
+    protected beforeUpdate(): void {
         this.lastAttempt = new Date()
     }
 }

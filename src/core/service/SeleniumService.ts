@@ -1,10 +1,11 @@
 import { singleton } from 'tsyringe'
-import { Builder } from 'selenium-webdriver';
-import { Options } from 'selenium-webdriver/chrome';
+import { Builder, ThenableWebDriver } from 'selenium-webdriver'
+// eslint-disable-next-line import/no-internal-modules
+import { Options } from 'selenium-webdriver/chrome'
 
 @singleton()
 export class SeleniumService {
-    public static async createDriver(profile: string = '', headless: boolean = false) {
+    public static async createDriver(profile: string = '', headless: boolean = false): Promise<ThenableWebDriver> {
         const options = new Options()
             .windowSize({ width: 1920, height: 1080 })
             .addArguments('--no-sandbox')
@@ -19,6 +20,6 @@ export class SeleniumService {
             options.addArguments(`--user-data-dir=${profile}`)
         }
 
-        return await new Builder().forBrowser('chrome').setChromeOptions(options).build()
+        return new Builder().forBrowser('chrome').setChromeOptions(options).build()
     }
 }

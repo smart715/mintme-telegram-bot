@@ -1,13 +1,12 @@
-import { singleton } from 'tsyringe';
-import { Blockchain, logger, parseContactMethod } from '../../utils';
-import { ChannelStatusType, ContactHistoryStatusType, ContactMethod, TokenContactStatusType } from '../types';
-import { ChannelStatusService, ContactHistoryService, ContactQueueService, TokensService } from '../service';
-import { ContactMessage, Token } from '../entity';
-import { EnqueueTokensWorker } from './EnqueueTokensWorker';
+import { singleton } from 'tsyringe'
+import { Blockchain, logger, parseContactMethod } from '../../utils'
+import { ChannelStatusType, ContactHistoryStatusType, ContactMethod, TokenContactStatusType } from '../types'
+import { ChannelStatusService, ContactHistoryService, ContactQueueService, TokensService } from '../service'
+import { ContactMessage, Token } from '../entity'
+import { EnqueueTokensWorker } from './EnqueueTokensWorker'
 
 @singleton()
 export class QueueWorker {
-
     public constructor(
         private readonly contactQueueService: ContactQueueService,
         private readonly channelStatusService: ChannelStatusService,
@@ -105,7 +104,7 @@ export class QueueWorker {
         const {
             enqueued,
             contactChannel,
-            nextContactMethod
+            nextContactMethod,
         } = await this.enqueueTokensWorker.tryToEnqueueToken(token, isFutureContact)
 
         token.lastContactAttempt = new Date()
@@ -144,17 +143,23 @@ export class QueueWorker {
     private async contactViaEmail(email: string, message: ContactMessage): Promise<ChannelStatusType> {
         await new Promise(resolve => setTimeout(resolve, 3000))
 
+        logger.info(`[${QueueWorker.name}] contact via email ${email} ${message.id}`)
+
         return ChannelStatusType.ACTIVE
     }
 
     private async contactViaTwitter(twitterUrl: string, message: ContactMessage): Promise<ChannelStatusType> {
         await new Promise(resolve => setTimeout(resolve, 3000))
 
+        logger.info(`[${QueueWorker.name}] contact via twitter ${twitterUrl} ${message.id}`)
+
         return ChannelStatusType.ACTIVE
     }
 
     private async contactViaTelegram(telegramUrl: string, message: ContactMessage): Promise<ChannelStatusType> {
         await new Promise(resolve => setTimeout(resolve, 3000))
+
+        logger.info(`[${QueueWorker.name}] contact via telegramUrl ${telegramUrl} ${message.id}`)
 
         return ChannelStatusType.ACTIVE
     }

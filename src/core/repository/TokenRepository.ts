@@ -25,17 +25,17 @@ export class TokenRepository extends Repository<Token> {
                 'twitter_attempts',
                 'telegram_attempts',
             ])
-            .where('contact_status = :status', {status: TokenContactStatusType.NOT_CONTACTED})
+            .where('contact_status = :status', { status: TokenContactStatusType.NOT_CONTACTED })
             .andWhere('avoid_contacting = 0')
-            .andWhere('blockchain = :blockchain', {blockchain})
+            .andWhere('blockchain = :blockchain', { blockchain })
             .andWhere(
                 'last_contact_attempt is null or last_contact_attempt < :dateBefore',
-                {dateBefore: moment().utc().subtract(delayInSeconds, 'second').format()}
+                { dateBefore: moment().utc().subtract(delayInSeconds, 'second').format() }
             )
             .getRawMany()
     }
 
     public async findByAddressAndBlockchain(address: string, blockchain: Blockchain): Promise<Token | undefined> {
-        return this.findOne({where: {address, blockchain}})
+        return this.findOne({ where: { address, blockchain } })
     }
 }

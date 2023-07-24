@@ -32,7 +32,6 @@ prefix.apply(log, {
 
 prefix.apply(log.getLogger('critical'), {
     format(level: string, name: string | undefined, timestamp: Date) {
-
         return chalk.red.bold(`[${timestamp}] ${level} ${name}:`)
     },
 })

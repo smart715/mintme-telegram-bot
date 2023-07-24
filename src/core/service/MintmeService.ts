@@ -3,7 +3,7 @@ import { singleton } from 'tsyringe'
 
 @singleton()
 export class MintmeService {
-    private listedTokensAdresses: string[];
+    private listedTokensAdresses: string[]
 
     public async getCachedListedTokensAdresses(): Promise<string[]> {
         if (this.listedTokensAdresses) {
