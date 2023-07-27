@@ -1,7 +1,7 @@
-import {MigrationInterface, QueryRunner} from 'typeorm';
+import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class InitialState1689246380860 implements MigrationInterface {
-    name = 'InitialState1689246380860'
+    public name = 'InitialState1689246380860'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
@@ -91,5 +91,4 @@ export class InitialState1689246380860 implements MigrationInterface {
         await queryRunner.query(`DROP TABLE \`contact_history\``)
         await queryRunner.query(`DROP TABLE \`token\``)
     }
-
 }
