@@ -1,8 +1,8 @@
 import { singleton } from 'tsyringe'
-import { ContactHistoryRepository } from '../repository';
-import { ContactHistoryStatusType, ContactMethod } from '../types';
-import { ContactHistory } from '../entity';
-import { Blockchain } from '../../utils';
+import { ContactHistoryRepository } from '../repository'
+import { ContactHistoryStatusType, ContactMethod } from '../types'
+import { ContactHistory } from '../entity'
+import { Blockchain } from '../../utils'
 
 @singleton()
 export class ContactHistoryService {

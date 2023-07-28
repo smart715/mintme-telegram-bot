@@ -25,7 +25,7 @@ export class TokensService {
         workerSource: string,
         blockchain: Blockchain
     ): Promise<Token> {
-        let token = new Token()
+        const token = new Token()
 
         token.address = tokenAddress
         token.blockchain = blockchain
@@ -38,6 +38,10 @@ export class TokensService {
         await this.tokenRepository.insert(token)
 
         return token
+    }
+
+    public async update(token: Token): Promise<void> {
+        await this.tokenRepository.save(token)
     }
 
     public async saveTokenContactInfo(token: Token): Promise<void> {

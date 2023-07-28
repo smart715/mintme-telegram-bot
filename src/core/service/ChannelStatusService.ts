@@ -1,9 +1,9 @@
-import { singleton } from 'tsyringe';
-import { ChannelStatusRepository } from '../repository';
-import { In } from 'typeorm';
-import { ChannelStatus } from '../entity';
-import { ChannelStatusType } from '../types';
-import { Blockchain, getMaxAttemptsPerMethod, parseContactMethod } from '../../utils';
+import { singleton } from 'tsyringe'
+import { ChannelStatusRepository } from '../repository'
+import { In } from 'typeorm'
+import { ChannelStatus } from '../entity'
+import { ChannelStatusType } from '../types'
+import { Blockchain, getMaxAttemptsPerMethod, parseContactMethod } from '../../utils'
 
 @singleton()
 export class ChannelStatusService {
@@ -12,14 +12,14 @@ export class ChannelStatusService {
     ) {}
 
     public getContactsByChannels(channels: string[]): Promise<ChannelStatus[]> {
-        return this.channelStatusRepository.find({where: {channel: In(channels)}})
+        return this.channelStatusRepository.find({ where: { channel: In(channels) } })
     }
 
     public getFirstAvailableChannelCached(
         channels: string[],
         channelStatuses: ChannelStatus[],
         address: string,
-        blockchain: string,
+        blockchain: Blockchain,
     ): string {
         const activeChannelMap = channelStatuses.reduce((acc: {[key: string]: boolean}, channelStatus) => {
             if (false === acc[channelStatus.channel]) {

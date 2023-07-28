@@ -1,8 +1,8 @@
-import { singleton } from 'tsyringe';
-import { CommandInterface, RunEnqueueTokenWorkerCmdArgv } from './types';
-import { Arguments, Argv } from 'yargs';
-import { Blockchain, logger } from '../utils';
-import { EnqueueTokensWorker } from '../core';
+import { singleton } from 'tsyringe'
+import { CommandInterface, RunEnqueueTokenWorkerCmdArgv } from './types'
+import { Arguments, Argv } from 'yargs'
+import { Blockchain, logger } from '../utils'
+import { EnqueueTokensWorker } from '../core'
 
 @singleton()
 export class RunEnqueueTokenWorker implements CommandInterface {

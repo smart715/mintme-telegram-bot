@@ -6,11 +6,11 @@ import {
     PrimaryGeneratedColumn,
     UpdateDateColumn,
 } from 'typeorm'
-import { ContactMethod, TokenContactStatusType } from '../types';
-import { Blockchain } from '../../utils';
+import { ContactMethod, TokenContactStatusType } from '../types'
+import { Blockchain } from '../../utils'
 
 @Entity()
-@Index('UQ_ADDRESS_BLOCKCHAIN', ['address', 'blockchain'], {unique: true})
+@Index('UQ_ADDRESS_BLOCKCHAIN', [ 'address', 'blockchain' ], { unique: true })
 export class Token {
     @PrimaryGeneratedColumn()
     public id: string
@@ -54,7 +54,7 @@ export class Token {
     @Column({ width: 4, default: 0 })
     public duplicatedTimes: number
 
-    @Column({ length: 64, nullable: true})
+    @Column({ length: 64, nullable: true })
     public source: string
 
     @Column({ default: false })

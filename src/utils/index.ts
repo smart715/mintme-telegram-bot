@@ -5,6 +5,17 @@ export { Database } from './orm'
 export { default as logger, Loggable } from './logger'
 export * from './regexp'
 export * from './blockchains'
+export * from './constants'
+export { TokenNamesGenerator } from './TokenNamesGenerator'
+
+export {
+    findContractAddress,
+} from'./blockchain'
+
+export {
+    getHrefFromTagString,
+    getHrefValuesFromTagString,
+} from './domParser'
 
 export function parseContactMethod(channel: string): ContactMethod|undefined {
     if (channel.includes('@')) {
@@ -31,11 +42,6 @@ export function getMaxAttemptsPerMethod(method: ContactMethod): number {
     }
 }
 
-export {
-    findContractAddress,
-} from'./blockchain'
-
-export {
-    getHrefFromTagString,
-    getHrefValuesFromTagString,
-} from './domParser'
+export async function sleep(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms))
+}

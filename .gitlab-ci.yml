@@ -1,0 +1,16 @@
+image: node
+
+stages:
+  - lint
+
+eslint:
+  stage: lint
+  script:
+    - |
+      npm install eslint \
+      eslint-config-airbnb-base \
+      eslint-plugin-folders \
+      eslint-plugin-import \
+      @typescript-eslint/eslint-plugin \
+      @typescript-eslint/parser
+    - npm run eslint

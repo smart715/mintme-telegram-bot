@@ -1,13 +1,12 @@
-import { singleton } from 'tsyringe';
-import { AbstractTokenWorker } from './AbstractTokenWorker';
-import { ChannelStatusService, ContactQueueService, MintmeService, TokensService } from '../service';
-import { Blockchain, logger } from '../../utils';
-import { ContactMethod, TokenContactStatusType } from '../types';
-import { Token } from '../entity';
+import { singleton } from 'tsyringe'
+import { AbstractTokenWorker } from './AbstractTokenWorker'
+import { ChannelStatusService, ContactQueueService, MintmeService, TokensService } from '../service'
+import { Blockchain, logger } from '../../utils'
+import { ContactMethod, TokenContactStatusType } from '../types'
+import { Token } from '../entity'
 
 @singleton()
 export class EnqueueTokensWorker extends AbstractTokenWorker {
-
     public constructor(
         private readonly tokensService: TokensService,
         private readonly mintmeService: MintmeService,
@@ -46,7 +45,7 @@ export class EnqueueTokensWorker extends AbstractTokenWorker {
                 return
             }
 
-            const {enqueued, contactChannel, nextContactMethod} = await this.tryToEnqueueToken(token)
+            const { enqueued, contactChannel, nextContactMethod } = await this.tryToEnqueueToken(token)
 
             await this.tokensService.saveTokenContactInfo(token)
 
@@ -76,13 +75,9 @@ export class EnqueueTokensWorker extends AbstractTokenWorker {
         nextContactMethod: ContactMethod|null,
         contactChannel: string
     }> {
-        const [
-            availableEmail,
-            availableTwitter,
-            availableTelegram
-        ] = await this.getAvailableChannels(token)
+        const [ availableEmail, availableTwitter, availableTelegram ] = await this.getAvailableChannels(token)
 
-        const {contactMethod: nextContactMethod, channel: contactChannel} = this.getNextContactMethod(
+        const { contactMethod: nextContactMethod, channel: contactChannel } = this.getNextContactMethod(
             token.lastContactMethod,
             availableEmail,
             availableTwitter,
@@ -90,19 +85,19 @@ export class EnqueueTokensWorker extends AbstractTokenWorker {
         )
 
         if (!nextContactMethod) {
-            if (token.emailAttempts === 0 && token.twitterAttempts === 0 && token.telegramAttempts === 0) {
+            if (0 === token.emailAttempts && 0 === token.twitterAttempts && 0 === token.telegramAttempts) {
                 token.contactStatus = TokenContactStatusType.NO_CONTACTS
             } else {
                 token.contactStatus = TokenContactStatusType.LIMIT_REACHED
             }
 
-            return {enqueued: false, nextContactMethod: null, contactChannel: ''}
+            return { enqueued: false, nextContactMethod: null, contactChannel: '' }
         } else {
             token.contactStatus = TokenContactStatusType.QUEUED
 
             await this.contactQueueService.addToQueue(token.address, token.blockchain, contactChannel, isFutureContact)
 
-            return {enqueued: true, nextContactMethod, contactChannel}
+            return { enqueued: true, nextContactMethod, contactChannel }
         }
     }
 
@@ -111,11 +106,9 @@ export class EnqueueTokensWorker extends AbstractTokenWorker {
         const twitterChannels = this.tokensService.getTwitterAccounts(token)
         const telegramChannels = this.tokensService.getTelegramAccounts(token)
 
-        const channelStatuses = await this.channelStatusService.getContactsByChannels([
-            ...emails,
-            ...twitterChannels,
-            ...telegramChannels,
-        ])
+        const channelStatuses = await this.channelStatusService.getContactsByChannels(
+            [ ...emails, ...twitterChannels, ...telegramChannels ],
+        )
 
         const availableEmails = this.channelStatusService.getFirstAvailableChannelCached(
             emails,
@@ -138,9 +131,10 @@ export class EnqueueTokensWorker extends AbstractTokenWorker {
             token.blockchain
         )
 
-        return [availableEmails, availableTwitterChannels, availableTelegramChannels]
+        return [ availableEmails, availableTwitterChannels, availableTelegramChannels ]
     }
 
+    // eslint-disable-next-line complexity
     private getNextContactMethod(
         lastContactMethod: ContactMethod,
         email: string,
@@ -176,6 +170,6 @@ export class EnqueueTokensWorker extends AbstractTokenWorker {
             channel = telegram
         }
 
-        return {contactMethod, channel}
+        return { contactMethod, channel }
     }
 }

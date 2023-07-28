@@ -1,11 +1,10 @@
 import { singleton } from 'tsyringe'
 import { CMCService, TokensService } from '../service'
 import { AbstractTokenWorker } from './AbstractTokenWorker'
-import { parseBlockchainName } from '../../utils'
+import { logger, parseBlockchainName } from '../../utils'
 
 @singleton()
 export class CMCWorker extends AbstractTokenWorker {
-
     public constructor(
         private readonly cmcService: CMCService,
         private readonly tokensService: TokensService,
@@ -14,7 +13,7 @@ export class CMCWorker extends AbstractTokenWorker {
     }
 
     public async run(): Promise<any> {
-        console.log(`${CMCWorker.name} started`)
+        logger.info(`${CMCWorker.name} started`)
 
         const tokens = await this.cmcService.getLastTokens(10325, 10)
 
@@ -26,7 +25,7 @@ export class CMCWorker extends AbstractTokenWorker {
             const tokenInfos = await this.cmcService.getTokenInfo(token.slug)
 
             if (!tokenInfos.data || !tokenInfos.data[token.id]) {
-                console.log(`no token info found for ${token.name} . Skipping`)
+                logger.info(`no token info found for ${token.name} . Skipping`)
 
                 return
             }
@@ -47,12 +46,29 @@ export class CMCWorker extends AbstractTokenWorker {
             )
 
             if (foundToken) {
-                console.log(` ${token.name} already added. Skipping`)
+                logger.info(` ${token.name} already added. Skipping`)
 
                 return
             } else {
-                await this.tokensService.add(tokenAddress, tokenName, [website], [email], links, workerSource, blockchain)
-                console.log('Added to DB: ', tokenAddress, tokenName, website, email, links.join(','), workerSource, blockchain)
+                await this.tokensService.add(
+                    tokenAddress,
+                    tokenName,
+                    [ website ],
+                    [ email ],
+                    links,
+                    workerSource,
+                    blockchain,
+                )
+                logger.info(
+                    'Added to DB: ',
+                    tokenAddress,
+                    tokenName,
+                    website,
+                    email,
+                    links.join(','),
+                    workerSource,
+                    blockchain
+                )
             }
         })
     }
