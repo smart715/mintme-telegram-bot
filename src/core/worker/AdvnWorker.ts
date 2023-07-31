@@ -2,7 +2,7 @@
 import {singleton} from "tsyringe"
 import {AbstractTokenWorker} from "./AbstractTokenWorker"
 import {AdvnService} from "../service/AdvnService";
-import {findContractAddress, getHrefFromTagString, getHrefValuesFromTagString} from "../../utils";
+import {findContractAddress, getHrefFromTagString, getHrefValuesFromTagString, logger} from "../../utils";
 import {TokensService} from "../service";
 import {Crypto} from "../../../config/blockchains";
 
@@ -20,10 +20,10 @@ export class AdvnWorker extends AbstractTokenWorker {
     }
 
     public async run(currentBlockchain: Crypto): Promise<any> {
-        console.log(`${AdvnWorker.name} started`)
+        logger.info(`${AdvnWorker.name} started`)
 
         if (this.unsupportedBlockchain.includes(currentBlockchain)) {
-            console.log(`[AdvnWorker] Unsupported blockchain: ${currentBlockchain}`)
+            logger.info(`[AdvnWorker] Unsupported blockchain: ${currentBlockchain}`)
 
             return
         }
@@ -35,7 +35,7 @@ export class AdvnWorker extends AbstractTokenWorker {
         let count = 3000
         let start = 0
         do {
-            console.log(`[ADVN] Page start ${start}`)
+            logger.info(`[ADVN] Page start ${start}`)
 
             const tokens = await this.advnService.getTokens(start)
 
@@ -78,6 +78,6 @@ export class AdvnWorker extends AbstractTokenWorker {
             start += 3000
         } while (count > 0)
 
-        console.log('[ADVN] Finished')
+        logger.info('[ADVN] Finished')
     }
 }
