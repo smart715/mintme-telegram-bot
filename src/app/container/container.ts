@@ -32,6 +32,8 @@ import {
     QueuedTokenAddressRepository,
     QueuedWalletAddressRepository,
     TokenRepository,
+    CoinGeckoService,
+    CoinGeckoWorker
 } from '../../core'
 import { Application } from '../'
 import { CliDependency } from './types'
@@ -83,6 +85,10 @@ container.register(CMCService, {
 
 container.register(MintmeService, {
     useFactory: instanceCachingFactory(() => new MintmeService()),
+})
+
+container.register(CoinGeckoService, {
+    useFactory: instanceCachingFactory(() => new CoinGeckoService()),
 })
 
 container.register(AdvnService, {
@@ -181,6 +187,16 @@ container.register(EnqueueTokensWorker, {
         ),
     ),
 })
+
+container.register(CoinGeckoWorker, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new CoinGeckoWorker(
+            dependencyContainer.resolve(TokensService),
+            dependencyContainer.resolve(CoinGeckoService)
+        ),
+    ),
+})
+
 
 container.register(QueueWorker, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
