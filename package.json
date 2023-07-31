@@ -10,7 +10,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "typeorm": "ts-node ./node_modules/typeorm/cli.js -f ./config/ormconfig.ts",
     "cli": "ts-node src/cli.ts",
-    "eslint": "eslint src --ext .js,.ts",
+    "eslint": "eslint ./ --ext .js,.ts",
     "eslint:fix": "eslint src --ext .js,.ts --fix"
   },
   "repository": {
