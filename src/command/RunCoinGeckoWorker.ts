@@ -1,7 +1,7 @@
 import { singleton } from 'tsyringe'
 import { CommandInterface, RunCoinGeckoWorkerCmd } from './types'
 import { CoinGeckoWorker } from '../core'
-import {Arguments, Argv } from 'yargs'
+import { Arguments, Argv } from 'yargs'
 import { Blockchain, logger } from '../utils'
 
 @singleton()

@@ -42,6 +42,7 @@ import { RunEnqueueTokenWorker, RunQueueWorker, RunExplorerWorker } from '../../
 import { TokenNamesGenerator } from '../../utils'
 import {AdvnService} from "../../core/service/AdvnService";
 import {AdvnWorker} from "../../core/worker/AdvnWorker";
+import {RunCoinGeckoWorker} from "../../command/RunCoinGeckoWorker";
 
 container.register(TokenRepository, {
     useFactory: instanceCachingFactory(() => getConnection().getCustomRepository(TokenRepository)),
@@ -300,6 +301,8 @@ container.register(Application, {
     useFactory: instanceCachingFactory(() => new Application()),
 })
 
+// CLI
+
 container.register(CliDependency.COMMAND, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new RunEnqueueTokenWorker(
@@ -327,6 +330,14 @@ container.register(CliDependency.COMMAND, {
             dependencyContainer.resolve(BSCScanValidatorsFetcher),
             dependencyContainer.resolve(CheckTokenBNBWorker),
             dependencyContainer.resolve(ExplorerSearchAPIWorker),
+        )
+    ),
+})
+
+container.register(CliDependency.COMMAND, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new RunCoinGeckoWorker(
+            dependencyContainer.resolve(CoinGeckoWorker),
         )
     ),
 })
