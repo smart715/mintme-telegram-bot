@@ -2,7 +2,7 @@ import { singleton } from 'tsyringe'
 import { CommandInterface, RunCoinGeckoWorkerCmd } from './types'
 import { Arguments, Argv } from 'yargs'
 import { Blockchain, logger } from '../utils'
-import { AdvnWorker } from '../core/worker/AdvnWorker'
+import { AdvnWorker } from '../core'
 
 @singleton()
 export class RunAdvnWorker implements CommandInterface {

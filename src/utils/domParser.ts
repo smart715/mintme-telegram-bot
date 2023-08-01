@@ -1,5 +1,5 @@
-export function getHrefFromTagString(source: string): string {
-    const matchedAttr = source.match(/href="([^"]*)/)
+export function getHrefFromTagString(source: RegExpMatchArray): string {
+    const matchedAttr = source.join(' ').match(/href="([^"]*)/)
 
     if (!matchedAttr) {
         return ''
@@ -8,8 +8,8 @@ export function getHrefFromTagString(source: string): string {
     return matchedAttr[1]
 }
 
-export function getHrefValuesFromTagString(source: string): string[] {
-    const rawLinks = source.match((/href="(.+?)"/g))
+export function getHrefValuesFromTagString(source: RegExpMatchArray): string[] {
+    const rawLinks = source.join(' ').match((/href="(.+?)"/g))
 
     if (!rawLinks) {
         return []
@@ -21,7 +21,7 @@ export function getHrefValuesFromTagString(source: string): string[] {
         const result = rawLink.match(/href="([^"]*)/)
 
         if (!result) {
-            return
+            return []
         }
 
         links.push(result[1])

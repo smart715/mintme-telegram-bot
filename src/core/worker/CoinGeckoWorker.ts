@@ -100,7 +100,7 @@ export class CoinGeckoWorker extends AbstractTokenWorker {
 
             await this.tokenService.add(address, coinName, website, [ '' ], allLinks, 'CoinGecko', currentBlockchain)
 
-            logger.info('Added to DB: ', address, coinName, website, '', allLinks, 'CoinGecko', currentBlockchain)
+            logger.info(`${this.prefixLog} Added to DB: `, address, coinName, website, '', allLinks, 'CoinGecko', currentBlockchain)
         }
 
         logger.info(`${CoinGeckoWorker.name} finished`)

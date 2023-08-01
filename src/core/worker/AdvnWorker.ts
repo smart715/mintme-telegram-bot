@@ -1,16 +1,13 @@
-// @ts-nocheck
-import {singleton} from "tsyringe"
-import {AbstractTokenWorker} from "./AbstractTokenWorker"
-import {AdvnService} from "../service/AdvnService";
-import {Blockchain, findContractAddress, getHrefFromTagString, getHrefValuesFromTagString, logger} from "../../utils";
-import {TokensService} from "../service";
-import {Crypto} from "../../../config/blockchains";
+import { singleton } from 'tsyringe'
+import { AbstractTokenWorker } from './AbstractTokenWorker'
+import { Blockchain, findContractAddress, getHrefFromTagString, getHrefValuesFromTagString, logger } from '../../utils'
+import { TokensService, AdvnService } from '../service'
+import { AdvnGeneralResponse } from '../../types'
 
 @singleton()
 export class AdvnWorker extends AbstractTokenWorker {
-    private readonly unsupportedBlockchain: Crypto[] = [
-        Crypto.CRO,
-    ]
+    private readonly prefixLog = '[ADVN]'
+    private readonly unsupportedBlockchain: Blockchain[] = [ Blockchain.CRO ]
 
     public constructor(
         private readonly advnService: AdvnService,
@@ -20,57 +17,94 @@ export class AdvnWorker extends AbstractTokenWorker {
     }
 
     public async run(currentBlockchain: Blockchain): Promise<any> {
-        logger.info(`${AdvnWorker.name} started`)
+        logger.info(`${this.prefixLog} started`)
 
         if (this.unsupportedBlockchain.includes(currentBlockchain)) {
-            logger.info(`[AdvnWorker] Unsupported blockchain: ${currentBlockchain}`)
+            logger.warn(`[AdvnWorker] Unsupported blockchain: ${currentBlockchain}. Aborting.`)
 
             return
         }
 
-        const target = Crypto.BNB === currentBlockchain
-            ? "Binance"
-            : "Ethereum"
+        const target: string = Blockchain.BSC === currentBlockchain
+            ? 'Binance'
+            : 'Ethereum'
 
-        let count = 3000
-        let start = 0
+        let count: number = 3000
+        let start: number = 0
+
         do {
-            logger.info(`[ADVN] Page start ${start}`)
+            logger.info(`${this.prefixLog} Page start ${start}`)
 
-            const tokens = await this.advnService.getTokens(start)
+            let tokens: AdvnGeneralResponse
+
+            try {
+                tokens = await this.advnService.getTokens(start)
+            } catch (ex: any) {
+                logger.error(
+                    `${this.prefixLog} Aborting. Failed to fetch all tokens. Start: ${start} Reason: ${ex.message}`
+                )
+
+                return
+            }
 
             for (const advnToken of tokens.data) {
                 if (!advnToken.platform?.toString().includes(target)) {
-                    continue;
-                }
-
-                const nameSymbolArr = advnToken.name_symbol;
-                const name = nameSymbolArr[0] + "(" + nameSymbolArr[nameSymbolArr.length - 1] + ")"
-                const id = name.replace(" ", "-").replace("(", "-").replace(")", "")
-                const tokenInfo = await this.advnService.getTokenInfo(id);
-
-                const tokenAddress = findContractAddress(tokenInfo);
-
-                if (!tokenAddress || !tokenAddress.startsWith("0x")) {
                     continue
                 }
 
-                const website = getHrefFromTagString(
-                    tokenInfo.match(/<tr title="Official Website(.+?)<\/td>(.+?)<\/tr>/).join(' ')
-                )
+                const nameSymbolArr = advnToken.name_symbol
+                const name = nameSymbolArr[0] + '(' + nameSymbolArr[nameSymbolArr.length - 1] + ')'
+                const id = name
+                    .replace(' ', '-')
+                    .replace('(', '-')
+                    .replace(')', '')
 
-                const links = getHrefValuesFromTagString(
-                    tokenInfo.match(/<table class=\"table table-hover fundamentals social\">(.+?)<\/table>/).join(' ')
-                );
+
+                let tokenInfo: string
+
+                try {
+                    tokenInfo = await this.advnService.getTokenInfo(id)
+                } catch (ex: any) {
+                    logger.warn(
+                        `${this.prefixLog} Failed to fetch token info for ${id} Reason: ${ex.message}. Skipping...`
+                    )
+
+                    continue
+                }
+
+                const tokenAddress = findContractAddress(tokenInfo)
+
+                if (!tokenAddress || !tokenAddress.startsWith('0x')) {
+                    continue
+                }
+
+                const website = this.getWebsite(tokenInfo)
+                const links = this.getLinks(tokenInfo)
+
+                const tokenInDb = await this.tokenService.findByAddress(tokenAddress, currentBlockchain)
+
+                if (tokenInDb) {
+                    continue
+                }
 
                 await this.tokenService.add(
                     tokenAddress,
                     name,
-                    website,
-                    "",
-                    links.join('\n'),
-                    "ADVN",
+                    [ website ],
+                    [ '' ],
+                    links,
+                    'ADVN',
                     currentBlockchain,
+                )
+
+                logger.info(
+                    `${this.prefixLog} Added to DB: `,
+                    tokenAddress,
+                    name,
+                    website,
+                    links,
+                    'ADVN',
+                    currentBlockchain
                 )
             }
 
@@ -78,6 +112,26 @@ export class AdvnWorker extends AbstractTokenWorker {
             start += 3000
         } while (count > 0)
 
-        logger.info('[ADVN] Finished')
+        logger.info(`${this.prefixLog} Finished`)
+    }
+
+    private getWebsite(tokenInfo: string): string {
+        const websiteRawTags = tokenInfo.match(/<tr title="Official Website(.+?)<\/td>(.+?)<\/tr>/)
+
+        if (null === websiteRawTags) {
+            return ''
+        }
+
+        return getHrefFromTagString(websiteRawTags)
+    }
+
+    private getLinks(tokenInfo: string): string[] {
+        const linksRawTags = tokenInfo.match(/<table class="table table-hover fundamentals social">(.+?)<\/table>/)
+
+        if (null === linksRawTags) {
+            return []
+        }
+
+        return getHrefValuesFromTagString(linksRawTags)
     }
 }
