@@ -1,10 +1,14 @@
 import { singleton } from 'tsyringe'
 import { AbstractTokenWorker } from './AbstractTokenWorker'
 import { TokensService, CoinDiscoveryService } from '../service'
-import { Blockchain, getHrefValuesFromTagString } from '../../utils'
+import {Blockchain, getHrefFromTagString, getHrefValuesFromTagString, logger} from '../../utils'
+import {CoinDiscoveryGetTokensResponse} from "../../types";
 
 @singleton()
 export class CoinDiscoveryWorker extends AbstractTokenWorker {
+    private readonly prefixLog = '[CoinDiscovery]'
+    private readonly unsupportedBlockchain: Blockchain[] = [ Blockchain.CRO ]
+
     public constructor(
         private readonly coinDiscoveryService: CoinDiscoveryService,
         private readonly tokenService: TokensService,
@@ -13,81 +17,90 @@ export class CoinDiscoveryWorker extends AbstractTokenWorker {
     }
 
     public async run(currentBlockchain: Blockchain): Promise<any> {
-        try {
-            console.log(`${CoinDiscoveryWorker.name} started`)
+        logger.info(`${this.prefixLog} Worker started`)
 
-            const unsupportedBlockchains: Blockchain[] = [Blockchain.CRO]
+        if (this.unsupportedBlockchain.includes(currentBlockchain)) {
+            logger.info(`${this.prefixLog} Unsupported blockchain ${currentBlockchain}. Aborting`)
 
-            if (unsupportedBlockchains.includes(currentBlockchain)) {
-                console.log(`[CoinDiscoveryWorker] Unsupported blockchain ${currentBlockchain}`)
+            return
+        }
+
+        let count: number
+        let start: number = 0
+
+        do {
+            console.log(`[CoinDiscoveryWorker] cursor ${start}`)
+
+            let allCoinsRes: CoinDiscoveryGetTokensResponse
+
+            try {
+                allCoinsRes = await this.coinDiscoveryService.getTokens(start)
+            } catch (ex: any) {
+                logger.error(
+                    `${this.prefixLog} Aborting. Failed to fetch all tokens. Start: ${start} Reason: ${ex.message}`
+                )
 
                 return
             }
 
+            const coins = allCoinsRes.data
 
-            // @todo get rid of chainId
-            const chainId = Blockchain.BSC === currentBlockchain
-                ? 1
-                : "Ethereum"
+            count = Object.keys(coins).length
 
-            let count: number
-            let start: number = 0
+            for (const coin of coins) {
+                const name = coin.name + '(' + coin.symbol + ')'
+                const nameSlug = coin.name_slug
+                const tokenAddress = coin.contract
+                const blockchain = coin.chain === '1'
+                    ? 'bnbTokens'
+                    : coin.chain === '2'
+                        ? 'etherscanTokens'
+                        : ''
 
-            do {
-                console.log(`[CoinDiscoveryWorker] cursor ${start}`)
-
-                const coins = await this.coinDiscoveryService.getTokens(start)
-
-                count = Object.keys(coins).length
-
-                for (const coin of coins) {
-                    const name = coin.name + "(" + coin.symbol + ")"
-                    const id = coin.name_slug
-                    const tokenAddress: string = coin.contract
-                    const blockchain = coin.chain === "1"
-                        ? "bnbTokens"
-                        : chain === "2"
-                            ? "etherscanTokens"
-                            : ""
-
-                    if ("" === blockchain) {
-                        continue
-                    }
-
-                    if (await this.tokenService.findByAddress(tokenAddress, currentBlockchain)) {
-                        continue
-                    }
-
-                    const tokenInfo = await this.coinDiscoveryService.getInfo(id)
-
-                    let website = ""
-
-                    const links = getHrefValuesFromTagString(
-                        tokenInfo.match(/<div class=""chain-action d-flex"">(.+?)<table class=""table"/).join(' ')
-                    )
-
-                    if (links.length > 0) {
-                        if (tokenInfo.includes("class\"link\"")) {
-                            website = links[0]
-                        }
-                    }
-
-                    await this.tokenService.add(
-                        tokenAddress,
-                        name,
-                        [website],
-                        [""],
-                        links,
-                        "CoinDiscovery",
-                        currentBlockchain
-                    )
-
-                    start += 500
+                if ('' === blockchain) {
+                    continue
                 }
-            } while (count > 0)
-            console.log(`${CoinDiscoveryWorker.name} finished`)
-        } catch (error: any) {
-            console.log(`${CoinDiscoveryWorker.name} something went wrong. Reason: ${error.message}`)
+
+                const tokenInDb = await this.tokenService.findByAddress(tokenAddress, currentBlockchain);
+
+                if (!tokenAddress.startsWith('0x') || tokenInDb) {
+                    continue
+                }
+
+                const tokenInfo = await this.coinDiscoveryService.getInfo(nameSlug)
+
+                const links = this.getLinks(tokenInfo)
+
+                if (links.length > 0) {
+                    if (tokenInfo.includes("class\"link\"")) {
+                        website = links[0]
+                    }
+                }
+
+                await this.tokenService.add(
+                    tokenAddress,
+                    name,
+                    [website],
+                    [""],
+                    links,
+                    "CoinDiscovery",
+                    currentBlockchain
+                )
+
+                start += 500
+            }
+        } while (count > 0)
+
+        logger.info(`${this.prefixLog} finished`)
+    }
+
+    private getLinks(tokenInfo: string): string[] {
+        const socialMediaRegMatch = tokenInfo.match(/<div class="chain-action d-flex">(.+?)<table class="table (.+?)">/)
+
+        if (null === socialMediaRegMatch) {
+            return []
         }
+
+        return getHrefValuesFromTagString(socialMediaRegMatch)
     }
 }
