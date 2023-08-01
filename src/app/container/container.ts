@@ -49,6 +49,8 @@ import {
 } from '../../command'
 import { TokenNamesGenerator } from '../../utils'
 
+// Repositories
+
 container.register(TokenRepository, {
     useFactory: instanceCachingFactory(() => getConnection().getCustomRepository(TokenRepository)),
 })
@@ -85,6 +87,14 @@ container.register(QueuedWalletAddressRepository, {
     useFactory: instanceCachingFactory(() => getConnection().getCustomRepository(QueuedWalletAddressRepository)),
 })
 
+// Utils
+
+container.register(TokenNamesGenerator, {
+    useFactory: instanceCachingFactory(() => new TokenNamesGenerator()),
+})
+
+// Services
+
 container.register(CMCService, {
     useFactory: instanceCachingFactory(() => new CMCService()),
 })
@@ -119,13 +129,6 @@ container.register(DuplicatesFoundService, {
     )),
 })
 
-container.register(ExplorerEnqueuer, {
-    useFactory: instanceCachingFactory((dependencyContainer) => new ExplorerEnqueuer(
-        dependencyContainer.resolve(QueuedTokenAddressService),
-        dependencyContainer.resolve(QueuedWalletAddressService),
-    )),
-})
-
 container.register(LastCheckedTokenNameService, {
     useFactory: instanceCachingFactory((dependencyContainer) => new LastCheckedTokenNameService(
         dependencyContainer.resolve(LastCheckedTokenNameRepository),
@@ -144,19 +147,6 @@ container.register(QueuedWalletAddressService, {
         dependencyContainer.resolve(QueuedWalletAddressRepository),
         dependencyContainer.resolve(DuplicatesFoundService),
     )),
-})
-
-container.register(TokenNamesGenerator, {
-    useFactory: instanceCachingFactory(() => new TokenNamesGenerator()),
-})
-
-container.register(CMCWorker, {
-    useFactory: instanceCachingFactory((dependencyContainer) =>
-        new CMCWorker(
-            dependencyContainer.resolve(CMCService),
-            dependencyContainer.resolve(TokensService),
-        ),
-    ),
 })
 
 container.register(ChannelStatusService, {
@@ -183,6 +173,24 @@ container.register(ContactHistoryService, {
     ),
 })
 
+// Workers
+
+container.register(ExplorerEnqueuer, {
+    useFactory: instanceCachingFactory((dependencyContainer) => new ExplorerEnqueuer(
+        dependencyContainer.resolve(QueuedTokenAddressService),
+        dependencyContainer.resolve(QueuedWalletAddressService),
+    )),
+})
+
+container.register(CMCWorker, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new CMCWorker(
+            dependencyContainer.resolve(CMCService),
+            dependencyContainer.resolve(TokensService),
+        ),
+    ),
+})
+
 container.register(EnqueueTokensWorker, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new EnqueueTokensWorker(
@@ -202,7 +210,6 @@ container.register(CoinGeckoWorker, {
         ),
     ),
 })
-
 
 container.register(QueueWorker, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
@@ -302,10 +309,6 @@ container.register(AdvnWorker, {
     ),
 })
 
-container.register(Application, {
-    useFactory: instanceCachingFactory(() => new Application()),
-})
-
 // CLI
 
 container.register(CliDependency.COMMAND, {
@@ -353,6 +356,12 @@ container.register(CliDependency.COMMAND, {
             dependencyContainer.resolve(AdvnWorker),
         )
     ),
+})
+
+// General
+
+container.register(Application, {
+    useFactory: instanceCachingFactory(() => new Application()),
 })
 
 export { container }
