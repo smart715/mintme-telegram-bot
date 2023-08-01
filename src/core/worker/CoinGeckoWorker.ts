@@ -1,9 +1,9 @@
-// @ts-nocheck
 import { singleton } from 'tsyringe'
 import { AbstractTokenWorker } from './AbstractTokenWorker'
 import { TokensService } from '../service'
-import {Blockchain, logger, sleep} from '../../utils'
+import { Blockchain, logger, sleep } from '../../utils'
 import { CoinGeckoService } from '../service'
+import { AllCoinsTokenResponse, CoinInfo, LinksCoinInfo } from '../../types'
 
 @singleton()
 export class CoinGeckoWorker extends AbstractTokenWorker {
@@ -37,12 +37,12 @@ export class CoinGeckoWorker extends AbstractTokenWorker {
                 break
         }
 
-        let tokens = {}
+        let tokens: AllCoinsTokenResponse[]
 
         try {
             const response = await this.coinGeckoService.getAll(link)
             tokens = response.tokens
-        } catch (ex) {
+        } catch (ex: any) {
             logger.error(
                 `${this.prefixLog} Aborting. Failed to fetch all tokens. Link: ${link} Reason: ${ex.message}`
             )
@@ -57,32 +57,30 @@ export class CoinGeckoWorker extends AbstractTokenWorker {
                 continue
             }
 
-            const address: string = token.address.toString()
+            const address: string = token.address
 
-            if (address < 0) {
+            if (address.length <= 0) {
                 continue
             }
 
-            let coinInfo = {}
+            let coinInfo: CoinInfo
 
             await sleep(this.sleepDuration)
 
             try {
                 coinInfo = await this.coinGeckoService.getCoinInfo(tokenId)
-            } catch (e) {
+            } catch (ex: any) {
                 logger.warn(
-                    `Failed to fetch coin info for ${tokenId} tokenId. Reason ${e.message}. Skipping...`
+                    `Failed to fetch coin info for ${tokenId} tokenId. Reason ${ex.message}. Skipping...`
                 )
 
                 continue
             }
 
-            logger.info(tokenId)
-
             const coinName: string = coinInfo.name + "(" + coinInfo.symbol + ")"
             const links = coinInfo.links
 
-            const website: string[] = links.homepage
+            const website: string[] = links.homepage.filter((page) => page !== "")
 
             if (
                 website.includes("realt.co") ||
@@ -108,9 +106,9 @@ export class CoinGeckoWorker extends AbstractTokenWorker {
 
         logger.info(`${CoinGeckoWorker.name} finished`)
     }
-    private getLinks(links: object): string[]
+    private getLinks(links: LinksCoinInfo): string[]
     {
-        let otherLinks = []
+        let otherLinks: string[] = []
 
         if (links.twitter_screen_name !== null && links.twitter_screen_name.length > 0) {
             otherLinks.push("https://twitter.com/" + links.twitter_screen_name)
@@ -120,7 +118,7 @@ export class CoinGeckoWorker extends AbstractTokenWorker {
             otherLinks.push("https://facebook.com/" + links.facebook_username)
         }
 
-        if (links.telegram_channel_identifier !== links && links.telegram_channel_identifier.length > 0) {
+        if (links.telegram_channel_identifier !== null && links.telegram_channel_identifier.length > 0) {
             otherLinks.push("https://t.me/" + links.telegram_channel_identifier)
         }
 
@@ -128,15 +126,10 @@ export class CoinGeckoWorker extends AbstractTokenWorker {
             otherLinks.push(links.subreddit_url)
         }
 
-        if (links.subreddit_url !== null && links.subreddit_url.length > 0) {
-            otherLinks.push(links.subreddit_url)
+        if (links.chat_url.length > 0) {
+            otherLinks.concat(links.chat_url)
         }
 
-        if (links.chat_url !== null && links.chat_url.length > 0) {
-            otherLinks.push(links.chat_url)
-        }
-
-
-        return otherLinks
+        return otherLinks.filter((link) => link !== "")
     }
 }
