@@ -2,7 +2,7 @@
 import {singleton} from "tsyringe"
 import {AbstractTokenWorker} from "./AbstractTokenWorker"
 import {AdvnService} from "../service/AdvnService";
-import {findContractAddress, getHrefFromTagString, getHrefValuesFromTagString, logger} from "../../utils";
+import {Blockchain, findContractAddress, getHrefFromTagString, getHrefValuesFromTagString, logger} from "../../utils";
 import {TokensService} from "../service";
 import {Crypto} from "../../../config/blockchains";
 
@@ -19,7 +19,7 @@ export class AdvnWorker extends AbstractTokenWorker {
         super()
     }
 
-    public async run(currentBlockchain: Crypto): Promise<any> {
+    public async run(currentBlockchain: Blockchain): Promise<any> {
         logger.info(`${AdvnWorker.name} started`)
 
         if (this.unsupportedBlockchain.includes(currentBlockchain)) {

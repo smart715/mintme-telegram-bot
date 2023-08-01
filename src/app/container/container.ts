@@ -34,15 +34,20 @@ import {
     TokenRepository,
     CoinGeckoService,
     CoinGeckoWorker,
+    AdvnWorker,
+    AdvnService,
 } from '../../core'
 import { Application } from '../'
 import { CliDependency } from './types'
 import { getConnection } from 'typeorm'
-import { RunEnqueueTokenWorker, RunQueueWorker, RunExplorerWorker } from '../../command'
+import {
+    RunEnqueueTokenWorker,
+    RunQueueWorker,
+    RunExplorerWorker,
+    RunCoinGeckoWorker,
+    RunAdvnWorker,
+} from '../../command'
 import { TokenNamesGenerator } from '../../utils'
-import { AdvnService } from '../../core/service/AdvnService'
-import { AdvnWorker } from '../../core/worker/AdvnWorker'
-import { RunCoinGeckoWorker } from '../../command/RunCoinGeckoWorker'
 
 container.register(TokenRepository, {
     useFactory: instanceCachingFactory(() => getConnection().getCustomRepository(TokenRepository)),
@@ -338,6 +343,14 @@ container.register(CliDependency.COMMAND, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new RunCoinGeckoWorker(
             dependencyContainer.resolve(CoinGeckoWorker),
+        )
+    ),
+})
+
+container.register(CliDependency.COMMAND, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new RunAdvnWorker(
+            dependencyContainer.resolve(AdvnWorker),
         )
     ),
 })
