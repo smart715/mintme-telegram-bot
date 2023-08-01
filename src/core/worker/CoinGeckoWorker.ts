@@ -1,8 +1,7 @@
 import { singleton } from 'tsyringe'
 import { AbstractTokenWorker } from './AbstractTokenWorker'
-import { TokensService } from '../service'
+import { TokensService, CoinGeckoService } from '../service'
 import { Blockchain, logger, sleep } from '../../utils'
-import { CoinGeckoService } from '../service'
 import { AllCoinsTokenResponse, CoinInfo, LinksCoinInfo } from '../../types'
 
 @singleton()
@@ -23,16 +22,16 @@ export class CoinGeckoWorker extends AbstractTokenWorker {
         let link: string = ''
 
         switch (currentBlockchain) {
-            case "BSC":
-                link = "https://tokens.coingecko.com/binance-smart-chain/all.json"
+            case 'BSC':
+                link = 'https://tokens.coingecko.com/binance-smart-chain/all.json'
 
                 break
-            case "ETH":
-                link = "https://tokens.coingecko.com/ethereum/all.json"
+            case 'ETH':
+                link = 'https://tokens.coingecko.com/ethereum/all.json'
 
                 break
-            case "CRO":
-                link = "https://tokens.coingecko.com/cronos/all.json"
+            case 'CRO':
+                link = 'https://tokens.coingecko.com/cronos/all.json'
 
                 break
         }
@@ -51,9 +50,9 @@ export class CoinGeckoWorker extends AbstractTokenWorker {
         }
 
         for (const token of tokens) {
-            const tokenId: string = token.name.toString().toLowerCase().replace(" ", "-")
+            const tokenId: string = token.name.toString().toLowerCase().replace(' ', '-')
 
-            if (tokenId.length <= 0 || tokenId.startsWith("realt-")) {
+            if (tokenId.length <= 0 || tokenId.startsWith('realt-')) {
                 continue
             }
 
@@ -77,16 +76,16 @@ export class CoinGeckoWorker extends AbstractTokenWorker {
                 continue
             }
 
-            const coinName: string = coinInfo.name + "(" + coinInfo.symbol + ")"
+            const coinName: string = coinInfo.name + '(' + coinInfo.symbol + ')'
             const links = coinInfo.links
 
-            const website: string[] = links.homepage.filter((page) => page !== "")
+            const website: string[] = links.homepage.filter((page) => page !== '')
 
             if (
-                website.includes("realt.co") ||
-                coinName.toLowerCase().includes("x short") ||
-                coinName.toLowerCase().includes("x long") ||
-                coinName.startsWith("Aave ")
+                website.includes('realt.co') ||
+                coinName.toLowerCase().includes('x short') ||
+                coinName.toLowerCase().includes('x long') ||
+                coinName.startsWith('Aave ')
             ) {
                 continue
             }
@@ -99,27 +98,27 @@ export class CoinGeckoWorker extends AbstractTokenWorker {
                 continue
             }
 
-            await this.tokenService.add(address, coinName, website, [''], allLinks, 'CoinGecko', currentBlockchain)
+            await this.tokenService.add(address, coinName, website, [ '' ], allLinks, 'CoinGecko', currentBlockchain)
 
             logger.info('Added to DB: ', address, coinName, website, '', allLinks, 'CoinGecko', currentBlockchain)
         }
 
         logger.info(`${CoinGeckoWorker.name} finished`)
     }
-    private getLinks(links: LinksCoinInfo): string[]
-    {
-        let otherLinks: string[] = []
+
+    private getLinks(links: LinksCoinInfo): string[] {
+        const otherLinks: string[] = []
 
         if (links.twitter_screen_name !== null && links.twitter_screen_name.length > 0) {
-            otherLinks.push("https://twitter.com/" + links.twitter_screen_name)
+            otherLinks.push('https://twitter.com/' + links.twitter_screen_name)
         }
 
         if (links.facebook_username !== null && links.facebook_username.length > 0) {
-            otherLinks.push("https://facebook.com/" + links.facebook_username)
+            otherLinks.push('https://facebook.com/' + links.facebook_username)
         }
 
         if (links.telegram_channel_identifier !== null && links.telegram_channel_identifier.length > 0) {
-            otherLinks.push("https://t.me/" + links.telegram_channel_identifier)
+            otherLinks.push('https://t.me/' + links.telegram_channel_identifier)
         }
 
         if (links.subreddit_url !== null && links.subreddit_url.length > 0) {
@@ -130,6 +129,6 @@ export class CoinGeckoWorker extends AbstractTokenWorker {
             otherLinks.concat(links.chat_url)
         }
 
-        return otherLinks.filter((link) => link !== "")
+        return otherLinks.filter((link) => link !== '')
     }
 }

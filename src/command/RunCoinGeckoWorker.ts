@@ -5,7 +5,7 @@ import { Arguments, Argv } from 'yargs'
 import { Blockchain, logger } from '../utils'
 
 @singleton()
-export class RunCoinGeckoWorker implements CommandInterface{
+export class RunCoinGeckoWorker implements CommandInterface {
     public readonly command = 'run-coin-gecko-worker'
     public readonly description = 'This command runs CoinGecko worker from cli'
 

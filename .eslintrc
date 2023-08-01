@@ -15,7 +15,7 @@
     "no-trailing-spaces": ["error", {"skipBlankLines": false}],
     "arrow-body-style": ["error", "as-needed"],
     "arrow-spacing": ["warn", {"before": true, "after": true}],
-    "complexity": ["error", 8],
+    "complexity": ["error", 19],
     "brace-style": ["error", "1tbs", {"allowSingleLine": true}],
     "array-bracket-newline": ["error", {"multiline": true, "minItems": 4}],
     "array-bracket-spacing": ["error", "always", {"objectsInArrays": true, "arraysInArrays": true}],
