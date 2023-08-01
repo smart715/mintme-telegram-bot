@@ -1,5 +1,5 @@
 import { singleton } from 'tsyringe'
-import { CommandInterface, RunCoinGeckoWorkerCmd } from './types'
+import { CommandInterface, RunAdvnWorkerCmdArgv } from './types'
 import { Arguments, Argv } from 'yargs'
 import { Blockchain, logger } from '../utils'
 import { AdvnWorker } from '../core'
@@ -13,7 +13,7 @@ export class RunAdvnWorker implements CommandInterface {
         private readonly advnWorker: AdvnWorker,
     ) { }
 
-    public builder(yargs: Argv<RunCoinGeckoWorkerCmd>): void {
+    public builder(yargs: Argv<RunAdvnWorkerCmdArgv>): void {
         yargs.option('blockchain', {
             type: 'string',
             describe: 'Blockchain to check',
@@ -22,7 +22,7 @@ export class RunAdvnWorker implements CommandInterface {
         })
     }
 
-    public async handler(argv: Arguments<RunCoinGeckoWorkerCmd>): Promise<void> {
+    public async handler(argv: Arguments<RunAdvnWorkerCmdArgv>): Promise<void> {
         logger.info(`Started command ${this.command}`)
 
         await this.advnWorker.run(argv.blockchain)

@@ -36,6 +36,8 @@ import {
     CoinGeckoWorker,
     AdvnWorker,
     AdvnService,
+    CoinDiscoveryService,
+    CoinDiscoveryWorker,
 } from '../../core'
 import { Application } from '../'
 import { CliDependency } from './types'
@@ -46,6 +48,7 @@ import {
     RunExplorerWorker,
     RunCoinGeckoWorker,
     RunAdvnWorker,
+    RunCoinDiscoveryWorker,
 } from '../../command'
 import { TokenNamesGenerator } from '../../utils'
 
@@ -171,6 +174,10 @@ container.register(ContactHistoryService, {
             dependencyContainer.resolve(ContactHistoryRepository),
         ),
     ),
+})
+
+container.register(CoinDiscoveryService, {
+    useFactory: instanceCachingFactory(() => new CoinDiscoveryService()),
 })
 
 // Workers
@@ -309,6 +316,15 @@ container.register(AdvnWorker, {
     ),
 })
 
+container.register(CoinDiscoveryWorker, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new CoinDiscoveryWorker(
+            dependencyContainer.resolve(CoinDiscoveryService),
+            dependencyContainer.resolve(TokensService),
+        )
+    ),
+})
+
 // CLI
 
 container.register(CliDependency.COMMAND, {
@@ -354,6 +370,14 @@ container.register(CliDependency.COMMAND, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new RunAdvnWorker(
             dependencyContainer.resolve(AdvnWorker),
+        )
+    ),
+})
+
+container.register(CliDependency.COMMAND, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new RunCoinDiscoveryWorker(
+            dependencyContainer.resolve(CoinDiscoveryWorker),
         )
     ),
 })

@@ -1,15 +1,13 @@
-// @ts-nocheck
-import {singleton} from "tsyringe"
-import {AbstractTokenWorker} from "./AbstractTokenWorker";
-import {TokensService} from "../service";
-import {Blockchain, getHrefValuesFromTagString} from "../../utils";
-import {CoinDiscoveryService} from "../service/CoinDiscoveryService";
+import { singleton } from 'tsyringe'
+import { AbstractTokenWorker } from './AbstractTokenWorker'
+import { TokensService, CoinDiscoveryService } from '../service'
+import { Blockchain, getHrefValuesFromTagString } from '../../utils'
 
 @singleton()
 export class CoinDiscoveryWorker extends AbstractTokenWorker {
     public constructor(
+        private readonly coinDiscoveryService: CoinDiscoveryService,
         private readonly tokenService: TokensService,
-        private readonly coinDiscoveryService: CoinDiscoveryService
     ) {
         super()
     }
@@ -26,14 +24,14 @@ export class CoinDiscoveryWorker extends AbstractTokenWorker {
                 return
             }
 
-            let count = 3000
 
             // @todo get rid of chainId
             const chainId = Blockchain.BSC === currentBlockchain
                 ? 1
                 : "Ethereum"
 
-            let start = 0
+            let count: number
+            let start: number = 0
 
             do {
                 console.log(`[CoinDiscoveryWorker] cursor ${start}`)
@@ -84,6 +82,7 @@ export class CoinDiscoveryWorker extends AbstractTokenWorker {
                         currentBlockchain
                     )
 
+                    start += 500
                 }
             } while (count > 0)
             console.log(`${CoinDiscoveryWorker.name} finished`)
