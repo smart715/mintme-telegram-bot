@@ -1,8 +1,9 @@
 import { singleton } from 'tsyringe'
 import { AbstractTokenWorker } from './AbstractTokenWorker'
 import { Blockchain, logger } from '../../utils'
-import { CoinBrainService, SeleniumService, TokensService } from '../service'
+import { CoinBrainService, TokensService } from '../service'
 import { CoinBrainGetTokensGeneralResponse } from '../../types'
+import { JSDOM } from 'jsdom'
 
 @singleton()
 export class CoinBrainWorker extends AbstractTokenWorker {
@@ -36,8 +37,6 @@ export class CoinBrainWorker extends AbstractTokenWorker {
         if (null === cryptoPagePrefix) {
             return
         }
-
-        const webDriver = await SeleniumService.createDriver()
 
         let endCursor = ''
         let hasNextPage = true
@@ -78,8 +77,10 @@ export class CoinBrainWorker extends AbstractTokenWorker {
                     continue
                 }
 
-                await webDriver.get(this.buildTokenPageUrl(cryptoPagePrefix, address))
-                // const tokenInfoStr = await webDriver.getPageSource()
+                const tokenInfoStr = await this.coinBrainService.getTokenInfo(cryptoPagePrefix, address)
+                const tokeInfoDOM = new JSDOM(tokenInfoStr)
+
+                console.log(tokeInfoDOM.window.document.getElementsByClassName("css-1vy8s6x ekbh7yg0")[0].outerHTML)
             }
         } while (hasNextPage)
     }
@@ -130,7 +131,7 @@ export class CoinBrainWorker extends AbstractTokenWorker {
         return cryptoPagePrefix
     }
 
-    private buildTokenPageUrl(prefix: string, address: string): string {
-        return 'https://coinbrain.com/coins/' + prefix + '-' + address
-    }
+    // private buildTokenPageUrl(prefix: string, address: string): string {
+    //     return 'https://coinbrain.com/coins/' + prefix + '-' + address
+    // }
 }

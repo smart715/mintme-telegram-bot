@@ -21,6 +21,7 @@
   "license": "ISC",
   "devDependencies": {
     "@types/config": "^3.3.0",
+    "@types/jsdom": "^21.1.1",
     "@types/yargs": "^17.0.24",
     "@typescript-eslint/eslint-plugin": "^6.1.0",
     "@typescript-eslint/parser": "^6.1.0",
@@ -36,6 +37,7 @@
     "axios": "^1.4.0",
     "chalk": "^4.1.0",
     "config": "^3.3.9",
+    "jsdom": "^22.1.0",
     "loglevel": "^1.8.1",
     "loglevel-plugin-prefix": "^0.8.4",
     "moment": "^2.29.4",
