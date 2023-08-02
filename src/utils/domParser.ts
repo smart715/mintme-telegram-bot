@@ -27,5 +27,6 @@ export function getHrefValuesFromTagString(source: RegExpMatchArray): string[] {
         links.push(result[1])
     }
 
-    return links
+    // filter empty href (#) and remove duplicates
+    return [ ...new Set(links.filter((link) => '#' !== link)) ]
 }

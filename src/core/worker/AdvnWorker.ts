@@ -20,7 +20,7 @@ export class AdvnWorker extends AbstractTokenWorker {
         logger.info(`${this.prefixLog} started`)
 
         if (this.unsupportedBlockchain.includes(currentBlockchain)) {
-            logger.warn(`[AdvnWorker] Unsupported blockchain: ${currentBlockchain}. Aborting.`)
+            logger.error(`[AdvnWorker] Unsupported blockchain: ${currentBlockchain}. Aborting.`)
 
             return
         }

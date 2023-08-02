@@ -1,8 +1,8 @@
 import { singleton } from 'tsyringe'
 import { AbstractTokenWorker } from './AbstractTokenWorker'
 import { TokensService, CoinDiscoveryService } from '../service'
-import {Blockchain, getHrefFromTagString, getHrefValuesFromTagString, logger} from '../../utils'
-import {CoinDiscoveryGetTokensResponse} from "../../types";
+import { Blockchain, getHrefValuesFromTagString, logger } from '../../utils'
+import { CoinDiscoveryGetTokensResponse } from '../../types'
 
 @singleton()
 export class CoinDiscoveryWorker extends AbstractTokenWorker {
@@ -20,7 +20,7 @@ export class CoinDiscoveryWorker extends AbstractTokenWorker {
         logger.info(`${this.prefixLog} Worker started`)
 
         if (this.unsupportedBlockchain.includes(currentBlockchain)) {
-            logger.info(`${this.prefixLog} Unsupported blockchain ${currentBlockchain}. Aborting`)
+            logger.error(`${this.prefixLog} Unsupported blockchain ${currentBlockchain}. Aborting`)
 
             return
         }
@@ -29,7 +29,7 @@ export class CoinDiscoveryWorker extends AbstractTokenWorker {
         let start: number = 0
 
         do {
-            console.log(`[CoinDiscoveryWorker] cursor ${start}`)
+            logger.info(`${this.prefixLog} Start position ${start}`)
 
             let allCoinsRes: CoinDiscoveryGetTokensResponse
 
@@ -51,9 +51,9 @@ export class CoinDiscoveryWorker extends AbstractTokenWorker {
                 const name = coin.name + '(' + coin.symbol + ')'
                 const nameSlug = coin.name_slug
                 const tokenAddress = coin.contract
-                const blockchain = coin.chain === '1'
+                const blockchain = '1' === coin.chain
                     ? 'bnbTokens'
-                    : coin.chain === '2'
+                    : '2' === coin.chain
                         ? 'etherscanTokens'
                         : ''
 
@@ -61,7 +61,7 @@ export class CoinDiscoveryWorker extends AbstractTokenWorker {
                     continue
                 }
 
-                const tokenInDb = await this.tokenService.findByAddress(tokenAddress, currentBlockchain);
+                const tokenInDb = await this.tokenService.findByAddress(tokenAddress, currentBlockchain)
 
                 if (!tokenAddress.startsWith('0x') || tokenInDb) {
                     continue
@@ -71,24 +71,34 @@ export class CoinDiscoveryWorker extends AbstractTokenWorker {
 
                 const links = this.getLinks(tokenInfo)
 
-                if (links.length > 0) {
-                    if (tokenInfo.includes("class\"link\"")) {
-                        website = links[0]
-                    }
+                let website = ''
+
+                if (links.length > 0 && tokenInfo.includes('class="link"')) {
+                    website = links[0]
                 }
 
                 await this.tokenService.add(
                     tokenAddress,
                     name,
-                    [website],
-                    [""],
+                    [ website ],
+                    [ '' ],
                     links,
-                    "CoinDiscovery",
+                    'CoinDiscovery',
                     currentBlockchain
                 )
 
-                start += 500
+                logger.info(
+                    `${this.prefixLog} Added to DB: `,
+                    tokenAddress,
+                    name,
+                    website,
+                    links,
+                    'CoinDiscovery',
+                    currentBlockchain
+                )
             }
+
+            start += 500
         } while (count > 0)
 
         logger.info(`${this.prefixLog} finished`)
