@@ -1,7 +1,7 @@
 export interface CoinBrainGetTokensGeneralResponse {
     endCursor: string,
-    hasNextPage: true,
-    hasPreviousPage: false,
+    hasNextPage: boolean,
+    hasPreviousPage: boolean,
     items: CoinBrainItemTokensGeneralResponse[],
     startCursor: string,
 }

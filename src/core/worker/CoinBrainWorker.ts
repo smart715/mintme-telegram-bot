@@ -1,7 +1,7 @@
 import { singleton } from 'tsyringe'
 import { AbstractTokenWorker } from './AbstractTokenWorker'
 import { Blockchain, logger } from '../../utils'
-import { CoinBrainService } from '../service'
+import { CoinBrainService, TokensService } from '../service'
 import { CoinBrainGetTokensGeneralResponse, CoinBrainItemTokensGeneralResponse } from '../../types'
 
 @singleton()
@@ -10,7 +10,8 @@ export class CoinBrainWorker extends AbstractTokenWorker {
     private readonly unsupportedBlockchain: Blockchain[] = [ Blockchain.CRO ]
 
     public constructor(
-        private readonly coinBrainService: CoinBrainService
+        private readonly coinBrainService: CoinBrainService,
+        private readonly tokenService: TokensService
     ) {
         super()
     }
@@ -24,22 +25,15 @@ export class CoinBrainWorker extends AbstractTokenWorker {
             return
         }
 
-        let currentChainId: number|null = null
-
-        switch (currentBlockchain) {
-            case Blockchain.BSC:
-                currentChainId = 56
-
-                break
-            case Blockchain.ETH:
-                currentChainId = 1
-
-                break
-        }
+        const currentChainId = this.getCurrentChainId(currentBlockchain)
 
         if (null === currentChainId) {
-            logger.error(`${this.prefixLog} current blockchain ${currentBlockchain} doesn't have chainId specified. Pls specify it in code. Aborting.`)
+            return
+        }
 
+        const cryptoPagePrefix = this.getCryptoPagePrefix(currentBlockchain)
+
+        if (null === cryptoPagePrefix) {
             return
         }
 
@@ -63,9 +57,11 @@ export class CoinBrainWorker extends AbstractTokenWorker {
                 return
             }
 
-
+            hasNextPage = res.hasNextPage
+            endCursor = res.endCursor.toString()
 
             const coins = res.items
+
 
             for (const coin: CoinBrainItemTokensGeneralResponse of coins) {
                 const address = coin.address.toLowerCase()
@@ -73,11 +69,61 @@ export class CoinBrainWorker extends AbstractTokenWorker {
                 if (coin.chainId.toString() !== currentChainId.toString()) {
                     continue
                 }
+
+                const coinInDb = await this.tokenService.findByAddress(address, currentBlockchain)
+
+                if (coinInDb) {
+                    continue
+                }
+
                 
             }
-
-
-
         } while (hasNextPage)
+    }
+
+    private getCurrentChainId(currentBlockchain: Blockchain): null|number {
+        let currentChainId: number|null = null
+
+        switch (currentBlockchain) {
+            case Blockchain.BSC:
+                currentChainId = 56
+
+                break
+            case Blockchain.ETH:
+                currentChainId = 1
+
+                break
+        }
+
+        if (null === currentChainId) {
+            logger.error(`${this.prefixLog} current blockchain ${currentBlockchain} doesn't have chainId specified. Pls specify it in code. Aborting.`)
+
+            return null
+        }
+
+        return currentChainId
+    }
+
+    private getCryptoPagePrefix(currentBlockchain: Blockchain): string|null {
+        let cryptoPagePrefix: string|null = null
+
+        switch (currentBlockchain) {
+            case Blockchain.BSC:
+                cryptoPagePrefix = 'bnb'
+
+                break
+            case Blockchain.ETH:
+                cryptoPagePrefix = 'eth'
+
+                break
+        }
+
+        if (null === cryptoPagePrefix) {
+            logger.error(`${this.prefixLog} current blockchain ${currentBlockchain} doesn't have crypto prefix specified. Pls specify it in code. Aborting.`)
+
+            return null
+        }
+
+        return cryptoPagePrefix
     }
 }
