@@ -3,7 +3,7 @@ import { AbstractTokenWorker } from './AbstractTokenWorker'
 import { Blockchain, logger } from '../../utils'
 import { CoinBrainService, TokensService } from '../service'
 import { CoinBrainGetTokensGeneralResponse } from '../../types'
-import { JSDOM } from 'jsdom'
+import { JSDOM} from 'jsdom'
 
 @singleton()
 export class CoinBrainWorker extends AbstractTokenWorker {
@@ -80,7 +80,44 @@ export class CoinBrainWorker extends AbstractTokenWorker {
                 const tokenInfoStr = await this.coinBrainService.getTokenInfo(cryptoPagePrefix, address)
                 const tokeInfoDOM = new JSDOM(tokenInfoStr)
 
-                console.log(tokeInfoDOM.window.document.getElementsByClassName("css-1vy8s6x ekbh7yg0")[0].outerHTML)
+                const linksElements = this.getLinksElements(tokeInfoDOM)
+                const tokenName = this.getTokenName(tokeInfoDOM)
+
+                let website = ''
+                let links: string[] = []
+
+                for (let i= 0; i < linksElements.length; i++) {
+                    if (website == '' && linksElements[i].dataset['type'] == 'website') {
+                        website = linksElements[i].href;
+                    } else {
+                        links.push(linksElements[i].href);
+                    }
+
+                }
+
+                if (links.length <= 0 && website.length <= 0) {
+                    continue
+                }
+
+                await this.tokenService.add(
+                    address,
+                    tokenName,
+                    [ website ],
+                    [ '' ],
+                    links,
+                    'CoinBrain',
+                    currentBlockchain
+                )
+
+                logger.info(
+                    `${this.prefixLog} Added to DB: `,
+                    address,
+                    tokenName,
+                    website,
+                    links,
+                    'CoinBrain',
+                    currentBlockchain
+                )
             }
         } while (hasNextPage)
     }
@@ -131,7 +168,26 @@ export class CoinBrainWorker extends AbstractTokenWorker {
         return cryptoPagePrefix
     }
 
-    // private buildTokenPageUrl(prefix: string, address: string): string {
-    //     return 'https://coinbrain.com/coins/' + prefix + '-' + address
-    // }
+    private getTokenName(tokenInfoDOM: JSDOM): string {
+        logger.info(tokenInfoDOM.hasOwnProperty('document'));
+        return tokenInfoDOM
+            .window
+            .document
+            .getElementsByTagName('h1')[0]
+            .getElementsByClassName('css-1vy8s6x ekbh7yg0')[0]
+            .textContent +
+                ' (' +
+                document
+                    .getElementsByTagName('h1')[0]
+                    .getElementsByClassName('css-g65rr5 ekbh7yg0')[0].textContent +
+                ')'
+    }
+
+    private getLinksElements(tokeInfoDOM: JSDOM): HTMLCollectionOf<HTMLAnchorElement> {
+        return tokeInfoDOM
+            .window
+            .document
+            .getElementsByClassName('css-bbxkir emf55gs0')[0]
+            .getElementsByTagName('a');
+    }
 }

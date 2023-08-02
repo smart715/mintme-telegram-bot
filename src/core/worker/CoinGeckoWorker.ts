@@ -79,10 +79,10 @@ export class CoinGeckoWorker extends AbstractTokenWorker {
             const coinName: string = coinInfo.name + '(' + coinInfo.symbol + ')'
             const links = coinInfo.links
 
-            const website: string[] = links.homepage.filter((page) => page !== '')
+            const websites: string[] = links.homepage.filter((page) => page !== '')
 
             if (
-                website.includes('realt.co') ||
+                websites.includes('realt.co') ||
                 coinName.toLowerCase().includes('x short') ||
                 coinName.toLowerCase().includes('x long') ||
                 coinName.startsWith('Aave ')
@@ -98,9 +98,9 @@ export class CoinGeckoWorker extends AbstractTokenWorker {
                 continue
             }
 
-            await this.tokenService.add(address, coinName, website, [ '' ], allLinks, 'CoinGecko', currentBlockchain)
+            await this.tokenService.add(address, coinName, websites, [ '' ], allLinks, 'CoinGecko', currentBlockchain)
 
-            logger.info(`${this.prefixLog} Added to DB: `, address, coinName, website, '', allLinks, 'CoinGecko', currentBlockchain)
+            logger.info(`${this.prefixLog} Added to DB: `, address, coinName, websites, '', allLinks, 'CoinGecko', currentBlockchain)
         }
 
         logger.info(`${CoinGeckoWorker.name} finished`)
