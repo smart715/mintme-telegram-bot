@@ -1,8 +1,8 @@
 import { singleton } from 'tsyringe'
 import { AbstractTokenWorker } from './AbstractTokenWorker'
 import { Blockchain, logger } from '../../utils'
-import { CoinBrainService, TokensService } from '../service'
-import { CoinBrainGetTokensGeneralResponse, CoinBrainItemTokensGeneralResponse } from '../../types'
+import { CoinBrainService, SeleniumService, TokensService } from '../service'
+import { CoinBrainGetTokensGeneralResponse } from '../../types'
 
 @singleton()
 export class CoinBrainWorker extends AbstractTokenWorker {
@@ -16,7 +16,7 @@ export class CoinBrainWorker extends AbstractTokenWorker {
         super()
     }
 
-    public async run(currentBlockchain): Promise<any> {
+    public async run(currentBlockchain: Blockchain): Promise<any> {
         logger.info(`${this.prefixLog} Worker started`)
 
         if (this.unsupportedBlockchain.includes(currentBlockchain)) {
@@ -36,6 +36,8 @@ export class CoinBrainWorker extends AbstractTokenWorker {
         if (null === cryptoPagePrefix) {
             return
         }
+
+        const webDriver = await SeleniumService.createDriver()
 
         let endCursor = ''
         let hasNextPage = true
@@ -63,7 +65,7 @@ export class CoinBrainWorker extends AbstractTokenWorker {
             const coins = res.items
 
 
-            for (const coin: CoinBrainItemTokensGeneralResponse of coins) {
+            for (const coin of coins) {
                 const address = coin.address.toLowerCase()
 
                 if (coin.chainId.toString() !== currentChainId.toString()) {
@@ -76,7 +78,8 @@ export class CoinBrainWorker extends AbstractTokenWorker {
                     continue
                 }
 
-                
+                await webDriver.get(this.buildTokenPageUrl(cryptoPagePrefix, address))
+                // const tokenInfoStr = await webDriver.getPageSource()
             }
         } while (hasNextPage)
     }
@@ -125,5 +128,9 @@ export class CoinBrainWorker extends AbstractTokenWorker {
         }
 
         return cryptoPagePrefix
+    }
+
+    private buildTokenPageUrl(prefix: string, address: string): string {
+        return 'https://coinbrain.com/coins/' + prefix + '-' + address
     }
 }

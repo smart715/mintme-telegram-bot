@@ -37,7 +37,7 @@ import {
     AdvnWorker,
     AdvnService,
     CoinDiscoveryService,
-    CoinDiscoveryWorker,
+    CoinDiscoveryWorker, CoinBrainService, CoinBrainWorker,
 } from '../../core'
 import { Application } from '../'
 import { CliDependency } from './types'
@@ -48,7 +48,7 @@ import {
     RunExplorerWorker,
     RunCoinGeckoWorker,
     RunAdvnWorker,
-    RunCoinDiscoveryWorker,
+    RunCoinDiscoveryWorker, RunCoinBrainWorker,
 } from '../../command'
 import { TokenNamesGenerator } from '../../utils'
 
@@ -178,6 +178,10 @@ container.register(ContactHistoryService, {
 
 container.register(CoinDiscoveryService, {
     useFactory: instanceCachingFactory(() => new CoinDiscoveryService()),
+})
+
+container.register(CoinBrainService, {
+    useFactory: instanceCachingFactory(() => new CoinBrainService()),
 })
 
 // Workers
@@ -325,6 +329,15 @@ container.register(CoinDiscoveryWorker, {
     ),
 })
 
+container.register(CoinBrainWorker, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new CoinBrainWorker(
+            dependencyContainer.resolve(CoinBrainService),
+            dependencyContainer.resolve(TokensService),
+        )
+    ),
+})
+
 // CLI
 
 container.register(CliDependency.COMMAND, {
@@ -378,6 +391,14 @@ container.register(CliDependency.COMMAND, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new RunCoinDiscoveryWorker(
             dependencyContainer.resolve(CoinDiscoveryWorker),
+        )
+    ),
+})
+
+container.register(CliDependency.COMMAND, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new RunCoinBrainWorker(
+            dependencyContainer.resolve(CoinBrainWorker),
         )
     ),
 })

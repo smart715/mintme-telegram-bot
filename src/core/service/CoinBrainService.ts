@@ -11,4 +11,12 @@ export class CoinBrainService {
 
         return response.data
     }
+
+    public async getTokenInfo(prefix: string, address: string): Promise<string> {
+        const response = await axios.get(
+            'https://coinbrain.com/coins/' + prefix + '-' + address
+        )
+
+        return response.data
+    }
 }
