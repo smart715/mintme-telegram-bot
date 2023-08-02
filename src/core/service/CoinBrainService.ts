@@ -1,0 +1,14 @@
+import { singleton } from 'tsyringe'
+import axios from 'axios'
+import { CoinBrainGetTokensGeneralResponse } from '../../types'
+
+@singleton()
+export class CoinBrainService {
+    public async getTokens(endCursor: string): Promise<CoinBrainGetTokensGeneralResponse> {
+        const response = await axios.post(
+            `https://api.coinbrain.com/cointoaster/coins?size=100&sort=age:asc&after=${endCursor}`,
+        )
+
+        return response.data
+    }
+}
