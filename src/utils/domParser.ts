@@ -9,7 +9,7 @@ export function getHrefFromTagString(source: RegExpMatchArray): string {
 }
 
 export function getHrefValuesFromTagString(source: RegExpMatchArray): string[] {
-    const rawLinks = source.join(' ').match((/href="(.+?)"/g))
+    const rawLinks = source.join(' ').match(/href="(.+?)"/g)
 
     if (!rawLinks) {
         return []

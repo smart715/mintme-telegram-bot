@@ -98,7 +98,7 @@ export class AdvnWorker extends AbstractTokenWorker {
                 )
 
                 logger.info(
-                    `${this.prefixLog} Added to DB: `,
+                    `${this.prefixLog} Added to DB:`,
                     tokenAddress,
                     name,
                     website,

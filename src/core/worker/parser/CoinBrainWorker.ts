@@ -109,7 +109,7 @@ export class CoinBrainWorker extends AbstractTokenWorker {
                 )
 
                 logger.info(
-                    `${this.prefixLog} Added to DB: `,
+                    `${this.prefixLog} Added to DB:`,
                     address,
                     tokenName,
                     website,
