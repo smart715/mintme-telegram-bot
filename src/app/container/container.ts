@@ -37,7 +37,9 @@ import {
     AdvnWorker,
     AdvnService,
     CoinDiscoveryService,
-    CoinDiscoveryWorker, CoinBrainService, CoinBrainWorker,
+    CoinDiscoveryWorker,
+    CoinBrainService,
+    CoinBrainWorker,
 } from '../../core'
 import { Application } from '../'
 import { CliDependency } from './types'
@@ -48,7 +50,8 @@ import {
     RunExplorerWorker,
     RunCoinGeckoWorker,
     RunAdvnWorker,
-    RunCoinDiscoveryWorker, RunCoinBrainWorker,
+    RunCoinDiscoveryWorker,
+    RunCoinBrainWorker,
 } from '../../command'
 import { TokenNamesGenerator } from '../../utils'
 

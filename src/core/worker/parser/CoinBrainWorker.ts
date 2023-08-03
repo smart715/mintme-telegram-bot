@@ -1,8 +1,8 @@
 import { singleton } from 'tsyringe'
-import { AbstractTokenWorker } from './AbstractTokenWorker'
-import { Blockchain, logger } from '../../utils'
-import { CoinBrainService, TokensService } from '../service'
-import { CoinBrainGetTokensGeneralResponse } from '../../types'
+import { AbstractTokenWorker } from '../AbstractTokenWorker'
+import { Blockchain, logger } from '../../../utils'
+import { CoinBrainService, TokensService } from '../../service'
+import { CoinBrainGetTokensGeneralResponse } from '../../../types'
 import { DOMWindow, JSDOM } from 'jsdom'
 
 @singleton()

@@ -1,8 +1,8 @@
 import { singleton } from 'tsyringe'
-import { AbstractTokenWorker } from './AbstractTokenWorker'
-import { TokensService, CoinGeckoService } from '../service'
-import { Blockchain, logger, sleep } from '../../utils'
-import { AllCoinsTokenResponse, CoinInfo, LinksCoinInfo } from '../../types'
+import { AbstractTokenWorker } from '../AbstractTokenWorker'
+import { TokensService, CoinGeckoService } from '../../service'
+import { Blockchain, logger, sleep } from '../../../utils'
+import { AllCoinsTokenResponse, CoinInfo, LinksCoinInfo } from '../../../types'
 
 @singleton()
 export class CoinGeckoWorker extends AbstractTokenWorker {

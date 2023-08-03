@@ -1,8 +1,8 @@
 import { singleton } from 'tsyringe'
-import { AbstractTokenWorker } from './AbstractTokenWorker'
-import { TokensService, CoinDiscoveryService } from '../service'
-import { Blockchain, getHrefValuesFromTagString, logger } from '../../utils'
-import { CoinDiscoveryGetTokensResponse } from '../../types'
+import { AbstractTokenWorker } from '../AbstractTokenWorker'
+import { TokensService, CoinDiscoveryService } from '../../service'
+import { Blockchain, getHrefValuesFromTagString, logger } from '../../../utils'
+import { CoinDiscoveryGetTokensResponse } from '../../../types'
 
 @singleton()
 export class CoinDiscoveryWorker extends AbstractTokenWorker {

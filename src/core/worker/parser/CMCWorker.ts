@@ -1,7 +1,7 @@
 import { singleton } from 'tsyringe'
-import { CMCService, TokensService } from '../service'
-import { AbstractTokenWorker } from './AbstractTokenWorker'
-import { logger, parseBlockchainName } from '../../utils'
+import { CMCService, TokensService } from '../../service'
+import { AbstractTokenWorker } from '../AbstractTokenWorker'
+import { logger, parseBlockchainName } from '../../../utils'
 
 @singleton()
 export class CMCWorker extends AbstractTokenWorker {

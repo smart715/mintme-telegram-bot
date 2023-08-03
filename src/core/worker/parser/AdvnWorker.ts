@@ -1,8 +1,8 @@
 import { singleton } from 'tsyringe'
-import { AbstractTokenWorker } from './AbstractTokenWorker'
-import { Blockchain, findContractAddress, getHrefFromTagString, getHrefValuesFromTagString, logger } from '../../utils'
-import { TokensService, AdvnService } from '../service'
-import { AdvnGeneralResponse } from '../../types'
+import { AbstractTokenWorker } from '../AbstractTokenWorker'
+import { Blockchain, findContractAddress, getHrefFromTagString, getHrefValuesFromTagString, logger } from '../../../utils'
+import { TokensService, AdvnService } from '../../service'
+import { AdvnGeneralResponse } from '../../../types'
 
 @singleton()
 export class AdvnWorker extends AbstractTokenWorker {
