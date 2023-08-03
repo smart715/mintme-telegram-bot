@@ -5,7 +5,12 @@ import { singleton } from 'tsyringe'
 export class CoinBuddyService {
     public async getAllCoins(tag: string, page: number): Promise<string> {
         const response = await axios.get(
-            `https://coinbuddy.co/tags/${tag}?page=${page}`
+            'https://coinbuddy.co/tags/' + tag,
+            {
+                params: {
+                    page: page,
+                },
+            }
         )
 
         return response.data.replace(/(\r\n|\n|\r)/gm, '')

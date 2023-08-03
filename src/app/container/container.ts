@@ -40,6 +40,8 @@ import {
     CoinDiscoveryWorker,
     CoinBrainService,
     CoinBrainWorker,
+    CoinBuddyService,
+    CoinBuddyWorker,
 } from '../../core'
 import { Application } from '../'
 import { CliDependency } from './types'
@@ -52,6 +54,7 @@ import {
     RunAdvnWorker,
     RunCoinDiscoveryWorker,
     RunCoinBrainWorker,
+    RunCoinBuddyWorker,
 } from '../../command'
 import { TokenNamesGenerator } from '../../utils'
 
@@ -185,6 +188,10 @@ container.register(CoinDiscoveryService, {
 
 container.register(CoinBrainService, {
     useFactory: instanceCachingFactory(() => new CoinBrainService()),
+})
+
+container.register(CoinBuddyService, {
+    useFactory: instanceCachingFactory(() => new CoinBuddyService()),
 })
 
 // Workers
@@ -341,6 +348,15 @@ container.register(CoinBrainWorker, {
     ),
 })
 
+container.register(CoinBuddyWorker, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new CoinBuddyWorker(
+            dependencyContainer.resolve(CoinBuddyService),
+            dependencyContainer.resolve(TokensService),
+        )
+    ),
+})
+
 // CLI
 
 container.register(CliDependency.COMMAND, {
@@ -402,6 +418,14 @@ container.register(CliDependency.COMMAND, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new RunCoinBrainWorker(
             dependencyContainer.resolve(CoinBrainWorker),
+        )
+    ),
+})
+
+container.register(CliDependency.COMMAND, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new RunCoinBuddyWorker(
+            dependencyContainer.resolve(CoinBuddyWorker),
         )
     ),
 })

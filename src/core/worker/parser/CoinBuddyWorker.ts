@@ -7,7 +7,7 @@ import { CoinBuddyService, TokensService } from '../../service'
 @singleton()
 export class CoinBuddyWorker extends AbstractTokenWorker{
     private readonly prefixLog = '[CoinBuddy]'
-    private readonly unsupportedBlockchain = [ ]
+    private readonly unsupportedBlockchain: Blockchain[] = [ ]
 
     public constructor(
         private readonly coinBuddyService: CoinBuddyService,
@@ -95,6 +95,10 @@ export class CoinBuddyWorker extends AbstractTokenWorker{
                 const coinInfoDOM = (new JSDOM(coinInfo)).window
 
                 const tokenName = coinInfoDOM.document.title
+
+                logger.info(`tokenName: ${tokenName}`)
+
+                await this.tokenService.findByAddress('asdasd', currentBlockchain)
             }
 
         } while (results > 0)
