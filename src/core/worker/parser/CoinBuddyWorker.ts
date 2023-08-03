@@ -1,8 +1,8 @@
-import { JSDOM } from 'jsdom'
-import { singleton } from 'tsyringe'
-import { AbstractTokenWorker } from '../AbstractTokenWorker'
-import { Blockchain, logger } from '../../../utils'
-import { CoinBuddyService, TokensService } from '../../service'
+import {DOMWindow, JSDOM} from 'jsdom'
+import {singleton} from 'tsyringe'
+import {AbstractTokenWorker} from '../AbstractTokenWorker'
+import {Blockchain, findContractAddress, logger} from '../../../utils'
+import {CoinBuddyService, TokensService} from '../../service'
 
 @singleton()
 export class CoinBuddyWorker extends AbstractTokenWorker{
@@ -28,7 +28,7 @@ export class CoinBuddyWorker extends AbstractTokenWorker{
         const tag = this.getTagByBlockchain(currentBlockchain)
 
         if (null === tag) {
-            logger.error(`Tag for ${currentBlockchain} doesn't exists. Pls specify it in code. Aborting`)
+            logger.error(`${this.prefixLog} Tag for ${currentBlockchain} doesn't exists. Pls specify it in code. Aborting`)
 
             return
         }
@@ -37,6 +37,8 @@ export class CoinBuddyWorker extends AbstractTokenWorker{
         let results = 50
 
         do {
+            logger.info(`${this.prefixLog} Page start ${page}`)
+
             let coinsSrc = ''
             try {
                 coinsSrc = await this.coinBuddyService.getAllCoins(tag, page)
@@ -49,7 +51,7 @@ export class CoinBuddyWorker extends AbstractTokenWorker{
             }
 
             if ('' === coinsSrc) {
-                logger.error(`${this.prefixLog} Aborting. Response for all coins returns emppty string. Tag: ${tag}. Page: ${page}`)
+                logger.error(`${this.prefixLog} Aborting. Response for all coins returns empty string. Tag: ${tag}. Page: ${page}`)
 
                 return
             }
@@ -67,16 +69,14 @@ export class CoinBuddyWorker extends AbstractTokenWorker{
             results = coins.length
 
             for (const coin of coins) {
-                const path = coin
-                    .replace('""', '')
-                    .replace('href=', '')
+                const path = this.getCoinInfoPagePath(coin)
 
                 let coinInfo = ''
                 try {
                     coinInfo = await this.coinBuddyService.getCoinInfo(path)
                 } catch (ex: any) {
                     logger.error(
-                        `${this.prefixLog} Aborting. Failed to fetch all coins. Tag: ${tag}. Page: ${page}. Reason: ${ex.message}`
+                        `${this.prefixLog} Aborting. Failed to fetch coin info. Tag: ${tag}. Page: ${page}. Reason: ${ex.message}`
                     )
 
                     return
@@ -84,24 +84,82 @@ export class CoinBuddyWorker extends AbstractTokenWorker{
 
                 const coinId = path.replace('\/coins\/', '')
 
-                logger.info(`Checking coin: ${coinId}`)
+                logger.info(`${this.prefixLog} Checking coin: ${coinId}`)
 
                 if ('' === coinInfo) {
-                    logger.info(`Empty response for ${coinId}. Skipping`)
+                    logger.info(`${this.prefixLog} Empty response for ${coinId}. Skipping`)
 
                     continue
                 }
 
                 const coinInfoDOM = (new JSDOM(coinInfo)).window
+                const tokenName = coinInfoDOM.document.title.split('- Where')[0]
+                const coinInfoDiv = this.getCoinInfoDiv(coinInfoDOM);
+                const linkElements = coinInfoDiv.querySelectorAll('.external-link')
+                let tokenAddress = this.findTokenAddress(coinInfoDiv, currentBlockchain)
 
-                const tokenName = coinInfoDOM.document.title
+                if (null === tokenAddress) {
+                    continue
+                }
 
-                logger.info(`tokenName: ${tokenName}`)
+                const tokenInDb = await this.tokenService.findByAddress(tokenAddress, currentBlockchain)
 
-                await this.tokenService.findByAddress('asdasd', currentBlockchain)
+                if (tokenInDb) {
+                    continue
+                }
+
+                let website: string = ''
+                const otherLinks: string[] = []
+
+                for (const linkElement of linkElements) {
+                    if ('A' !== linkElement.tagName) {
+                        continue
+                    }
+
+                    const hrefAttr = linkElement.getAttribute('href')
+
+                    if (!hrefAttr) {
+                        continue
+                    }
+
+                    if (linkElement.innerHTML.toLowerCase().includes('website')) {
+                        website = hrefAttr
+
+                        continue
+                    }
+
+                    otherLinks.push(hrefAttr)
+                }
+
+                if ('' === website) {
+                    continue
+                }
+
+                await this.tokenService.add(
+                    tokenAddress,
+                    tokenName,
+                    [ website ],
+                    [ '' ],
+                    otherLinks,
+                    'CoinBuddy',
+                    currentBlockchain
+                )
+
+                logger.info(
+                    `${this.prefixLog} Added to DB:`,
+                    tokenAddress,
+                    tokenName,
+                    website,
+                    otherLinks,
+                    'CoinBuddy',
+                    currentBlockchain
+                )
             }
 
+            page += 1
         } while (results > 0)
+
+        logger.info(`${this.prefixLog} worker finished`)
     }
 
     private getTagByBlockchain(currentBlockchain: Blockchain): string|null {
@@ -118,5 +176,39 @@ export class CoinBuddyWorker extends AbstractTokenWorker{
             default:
                 return null
         }
+    }
+
+    private getCoinInfoDiv(coinInfoDOM: DOMWindow): Element {
+        return coinInfoDOM
+            .document
+            .getElementsByClassName("coin-info")[0]
+    }
+
+    private findTokenAddress(coinInfoDiv: Element, currentBlockchain: Blockchain): string|null {
+        const coinInfoStr = coinInfoDiv.innerHTML
+
+        let tokenAddress = findContractAddress(coinInfoStr)
+
+        if (currentBlockchain === Blockchain.BSC &&
+            !coinInfoStr.includes('BSC</strong>') &&
+            !coinInfoStr.includes('BNB</strong>')
+        ) {
+            tokenAddress = null
+        }
+
+        if (currentBlockchain === Blockchain.ETH &&
+            !coinInfoStr.includes('ETH</strong>')
+        ) {
+            tokenAddress = null
+        }
+
+        return tokenAddress
+    }
+
+    private getCoinInfoPagePath(coin: string): string {
+        return coin
+            .replace('""', '')
+            .replace('href=', '')
+            .replace(/"/g, '')
     }
 }
