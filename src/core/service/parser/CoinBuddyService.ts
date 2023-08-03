@@ -10,4 +10,12 @@ export class CoinBuddyService {
 
         return response.data.replace(/(\r\n|\n|\r)/gm, '')
     }
+
+    public async getCoinInfo(path: string): Promise<string> {
+        const response = await axios.get(
+            'https://coinbuddy.co' + path
+        )
+
+        return response.data.replace(/(\r\n|\n|\r)/gm, '')
+    }
 }

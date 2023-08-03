@@ -1,8 +1,8 @@
-import { AbstractTokenWorker } from '../AbstractTokenWorker'
+import { JSDOM } from 'jsdom'
 import { singleton } from 'tsyringe'
+import { AbstractTokenWorker } from '../AbstractTokenWorker'
 import { Blockchain, logger } from '../../../utils'
-import { TokensService } from '../../service'
-import {CoinBuddyService} from "../../service/parser/CoinBuddyService";
+import { CoinBuddyService, TokensService } from '../../service'
 
 @singleton()
 export class CoinBuddyWorker extends AbstractTokenWorker{
@@ -67,12 +67,34 @@ export class CoinBuddyWorker extends AbstractTokenWorker{
             results = coins.length
 
             for (const coin of coins) {
-                const coinId = coin
+                const path = coin
                     .replace('""', '')
                     .replace('href=', '')
-                    .replace('\/coins\/', '')
+
+                let coinInfo = ''
+                try {
+                    coinInfo = await this.coinBuddyService.getCoinInfo(path)
+                } catch (ex: any) {
+                    logger.error(
+                        `${this.prefixLog} Aborting. Failed to fetch all coins. Tag: ${tag}. Page: ${page}. Reason: ${ex.message}`
+                    )
+
+                    return
+                }
+
+                const coinId = path.replace('\/coins\/', '')
 
                 logger.info(`Checking coin: ${coinId}`)
+
+                if ('' === coinInfo) {
+                    logger.info(`Empty response for ${coinId}. Skipping`)
+
+                    continue
+                }
+
+                const coinInfoDOM = (new JSDOM(coinInfo)).window
+
+                const tokenName = coinInfoDOM.document.title
             }
 
         } while (results > 0)
