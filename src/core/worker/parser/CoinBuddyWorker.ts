@@ -1,11 +1,11 @@
-import {DOMWindow, JSDOM} from 'jsdom'
-import {singleton} from 'tsyringe'
-import {AbstractTokenWorker} from '../AbstractTokenWorker'
-import {Blockchain, findContractAddress, logger} from '../../../utils'
-import {CoinBuddyService, TokensService} from '../../service'
+import { DOMWindow, JSDOM } from 'jsdom'
+import { singleton } from 'tsyringe'
+import { AbstractTokenWorker } from '../AbstractTokenWorker'
+import { Blockchain, findContractAddress, logger } from '../../../utils'
+import { CoinBuddyService, TokensService } from '../../service'
 
 @singleton()
-export class CoinBuddyWorker extends AbstractTokenWorker{
+export class CoinBuddyWorker extends AbstractTokenWorker {
     private readonly prefixLog = '[CoinBuddy]'
     private readonly unsupportedBlockchain: Blockchain[] = [ ]
 
@@ -56,8 +56,8 @@ export class CoinBuddyWorker extends AbstractTokenWorker{
                 return
             }
 
-            let coins = coinsSrc
-                .replace('href="\/coins\/new_coins"', '')
+            const coins = coinsSrc
+                .replace('href="/coins/new_coins"', '')
                 .match(/href="\/coins\/(.+?)"/g)
 
             if (null === coins) {
@@ -82,7 +82,7 @@ export class CoinBuddyWorker extends AbstractTokenWorker{
                     return
                 }
 
-                const coinId = path.replace('\/coins\/', '')
+                const coinId = path.replace('/coins/', '')
 
                 logger.info(`${this.prefixLog} Checking coin: ${coinId}`)
 
@@ -94,9 +94,9 @@ export class CoinBuddyWorker extends AbstractTokenWorker{
 
                 const coinInfoDOM = (new JSDOM(coinInfo)).window
                 const tokenName = coinInfoDOM.document.title.split('- Where')[0]
-                const coinInfoDiv = this.getCoinInfoDiv(coinInfoDOM);
+                const coinInfoDiv = this.getCoinInfoDiv(coinInfoDOM)
                 const linkElements = coinInfoDiv.querySelectorAll('.external-link')
-                let tokenAddress = this.findTokenAddress(coinInfoDiv, currentBlockchain)
+                const tokenAddress = this.findTokenAddress(coinInfoDiv, currentBlockchain)
 
                 if (null === tokenAddress) {
                     continue
@@ -181,7 +181,7 @@ export class CoinBuddyWorker extends AbstractTokenWorker{
     private getCoinInfoDiv(coinInfoDOM: DOMWindow): Element {
         return coinInfoDOM
             .document
-            .getElementsByClassName("coin-info")[0]
+            .getElementsByClassName('coin-info')[0]
     }
 
     private findTokenAddress(coinInfoDiv: Element, currentBlockchain: Blockchain): string|null {
