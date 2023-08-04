@@ -1,12 +1,12 @@
 import { singleton } from 'tsyringe'
 import { Arguments, Argv } from 'yargs'
 import { CommandInterface, RunCoinCapWorkerCmdArgv } from './types'
-import { CoinCapWorker} from '../core'
+import { CoinCapWorker } from '../core'
 import { Blockchain, logger } from '../utils'
 
 @singleton()
 export class RunCoinCapWorker implements CommandInterface {
-    public readonly command = 'run-coin-buddy-worker'
+    public readonly command = 'run-coin-cap-worker'
     public readonly description = 'This command runs Coin Buddy worker from cli'
 
     public constructor(

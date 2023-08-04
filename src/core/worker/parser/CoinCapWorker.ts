@@ -1,7 +1,8 @@
-import {AbstractTokenWorker} from '../AbstractTokenWorker'
-import {singleton} from 'tsyringe'
-import {Blockchain, logger} from '../../../utils'
-import {CoinCapService, TokensService} from '../../service'
+import { singleton } from 'tsyringe'
+import { AbstractTokenWorker } from '../AbstractTokenWorker'
+import {Blockchain, findContractAddress, logger} from '../../../utils'
+import {CoinCapService, QueuedTokenAddressService} from '../../service'
+import { CoinCapCoinInfoResponse } from '../../../types'
 
 @singleton()
 export class CoinCapWorker extends AbstractTokenWorker {
@@ -10,7 +11,7 @@ export class CoinCapWorker extends AbstractTokenWorker {
 
     public constructor(
         private readonly coinCapService: CoinCapService,
-        private readonly tokenService: TokensService
+        private readonly queuedTokenAddressService: QueuedTokenAddressService
     ) {
         super()
     }
@@ -21,6 +22,68 @@ export class CoinCapWorker extends AbstractTokenWorker {
             logger.error(`${this.prefixLog} Unsupported blockchain ${currentBlockchain}. Aborting`)
 
             return
+        }
+
+        let result: number
+        let page = 1
+        let limit = 2000
+
+        do {
+            logger.info(`${this.prefixLog} Page: ${page}. Limit: ${limit}`)
+
+            let coinsInfoResponse: CoinCapCoinInfoResponse
+
+            try {
+                coinsInfoResponse = await this.coinCapService.getCoinsInfo(page, limit)
+            } catch (ex: any) {
+                logger.error(
+                    `${this.prefixLog} Aborting. Failed to fetch coins info. Page: ${page}. Limit: ${limit}. Reason: ${ex.message}`
+                )
+
+                return
+            }
+
+            const coins = coinsInfoResponse.data
+
+            result = coins.length
+            page += 1
+
+            const targetExplorer = this.getTargetExplorer(currentBlockchain)
+
+            for (const coin of coins) {
+                const explorerLink = coin.explorer
+
+                if (null === explorerLink || !explorerLink.includes(targetExplorer)) {
+                    continue
+                }
+
+                const tokenAddress = findContractAddress(explorerLink)
+
+                if (!tokenAddress) {
+                    continue
+                }
+
+                await this.queuedTokenAddressService.push(tokenAddress, currentBlockchain)
+
+                logger.info(
+                    `${this.prefixLog} Pushed token address to queue service:`,
+                    tokenAddress,
+                    'CoinBuddy',
+                    currentBlockchain
+                )
+            }
+
+        } while (result > 0)
+    }
+
+    private getTargetExplorer(currentBlockchain: Blockchain): string {
+        switch (currentBlockchain) {
+            case Blockchain.BSC:
+                return 'bscscan.com'
+            case Blockchain.ETH:
+                return 'etherscan.io'
+            default:
+                throw new Error('Wrong blockchain provided. Explorer doesn\'t exists for provided blockchain')
         }
     }
 }

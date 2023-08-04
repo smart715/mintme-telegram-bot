@@ -365,7 +365,7 @@ container.register(CoinCapWorker, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new CoinCapWorker(
             dependencyContainer.resolve(CoinCapService),
-            dependencyContainer.resolve(TokensService),
+            dependencyContainer.resolve(QueuedTokenAddressService),
         )
     ),
 })
