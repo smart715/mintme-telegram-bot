@@ -16,7 +16,7 @@ export class CoinGeckoWorker extends AbstractTokenWorker {
         super()
     }
 
-    public async run(currentBlockchain: Blockchain): Promise<any> {
+    public async run(currentBlockchain: Blockchain): Promise<void> {
         logger.info(`${CoinGeckoWorker.name} started`)
 
         let link: string = ''

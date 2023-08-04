@@ -16,7 +16,7 @@ export class AdvnWorker extends AbstractTokenWorker {
         super()
     }
 
-    public async run(currentBlockchain: Blockchain): Promise<any> {
+    public async run(currentBlockchain: Blockchain): Promise<void> {
         logger.info(`${this.prefixLog} started`)
 
         if (this.unsupportedBlockchain.includes(currentBlockchain)) {

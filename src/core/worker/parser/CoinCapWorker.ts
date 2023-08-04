@@ -1,6 +1,6 @@
 import { singleton } from 'tsyringe'
 import { AbstractTokenWorker } from '../AbstractTokenWorker'
-import { Blockchain, findContractAddress, logger } from '../../../utils'
+import { Blockchain, explorerDomains, findContractAddress, logger } from '../../../utils'
 import { CoinCapService, QueuedTokenAddressService } from '../../service'
 import { CoinCapCoinInfoResponse } from '../../../types'
 
@@ -73,17 +73,17 @@ export class CoinCapWorker extends AbstractTokenWorker {
                     currentBlockchain
                 )
             }
-
-            logger.info(`${this.prefixLog} finished`)
         } while (result > 0)
+
+        logger.info(`${this.prefixLog} finished`)
     }
 
     private getTargetExplorer(currentBlockchain: Blockchain): string {
         switch (currentBlockchain) {
             case Blockchain.BSC:
-                return 'bscscan.com'
+                return explorerDomains[Blockchain.BSC]
             case Blockchain.ETH:
-                return 'etherscan.io'
+                return explorerDomains[Blockchain.ETH]
             default:
                 throw new Error('Wrong blockchain provided. Explorer doesn\'t exists for provided blockchain')
         }
