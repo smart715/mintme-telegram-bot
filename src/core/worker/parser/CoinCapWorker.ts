@@ -1,7 +1,7 @@
 import { singleton } from 'tsyringe'
 import { AbstractTokenWorker } from '../AbstractTokenWorker'
-import {Blockchain, findContractAddress, logger} from '../../../utils'
-import {CoinCapService, QueuedTokenAddressService} from '../../service'
+import { Blockchain, findContractAddress, logger } from '../../../utils'
+import { CoinCapService, QueuedTokenAddressService } from '../../service'
 import { CoinCapCoinInfoResponse } from '../../../types'
 
 @singleton()
@@ -15,6 +15,7 @@ export class CoinCapWorker extends AbstractTokenWorker {
     ) {
         super()
     }
+
     public async run(currentBlockchain: Blockchain): Promise<void> {
         logger.info(`${this.prefixLog} Worker started`)
 
@@ -26,7 +27,7 @@ export class CoinCapWorker extends AbstractTokenWorker {
 
         let result: number
         let page = 1
-        let limit = 2000
+        const limit = 2000
 
         do {
             logger.info(`${this.prefixLog} Page: ${page}. Limit: ${limit}`)
@@ -68,11 +69,12 @@ export class CoinCapWorker extends AbstractTokenWorker {
                 logger.info(
                     `${this.prefixLog} Pushed token address to queue service:`,
                     tokenAddress,
-                    'CoinBuddy',
+                    'CoinCap',
                     currentBlockchain
                 )
             }
 
+            logger.info(`${this.prefixLog} finished`)
         } while (result > 0)
     }
 
