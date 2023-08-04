@@ -7,7 +7,7 @@ import { Blockchain, logger } from '../utils'
 @singleton()
 export class RunCoinGeckoWorker implements CommandInterface {
     public readonly command = 'run-coin-gecko-worker'
-    public readonly description = 'This command runs CoinGecko worker from cli'
+    public readonly description = 'This command runs Coin Gecko worker from cli'
 
     public constructor(
         private readonly coinGeckoWorker: CoinGeckoWorker,

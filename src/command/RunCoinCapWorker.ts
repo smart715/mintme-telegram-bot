@@ -7,7 +7,7 @@ import { Blockchain, logger } from '../utils'
 @singleton()
 export class RunCoinCapWorker implements CommandInterface {
     public readonly command = 'run-coin-cap-worker'
-    public readonly description = 'This command runs Coin Buddy worker from cli'
+    public readonly description = 'This command runs Coin Cap worker from cli'
 
     public constructor(
         private readonly coinCapWorker: CoinCapWorker,
