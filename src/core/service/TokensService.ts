@@ -29,7 +29,8 @@ export class TokensService {
 
         token.address = tokenAddress
         token.blockchain = blockchain
-        token.name = tokenName
+        // replace unicode (emojis) from token name
+        token.name = tokenName.replace(/[\u0800-\uFFFF]/g, '')
         token.websites = websites
         token.emails = emails
         token.links = links
