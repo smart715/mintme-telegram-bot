@@ -67,7 +67,7 @@ export class CoinCodexWorker extends AbstractTokenWorker {
             const website = coinInfo.website
 
             let contractAddress: string|null = null
-            let links: string[] = []
+            const links: string[] = []
 
             coinInfo.socials.forEach((social) => {
                 if (social.value.toLowerCase().includes(explorerURI)) {
@@ -123,7 +123,7 @@ export class CoinCodexWorker extends AbstractTokenWorker {
     private getPlatformRegEx(currentBlockchain: Blockchain): RegExp {
         switch (currentBlockchain) {
             case Blockchain.BSC:
-                return /binance|bsc/
+                return /binance|bsc|bnb/
             case Blockchain.ETH:
                 return /eth|ethereum/
             default:

@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/naming-convention */
+
 export interface CoinCodexCoinResponse {
     aliases: string,
     categories: number[],

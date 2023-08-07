@@ -46,6 +46,8 @@ import {
     CoinCapService,
     CoinCatapultService,
     CoinCatapultWorker,
+    CoinCodexWorker,
+    CoinCodexService,
 } from '../../core'
 import { Application } from '../'
 import { CliDependency } from './types'
@@ -61,6 +63,7 @@ import {
     RunCoinBuddyWorker,
     RunCoinCapWorker,
     RunCoinCatapultWorker,
+    RunCoinCodexWorker,
 } from '../../command'
 import { TokenNamesGenerator } from '../../utils'
 
@@ -206,6 +209,10 @@ container.register(CoinCapService, {
 
 container.register(CoinCatapultService, {
     useFactory: instanceCachingFactory(() => new CoinCatapultService()),
+})
+
+container.register(CoinCodexService, {
+    useFactory: instanceCachingFactory(() => new CoinCodexService()),
 })
 
 // Workers
@@ -389,6 +396,15 @@ container.register(CoinCatapultWorker, {
     ),
 })
 
+container.register(CoinCodexWorker, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new CoinCodexWorker(
+            dependencyContainer.resolve(CoinCodexService),
+            dependencyContainer.resolve(TokensService),
+        )
+    ),
+})
+
 // CLI
 
 container.register(CliDependency.COMMAND, {
@@ -474,6 +490,14 @@ container.register(CliDependency.COMMAND, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new RunCoinCatapultWorker(
             dependencyContainer.resolve(CoinCatapultWorker),
+        )
+    ),
+})
+
+container.register(CliDependency.COMMAND, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new RunCoinCodexWorker(
+            dependencyContainer.resolve(CoinCodexWorker),
         )
     ),
 })
