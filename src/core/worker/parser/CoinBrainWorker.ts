@@ -8,7 +8,7 @@ import { DOMWindow, JSDOM } from 'jsdom'
 @singleton()
 export class CoinBrainWorker extends AbstractTokenWorker {
     private readonly prefixLog = '[CoinBrain]'
-    private readonly unsupportedBlockchain: Blockchain[] = [ Blockchain.CRO ]
+    private readonly unsupportedBlockchains: Blockchain[] = [ Blockchain.CRO ]
 
     public constructor(
         private readonly coinBrainService: CoinBrainService,
@@ -20,7 +20,7 @@ export class CoinBrainWorker extends AbstractTokenWorker {
     public async run(currentBlockchain: Blockchain): Promise<void> {
         logger.info(`${this.prefixLog} Worker started`)
 
-        if (this.unsupportedBlockchain.includes(currentBlockchain)) {
+        if (this.unsupportedBlockchains.includes(currentBlockchain)) {
             logger.error(`${this.prefixLog} Unsupported blockchain ${currentBlockchain}. Aborting`)
 
             return

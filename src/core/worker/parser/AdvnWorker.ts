@@ -7,7 +7,7 @@ import { AdvnGeneralResponse } from '../../../types'
 @singleton()
 export class AdvnWorker extends AbstractTokenWorker {
     private readonly prefixLog = '[ADVN]'
-    private readonly unsupportedBlockchain: Blockchain[] = [ Blockchain.CRO ]
+    private readonly unsupportedBlockchains: Blockchain[] = [ Blockchain.CRO ]
 
     public constructor(
         private readonly advnService: AdvnService,
@@ -19,7 +19,7 @@ export class AdvnWorker extends AbstractTokenWorker {
     public async run(currentBlockchain: Blockchain): Promise<void> {
         logger.info(`${this.prefixLog} started`)
 
-        if (this.unsupportedBlockchain.includes(currentBlockchain)) {
+        if (this.unsupportedBlockchains.includes(currentBlockchain)) {
             logger.error(`[AdvnWorker] Unsupported blockchain: ${currentBlockchain}. Aborting.`)
 
             return

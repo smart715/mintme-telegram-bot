@@ -7,7 +7,7 @@ import { CoinBuddyService, TokensService } from '../../service'
 @singleton()
 export class CoinBuddyWorker extends AbstractTokenWorker {
     private readonly prefixLog = '[CoinBuddy]'
-    private readonly unsupportedBlockchain: Blockchain[] = [ ]
+    private readonly unsupportedBlockchains: Blockchain[] = [ ]
 
     public constructor(
         private readonly coinBuddyService: CoinBuddyService,
@@ -19,7 +19,7 @@ export class CoinBuddyWorker extends AbstractTokenWorker {
     public async run(currentBlockchain: Blockchain): Promise<void> {
         logger.info(`${this.prefixLog} Worker started`)
 
-        if (this.unsupportedBlockchain.includes(currentBlockchain)) {
+        if (this.unsupportedBlockchains.includes(currentBlockchain)) {
             logger.error(`${this.prefixLog} Unsupported blockchain ${currentBlockchain}. Aborting`)
 
             return

@@ -7,7 +7,7 @@ import { CoinCapCoinInfoResponse } from '../../../types'
 @singleton()
 export class CoinCapWorker extends AbstractTokenWorker {
     private readonly prefixLog = '[CoinCap]'
-    private readonly unsupportedBlockchain: Blockchain[] = [ Blockchain.CRO ]
+    private readonly unsupportedBlockchains: Blockchain[] = [ Blockchain.CRO ]
 
     public constructor(
         private readonly coinCapService: CoinCapService,
@@ -19,7 +19,7 @@ export class CoinCapWorker extends AbstractTokenWorker {
     public async run(currentBlockchain: Blockchain): Promise<void> {
         logger.info(`${this.prefixLog} Worker started`)
 
-        if (this.unsupportedBlockchain.includes(currentBlockchain)) {
+        if (this.unsupportedBlockchains.includes(currentBlockchain)) {
             logger.error(`${this.prefixLog} Unsupported blockchain ${currentBlockchain}. Aborting`)
 
             return

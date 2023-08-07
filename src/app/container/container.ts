@@ -41,7 +41,11 @@ import {
     CoinBrainService,
     CoinBrainWorker,
     CoinBuddyService,
-    CoinBuddyWorker, CoinCapWorker, CoinCapService, CoinCatapultService, CoinCatapultWorker,
+    CoinBuddyWorker,
+    CoinCapWorker,
+    CoinCapService,
+    CoinCatapultService,
+    CoinCatapultWorker,
 } from '../../core'
 import { Application } from '../'
 import { CliDependency } from './types'
@@ -54,7 +58,9 @@ import {
     RunAdvnWorker,
     RunCoinDiscoveryWorker,
     RunCoinBrainWorker,
-    RunCoinBuddyWorker, RunCoinCapWorker, RunCoinCatapultWorker,
+    RunCoinBuddyWorker,
+    RunCoinCapWorker,
+    RunCoinCatapultWorker,
 } from '../../command'
 import { TokenNamesGenerator } from '../../utils'
 
