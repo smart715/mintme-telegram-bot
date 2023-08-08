@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/naming-convention */
 import axios from 'axios'
 import config from 'config'
 import { singleton } from 'tsyringe'
@@ -26,14 +27,14 @@ export class BitQueryService {
                 limit: limit,
                 offset: offset,
                 network: blockchain,
-                dateFormat: '%Y-%m-%d'
-            }
-        };
+                dateFormat: '%Y-%m-%d',
+            },
+        }
 
         const headers = {
             'Content-Type': 'application/json',
-            'X-API-KEY': this.apiKey
-        };
+            'X-API-KEY': this.apiKey,
+        }
 
         const response = await axios.post(
             'https://graphql.bitquery.io',

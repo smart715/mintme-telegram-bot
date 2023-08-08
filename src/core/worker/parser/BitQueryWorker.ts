@@ -32,9 +32,9 @@ export class BitQueryWorker extends AbstractTokenWorker {
 
                 continue
             }
-            
+
             let allAddressesRes: BitQueryTransfersResponse
-            
+
             try {
                 allAddressesRes = await this.bitQueryService.getAddresses(offset, limit, blockchainParam)
             } catch (ex: any) {
@@ -43,10 +43,10 @@ export class BitQueryWorker extends AbstractTokenWorker {
                 } else {
                     currentOffsetRetries = 0
                     offset += 25000
-                    
+
                     logger.warn(`${this.prefixLog} Failed to fetch all addresses for ${blockchainParam} with offset ${offset}. Reason: ${ex.message}. Skipping.`)
                 }
-                
+
                 continue
             }
 
@@ -76,7 +76,11 @@ export class BitQueryWorker extends AbstractTokenWorker {
         } while (fetchNext)
     }
 
-    private async checkAddresses(addresses: AddressResponse[], currentBlockchain: Blockchain, offset: number): Promise<void> {
+    private async checkAddresses(
+        addresses: AddressResponse[],
+        currentBlockchain: Blockchain,
+        offset: number
+    ): Promise<void> {
         let i = offset
         for (const address of addresses) {
             ++i

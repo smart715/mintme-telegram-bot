@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/naming-convention */
 export interface BitQueryTransfersResponse {
     data: {
         ethereum: {
@@ -11,7 +12,7 @@ export interface AddressResponse {
     count: number,
     currency: {
         address: string
-    } ,
+    },
 }
 
 export interface ErrorTransferResponse {
