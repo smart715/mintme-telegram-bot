@@ -1,14 +1,14 @@
 export interface BitQueryTransfersResponse {
     data: {
         ethereum: {
-            transfers: [
-                {
-                    count: number,
-                    currency: {
-                        address: string
-                    } ,
-                },
-            ],
+            transfers: AddressResponse[],
         },
     },
+}
+
+export interface AddressResponse {
+    count: number,
+    currency: {
+        address: string
+    } ,
 }
