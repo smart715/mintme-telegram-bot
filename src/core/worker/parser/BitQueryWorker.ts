@@ -26,6 +26,12 @@ export class BitQueryWorker extends AbstractTokenWorker {
         do {
             logger.info(`${this.prefixLog} Offset: ${offset} | Retries: ${currentOffsetRetries}`)
 
+            // prevent infinite loop
+            if (offset >= 100000000) {
+                fetchNext = false
+
+                continue
+            }
             
             let allAddressesRes: BitQueryTransfersResponse
             
@@ -44,6 +50,17 @@ export class BitQueryWorker extends AbstractTokenWorker {
                 continue
             }
 
+            if (allAddressesRes.errors) {
+                if (currentOffsetRetries < 3) {
+                    ++currentOffsetRetries
+                } else {
+                    currentOffsetRetries = 0
+                    offset += 25000
+                }
+
+                continue
+            }
+
             const addresses = allAddressesRes.data.ethereum.transfers
 
             if (0 === addresses.length) {
@@ -52,12 +69,18 @@ export class BitQueryWorker extends AbstractTokenWorker {
                 continue
             }
 
-            await this.checkAddresses(addresses, currentBlockchain)
+            await this.checkAddresses(addresses, currentBlockchain, offset)
+
+            currentOffsetRetries = 0
+            offset += 25000
         } while (fetchNext)
     }
 
-    private async checkAddresses(addresses: AddressResponse[], currentBlockchain: Blockchain): Promise<void> {
+    private async checkAddresses(addresses: AddressResponse[], currentBlockchain: Blockchain, offset: number): Promise<void> {
+        let i = offset
         for (const address of addresses) {
+            ++i
+
             const foundAddress = findContractAddress(address.currency.address)
 
             if (!foundAddress) {
@@ -67,7 +90,7 @@ export class BitQueryWorker extends AbstractTokenWorker {
             await this.queuedTokenAddressService.push(foundAddress, currentBlockchain)
 
             logger.info(
-                `${this.prefixLog} Pushed token address to queue service:`,
+                `${this.prefixLog} Pushed token address to queue service (${i}/${addresses.length + offset}:`,
                 foundAddress,
                 'BitQuery',
                 currentBlockchain

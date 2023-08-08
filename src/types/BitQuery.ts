@@ -4,6 +4,7 @@ export interface BitQueryTransfersResponse {
             transfers: AddressResponse[],
         },
     },
+    errors: ErrorTransferResponse[]|undefined,
 }
 
 export interface AddressResponse {
@@ -11,4 +12,12 @@ export interface AddressResponse {
     currency: {
         address: string
     } ,
+}
+
+export interface ErrorTransferResponse {
+    message: string,
+    locations: [],
+    path: [],
+    error_type: string,
+    query_id: string,
 }
