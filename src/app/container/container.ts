@@ -48,6 +48,8 @@ import {
     CoinCatapultWorker,
     CoinCodexWorker,
     CoinCodexService,
+    BitQueryService,
+    BitQueryWorker,
 } from '../../core'
 import { Application } from '../'
 import { CliDependency } from './types'
@@ -64,6 +66,7 @@ import {
     RunCoinCapWorker,
     RunCoinCatapultWorker,
     RunCoinCodexWorker,
+    RunBitQueryWorker,
 } from '../../command'
 import { TokenNamesGenerator } from '../../utils'
 
@@ -213,6 +216,10 @@ container.register(CoinCatapultService, {
 
 container.register(CoinCodexService, {
     useFactory: instanceCachingFactory(() => new CoinCodexService()),
+})
+
+container.register(BitQueryService, {
+    useFactory: instanceCachingFactory(() => new BitQueryService()),
 })
 
 // Workers
@@ -405,6 +412,15 @@ container.register(CoinCodexWorker, {
     ),
 })
 
+container.register(BitQueryWorker, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new BitQueryWorker(
+            dependencyContainer.resolve(BitQueryService),
+            dependencyContainer.resolve(QueuedTokenAddressService),
+        )
+    ),
+})
+
 // CLI
 
 container.register(CliDependency.COMMAND, {
@@ -498,6 +514,14 @@ container.register(CliDependency.COMMAND, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new RunCoinCodexWorker(
             dependencyContainer.resolve(CoinCodexWorker),
+        )
+    ),
+})
+
+container.register(CliDependency.COMMAND, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new RunBitQueryWorker(
+            dependencyContainer.resolve(BitQueryWorker),
         )
     ),
 })

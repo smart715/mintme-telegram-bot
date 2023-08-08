@@ -1,9 +1,8 @@
 import { singleton } from 'tsyringe'
 import { AbstractTokenWorker } from '../AbstractTokenWorker'
-import {Blockchain, findContractAddress, logger} from '../../../utils'
-import { BitQueryService } from '../../service/parser/BitQueryService'
-import { QueuedTokenAddressService } from '../../service'
-import {AddressResponse, BitQueryTransfersResponse} from "../../../types";
+import { QueuedTokenAddressService, BitQueryService } from '../../service'
+import { AddressResponse, BitQueryTransfersResponse } from '../../../types'
+import { Blockchain, findContractAddress, logger } from '../../../utils'
 
 @singleton()
 export class BitQueryWorker extends AbstractTokenWorker {
