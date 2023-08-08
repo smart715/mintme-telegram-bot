@@ -6,7 +6,8 @@ import { CoinCapCoinInfoResponse } from '../../../types'
 
 @singleton()
 export class CoinCapWorker extends AbstractTokenWorker {
-    private readonly prefixLog = '[CoinCap]'
+    private readonly workerName = 'CoinCap'
+    private readonly prefixLog = `[${this.workerName}]`
     private readonly unsupportedBlockchains: Blockchain[] = [ Blockchain.CRO ]
 
     public constructor(
@@ -69,7 +70,7 @@ export class CoinCapWorker extends AbstractTokenWorker {
                 logger.info(
                     `${this.prefixLog} Pushed token address to queue service:`,
                     tokenAddress,
-                    'CoinCap',
+                    this.workerName,
                     currentBlockchain
                 )
             }

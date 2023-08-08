@@ -1,5 +1,5 @@
-import { singleton } from 'tsyringe'
 import axios from 'axios'
+import { singleton } from 'tsyringe'
 import { CoinBrainGetTokensGeneralResponse } from '../../../types'
 
 @singleton()

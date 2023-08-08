@@ -7,7 +7,8 @@ import { DOMWindow, JSDOM } from 'jsdom'
 
 @singleton()
 export class CoinBrainWorker extends AbstractTokenWorker {
-    private readonly prefixLog = '[CoinBrain]'
+    private readonly workerName = 'CoinBrain'
+    private readonly prefixLog = `[${this.workerName}]`
     private readonly unsupportedBlockchains: Blockchain[] = [ Blockchain.CRO ]
 
     public constructor(
@@ -104,7 +105,7 @@ export class CoinBrainWorker extends AbstractTokenWorker {
                     [ website ],
                     [ '' ],
                     links,
-                    'CoinBrain',
+                    this.workerName,
                     currentBlockchain
                 )
 
@@ -114,7 +115,7 @@ export class CoinBrainWorker extends AbstractTokenWorker {
                     tokenName,
                     website,
                     links,
-                    'CoinBrain',
+                    this.workerName,
                     currentBlockchain
                 )
             }

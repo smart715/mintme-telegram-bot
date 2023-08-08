@@ -6,7 +6,8 @@ import { Blockchain, findContractAddress, logger } from '../../../utils'
 
 @singleton()
 export class BitQueryWorker extends AbstractTokenWorker {
-    private readonly prefixLog = '[BitQuery]'
+    private readonly workerName = 'BitQuery'
+    private readonly prefixLog = `[${this.workerName}]`
 
     public constructor(
         private readonly bitQueryService: BitQueryService,
@@ -96,7 +97,7 @@ export class BitQueryWorker extends AbstractTokenWorker {
             logger.info(
                 `${this.prefixLog} Pushed token address to queue service (${i}/${addresses.length + offset}:`,
                 foundAddress,
-                'BitQuery',
+                this.workerName,
                 currentBlockchain
             )
         }

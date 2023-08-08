@@ -6,7 +6,8 @@ import { CoinCatapultAllCoinsResponse, CoinCatapultTokenInfoGeneralResponse } fr
 
 @singleton()
 export class CoinCatapultWorker extends AbstractTokenWorker {
-    private readonly prefixLog = '[CoinCatapult]'
+    private readonly workerName = 'CoinCatapult'
+    private readonly prefixLog = `[${this.workerName}]`
     private readonly unsupportedBlockchains: Blockchain[] = [ Blockchain.CRO ]
 
     public constructor(
@@ -103,7 +104,7 @@ export class CoinCatapultWorker extends AbstractTokenWorker {
                 [ website ],
                 [ email ],
                 links,
-                'CoinCatapult',
+                this.workerName,
                 currentBlockchain
             )
 
@@ -113,7 +114,7 @@ export class CoinCatapultWorker extends AbstractTokenWorker {
                 tokenName,
                 website,
                 links,
-                'CoinCatapult',
+                this.workerName,
                 currentBlockchain
             )
         }

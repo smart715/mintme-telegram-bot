@@ -6,7 +6,8 @@ import { CoinCodexCoinResponse, CoinInfoResponse } from '../../../types'
 
 @singleton()
 export class CoinCodexWorker extends AbstractTokenWorker {
-    private readonly prefixLog = '[CoinCodex]'
+    private readonly workerName = 'CoinCodex'
+    private readonly prefixLog = `[${this.workerName}]`
     private readonly unsupportedBlockchains: Blockchain[] = [ Blockchain.CRO ]
 
     public constructor(
@@ -93,7 +94,7 @@ export class CoinCodexWorker extends AbstractTokenWorker {
                 [ website ],
                 [ '' ],
                 links,
-                'CoinCodex',
+                this.workerName,
                 currentBlockchain
             )
 
@@ -103,7 +104,7 @@ export class CoinCodexWorker extends AbstractTokenWorker {
                 coinName,
                 website,
                 links,
-                'CoinCodex',
+                this.workerName,
                 currentBlockchain
             )
         }

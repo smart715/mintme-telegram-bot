@@ -1,12 +1,13 @@
 import { singleton } from 'tsyringe'
 import { AbstractTokenWorker } from '../AbstractTokenWorker'
-import { TokensService, CoinGeckoService } from '../../service'
+import { CoinGeckoService, TokensService } from '../../service'
 import { Blockchain, logger, sleep } from '../../../utils'
 import { AllCoinsTokenResponse, CoinInfo, LinksCoinInfo } from '../../../types'
 
 @singleton()
 export class CoinGeckoWorker extends AbstractTokenWorker {
-    private readonly prefixLog = '[CoinGecko]'
+    private readonly workerName = 'CoinGecko'
+    private readonly prefixLog = `[${this.workerName}]`
     private readonly sleepDuration = 4 * 1000 // 3 seconds produces 429 http error. So 4-5 is ok
 
     public constructor(
@@ -19,22 +20,7 @@ export class CoinGeckoWorker extends AbstractTokenWorker {
     public async run(currentBlockchain: Blockchain): Promise<void> {
         logger.info(`${CoinGeckoWorker.name} started`)
 
-        let link: string = ''
-
-        switch (currentBlockchain) {
-            case 'BSC':
-                link = 'https://tokens.coingecko.com/binance-smart-chain/all.json'
-
-                break
-            case 'ETH':
-                link = 'https://tokens.coingecko.com/ethereum/all.json'
-
-                break
-            case 'CRO':
-                link = 'https://tokens.coingecko.com/cronos/all.json'
-
-                break
-        }
+        const link = this.getAllCoinsLink(currentBlockchain)
 
         let tokens: AllCoinsTokenResponse[]
 
@@ -98,12 +84,42 @@ export class CoinGeckoWorker extends AbstractTokenWorker {
                 continue
             }
 
-            await this.tokenService.add(address, coinName, websites, [ '' ], allLinks, 'CoinGecko', currentBlockchain)
+            await this.tokenService.add(
+                address,
+                coinName,
+                websites,
+                [ '' ],
+                allLinks,
+                this.workerName,
+                currentBlockchain
+            )
 
-            logger.info(`${this.prefixLog} Added to DB:`, address, coinName, websites, '', allLinks, 'CoinGecko', currentBlockchain)
+            logger.info(
+                `${this.prefixLog} Added to DB:`,
+                address,
+                coinName,
+                websites,
+                '',
+                allLinks,
+                this.workerName,
+                currentBlockchain
+            )
         }
 
         logger.info(`${CoinGeckoWorker.name} finished`)
+    }
+
+    private getAllCoinsLink(currentBlockchain: Blockchain): string {
+        switch (currentBlockchain) {
+            case Blockchain.BSC:
+                return 'https://tokens.coingecko.com/binance-smart-chain/all.json'
+            case Blockchain.ETH:
+                return 'https://tokens.coingecko.com/ethereum/all.json'
+            case Blockchain.CRO:
+                return 'https://tokens.coingecko.com/cronos/all.json'
+            default:
+                throw new Error('Wrong blockchain provided. All coins link doesn\'t exists for provided blockchain')
+        }
     }
 
     private getLinks(links: LinksCoinInfo): string[] {

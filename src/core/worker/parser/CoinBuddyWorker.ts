@@ -6,7 +6,8 @@ import { CoinBuddyService, TokensService } from '../../service'
 
 @singleton()
 export class CoinBuddyWorker extends AbstractTokenWorker {
-    private readonly prefixLog = '[CoinBuddy]'
+    private readonly workerName = 'CoinBuddy'
+    private readonly prefixLog = `[${this.workerName}]`
     private readonly unsupportedBlockchains: Blockchain[] = [ ]
 
     public constructor(
@@ -141,7 +142,7 @@ export class CoinBuddyWorker extends AbstractTokenWorker {
                     [ website ],
                     [ '' ],
                     otherLinks,
-                    'CoinBuddy',
+                    this.workerName,
                     currentBlockchain
                 )
 
@@ -151,7 +152,7 @@ export class CoinBuddyWorker extends AbstractTokenWorker {
                     tokenName,
                     website,
                     otherLinks,
-                    'CoinBuddy',
+                    this.workerName,
                     currentBlockchain
                 )
             }

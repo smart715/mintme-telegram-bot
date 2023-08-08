@@ -6,7 +6,8 @@ import { CoinDiscoveryGetTokensResponse } from '../../../types'
 
 @singleton()
 export class CoinDiscoveryWorker extends AbstractTokenWorker {
-    private readonly prefixLog = '[CoinDiscovery]'
+    private readonly workerName = 'CoinDiscovery'
+    private readonly prefixLog = `[${this.workerName}]`
     private readonly unsupportedBlockchains: Blockchain[] = [ Blockchain.CRO ]
 
     public constructor(
@@ -51,13 +52,9 @@ export class CoinDiscoveryWorker extends AbstractTokenWorker {
                 const name = coin.name + '(' + coin.symbol + ')'
                 const nameSlug = coin.name_slug
                 const tokenAddress = coin.contract
-                const blockchain = '1' === coin.chain
-                    ? 'bnbTokens'
-                    : '2' === coin.chain
-                        ? 'etherscanTokens'
-                        : ''
+                const blockchain = this.getBlockchain(coin.chain.toString())
 
-                if ('' === blockchain) {
+                if (null === blockchain) {
                     continue
                 }
 
@@ -83,7 +80,7 @@ export class CoinDiscoveryWorker extends AbstractTokenWorker {
                     [ website ],
                     [ '' ],
                     links,
-                    'CoinDiscovery',
+                    this.workerName,
                     currentBlockchain
                 )
 
@@ -93,7 +90,7 @@ export class CoinDiscoveryWorker extends AbstractTokenWorker {
                     name,
                     website,
                     links,
-                    'CoinDiscovery',
+                    this.workerName,
                     currentBlockchain
                 )
             }
@@ -102,6 +99,17 @@ export class CoinDiscoveryWorker extends AbstractTokenWorker {
         } while (count > 0)
 
         logger.info(`${this.prefixLog} finished`)
+    }
+
+    private getBlockchain(chain: string): string|null {
+        switch (chain) {
+            case '1':
+                return 'bnbTokens'
+            case '2':
+                return 'etherscanTokens'
+            default:
+                return null
+        }
     }
 
     private getLinks(tokenInfo: string): string[] {

@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/naming-convention */
+
 export interface BitQueryTransfersResponse {
     data: {
         ethereum: {

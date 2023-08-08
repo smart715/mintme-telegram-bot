@@ -8,7 +8,6 @@ export interface AdvnGeneralResponse {
     status: string,
 }
 
-
 interface AdvnToken {
     avg_7_day_volume_trend: number,
     change: string[],

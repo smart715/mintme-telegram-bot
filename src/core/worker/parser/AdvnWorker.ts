@@ -6,7 +6,8 @@ import { AdvnGeneralResponse } from '../../../types'
 
 @singleton()
 export class AdvnWorker extends AbstractTokenWorker {
-    private readonly prefixLog = '[ADVN]'
+    private readonly workerName = 'ADVN'
+    private readonly prefixLog = `[${this.workerName}]`
     private readonly unsupportedBlockchains: Blockchain[] = [ Blockchain.CRO ]
 
     public constructor(
@@ -20,14 +21,12 @@ export class AdvnWorker extends AbstractTokenWorker {
         logger.info(`${this.prefixLog} started`)
 
         if (this.unsupportedBlockchains.includes(currentBlockchain)) {
-            logger.error(`[AdvnWorker] Unsupported blockchain: ${currentBlockchain}. Aborting.`)
+            logger.error(`${this.prefixLog} Unsupported blockchain: ${currentBlockchain}. Aborting.`)
 
             return
         }
 
-        const target: string = Blockchain.BSC === currentBlockchain
-            ? 'Binance'
-            : 'Ethereum'
+        const target: string = this.getTarget(currentBlockchain)
 
         let count: number = 3000
         let start: number = 0
@@ -93,7 +92,7 @@ export class AdvnWorker extends AbstractTokenWorker {
                     [ website ],
                     [ '' ],
                     links,
-                    'ADVN',
+                    this.workerName,
                     currentBlockchain,
                 )
 
@@ -103,7 +102,7 @@ export class AdvnWorker extends AbstractTokenWorker {
                     name,
                     website,
                     links,
-                    'ADVN',
+                    this.workerName,
                     currentBlockchain
                 )
             }
@@ -113,6 +112,17 @@ export class AdvnWorker extends AbstractTokenWorker {
         } while (count > 0)
 
         logger.info(`${this.prefixLog} Finished`)
+    }
+
+    private getTarget(blockchain: Blockchain): string {
+        switch (blockchain) {
+            case Blockchain.BSC:
+                return 'Binance'
+            case Blockchain.ETH:
+                return 'Ethereum'
+            default:
+                throw new Error('Wrong blockchain provided. Target doesn\'t exists for provided blockchain')
+        }
     }
 
     private getWebsite(tokenInfo: string): string {
