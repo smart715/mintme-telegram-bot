@@ -1,7 +1,7 @@
 export interface RugFreeCoinsAllCoins {
     error: string|null,
     message: string,
-    payload: Payload|null,
+    payload: Payload,
 }
 
 export interface Payload {
