@@ -39,7 +39,7 @@ export class RugFreeCoinsWorker extends AbstractTokenWorker {
                     `${this.prefixLog} Aborting. Failed to fetch all tokens. Page: ${page} Reason: ${ex.message}`
                 )
 
-                return
+                continue
             }
 
             if ('success' !== allCoinsRes.message) {
