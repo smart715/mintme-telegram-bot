@@ -36,7 +36,7 @@ export class RugFreeCoinsWorker extends AbstractTokenWorker {
                 allCoinsRes = await this.rugFreeCoinsService.getAllCoins(page)
             } catch (ex: any) {
                 logger.error(
-                    `${this.prefixLog} Aborting. Failed to fetch all tokens. Start: ${start} Reason: ${ex.message}`
+                    `${this.prefixLog} Aborting. Failed to fetch all tokens. Page: ${page} Reason: ${ex.message}`
                 )
 
                 return
@@ -49,6 +49,7 @@ export class RugFreeCoinsWorker extends AbstractTokenWorker {
             }
 
             const allCoins = allCoinsRes.payload.data
+            resultsCount = allCoins.length
 
             for (const coin of allCoins) {
                 const tokenAddress = this.getTokenAddress(coin, currentBlockchain)
@@ -63,7 +64,7 @@ export class RugFreeCoinsWorker extends AbstractTokenWorker {
                     continue
                 }
 
-                const tokenName = `${coin.name}(${coin.symbol}})}`
+                const tokenName = `${coin.name}(${coin.symbol})`
                 const website = coin.website
                 const links = this.getLinks(coin)
 
@@ -93,7 +94,7 @@ export class RugFreeCoinsWorker extends AbstractTokenWorker {
             page += 1
         } while(resultsCount > 0)
 
-        logger.info(`${this.prefixLog} finished`)
+        logger.info(`${this.prefixLog} Finished`)
     }
 
     private getLinks(coin: CoinData): string[] {

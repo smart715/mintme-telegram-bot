@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/naming-convention */
+
 export interface RugFreeCoinsAllCoins {
     error: string|null,
     message: string,
