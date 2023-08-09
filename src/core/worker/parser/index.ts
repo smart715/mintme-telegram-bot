@@ -1,1 +1,1 @@
-export { RugFreeCoins } from './RugFreeCoins'
+export { RugFreeCoinsWorker } from './RugFreeCoinsWorker'

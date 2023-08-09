@@ -1,12 +1,15 @@
 import { AbstractTokenWorker } from '../AbstractTokenWorker'
 import { Blockchain, logger } from '../../../utils'
+import { RugFreeCoinsService } from "../../service";
 
-export class RugFreeCoins extends AbstractTokenWorker {
+export class RugFreeCoinsWorker extends AbstractTokenWorker {
     private readonly workerName = 'RugFreeCoins'
     private readonly prefixLog = `[${this.workerName}]`
     private readonly unsupportedBlockchains: Blockchain[] = [ Blockchain.CRO ]
 
-    public constructor() {
+    public constructor(
+        private readonly rugFreeCoinsService: RugFreeCoinsService
+    ) {
         super()
     }
 
@@ -24,6 +27,8 @@ export class RugFreeCoins extends AbstractTokenWorker {
             logger.info(`${this.prefixLog} Page: ${page}`)
 
             const allCoinsStr = await this.rugFreeCoinsService.getAllCoins(page)
+
+            page += 1
         } while(resultsCount > 0)
     }
 }
