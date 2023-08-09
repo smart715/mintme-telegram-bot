@@ -9,10 +9,6 @@ export * from './constants'
 export { TokenNamesGenerator } from './TokenNamesGenerator'
 
 export {
-    findContractAddress,
-} from'./blockchain'
-
-export {
     getHrefFromTagString,
     getHrefValuesFromTagString,
 } from './domParser'
