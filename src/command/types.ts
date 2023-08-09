@@ -34,3 +34,7 @@ export enum ExplorerWorkerNames {
     TOKEN_CHECKER = 'check-token-worker',
     EXPLORER_SEARCH = 'explorer-search-api-worker',
 }
+
+export interface RunRugFreeCoinsWorkerCmdArgv {
+    blockchain: Blockchain,
+}

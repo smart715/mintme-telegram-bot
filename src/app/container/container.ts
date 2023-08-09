@@ -32,12 +32,21 @@ import {
     QueuedTokenAddressRepository,
     QueuedWalletAddressRepository,
     TokenRepository,
+    RugFreeCoinsService,
+    RugFreeCoinsWorker,
 } from '../../core'
 import { Application } from '../'
 import { CliDependency } from './types'
 import { getConnection } from 'typeorm'
-import { RunEnqueueTokenWorker, RunQueueWorker, RunExplorerWorker } from '../../command'
+import {
+    RunEnqueueTokenWorker,
+    RunQueueWorker,
+    RunExplorerWorker,
+    RunRugFreeCoinsWorker,
+} from '../../command'
 import { TokenNamesGenerator } from '../../utils'
+
+// Repositories
 
 container.register(TokenRepository, {
     useFactory: instanceCachingFactory(() => getConnection().getCustomRepository(TokenRepository)),
@@ -75,6 +84,14 @@ container.register(QueuedWalletAddressRepository, {
     useFactory: instanceCachingFactory(() => getConnection().getCustomRepository(QueuedWalletAddressRepository)),
 })
 
+// Utils
+
+container.register(TokenNamesGenerator, {
+    useFactory: instanceCachingFactory(() => new TokenNamesGenerator()),
+})
+
+// Services
+
 container.register(CMCService, {
     useFactory: instanceCachingFactory(() => new CMCService()),
 })
@@ -101,13 +118,6 @@ container.register(DuplicatesFoundService, {
     )),
 })
 
-container.register(ExplorerEnqueuer, {
-    useFactory: instanceCachingFactory((dependencyContainer) => new ExplorerEnqueuer(
-        dependencyContainer.resolve(QueuedTokenAddressService),
-        dependencyContainer.resolve(QueuedWalletAddressService),
-    )),
-})
-
 container.register(LastCheckedTokenNameService, {
     useFactory: instanceCachingFactory((dependencyContainer) => new LastCheckedTokenNameService(
         dependencyContainer.resolve(LastCheckedTokenNameRepository),
@@ -126,19 +136,6 @@ container.register(QueuedWalletAddressService, {
         dependencyContainer.resolve(QueuedWalletAddressRepository),
         dependencyContainer.resolve(DuplicatesFoundService),
     )),
-})
-
-container.register(TokenNamesGenerator, {
-    useFactory: instanceCachingFactory(() => new TokenNamesGenerator()),
-})
-
-container.register(CMCWorker, {
-    useFactory: instanceCachingFactory((dependencyContainer) =>
-        new CMCWorker(
-            dependencyContainer.resolve(CMCService),
-            dependencyContainer.resolve(TokensService),
-        ),
-    ),
 })
 
 container.register(ChannelStatusService, {
@@ -161,6 +158,28 @@ container.register(ContactHistoryService, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new ContactHistoryService(
             dependencyContainer.resolve(ContactHistoryRepository),
+        ),
+    ),
+})
+
+container.register(RugFreeCoinsService, {
+    useFactory: instanceCachingFactory(() => new RugFreeCoinsService()),
+})
+
+// Workers
+
+container.register(ExplorerEnqueuer, {
+    useFactory: instanceCachingFactory((dependencyContainer) => new ExplorerEnqueuer(
+        dependencyContainer.resolve(QueuedTokenAddressService),
+        dependencyContainer.resolve(QueuedWalletAddressService),
+    )),
+})
+
+container.register(CMCWorker, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new CMCWorker(
+            dependencyContainer.resolve(CMCService),
+            dependencyContainer.resolve(TokensService),
         ),
     ),
 })
@@ -265,9 +284,16 @@ container.register(ExplorerSearchAPIWorker, {
     ),
 })
 
-container.register(Application, {
-    useFactory: instanceCachingFactory(() => new Application()),
+container.register(RugFreeCoinsWorker, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new RugFreeCoinsWorker(
+            dependencyContainer.resolve(RugFreeCoinsService),
+            dependencyContainer.resolve(TokensService),
+        )
+    ),
 })
+
+// CLI
 
 container.register(CliDependency.COMMAND, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
@@ -299,5 +325,20 @@ container.register(CliDependency.COMMAND, {
         )
     ),
 })
+
+container.register(CliDependency.COMMAND, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new RunRugFreeCoinsWorker(
+            dependencyContainer.resolve(RugFreeCoinsWorker),
+        ),
+    ),
+})
+
+// General
+
+container.register(Application, {
+    useFactory: instanceCachingFactory(() => new Application()),
+})
+
 
 export { container }
