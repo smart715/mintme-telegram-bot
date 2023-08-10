@@ -61,6 +61,10 @@ export class TokensService {
         return this.tokenRepository.getLastNotContactedTokens(blockchain)
     }
 
+    public async getNextWithoutTxDate(): Promise<Token | undefined> {
+        return this.tokenRepository.getNextWithoutTxDate()
+    }
+
     public getEmails(token: Token): string[] {
         return token.emails.filter(email => isValidEmail(email))
     }

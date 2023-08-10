@@ -1,5 +1,5 @@
 import { singleton } from 'tsyringe'
-import { EntityRepository, Repository } from 'typeorm'
+import { Brackets, EntityRepository, Repository } from 'typeorm'
 import { Token } from '../entity'
 import moment from 'moment'
 import config from 'config'
@@ -9,6 +9,10 @@ import { Blockchain } from '../../utils'
 @singleton()
 @EntityRepository(Token)
 export class TokenRepository extends Repository<Token> {
+    public async findByAddressAndBlockchain(address: string, blockchain: Blockchain): Promise<Token | undefined> {
+        return this.findOne({ where: { address, blockchain } })
+    }
+
     public async getLastNotContactedTokens(blockchain: Blockchain): Promise<Token[]> {
         const delayInSeconds = parseInt(config.get('contact_frequency_in_seconds'))
 
@@ -35,7 +39,16 @@ export class TokenRepository extends Repository<Token> {
             .getRawMany()
     }
 
-    public async findByAddressAndBlockchain(address: string, blockchain: Blockchain): Promise<Token | undefined> {
-        return this.findOne({ where: { address, blockchain } })
+    public async getNextWithoutTxDate(): Promise<Token | undefined> {
+        return this.createQueryBuilder()
+            .where('last_tx_date is null')
+            .andWhere(new Brackets(queryBuilder => {
+                queryBuilder
+                    .where(`emails like '%@%'`)
+                    .orWhere(`links like '%twitter.com%'`)
+                    .orWhere(`links like '%t.me/%'`)
+            }))
+            .orderBy('created_at', 'DESC')
+            .getOne()
     }
 }
