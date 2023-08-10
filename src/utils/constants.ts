@@ -8,3 +8,9 @@ export const explorerDomains = {
     [Blockchain.ETH]: 'etherscan.io',
     [Blockchain.CRO]: 'cronoscan.com',
 }
+
+export const explorerApiUrls = {
+    [Blockchain.BSC]: 'api.bscscan.com',
+    [Blockchain.ETH]: 'api.etherscan.io',
+    [Blockchain.CRO]: 'api.cronoscan.com',
+}
