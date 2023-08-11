@@ -38,3 +38,7 @@ export enum ExplorerWorkerNames {
 export interface RunRugFreeCoinsWorkerCmdArgv {
     blockchain: Blockchain,
 }
+
+export interface RunTop100TokensWorkerCmdArgv {
+    blockchain: Blockchain,
+}

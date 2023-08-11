@@ -1,7 +1,9 @@
+/* eslint-disable @typescript-eslint/naming-convention */
+
 export interface Top100TokensTopListResponse {
     status: string,
     _data: {
-        topList: Top100TokensToken[],
+        toplist: Top100TokensToken[],
     }
 }
 

@@ -34,6 +34,8 @@ import {
     TokenRepository,
     RugFreeCoinsService,
     RugFreeCoinsWorker,
+    Top100TokensService,
+    Top100TokensWorker,
 } from '../../core'
 import { Application } from '../'
 import { CliDependency } from './types'
@@ -43,6 +45,7 @@ import {
     RunQueueWorker,
     RunExplorerWorker,
     RunRugFreeCoinsWorker,
+    RunTop100TokensWorker,
 } from '../../command'
 import { TokenNamesGenerator } from '../../utils'
 
@@ -164,6 +167,10 @@ container.register(ContactHistoryService, {
 
 container.register(RugFreeCoinsService, {
     useFactory: instanceCachingFactory(() => new RugFreeCoinsService()),
+})
+
+container.register(Top100TokensService, {
+    useFactory: instanceCachingFactory(() => new Top100TokensService()),
 })
 
 // Workers
@@ -293,6 +300,15 @@ container.register(RugFreeCoinsWorker, {
     ),
 })
 
+container.register(Top100TokensWorker, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new Top100TokensWorker(
+            dependencyContainer.resolve(Top100TokensService),
+            dependencyContainer.resolve(TokensService),
+        )
+    ),
+})
+
 // CLI
 
 container.register(CliDependency.COMMAND, {
@@ -330,6 +346,14 @@ container.register(CliDependency.COMMAND, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new RunRugFreeCoinsWorker(
             dependencyContainer.resolve(RugFreeCoinsWorker),
+        ),
+    ),
+})
+
+container.register(CliDependency.COMMAND, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new RunTop100TokensWorker(
+            dependencyContainer.resolve(Top100TokensWorker),
         ),
     ),
 })

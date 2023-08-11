@@ -41,7 +41,7 @@ export class Top100TokensWorker extends AbstractTokenWorker {
                 continue
             }
 
-            const coins = allTokensResponse._data.topList
+            const coins = allTokensResponse._data.toplist
 
             resultsCount = coins.length
 
@@ -61,8 +61,8 @@ export class Top100TokensWorker extends AbstractTokenWorker {
                 if (tokenInDb) {
                     continue
                 }
-                
-                const tokenName = coin.name + '(' + coin.symbol + ')'
+
+                const tokenName = this.getTokenName(coin)
                 const website = coin.websiteLink
                 const links = this.getLinks(coin)
 
@@ -93,6 +93,14 @@ export class Top100TokensWorker extends AbstractTokenWorker {
 
             page += 1
         } while (resultsCount > 0)
+    }
+
+    private getTokenName(coin: Top100TokensToken): string {
+        const tempName = coin.name + '(' + coin.symbol + ')'
+
+        return tempName.length <= 255
+            ? tempName
+            : coin.symbol
     }
 
     private getLinks(coin: Top100TokensToken): string[] {
