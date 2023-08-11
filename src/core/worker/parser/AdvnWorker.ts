@@ -28,7 +28,7 @@ export class AdvnWorker extends AbstractTokenWorker {
 
         const target: string = this.getTarget(currentBlockchain)
 
-        let count: number = 3000
+        let count: number = 0
         let start: number = 0
 
         do {
@@ -57,7 +57,6 @@ export class AdvnWorker extends AbstractTokenWorker {
                     .replace(' ', '-')
                     .replace('(', '-')
                     .replace(')', '')
-
 
                 let tokenInfo: string
 

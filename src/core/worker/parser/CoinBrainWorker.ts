@@ -64,7 +64,6 @@ export class CoinBrainWorker extends AbstractTokenWorker {
 
             const coins = res.items
 
-
             for (const coin of coins) {
                 const address = coin.address.toLowerCase()
 
