@@ -32,6 +32,7 @@ import {
     QueuedTokenAddressRepository,
     QueuedWalletAddressRepository,
     TokenRepository,
+    LastTokenTxDateFetcher,
     RugFreeCoinsService,
     RugFreeCoinsWorker,
     Top100TokensService,
@@ -291,6 +292,14 @@ container.register(ExplorerSearchAPIWorker, {
     ),
 })
 
+container.register(LastTokenTxDateFetcher, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new LastTokenTxDateFetcher(
+            dependencyContainer.resolve(TokensService),
+        )
+    ),
+})
+
 container.register(RugFreeCoinsWorker, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new RugFreeCoinsWorker(
@@ -363,6 +372,5 @@ container.register(CliDependency.COMMAND, {
 container.register(Application, {
     useFactory: instanceCachingFactory(() => new Application()),
 })
-
 
 export { container }
