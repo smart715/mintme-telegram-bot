@@ -1,7 +1,7 @@
-import {AbstractTokenWorker} from "../AbstractTokenWorker";
-import {Blockchain, logger} from "../../../utils";
-import {TokensService, Top100TokensService} from "../../service";
-import {Top100TokensTopListResponse} from "../../../types";
+import { AbstractTokenWorker } from '../AbstractTokenWorker'
+import { Blockchain, logger } from '../../../utils'
+import { TokensService, Top100TokensService } from '../../service'
+import { Top100TokensToken, Top100TokensTopListResponse } from '../../../types'
 
 export class Top100TokensWorker extends AbstractTokenWorker {
     private readonly workerName = 'Top100Tokens'
@@ -41,8 +41,80 @@ export class Top100TokensWorker extends AbstractTokenWorker {
                 continue
             }
 
+            const coins = allTokensResponse._data.topList
+
+            resultsCount = coins.length
+
+            for (const coin of coins) {
+                if (targetBlockchain !== coin.network) {
+                    continue
+                }
+
+                const tokenAddress = coin.contract
+
+                if (!tokenAddress) {
+                    continue
+                }
+
+                const tokenInDb = await this.tokenService.findByAddress(tokenAddress, currentBlockchain)
+
+                if (tokenInDb) {
+                    continue
+                }
+                
+                const tokenName = coin.name + '(' + coin.symbol + ')'
+                const website = coin.websiteLink
+                const links = this.getLinks(coin)
+
+                if (0 === links.length) {
+                    continue
+                }
+
+                await this.tokenService.add(
+                    tokenAddress,
+                    tokenName,
+                    [ website ],
+                    [ '' ],
+                    links,
+                    this.workerName,
+                    currentBlockchain
+                )
+
+                logger.info(
+                    `${this.prefixLog} Added to DB:`,
+                    tokenAddress,
+                    tokenName,
+                    [ website ],
+                    links,
+                    this.workerName,
+                    currentBlockchain
+                )
+            }
+
             page += 1
         } while (resultsCount > 0)
+    }
+
+    private getLinks(coin: Top100TokensToken): string[] {
+        const links: string[] = []
+
+        if (coin.reddit !== null && coin.reddit.length > 0) {
+            links.push(coin.reddit)
+        }
+
+        if (coin.twitter !== null && coin.twitter.length > 0) {
+            links.push(coin.twitter)
+        }
+
+        if (coin.discord !== null && coin.discord.length > 0) {
+            links.push(coin.discord)
+        }
+
+        if (coin.telegram !== null && coin.telegram.length > 0) {
+            links.push(coin.telegram)
+        }
+
+        return links
     }
 
     private getTargetBlockchain(currentBlockchain: Blockchain): string {
