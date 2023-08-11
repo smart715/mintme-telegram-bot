@@ -32,6 +32,7 @@ import {
     QueuedTokenAddressRepository,
     QueuedWalletAddressRepository,
     TokenRepository,
+    LastTokenTxDateFetcher,
     CoinGeckoService,
     CoinGeckoWorker,
     AdvnWorker,
@@ -345,6 +346,14 @@ container.register(ExplorerSearchAPIWorker, {
             dependencyContainer.resolve(TokenNamesGenerator),
             dependencyContainer.resolve(LastCheckedTokenNameService),
             dependencyContainer.resolve(ExplorerEnqueuer),
+        )
+    ),
+})
+
+container.register(LastTokenTxDateFetcher, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new LastTokenTxDateFetcher(
+            dependencyContainer.resolve(TokensService),
         )
     ),
 })
