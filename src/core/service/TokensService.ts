@@ -57,8 +57,14 @@ export class TokensService {
             })
     }
 
-    public async getLastNotContactedTokens(blockchain: Blockchain): Promise<Token[]> {
-        return this.tokenRepository.getLastNotContactedTokens(blockchain)
+    public async getLastNotContactedTokens(blockchain: Blockchain,
+        maxEmailAttempts: number,
+        maxTwitterAttempts: number,
+        maxTelegramAttempts: number): Promise<Token[]> {
+        return this.tokenRepository.getLastNotContactedTokens(blockchain,
+            maxEmailAttempts,
+            maxTwitterAttempts,
+            maxTelegramAttempts)
     }
 
     public async getNextWithoutTxDate(): Promise<Token | undefined> {
