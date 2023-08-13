@@ -3,11 +3,11 @@ export function isValidEmail(email: string): boolean {
 }
 
 export function isValidTwitterLink(link: string): boolean {
-    return /http(?:s)?:\/\/(?:www\.)?twitter\.com\/([a-zA-Z0-9_]+)/.test(link)
+    return link.toLowerCase().includes('twitter.com/')
 }
 
 export function isValidTgLink(link: string): boolean {
-    return /http(?:s)?:\/\/(?:www\.)?(telegram|t)\.me\/([a-zA-Z0-9_]+)/.test(link)
+    return link.toLowerCase().includes('t.me/')
 }
 
 export function removeQueryParams(link: string): string {

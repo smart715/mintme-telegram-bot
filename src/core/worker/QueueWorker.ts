@@ -1,7 +1,7 @@
 import { singleton } from 'tsyringe'
 import { Blockchain, logger, parseContactMethod } from '../../utils'
-import { ChannelStatusType, ContactHistoryStatusType, ContactMethod, TokenContactStatusType } from '../types'
-import { ChannelStatusService, ContactHistoryService, ContactQueueService, TokensService } from '../service'
+import { ContactHistoryStatusType, ContactMethod, TokenContactStatusType } from '../types'
+import { ContactHistoryService, ContactQueueService, TokensService } from '../service'
 import { ContactMessage, Token } from '../entity'
 import { EnqueueTokensWorker } from './EnqueueTokensWorker'
 
@@ -9,7 +9,6 @@ import { EnqueueTokensWorker } from './EnqueueTokensWorker'
 export class QueueWorker {
     public constructor(
         private readonly contactQueueService: ContactQueueService,
-        private readonly channelStatusService: ChannelStatusService,
         private readonly tokensService: TokensService,
         private readonly contactHistoryService: ContactHistoryService,
         private readonly enqueueTokensWorker: EnqueueTokensWorker,
@@ -28,14 +27,12 @@ export class QueueWorker {
     }
 
     private async runQueueRecursively(): Promise<void> {
-        const queueItem = await this.contactQueueService.getFirstFromQueue()
+        const queueItem = await this.contactQueueService.getFirstFromQueue(ContactMethod.ALL)
 
         if (!queueItem) {
             logger.info(`[${QueueWorker.name}] Queue is empty.`)
             return
         }
-
-        await this.contactQueueService.setProcessing(queueItem)
 
         const token = await this.tokensService.findByAddress(queueItem.address, queueItem.blockchain)
 
@@ -66,14 +63,13 @@ export class QueueWorker {
         const contactMethod = parseContactMethod(queueItem.channel)
         const message = await this.getContactMessage()
 
-        let contactResult: ChannelStatusType
+        let contactResult: ContactHistoryStatusType
+        let tgAccountId: number|undefined
 
         if (ContactMethod.EMAIL === contactMethod) {
             contactResult = await this.contactViaEmail(queueItem.channel, message)
         } else if (ContactMethod.TWITTER === contactMethod) {
             contactResult = await this.contactViaTwitter(queueItem.channel, message)
-        } else if (ContactMethod.TELEGRAM === contactMethod) {
-            contactResult = await this.contactViaTelegram(queueItem.channel, message)
         } else {
             logger.warn(
                 `[${QueueWorker.name}] Unknown contact method for ${queueItem.address} :: ${queueItem.channel}. ` +
@@ -83,14 +79,14 @@ export class QueueWorker {
             return this.runQueueRecursively()
         }
 
-        await this.channelStatusService.saveChannelStatus(
+        await this.saveHistoryRecord(
+            token,
             queueItem.channel,
-            token.address,
-            token.blockchain,
-            contactResult
+            contactMethod,
+            contactResult,
+            message,
+            tgAccountId,
         )
-
-        await this.saveHistoryRecord(token, queueItem.channel, contactMethod, contactResult, message)
 
         logger.info(`[${QueueWorker.name}] ` +
             `Token ${token.address} was contacted to ${queueItem.channel} with status ${contactResult}.`
@@ -100,14 +96,13 @@ export class QueueWorker {
 
         this.updateTokenInfo(token, contactMethod)
 
-        const isFutureContact = ChannelStatusType.ACTIVE === contactResult
+        const isFutureContact = ContactHistoryStatusType.SENT === contactResult
         const {
             enqueued,
             contactChannel,
             nextContactMethod,
         } = await this.enqueueTokensWorker.tryToEnqueueToken(token, isFutureContact)
 
-        token.lastContactAttempt = new Date()
         await this.tokensService.saveTokenContactInfo(token)
 
         if (enqueued) {
@@ -140,28 +135,20 @@ export class QueueWorker {
     }
 
     // TODO: task for another issue
-    private async contactViaEmail(email: string, message: ContactMessage): Promise<ChannelStatusType> {
+    private async contactViaEmail(email: string, message: ContactMessage): Promise<ContactHistoryStatusType> {
         await new Promise(resolve => setTimeout(resolve, 3000))
 
         logger.info(`[${QueueWorker.name}] contact via email ${email} ${message.id}`)
 
-        return ChannelStatusType.ACTIVE
+        return ContactHistoryStatusType.SENT
     }
 
-    private async contactViaTwitter(twitterUrl: string, message: ContactMessage): Promise<ChannelStatusType> {
+    private async contactViaTwitter(twitterUrl: string, message: ContactMessage): Promise<ContactHistoryStatusType> {
         await new Promise(resolve => setTimeout(resolve, 3000))
 
         logger.info(`[${QueueWorker.name}] contact via twitter ${twitterUrl} ${message.id}`)
 
-        return ChannelStatusType.ACTIVE
-    }
-
-    private async contactViaTelegram(telegramUrl: string, message: ContactMessage): Promise<ChannelStatusType> {
-        await new Promise(resolve => setTimeout(resolve, 3000))
-
-        logger.info(`[${QueueWorker.name}] contact via telegramUrl ${telegramUrl} ${message.id}`)
-
-        return ChannelStatusType.ACTIVE
+        return ContactHistoryStatusType.SENT
     }
 
     // TODO: Task for another issue
@@ -188,27 +175,21 @@ export class QueueWorker {
         token: Token,
         channel: string,
         contactMethod: ContactMethod,
-        contactResult: ChannelStatusType,
+        contactResult: ContactHistoryStatusType,
         message: ContactMessage,
+        tgAccountId?: number,
     ): Promise<void> {
-        let status: ContactHistoryStatusType
-        let isSuccess = false
-        if (ChannelStatusType.ACTIVE === contactResult) {
-            status = ContactHistoryStatusType.SENT
-            isSuccess = true
-        } else {
-            // TODO: add proper typings
-            status = contactResult as unknown as ContactHistoryStatusType
-        }
+        const isSuccess = ContactHistoryStatusType.SENT === contactResult
 
-        return this.contactHistoryService.addRecord(
+        await this.contactHistoryService.addRecord(
             token.address,
             token.blockchain,
             contactMethod,
             isSuccess,
             message.id,
             channel,
-            status
+            contactResult,
+            tgAccountId,
         )
     }
 }

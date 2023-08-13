@@ -11,9 +11,9 @@ export class ContactMessage {
     @Column('text')
     public content: string
 
-    @Column({ nullable: true })
-    public allowedBlockchains: string
-
     @Column({ default: false })
     public isTgOnly: boolean
+
+    @Column({ type: 'int', nullable: true })
+    public accountID!: number | null
 }

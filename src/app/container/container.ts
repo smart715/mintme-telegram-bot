@@ -2,7 +2,6 @@ import { container, instanceCachingFactory } from 'tsyringe'
 import {
     CMCService,
     CMCWorker,
-    ChannelStatusService,
     ContactHistoryService,
     ContactQueueService,
     EnqueueTokensWorker,
@@ -23,7 +22,6 @@ import {
     BSCScanValidatorsFetcher,
     CheckTokenBNBWorker,
     ExplorerSearchAPIWorker,
-    ChannelStatusRepository,
     ContactHistoryRepository,
     ContactMessageRepository,
     DuplicatesFoundRepository,
@@ -32,12 +30,16 @@ import {
     QueuedTokenAddressRepository,
     QueuedWalletAddressRepository,
     TokenRepository,
+    TelegramAccountsRepository,
+    TelegramWorker,
+    TelegramService,
+    ContactMessageService,
     LastTokenTxDateFetcher,
 } from '../../core'
 import { Application } from '../'
 import { CliDependency } from './types'
 import { getConnection } from 'typeorm'
-import { RunEnqueueTokenWorker, RunQueueWorker, RunExplorerWorker } from '../../command'
+import { RunEnqueueTokenWorker, RunQueueWorker, RunExplorerWorker, RunTelegramWorker } from '../../command'
 import { TokenNamesGenerator } from '../../utils'
 
 container.register(TokenRepository, {
@@ -56,8 +58,8 @@ container.register(QueuedContactRepository, {
     useFactory: instanceCachingFactory(() => getConnection().getCustomRepository(QueuedContactRepository)),
 })
 
-container.register(ChannelStatusRepository, {
-    useFactory: instanceCachingFactory(() => getConnection().getCustomRepository(ChannelStatusRepository)),
+container.register(TelegramAccountsRepository, {
+    useFactory: instanceCachingFactory(() => getConnection().getCustomRepository(TelegramAccountsRepository)),
 })
 
 container.register(DuplicatesFoundRepository, {
@@ -142,11 +144,11 @@ container.register(CMCWorker, {
     ),
 })
 
-container.register(ChannelStatusService, {
+container.register(ContactMessageService, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
-        new ChannelStatusService(
-            dependencyContainer.resolve(ChannelStatusRepository),
-        ),
+        new ContactMessageService(
+            dependencyContainer.resolve(ContactMessageRepository),
+        )
     ),
 })
 
@@ -166,12 +168,20 @@ container.register(ContactHistoryService, {
     ),
 })
 
+container.register(ContactHistoryService, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new ContactHistoryService(
+            dependencyContainer.resolve(ContactHistoryRepository)
+        )
+    ),
+})
+
 container.register(EnqueueTokensWorker, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new EnqueueTokensWorker(
             dependencyContainer.resolve(TokensService),
             dependencyContainer.resolve(MintmeService),
-            dependencyContainer.resolve(ChannelStatusService),
+            dependencyContainer.resolve(ContactHistoryService),
             dependencyContainer.resolve(ContactQueueService),
         ),
     ),
@@ -181,7 +191,6 @@ container.register(QueueWorker, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new QueueWorker(
             dependencyContainer.resolve(ContactQueueService),
-            dependencyContainer.resolve(ChannelStatusService),
             dependencyContainer.resolve(TokensService),
             dependencyContainer.resolve(ContactHistoryService),
             dependencyContainer.resolve(EnqueueTokensWorker),
@@ -266,6 +275,18 @@ container.register(ExplorerSearchAPIWorker, {
     ),
 })
 
+container.register(TelegramWorker, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new TelegramWorker(
+            dependencyContainer.resolve(TelegramService),
+            dependencyContainer.resolve(ContactHistoryService),
+            dependencyContainer.resolve(ContactMessageService),
+            dependencyContainer.resolve(ContactQueueService),
+            dependencyContainer.resolve(TokensService),
+        )
+    ),
+})
+
 container.register(LastTokenTxDateFetcher, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new LastTokenTxDateFetcher(
@@ -305,6 +326,14 @@ container.register(CliDependency.COMMAND, {
             dependencyContainer.resolve(BSCScanValidatorsFetcher),
             dependencyContainer.resolve(CheckTokenBNBWorker),
             dependencyContainer.resolve(ExplorerSearchAPIWorker),
+        )
+    ),
+})
+
+container.register(CliDependency.COMMAND, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new RunTelegramWorker(
+            dependencyContainer.resolve(TelegramWorker),
         )
     ),
 })
