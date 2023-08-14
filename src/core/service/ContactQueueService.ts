@@ -4,13 +4,17 @@ import { QueuedContact } from '../entity'
 import { Brackets } from 'typeorm'
 import config from 'config'
 import moment from 'moment'
-import { Blockchain } from '../../utils'
+import { Blockchain, logger } from '../../utils'
+import { ContactMethod } from '../types'
+import axios from 'axios'
 
 @singleton()
 export class ContactQueueService {
+    private isFetchingQueue = false
+
     public constructor(
         private readonly queuedContactRepository: QueuedContactRepository,
-    ) {}
+    ) { }
 
     public async addToQueue(
         address: string,
@@ -37,25 +41,80 @@ export class ContactQueueService {
         await this.queuedContactRepository.delete({ address, blockchain })
     }
 
-    public async getFirstFromQueue(): Promise<QueuedContact | undefined> {
-        const delayInSeconds = parseInt(config.get('contact_frequency_in_seconds'))
+    public async getFirstFromQueue(contactMethod: ContactMethod): Promise<QueuedContact | undefined> {
+        try {
+            while (this.isFetchingQueue) {
+                await new Promise(resolve => setTimeout(resolve, 500))
+            }
+            this.isFetchingQueue = true
+            const delayInSeconds = parseInt(config.get('contact_frequency_in_seconds'))
 
-        return this.queuedContactRepository
-            .createQueryBuilder()
-            .where('is_processing = 0')
-            .andWhere(new Brackets((qb) => qb
-                .where('is_planned = 0')
-                .orWhere(
-                    'created_at < :thresholdDate',
-                    { thresholdDate: moment().utc().subtract(delayInSeconds, 'second').format() }
-                )
-            ))
-            .getOne()
+            let contactFilter = ''
+            switch (contactMethod) {
+                case ContactMethod.EMAIL:
+                    //TODO
+                    break
+                case ContactMethod.TELEGRAM:
+                    contactFilter = 'channel LIKE \'%t.me/%\''
+                    break
+
+                case ContactMethod.TWITTER:
+                    contactFilter = 'channel LIKE \'%twitter.com/%\''
+                    break
+            }
+
+            const result = await this.queuedContactRepository
+                .createQueryBuilder()
+                .where('is_processing = 0')
+                .andWhere(contactFilter)
+                .andWhere(new Brackets((qb) => qb
+                    .where('is_planned = 0')
+                    .orWhere(
+                        'created_at < :thresholdDate',
+                        { thresholdDate: moment().utc().subtract(delayInSeconds, 'second').format() }
+                    )
+                ))
+                .getOne()
+
+            if (result) {
+                await this.setProcessing(result)
+            }
+
+            this.isFetchingQueue = false
+            return result
+        } catch (e) {
+            this.isFetchingQueue = false
+            logger.error(e)
+            return undefined
+        }
     }
 
     public async setProcessing(queuedContact: QueuedContact): Promise<QueuedContact> {
         queuedContact.isProcessing = true
-
         return this.queuedContactRepository.save(queuedContact)
+    }
+
+    public async isQueuedAddress(address: string): Promise<boolean> {
+        const find = await this.queuedContactRepository.createQueryBuilder()
+            .where('address = :address', { address })
+            .getCount()
+        return (find > 0)
+    }
+
+    public async isQueuedChannel(channel: string): Promise<boolean> {
+        const find = await this.queuedContactRepository.createQueryBuilder()
+            .where('channel = :channel', { channel })
+            .getCount()
+        return (find > 0)
+    }
+
+    public async isExistingTg(link: string): Promise<boolean> {
+        try {
+            const request = await axios.get(link)
+            return (request.data.includes('tgme_page_title') && !request.data.includes(' subscribers'))
+        } catch (e) {
+            logger.error(e)
+            return false
+        }
     }
 }

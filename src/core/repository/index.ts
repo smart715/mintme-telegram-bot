@@ -1,6 +1,6 @@
+export { TelegramAccountsRepository } from './TelegramAccountsRepository'
 export { QueuedContactRepository } from './QueuedContactRepository'
 export { TokenRepository } from './TokenRepository'
-export { ChannelStatusRepository } from './ChannelStatusRepository'
 export { ContactHistoryRepository } from './ContactHistoryRepository'
 export { ContactMessageRepository } from './ContactMessageRepository'
 export { QueuedTokenAddressRepository } from './QueuedTokenAddressRepository'

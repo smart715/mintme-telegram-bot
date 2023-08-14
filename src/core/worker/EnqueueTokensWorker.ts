@@ -1,8 +1,8 @@
 import { singleton } from 'tsyringe'
 import { AbstractTokenWorker } from './AbstractTokenWorker'
-import { ChannelStatusService, ContactQueueService, MintmeService, TokensService } from '../service'
-import { Blockchain, logger } from '../../utils'
-import { ContactMethod, TokenContactStatusType } from '../types'
+import { ContactQueueService, MintmeService, TokensService, ContactHistoryService } from '../service'
+import { Blockchain, getMaxAttemptsPerMethod, logger } from '../../utils'
+import { ContactHistoryStatusType, ContactMethod, TokenContactStatusType } from '../types'
 import { Token } from '../entity'
 
 @singleton()
@@ -10,7 +10,7 @@ export class EnqueueTokensWorker extends AbstractTokenWorker {
     public constructor(
         private readonly tokensService: TokensService,
         private readonly mintmeService: MintmeService,
-        private readonly channelStatusService: ChannelStatusService,
+        private readonly contactHistoryService: ContactHistoryService,
         private readonly contactQueueService: ContactQueueService,
     ) {
         super()
@@ -19,17 +19,13 @@ export class EnqueueTokensWorker extends AbstractTokenWorker {
     public async run(blockchain: Blockchain): Promise<any> {
         logger.info(`[${EnqueueTokensWorker.name}] Started for ${blockchain} blockchain`)
 
-        let listedTokensAdresses: string[]
-        try {
-            listedTokensAdresses = await this.mintmeService.getCachedListedTokensAdresses()
-            logger.info(`[${EnqueueTokensWorker.name}] Fetched listed addresses, amount: ${listedTokensAdresses.length}`)
-        } catch (err: any) {
-            logger.error(`[${EnqueueTokensWorker.name}] Could not fetch listed addresses, error: ${err?.message}`)
+        const listedTokensAdresses = await this.mintmeService.getCachedListedTokensAdresses()
+        logger.info(`[${EnqueueTokensWorker.name}] Fetched listed addresses, amount: ${listedTokensAdresses.length}`)
 
-            listedTokensAdresses = []
-        }
-
-        const tokensToContact = await this.tokensService.getLastNotContactedTokens(blockchain)
+        const tokensToContact = await this.tokensService.getLastNotContactedTokens(blockchain,
+            getMaxAttemptsPerMethod(ContactMethod.EMAIL),
+            getMaxAttemptsPerMethod(ContactMethod.TWITTER),
+            getMaxAttemptsPerMethod(ContactMethod.TELEGRAM))
         logger.info(`[${EnqueueTokensWorker.name}] Tokens to review: ${tokensToContact.length}`)
 
         let queuedTokensCount = 0
@@ -37,12 +33,21 @@ export class EnqueueTokensWorker extends AbstractTokenWorker {
 
         for (let i = 0; i < tokensToContact.length; i++) {
             const token = tokensToContact[i]
+            logger.info(`Checking Token ${token.name}(${token.address}) - ${i+1}/${tokensToContact.length}`)
 
             if (listedTokensAdresses.includes(token.address)) {
                 logger.warn(`[${EnqueueTokensWorker.name}] Address ${token.address} already listed`)
                 skippedTokensCount++
 
-                return
+                continue
+            }
+
+            if (await this.contactQueueService.isQueuedAddress(token.address)) {
+                token.contactStatus = TokenContactStatusType.QUEUED
+                await this.tokensService.saveTokenContactInfo(token)
+                logger.warn(`[${EnqueueTokensWorker.name}] Address ${token.address} was already queued`)
+                skippedTokensCount++
+                continue
             }
 
             const { enqueued, contactChannel, nextContactMethod } = await this.tryToEnqueueToken(token)
@@ -72,7 +77,7 @@ export class EnqueueTokensWorker extends AbstractTokenWorker {
 
     public async tryToEnqueueToken(token: Token, isFutureContact: boolean = false): Promise<{
         enqueued: boolean,
-        nextContactMethod: ContactMethod|null,
+        nextContactMethod: ContactMethod | null,
         contactChannel: string
     }> {
         const [ availableEmail, availableTwitter, availableTelegram ] = await this.getAvailableChannels(token)
@@ -101,35 +106,111 @@ export class EnqueueTokensWorker extends AbstractTokenWorker {
         }
     }
 
+    private async checkTelegramLink(channel: string): Promise<string|undefined> {
+        let link = channel.replace('https/', 'https:/')
+            .replace('http/', 'https:/')
+            .replace('http://', 'https://')
+            .replace('www.', '')
+            .replace('https://t.me/https://t.me/', 'https://t.me/')
+            .replace('t.me/@', 't.me/')
+
+        if (!link.startsWith('http')) {
+            link = `https://${link}`
+        }
+
+        if (!link.startsWith('https://t.me/')) {
+            logger.warn(`${link} is invalid`)
+            return undefined
+        }
+
+        if (await this.contactQueueService.isQueuedChannel(link)) {
+            logger.warn(`Telegram channel ${link} is already queued`)
+            return undefined
+        }
+
+        if (await this.contactHistoryService.getChannelContactTimes(link) >=
+        getMaxAttemptsPerMethod(ContactMethod.TELEGRAM)) {
+            logger.warn(`Telegram channel ${link} was contacted before and channel limit hit`)
+            return undefined
+        }
+        return link
+    }
+
+    private async getFirstNotFailedChannel(
+        token: Token,
+        channels: string[],
+        contactMethod: ContactMethod): Promise<string> {
+        for (const channel of channels) {
+            if (!await this.contactHistoryService.isFailedChannel(channel)) {
+                if (contactMethod === ContactMethod.TELEGRAM) {
+                    const link = await this.checkTelegramLink(channel)
+                    if (!link) {
+                        continue
+                    }
+
+                    logger.info(`Checking if telegram channel ${link} available`)
+
+                    await new Promise(f => setTimeout(f, 1000))
+
+                    if (await this.contactQueueService.isExistingTg(link)) {
+                        logger.info(`Telegram channel ${link} is active`)
+                        return link
+                    } else {
+                        logger.warn(`Telegram channel ${link} not active`)
+                        await this.contactHistoryService.addRecord(token.address,
+                            token.blockchain,
+                            ContactMethod.TELEGRAM,
+                            false,
+                            0,
+                            link,
+                            ContactHistoryStatusType.ACCOUNT_NOT_EXISTS)
+                        continue
+                    }
+                }
+
+                if (await this.contactQueueService.isQueuedChannel(channel)) {
+                    logger.warn(`channel ${channel} is already queued`)
+                    continue
+                }
+
+                if (await this.contactHistoryService.getChannelContactTimes(channel) >=
+                getMaxAttemptsPerMethod(contactMethod)) {
+                    logger.warn(`channel ${channel} was contacted before and channel limit hit`)
+                    continue
+                }
+
+                return channel
+            } else {
+                logger.warn(`Skipping Channel ${channel} for previous faliure`)
+                continue
+            }
+        }
+        return ''
+    }
+
     private async getAvailableChannels(token: Token): Promise<string[]> {
         const emails = this.tokensService.getEmails(token)
         const twitterChannels = this.tokensService.getTwitterAccounts(token)
         const telegramChannels = this.tokensService.getTelegramAccounts(token)
 
-        const channelStatuses = await this.channelStatusService.getContactsByChannels(
-            [ ...emails, ...twitterChannels, ...telegramChannels ],
-        )
+        let availableEmails = ''
+        if (token.emailAttempts < getMaxAttemptsPerMethod(ContactMethod.EMAIL)) {
+            availableEmails = await this.getFirstNotFailedChannel(token, emails, ContactMethod.EMAIL)
+        }
 
-        const availableEmails = this.channelStatusService.getFirstAvailableChannelCached(
-            emails,
-            channelStatuses,
-            token.address,
-            token.blockchain
-        )
+        let availableTwitterChannels = ''
+        if (token.twitterAttempts < getMaxAttemptsPerMethod(ContactMethod.TWITTER)) {
+            availableTwitterChannels = await this.getFirstNotFailedChannel(token,
+                twitterChannels,
+                ContactMethod.TWITTER)
+        }
 
-        const availableTwitterChannels = this.channelStatusService.getFirstAvailableChannelCached(
-            twitterChannels,
-            channelStatuses,
-            token.address,
-            token.blockchain
-        )
-
-        const availableTelegramChannels = this.channelStatusService.getFirstAvailableChannelCached(
-            telegramChannels,
-            channelStatuses,
-            token.address,
-            token.blockchain
-        )
+        let availableTelegramChannels = ''
+        if (token.telegramAttempts < getMaxAttemptsPerMethod(ContactMethod.TELEGRAM)) {
+            availableTelegramChannels = await this.getFirstNotFailedChannel(token,
+                telegramChannels,
+                ContactMethod.TELEGRAM)
+        }
 
         return [ availableEmails, availableTwitterChannels, availableTelegramChannels ]
     }
@@ -140,31 +221,31 @@ export class EnqueueTokensWorker extends AbstractTokenWorker {
         email: string,
         twitter: string,
         telegram: string,
-    ): {contactMethod: ContactMethod|null, channel: string} {
+    ): { contactMethod: ContactMethod | null, channel: string } {
         let contactMethod = null
         let channel = ''
 
         if (
-            !lastContactMethod && email
-            || lastContactMethod === ContactMethod.EMAIL && email && !twitter && !telegram
-            || lastContactMethod === ContactMethod.TWITTER && email && !telegram
-            || lastContactMethod === ContactMethod.TELEGRAM && email
+            (!lastContactMethod && email)
+            || (lastContactMethod === ContactMethod.EMAIL && email && !twitter && !telegram)
+            || (lastContactMethod === ContactMethod.TWITTER && email && !telegram)
+            || (lastContactMethod === ContactMethod.TELEGRAM && email)
         ) {
             contactMethod = ContactMethod.EMAIL
             channel = email
         } else if (
-            !lastContactMethod && !email && twitter
-            || lastContactMethod === ContactMethod.EMAIL && twitter
-            || lastContactMethod === ContactMethod.TWITTER && twitter && !telegram && !email
-            || lastContactMethod === ContactMethod.TELEGRAM && twitter && !email
+            (!lastContactMethod && !email && twitter)
+            || (lastContactMethod === ContactMethod.EMAIL && twitter)
+            || (lastContactMethod === ContactMethod.TWITTER && twitter && !telegram && !email)
+            || (lastContactMethod === ContactMethod.TELEGRAM && twitter && !email)
         ) {
             contactMethod = ContactMethod.TWITTER
             channel = twitter
         } else if (
-            !lastContactMethod && !email && !twitter && telegram
-            || lastContactMethod === ContactMethod.EMAIL && telegram && !twitter
-            || lastContactMethod === ContactMethod.TWITTER && telegram
-            || lastContactMethod === ContactMethod.TELEGRAM && telegram && !email && !twitter
+            (!lastContactMethod && !email && !twitter && telegram)
+            || (lastContactMethod === ContactMethod.EMAIL && telegram && !twitter)
+            || (lastContactMethod === ContactMethod.TWITTER && telegram)
+            || (lastContactMethod === ContactMethod.TELEGRAM && telegram && !email && !twitter)
         ) {
             contactMethod = ContactMethod.TELEGRAM
             channel = telegram
