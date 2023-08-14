@@ -18,4 +18,5 @@ export default {
     },
     namingStrategy: new SnakeNamingStrategy(),
     timezone: '0',
+    charset: 'utf8mb4',
 } as ConnectionOptions
