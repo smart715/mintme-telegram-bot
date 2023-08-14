@@ -71,6 +71,7 @@ import {
     RunCoinCodexWorker,
     RunBitQueryWorker,
     RunTelegramWorker,
+    RunLastTokenTxDateFetcher,
 } from '../../command'
 import { TokenNamesGenerator } from '../../utils'
 
@@ -582,6 +583,14 @@ container.register(CliDependency.COMMAND, {
 
 container.register(Application, {
     useFactory: instanceCachingFactory(() => new Application()),
+})
+
+container.register(CliDependency.COMMAND, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new RunLastTokenTxDateFetcher(
+            dependencyContainer.resolve(LastTokenTxDateFetcher),
+        )
+    ),
 })
 
 export { container }
