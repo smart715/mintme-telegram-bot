@@ -39,7 +39,13 @@ import {
 import { Application } from '../'
 import { CliDependency } from './types'
 import { getConnection } from 'typeorm'
-import { RunEnqueueTokenWorker, RunQueueWorker, RunExplorerWorker, RunTelegramWorker } from '../../command'
+import {
+    RunEnqueueTokenWorker,
+    RunQueueWorker,
+    RunExplorerWorker,
+    RunTelegramWorker,
+    RunLastTokenTxDateFetcher,
+} from '../../command'
 import { TokenNamesGenerator } from '../../utils'
 
 container.register(TokenRepository, {
@@ -334,6 +340,14 @@ container.register(CliDependency.COMMAND, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new RunTelegramWorker(
             dependencyContainer.resolve(TelegramWorker),
+        )
+    ),
+})
+
+container.register(CliDependency.COMMAND, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new RunLastTokenTxDateFetcher(
+            dependencyContainer.resolve(LastTokenTxDateFetcher),
         )
     ),
 })
