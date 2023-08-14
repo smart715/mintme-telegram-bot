@@ -1,7 +1,7 @@
 import axios from 'axios'
 import config from 'config'
 import { singleton } from 'tsyringe'
-import { TokensInsightAllCoinsResponse } from '../../../types/TokensInsight'
+import {TokensInsightAllCoinsResponse, TokensInsightCoinDataResponse} from '../../../types/TokensInsight'
 
 @singleton()
 export class TokensInsightService {
@@ -21,6 +21,22 @@ export class TokensInsightService {
                     offset,
                     limit,
                 },
+            },
+        )
+
+        return response.data
+    }
+
+    public async getCoinData(id: string): Promise<TokensInsightCoinDataResponse> {
+        const headers = {
+            'Content-Type': 'application/json',
+            'TI_API_KEY': this.apiKey,
+        }
+
+        const response = await axios.get(
+            `https://api.tokeninsight.com/api/v1/coins/${id}`,
+            {
+                headers: headers,
             },
         )
 

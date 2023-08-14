@@ -2,6 +2,7 @@ import { singleton } from 'tsyringe'
 import { TokenRepository } from '../repository'
 import { Token } from '../entity'
 import { Blockchain, isValidEmail, isValidTgLink, isValidTwitterLink } from '../../utils'
+import {name} from "chalk";
 
 @singleton()
 export class TokensService {
@@ -14,6 +15,13 @@ export class TokensService {
         blockchain: Blockchain,
     ): Promise<Token | undefined> {
         return this.tokenRepository.findByAddressAndBlockchain(address, blockchain)
+    }
+
+    public async findByName(
+        name: string,
+        blockchain: Blockchain,
+    ): Promise<Token | undefined> {
+        return this.tokenRepository.findByNameAndBlockchain(name, blockchain)
     }
 
     public async add(

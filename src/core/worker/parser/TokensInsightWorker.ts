@@ -2,7 +2,7 @@ import { AbstractTokenWorker } from '../AbstractTokenWorker'
 import { singleton } from 'tsyringe'
 import { Blockchain, logger } from '../../../utils'
 import { TokensInsightService, TokensService } from '../../service'
-import {TokensInsightAllCoinsResponse} from "../../../types/TokensInsight";
+import {TokensInsightAllCoinsResponse, TokensInsightCoinDataResponse} from '../../../types/TokensInsight'
 
 @singleton()
 export class TokensInsightWorker extends AbstractTokenWorker {
@@ -34,9 +34,57 @@ export class TokensInsightWorker extends AbstractTokenWorker {
                 continue
             }
 
-            if ()
+            const coins = allCoinsRes.data.items
+            const coinsLength = coins.length
+
+            if (0 === coinsLength) {
+                fetchNext = false
+            }
+
+            const target = this.getTargetBlockchain(currentBlockchain)
+
+            let i = 0
+            for (const coin of coins) {
+                ++i
+                const tokenName = coin.name + '(' + coin.symbol + ')'
+
+                logger.info(`${this.prefixLog} Check ${tokenName}. ${i}/${coinsLength}`)
+
+                const tokenInDb = await this.tokensService.findByName(tokenName, currentBlockchain)
+
+                if (tokenInDb) {
+                    continue
+                }
+
+                const coinData = await this.tokensInsightService.getCoinData(coin.id)
+
+                const tokenAddress = this.getTokenAddress(coinData, currentBlockchain)
+
+                if (!tokenAddress) {
+                    continue
+                }
+            }
 
             offset += this.limit
         } while (fetchNext)
+    }
+
+    private getTargetBlockchain(currentBlockchain: Blockchain): string {
+        switch (currentBlockchain) {
+            case Blockchain.ETH:
+                return 'ethereum'
+            case Blockchain.BSC:
+                return 'BNB'
+            case Blockchain.CRO:
+                return 'cronos'
+            default:
+                throw new Error('Wrong blockchain provided. Target blockchain doesn\'t exists for provided blockchain')
+        }
+    }
+
+    public getTokenAddress(coinData: TokensInsightCoinDataResponse, currentBlockchain: Blockchain): Promise|null {
+        const platform: Platform = coinData.data.platforms.filter(
+            (platform) => platform.name
+        )
     }
 }
