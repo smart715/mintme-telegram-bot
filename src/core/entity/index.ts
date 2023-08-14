@@ -1,6 +1,6 @@
+export { TelegramAccount } from './TelegramAccount'
 export { QueuedContact } from './QueuedContact'
 export { Token } from './Token'
-export { ChannelStatus } from './ChannelStatus'
 export { ContactHistory } from './ContactHistory'
 export { ContactMessage } from './ContactMessage'
 export { QueuedTokenAddress } from './QueuedTokenAddress'

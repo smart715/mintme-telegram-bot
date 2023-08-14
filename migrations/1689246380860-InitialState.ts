@@ -59,20 +59,6 @@ export class InitialState1689246380860 implements MigrationInterface {
             ) ENGINE = InnoDB
         `)
         await queryRunner.query(`
-            CREATE TABLE \`channel_status\` (
-                \`id\` int NOT NULL AUTO_INCREMENT,
-                \`address\` varchar(80) NOT NULL,
-                \`blockchain\` varchar(32) NOT NULL,
-                \`channel\` varchar(512) NOT NULL,
-                \`attempts_amount\` tinyint(4) NOT NULL DEFAULT '0',
-                \`status\` varchar(32) NOT NULL,
-                \`created_at\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
-                \`last_attempt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
-                UNIQUE INDEX \`UQ_ADDRESS_BLOCKCHAIN_CHANNEL\` (\`address\`, \`blockchain\`, \`channel\`),
-                PRIMARY KEY (\`id\`)
-            ) ENGINE = InnoDB
-        `)
-        await queryRunner.query(`
             CREATE TABLE \`contact_message\` (
                 \`id\` int NOT NULL AUTO_INCREMENT,
                 \`title\` varchar(512) NOT NULL,
@@ -86,7 +72,6 @@ export class InitialState1689246380860 implements MigrationInterface {
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`DROP TABLE \`contact_message\``)
-        await queryRunner.query(`DROP TABLE \`channel_status\``)
         await queryRunner.query(`DROP TABLE \`queued_contact\``)
         await queryRunner.query(`DROP TABLE \`contact_history\``)
         await queryRunner.query(`DROP TABLE \`token\``)

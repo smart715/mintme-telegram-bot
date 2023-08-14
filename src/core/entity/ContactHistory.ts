@@ -32,6 +32,9 @@ export class ContactHistory {
     @CreateDateColumn()
     public createdAt: Date
 
+    @Column({ nullable: true })
+    public tgAccountId: number
+
     public constructor(
         address: string,
         blockchain: Blockchain,
