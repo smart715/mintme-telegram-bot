@@ -7,6 +7,7 @@ export default {
 
     //CMC
     'coinmarketcap_api_key': '0da9b092-fee6-4c91-875a-e93fbb6b78e0',
+    'tokensinsight_api_key': '65851ffff61d47fe9d600c6c69ef87e6',
 
     // telegram configs
     'telegram_max_accounts': 1,
