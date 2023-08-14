@@ -1,7 +1,8 @@
+/* eslint-disable @typescript-eslint/naming-convention */
 import axios from 'axios'
 import config from 'config'
 import { singleton } from 'tsyringe'
-import {TokensInsightAllCoinsResponse, TokensInsightCoinDataResponse} from '../../../types/TokensInsight'
+import { TokensInsightAllCoinsResponse, TokensInsightCoinDataResponse } from '../../../types'
 
 @singleton()
 export class TokensInsightService {

@@ -42,3 +42,7 @@ export interface RunRugFreeCoinsWorkerCmdArgv {
 export interface RunTop100TokensWorkerCmdArgv {
     blockchain: Blockchain,
 }
+
+export interface RunTokensInsightWorkerCmdArgv {
+    blockchain: Blockchain,
+}

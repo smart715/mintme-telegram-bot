@@ -84,7 +84,6 @@ export class RugFreeCoinsWorker extends AbstractTokenWorker {
                     tokenAddress,
                     tokenName,
                     website,
-                    '',
                     links,
                     this.workerName,
                     currentBlockchain

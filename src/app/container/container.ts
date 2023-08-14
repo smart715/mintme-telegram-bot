@@ -38,7 +38,7 @@ import {
     RugFreeCoinsService,
     RugFreeCoinsWorker,
     Top100TokensService,
-    Top100TokensWorker,
+    Top100TokensWorker, TokensInsightService, TokensInsightWorker,
 } from '../../core'
 import { Application } from '../'
 import { CliDependency } from './types'
@@ -50,7 +50,7 @@ import {
     RunTelegramWorker,
     RunLastTokenTxDateFetcher,
     RunRugFreeCoinsWorker,
-    RunTop100TokensWorker,
+    RunTop100TokensWorker, RunTokensInsightWorker,
 } from '../../command'
 import { TokenNamesGenerator } from '../../utils'
 
@@ -180,6 +180,10 @@ container.register(RugFreeCoinsService, {
 
 container.register(Top100TokensService, {
     useFactory: instanceCachingFactory(() => new Top100TokensService()),
+})
+
+container.register(TokensInsightService, {
+    useFactory: instanceCachingFactory(() => new TokensInsightService()),
 })
 
 // Workers
@@ -345,10 +349,11 @@ container.register(Top100TokensWorker, {
     ),
 })
 
-container.register(CliDependency.COMMAND, {
+container.register(TokensInsightWorker, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
-        new RunTelegramWorker(
-            dependencyContainer.resolve(TelegramWorker),
+        new TokensInsightWorker(
+            dependencyContainer.resolve(TokensInsightService),
+            dependencyContainer.resolve(TokensService),
         )
     ),
 })
@@ -406,6 +411,22 @@ container.register(CliDependency.COMMAND, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new RunLastTokenTxDateFetcher(
             dependencyContainer.resolve(LastTokenTxDateFetcher),
+        )
+    ),
+})
+
+container.register(CliDependency.COMMAND, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new RunTelegramWorker(
+            dependencyContainer.resolve(TelegramWorker),
+        )
+    ),
+})
+
+container.register(CliDependency.COMMAND, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new RunTokensInsightWorker(
+            dependencyContainer.resolve(TokensInsightWorker),
         )
     ),
 })

@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/naming-convention */
+
 export interface TokensInsightAllCoinsResponse {
     status: {
         code: number,

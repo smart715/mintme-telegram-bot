@@ -2,7 +2,6 @@ import { singleton } from 'tsyringe'
 import { TokenRepository } from '../repository'
 import { Token } from '../entity'
 import { Blockchain, isValidEmail, isValidTgLink, isValidTwitterLink } from '../../utils'
-import {name} from "chalk";
 
 @singleton()
 export class TokensService {
