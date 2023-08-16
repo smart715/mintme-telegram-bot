@@ -2,7 +2,7 @@ import { singleton } from 'tsyringe'
 import { AbstractTokenWorker } from '../AbstractTokenWorker'
 import { Blockchain, findContractAddress, logger } from '../../../utils'
 import { RugFreeCoinsService, TokensService } from '../../service'
-import { CoinData, RugFreeCoinsAllCoins } from '../../../types'
+import { RugFreeCoinData, RugFreeCoinsAllCoins } from '../../../types'
 
 @singleton()
 export class RugFreeCoinsWorker extends AbstractTokenWorker {
@@ -96,7 +96,7 @@ export class RugFreeCoinsWorker extends AbstractTokenWorker {
         logger.info(`${this.prefixLog} Finished`)
     }
 
-    private getLinks(coin: CoinData): string[] {
+    private getLinks(coin: RugFreeCoinData): string[] {
         const links: string[] = []
 
         if (coin.twitter_link) {
@@ -118,7 +118,7 @@ export class RugFreeCoinsWorker extends AbstractTokenWorker {
         return links
     }
 
-    private getTokenAddress(coin: CoinData, currentBlockchain: Blockchain): string|null {
+    private getTokenAddress(coin: RugFreeCoinData, currentBlockchain: Blockchain): string|null {
         let tokenAddress: string|null|undefined = null
 
         switch (currentBlockchain) {

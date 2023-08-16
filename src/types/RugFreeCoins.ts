@@ -8,7 +8,7 @@ export interface RugFreeCoinsAllCoins {
 
 export interface Payload {
     current_page: number,
-    data: CoinData[]
+    data: RugFreeCoinData[]
     firs_page_url: string,
     from: number|null,
     last_page: number,
@@ -22,7 +22,7 @@ export interface Payload {
     total: number,
 }
 
-export interface CoinData {
+export interface RugFreeCoinData {
     actual_market_cap: number,
     actual_price: number,
     approved_at: string,
