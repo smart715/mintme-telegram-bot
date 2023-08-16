@@ -82,3 +82,7 @@ export interface RunTop100TokensWorkerCmdArgv {
 export interface RunTokensInsightWorkerCmdArgv {
     blockchain: Blockchain,
 }
+
+export interface RunMyEtherListsWorkerCmdArgv {
+    blockchain: Blockchain,
+}
