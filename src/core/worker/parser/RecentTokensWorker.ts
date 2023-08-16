@@ -55,6 +55,8 @@ export class RecentTokensWorker extends AbstractTokenWorker {
                 if (!tokenLink) {
                     continue
                 }
+
+                logger.info(`${this.prefixLog} Link: ${tokenLink.href}`)
             }
 
             page += 1

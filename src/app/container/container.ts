@@ -58,7 +58,7 @@ import {
     Top100TokensService,
     Top100TokensWorker,
     TokensInsightService,
-    TokensInsightWorker, MyEtherListsService, MyEtherListsWorker,
+    TokensInsightWorker, MyEtherListsService, MyEtherListsWorker, RecentTokensService, RecentTokensWorker,
 } from '../../core'
 import { Application } from '../'
 import { CliDependency } from './types'
@@ -79,7 +79,7 @@ import {
     RunTelegramWorker,
     RunLastTokenTxDateFetcher,
     RunRugFreeCoinsWorker,
-    RunTop100TokensWorker, RunTokensInsightWorker, RunMyEtherListsWorker,
+    RunTop100TokensWorker, RunTokensInsightWorker, RunMyEtherListsWorker, RunRecentTokensWorker,
 } from '../../command'
 import { TokenNamesGenerator } from '../../utils'
 
@@ -253,6 +253,10 @@ container.register(TokensInsightService, {
 
 container.register(MyEtherListsService, {
     useFactory: instanceCachingFactory(() => new MyEtherListsService()),
+})
+
+container.register(RecentTokensService, {
+    useFactory: instanceCachingFactory(() => new RecentTokensService()),
 })
 
 // Workers
@@ -509,6 +513,15 @@ container.register(MyEtherListsWorker, {
     ),
 })
 
+container.register(RecentTokensWorker, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new RecentTokensWorker(
+            dependencyContainer.resolve(RecentTokensService),
+            dependencyContainer.resolve(TokensService),
+        )
+    ),
+})
+
 // CLI
 
 container.register(CliDependency.COMMAND, {
@@ -626,6 +639,14 @@ container.register(CliDependency.COMMAND, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new RunBitQueryWorker(
             dependencyContainer.resolve(BitQueryWorker),
+        )
+    ),
+})
+
+container.register(CliDependency.COMMAND, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new RunRecentTokensWorker(
+            dependencyContainer.resolve(RecentTokensWorker),
         )
     ),
 })
