@@ -8,6 +8,11 @@ export * from './blockchains'
 export * from './constants'
 export { TokenNamesGenerator } from './TokenNamesGenerator'
 
+export {
+    getHrefFromTagString,
+    getHrefValuesFromTagString,
+} from './domParser'
+
 export function parseContactMethod(channel: string): ContactMethod|undefined {
     if (channel.includes('@')) {
         return ContactMethod.EMAIL

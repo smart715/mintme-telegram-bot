@@ -35,10 +35,30 @@ import {
     TelegramService,
     ContactMessageService,
     LastTokenTxDateFetcher,
+    CoinGeckoService,
+    CoinGeckoWorker,
+    AdvnWorker,
+    AdvnService,
+    CoinDiscoveryService,
+    CoinDiscoveryWorker,
+    CoinBrainService,
+    CoinBrainWorker,
+    CoinBuddyService,
+    CoinBuddyWorker,
+    CoinCapWorker,
+    CoinCapService,
+    CoinCatapultService,
+    CoinCatapultWorker,
+    CoinCodexWorker,
+    CoinCodexService,
+    BitQueryService,
+    BitQueryWorker,
     RugFreeCoinsService,
     RugFreeCoinsWorker,
     Top100TokensService,
-    Top100TokensWorker, TokensInsightService, TokensInsightWorker,
+    Top100TokensWorker,
+    TokensInsightService,
+    TokensInsightWorker,
 } from '../../core'
 import { Application } from '../'
 import { CliDependency } from './types'
@@ -47,6 +67,15 @@ import {
     RunEnqueueTokenWorker,
     RunQueueWorker,
     RunExplorerWorker,
+    RunCoinGeckoWorker,
+    RunAdvnWorker,
+    RunCoinDiscoveryWorker,
+    RunCoinBrainWorker,
+    RunCoinBuddyWorker,
+    RunCoinCapWorker,
+    RunCoinCatapultWorker,
+    RunCoinCodexWorker,
+    RunBitQueryWorker,
     RunTelegramWorker,
     RunLastTokenTxDateFetcher,
     RunRugFreeCoinsWorker,
@@ -106,6 +135,14 @@ container.register(CMCService, {
 
 container.register(MintmeService, {
     useFactory: instanceCachingFactory(() => new MintmeService()),
+})
+
+container.register(CoinGeckoService, {
+    useFactory: instanceCachingFactory(() => new CoinGeckoService()),
+})
+
+container.register(AdvnService, {
+    useFactory: instanceCachingFactory(() => new AdvnService()),
 })
 
 container.register(TokensService, {
@@ -212,6 +249,52 @@ container.register(ContactHistoryService, {
     ),
 })
 
+container.register(CoinDiscoveryService, {
+    useFactory: instanceCachingFactory(() => new CoinDiscoveryService()),
+})
+
+container.register(CoinBrainService, {
+    useFactory: instanceCachingFactory(() => new CoinBrainService()),
+})
+
+container.register(CoinBuddyService, {
+    useFactory: instanceCachingFactory(() => new CoinBuddyService()),
+})
+
+container.register(CoinCapService, {
+    useFactory: instanceCachingFactory(() => new CoinCapService()),
+})
+
+container.register(CoinCatapultService, {
+    useFactory: instanceCachingFactory(() => new CoinCatapultService()),
+})
+
+container.register(CoinCodexService, {
+    useFactory: instanceCachingFactory(() => new CoinCodexService()),
+})
+
+container.register(BitQueryService, {
+    useFactory: instanceCachingFactory(() => new BitQueryService()),
+})
+
+// Workers
+
+container.register(ExplorerEnqueuer, {
+    useFactory: instanceCachingFactory((dependencyContainer) => new ExplorerEnqueuer(
+        dependencyContainer.resolve(QueuedTokenAddressService),
+        dependencyContainer.resolve(QueuedWalletAddressService),
+    )),
+})
+
+container.register(CMCWorker, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new CMCWorker(
+            dependencyContainer.resolve(CMCService),
+            dependencyContainer.resolve(TokensService),
+        ),
+    ),
+})
+
 container.register(EnqueueTokensWorker, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new EnqueueTokensWorker(
@@ -219,6 +302,15 @@ container.register(EnqueueTokensWorker, {
             dependencyContainer.resolve(MintmeService),
             dependencyContainer.resolve(ContactHistoryService),
             dependencyContainer.resolve(ContactQueueService),
+        ),
+    ),
+})
+
+container.register(CoinGeckoWorker, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new CoinGeckoWorker(
+            dependencyContainer.resolve(TokensService),
+            dependencyContainer.resolve(CoinGeckoService)
         ),
     ),
 })
@@ -331,6 +423,51 @@ container.register(LastTokenTxDateFetcher, {
     ),
 })
 
+container.register(AdvnWorker, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new AdvnWorker(
+            dependencyContainer.resolve(AdvnService),
+            dependencyContainer.resolve(TokensService),
+        )
+    ),
+})
+
+container.register(CoinDiscoveryWorker, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new CoinDiscoveryWorker(
+            dependencyContainer.resolve(CoinDiscoveryService),
+            dependencyContainer.resolve(TokensService),
+        )
+    ),
+})
+
+container.register(CoinBrainWorker, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new CoinBrainWorker(
+            dependencyContainer.resolve(CoinBrainService),
+            dependencyContainer.resolve(TokensService),
+        )
+    ),
+})
+
+container.register(CoinBuddyWorker, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new CoinBuddyWorker(
+            dependencyContainer.resolve(CoinBuddyService),
+            dependencyContainer.resolve(TokensService),
+        )
+    ),
+})
+
+container.register(CoinCapWorker, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new CoinCapWorker(
+            dependencyContainer.resolve(CoinCapService),
+            dependencyContainer.resolve(QueuedTokenAddressService),
+        )
+    ),
+})
+
 container.register(RugFreeCoinsWorker, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new RugFreeCoinsWorker(
@@ -348,6 +485,43 @@ container.register(Top100TokensWorker, {
         )
     ),
 })
+
+container.register(CoinCatapultWorker, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new CoinCatapultWorker(
+            dependencyContainer.resolve(CoinCatapultService),
+            dependencyContainer.resolve(TokensService),
+        )
+    ),
+})
+
+container.register(CoinCodexWorker, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new CoinCodexWorker(
+            dependencyContainer.resolve(CoinCodexService),
+            dependencyContainer.resolve(TokensService),
+        )
+    ),
+})
+
+container.register(BitQueryWorker, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new BitQueryWorker(
+            dependencyContainer.resolve(BitQueryService),
+            dependencyContainer.resolve(QueuedTokenAddressService),
+        )
+    ),
+})
+
+container.register(CliDependency.COMMAND, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new RunTelegramWorker(
+            dependencyContainer.resolve(TelegramWorker),
+        )
+    ),
+})
+
+// CLI
 
 container.register(TokensInsightWorker, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
@@ -393,6 +567,62 @@ container.register(CliDependency.COMMAND, {
 
 container.register(CliDependency.COMMAND, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
+        new RunCoinGeckoWorker(
+            dependencyContainer.resolve(CoinGeckoWorker),
+        )
+    ),
+})
+
+container.register(CliDependency.COMMAND, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new RunAdvnWorker(
+            dependencyContainer.resolve(AdvnWorker),
+        )
+    ),
+})
+
+container.register(CliDependency.COMMAND, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new RunCoinDiscoveryWorker(
+            dependencyContainer.resolve(CoinDiscoveryWorker),
+        )
+    ),
+})
+
+container.register(CliDependency.COMMAND, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new RunCoinBrainWorker(
+            dependencyContainer.resolve(CoinBrainWorker),
+        )
+    ),
+})
+
+container.register(CliDependency.COMMAND, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new RunCoinBuddyWorker(
+            dependencyContainer.resolve(CoinBuddyWorker),
+        )
+    ),
+})
+
+container.register(CliDependency.COMMAND, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new RunCoinCapWorker(
+            dependencyContainer.resolve(CoinCapWorker),
+        )
+    ),
+})
+
+container.register(CliDependency.COMMAND, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new RunCoinCatapultWorker(
+            dependencyContainer.resolve(CoinCatapultWorker),
+        ),
+    ),
+})
+
+container.register(CliDependency.COMMAND, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
         new RunRugFreeCoinsWorker(
             dependencyContainer.resolve(RugFreeCoinsWorker),
         ),
@@ -405,6 +635,28 @@ container.register(CliDependency.COMMAND, {
             dependencyContainer.resolve(Top100TokensWorker),
         ),
     ),
+})
+
+container.register(CliDependency.COMMAND, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new RunCoinCodexWorker(
+            dependencyContainer.resolve(CoinCodexWorker),
+        )
+    ),
+})
+
+container.register(CliDependency.COMMAND, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new RunBitQueryWorker(
+            dependencyContainer.resolve(BitQueryWorker),
+        )
+    ),
+})
+
+// General
+
+container.register(Application, {
+    useFactory: instanceCachingFactory(() => new Application()),
 })
 
 container.register(CliDependency.COMMAND, {

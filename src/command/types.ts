@@ -35,6 +35,42 @@ export enum ExplorerWorkerNames {
     EXPLORER_SEARCH = 'explorer-search-api-worker',
 }
 
+export interface RunCoinGeckoWorkerCmdArgv {
+    blockchain: Blockchain,
+}
+
+export interface RunAdvnWorkerCmdArgv {
+    blockchain: Blockchain,
+}
+
+export interface RunCoinDiscoveryWorkerCmdArgv {
+    blockchain: Blockchain,
+}
+
+export interface RunCoinBrainWorkerCmdArgv {
+    blockchain: Blockchain,
+}
+
+export interface RunCoinBuddyWorkerCmdArgv {
+    blockchain: Blockchain,
+}
+
+export interface RunCoinCapWorkerCmdArgv {
+    blockchain: Blockchain,
+}
+
+export interface RunCoinCatapultWorkerCmdArgv {
+    blockchain: Blockchain,
+}
+
+export interface RunCoinCodexWorkerCmdArgv {
+    blockchain: Blockchain,
+}
+
+export interface RunBitQueryWorkerCmdArgv {
+    blockchain: Blockchain,
+}
+
 export interface RunRugFreeCoinsWorkerCmdArgv {
     blockchain: Blockchain,
 }
