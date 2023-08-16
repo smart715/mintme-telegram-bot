@@ -1,8 +1,8 @@
-import { AbstractTokenWorker } from '../AbstractTokenWorker'
 import { singleton } from 'tsyringe'
-import {Blockchain, logger} from "../../../utils";
-import {MyEtherListsService, TokensService} from "../../service";
-import {GitHubFile} from "../../../types";
+import { AbstractTokenWorker } from '../AbstractTokenWorker'
+import { Blockchain, logger } from '../../../utils'
+import { MyEtherListsService, TokensService } from '../../service'
+import {GitHubFile, GitHubRawTokenSocial} from '../../../types'
 
 @singleton()
 export class MyEtherListsWorker extends AbstractTokenWorker{
@@ -38,8 +38,64 @@ export class MyEtherListsWorker extends AbstractTokenWorker{
             return
         }
 
+        let i = 0
+
         for (const file of files) {
-            logger.info(file.name, file.name, file.download_url,)
+            ++i
+
+            const rawToken = await this.myEtherListsService.getRawToken(file.download_url)
+            const tokenName = rawToken.name + '(' + rawToken.symbol + ')'
+
+            logger.info(`${this.prefixLog} Check ${tokenName} ${i}/${files.length}`)
+
+            const tokenInDb = await this.tokensService.findByAddress(rawToken.address, currentBlockchain)
+
+            if (tokenInDb) {
+                continue
+            }
+
+            const tokenAddress = rawToken.address
+            const website = rawToken.website
+            const email = rawToken.support.email
+            const links = this.getLinks(rawToken.social)
+
+            if (0 === email.length && 0 === links.length) {
+                continue
+            }
+
+            await this.tokensService.add(
+                tokenAddress,
+                tokenName,
+                [ website ],
+                [ email ],
+                links,
+                this.workerName,
+                currentBlockchain
+            )
+
+            logger.info(
+                `${this.prefixLog} Added to DB:`,
+                tokenAddress,
+                tokenName,
+                website,
+                links,
+                this.workerName,
+                currentBlockchain
+            )
         }
+    }
+
+    private getLinks(social: GitHubRawTokenSocial): string[] {
+        const links = []
+
+        for (const socialKey in social) {
+            const prop: string = social[socialKey as keyof GitHubRawTokenSocial]
+
+            if (prop) {
+                links.push(prop)
+            }
+        }
+
+        return links
     }
 }

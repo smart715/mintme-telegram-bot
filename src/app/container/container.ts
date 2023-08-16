@@ -58,7 +58,7 @@ import {
     Top100TokensService,
     Top100TokensWorker,
     TokensInsightService,
-    TokensInsightWorker,
+    TokensInsightWorker, MyEtherListsService, MyEtherListsWorker,
 } from '../../core'
 import { Application } from '../'
 import { CliDependency } from './types'
@@ -79,7 +79,7 @@ import {
     RunTelegramWorker,
     RunLastTokenTxDateFetcher,
     RunRugFreeCoinsWorker,
-    RunTop100TokensWorker, RunTokensInsightWorker,
+    RunTop100TokensWorker, RunTokensInsightWorker, RunMyEtherListsWorker,
 } from '../../command'
 import { TokenNamesGenerator } from '../../utils'
 
@@ -211,44 +211,6 @@ container.register(ContactHistoryService, {
     ),
 })
 
-container.register(RugFreeCoinsService, {
-    useFactory: instanceCachingFactory(() => new RugFreeCoinsService()),
-})
-
-container.register(Top100TokensService, {
-    useFactory: instanceCachingFactory(() => new Top100TokensService()),
-})
-
-container.register(TokensInsightService, {
-    useFactory: instanceCachingFactory(() => new TokensInsightService()),
-})
-
-// Workers
-
-container.register(ExplorerEnqueuer, {
-    useFactory: instanceCachingFactory((dependencyContainer) => new ExplorerEnqueuer(
-        dependencyContainer.resolve(QueuedTokenAddressService),
-        dependencyContainer.resolve(QueuedWalletAddressService),
-    )),
-})
-
-container.register(CMCWorker, {
-    useFactory: instanceCachingFactory((dependencyContainer) =>
-        new CMCWorker(
-            dependencyContainer.resolve(CMCService),
-            dependencyContainer.resolve(TokensService),
-        ),
-    ),
-})
-
-container.register(ContactHistoryService, {
-    useFactory: instanceCachingFactory((dependencyContainer) =>
-        new ContactHistoryService(
-            dependencyContainer.resolve(ContactHistoryRepository)
-        )
-    ),
-})
-
 container.register(CoinDiscoveryService, {
     useFactory: instanceCachingFactory(() => new CoinDiscoveryService()),
 })
@@ -277,14 +239,23 @@ container.register(BitQueryService, {
     useFactory: instanceCachingFactory(() => new BitQueryService()),
 })
 
-// Workers
-
-container.register(ExplorerEnqueuer, {
-    useFactory: instanceCachingFactory((dependencyContainer) => new ExplorerEnqueuer(
-        dependencyContainer.resolve(QueuedTokenAddressService),
-        dependencyContainer.resolve(QueuedWalletAddressService),
-    )),
+container.register(RugFreeCoinsService, {
+    useFactory: instanceCachingFactory(() => new RugFreeCoinsService()),
 })
+
+container.register(Top100TokensService, {
+    useFactory: instanceCachingFactory(() => new Top100TokensService()),
+})
+
+container.register(TokensInsightService, {
+    useFactory: instanceCachingFactory(() => new TokensInsightService()),
+})
+
+container.register(MyEtherListsService, {
+    useFactory: instanceCachingFactory(() => new MyEtherListsService()),
+})
+
+// Workers
 
 container.register(CMCWorker, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
@@ -293,6 +264,13 @@ container.register(CMCWorker, {
             dependencyContainer.resolve(TokensService),
         ),
     ),
+})
+
+container.register(ExplorerEnqueuer, {
+    useFactory: instanceCachingFactory((dependencyContainer) => new ExplorerEnqueuer(
+        dependencyContainer.resolve(QueuedTokenAddressService),
+        dependencyContainer.resolve(QueuedWalletAddressService),
+    )),
 })
 
 container.register(EnqueueTokensWorker, {
@@ -513,20 +491,19 @@ container.register(BitQueryWorker, {
     ),
 })
 
-container.register(CliDependency.COMMAND, {
-    useFactory: instanceCachingFactory((dependencyContainer) =>
-        new RunTelegramWorker(
-            dependencyContainer.resolve(TelegramWorker),
-        )
-    ),
-})
-
-// CLI
-
 container.register(TokensInsightWorker, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new TokensInsightWorker(
             dependencyContainer.resolve(TokensInsightService),
+            dependencyContainer.resolve(TokensService),
+        )
+    ),
+})
+
+container.register(MyEtherListsWorker, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new MyEtherListsWorker(
+            dependencyContainer.resolve(MyEtherListsService),
             dependencyContainer.resolve(TokensService),
         )
     ),
@@ -679,6 +656,14 @@ container.register(CliDependency.COMMAND, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new RunTokensInsightWorker(
             dependencyContainer.resolve(TokensInsightWorker),
+        )
+    ),
+})
+
+container.register(CliDependency.COMMAND, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new RunMyEtherListsWorker(
+            dependencyContainer.resolve(MyEtherListsWorker),
         )
     ),
 })

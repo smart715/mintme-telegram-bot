@@ -1,6 +1,6 @@
 import axios from 'axios'
 import { singleton } from 'tsyringe'
-import { GitHubFile } from '../../../types'
+import {GitHubFile, GitHubRawTokenFile} from '../../../types'
 
 @singleton()
 export class MyEtherListsService {
@@ -13,6 +13,12 @@ export class MyEtherListsService {
 
         const response = await axios.get(apiUrl);
 
-        return response.data.filter(item => 'file' === item.type)
+        return response.data.filter((item: GitHubFile) => 'file' === item.type)
+    }
+
+    public async getRawToken(link: string): Promise<GitHubRawTokenFile> {
+        const response = await axios.get(link);
+
+        return response.data
     }
 }
