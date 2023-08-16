@@ -1,5 +1,5 @@
+import axios from 'axios'
 import { singleton } from 'tsyringe'
-import axios from "axios";
 
 @singleton()
 export class RecentTokensService {
