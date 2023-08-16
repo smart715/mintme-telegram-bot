@@ -51,7 +51,7 @@ export class TokensInsightWorker extends AbstractTokenWorker {
                 ++i
                 const tokenName = coin.name + '(' + coin.symbol + ')'
 
-                logger.info(`${this.prefixLog} Check ${tokenName}. ${i}/${coinsLength}`)
+                logger.info(`${this.prefixLog} Check ${tokenName}. ${i+offset}/${coinsLength+offset}`)
 
                 const tokenInDb = await this.tokensService.findByName(tokenName, currentBlockchain)
 
