@@ -1,13 +1,44 @@
+import { ContactMethod } from '../core'
+
 export function isValidEmail(email: string): boolean {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/i.test(email)
 }
 
-export function isValidTwitterLink(link: string): boolean {
-    return link.toLowerCase().includes('twitter.com/')
+export function getContactMethodRegex(method: ContactMethod): RegExp|undefined {
+    switch (method) {
+        case ContactMethod.TWITTER:
+            return /twitter\.com\/[a-zA-Z0-9_]{4,15}/
+        case ContactMethod.TELEGRAM:
+            return /t\.me\/[a-zA-Z0-9]{5,64}/
+    }
+    return undefined
 }
+export function getValidLinks(links: string[], method: ContactMethod): string[] {
+    const blacklistLinks = [
+        'twitter.com/status',
+        'twitter.com/search',
+        'twitter.com/messages',
+        'twitter.com/explore',
+        'twitter.com/notifications',
+        'twitter.com/settings',
+    ]
+    const regex = getContactMethodRegex(method)
+    if(!regex) {
+        return []
+    }
 
-export function isValidTgLink(link: string): boolean {
-    return link.toLowerCase().includes('t.me/')
+    const validLinks = []
+    for(const link of links) {
+        const regexResults = regex.exec(link.replace('/@', '/'))
+        if(regexResults) {
+            for(const validLink of regexResults) {
+                if(!blacklistLinks.includes(validLink)) {
+                    validLinks.push(`https://${validLink}`)
+                }
+            }
+        }
+    }
+    return validLinks
 }
 
 export function removeQueryParams(link: string): string {
