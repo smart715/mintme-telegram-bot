@@ -2,19 +2,19 @@ import { singleton } from 'tsyringe'
 import { AbstractTokenWorker } from '../AbstractTokenWorker'
 import { Blockchain, logger } from '../../../utils'
 import { MyEtherListsService, TokensService } from '../../service'
-import {GitHubFile, GitHubRawTokenSocial} from '../../../types'
+import { GitHubFile, GitHubRawTokenSocial } from '../../../types'
 
 @singleton()
-export class MyEtherListsWorker extends AbstractTokenWorker{
+export class MyEtherListsWorker extends AbstractTokenWorker {
     private readonly workerName = 'MyEtherLists'
     private readonly prefixLog = `[${this.workerName}]`
     private readonly unsupportedBlockchains: Blockchain[] = [ Blockchain.CRO ]
 
-    constructor(
+    public constructor(
         private readonly myEtherListsService: MyEtherListsService,
         private readonly tokensService: TokensService,
     ) {
-        super();
+        super()
     }
 
     public async run(currentBlockchain: Blockchain): Promise<void> {
