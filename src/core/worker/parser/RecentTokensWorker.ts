@@ -1,10 +1,10 @@
 import { DOMWindow, JSDOM } from 'jsdom'
 import { AbstractTokenWorker } from '../AbstractTokenWorker'
-import { Blockchain, logger } from '../../../utils'
+import { Blockchain, findContractAddress, logger } from '../../../utils'
 import { RecentTokensService, TokensService } from '../../service'
 
 export class RecentTokensWorker extends AbstractTokenWorker {
-    private readonly workerName = 'CoinBrain'
+    private readonly workerName = 'RecentTokens'
     private readonly prefixLog = `[${this.workerName}]`
     private readonly unsupportedBlockchains: Blockchain[] = [ Blockchain.CRO ]
 
@@ -56,15 +56,57 @@ export class RecentTokensWorker extends AbstractTokenWorker {
                     continue
                 }
 
-                logger.info(`${this.prefixLog} Link: ${tokenLink.href}`)
+                let tokenPageInfo: string
+
+                try {
+                    tokenPageInfo = await this.recentTokensService.getTokenInfoPage(tokenLink)
+                } catch (ex: any) {
+                    logger.error(
+                        `${this.prefixLog} Failed to get token page. Page link: ${tokenLink} Reason: ${ex.message}. Skipping...`
+                    )
+
+                    continue
+                }
+
+                const tokenAddress = findContractAddress(tokenPageInfo)
+
+                if (!tokenAddress) {
+                    continue
+                }
+
+                const tokenPageDOM = (new JSDOM(tokenPageInfo)).window
+
+                const tokenName = this.getTokenName(tokenPageDOM)
+
+                logger.info(`name: ${tokenName}. addr: ${tokenAddress}`)
             }
 
             page += 1
         } while (tokensCount > 0)
     }
 
-    private getTokenLink(token: Element): HTMLAnchorElement|undefined {
-        return token.getElementsByTagName('a')[0]
+    private getTokenName(tokenPageDOM: DOMWindow): string|null {
+        const h1Tags = tokenPageDOM
+            .document
+            .getElementsByTagName('h1')
+
+        const titleMatchedRegEx = h1Tags[0].innerHTML.match(/alt="([^"]+)"/)
+
+        if (!titleMatchedRegEx) {
+            return null
+        }
+
+        return titleMatchedRegEx[1]
+    }
+
+    private getTokenLink(token: Element): string|null {
+        const linkTag = token.getElementsByTagName('a')[0]
+
+        if (!linkTag) {
+            return null
+        }
+
+        return linkTag.href
     }
 
     private geTokenDivs(allTokensDOM: DOMWindow): HTMLCollectionOf<Element> {

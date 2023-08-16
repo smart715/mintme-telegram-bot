@@ -58,7 +58,11 @@ import {
     Top100TokensService,
     Top100TokensWorker,
     TokensInsightService,
-    TokensInsightWorker, MyEtherListsService, MyEtherListsWorker, RecentTokensService, RecentTokensWorker,
+    TokensInsightWorker,
+    MyEtherListsService,
+    MyEtherListsWorker,
+    RecentTokensService,
+    RecentTokensWorker,
 } from '../../core'
 import { Application } from '../'
 import { CliDependency } from './types'
@@ -79,7 +83,10 @@ import {
     RunTelegramWorker,
     RunLastTokenTxDateFetcher,
     RunRugFreeCoinsWorker,
-    RunTop100TokensWorker, RunTokensInsightWorker, RunMyEtherListsWorker, RunRecentTokensWorker,
+    RunTop100TokensWorker,
+    RunTokensInsightWorker,
+    RunMyEtherListsWorker,
+    RunRecentTokensWorker,
 } from '../../command'
 import { TokenNamesGenerator } from '../../utils'
 
