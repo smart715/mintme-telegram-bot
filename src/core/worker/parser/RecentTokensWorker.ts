@@ -1,7 +1,7 @@
-import {DOMWindow, JSDOM} from 'jsdom'
-import {AbstractTokenWorker} from '../AbstractTokenWorker'
-import {Blockchain, findContractAddress, getHrefFromTagString, getHrefValuesFromTagString, logger} from '../../../utils'
-import {RecentTokensService, TokensService} from '../../service'
+import { DOMWindow, JSDOM } from 'jsdom'
+import { AbstractTokenWorker } from '../AbstractTokenWorker'
+import { Blockchain, findContractAddress, getHrefFromTagString, getHrefValuesFromTagString, logger } from '../../../utils'
+import { RecentTokensService, TokensService } from '../../service'
 
 export class RecentTokensWorker extends AbstractTokenWorker {
     private readonly workerName = 'RecentTokens'
@@ -45,7 +45,7 @@ export class RecentTokensWorker extends AbstractTokenWorker {
 
             const allTokensDOM = (new JSDOM(tokensPageStr)).window
 
-            const tokens  = this.geTokenDivs(allTokensDOM)
+            const tokens = this.geTokenDivs(allTokensDOM)
 
             tokensCount = tokens.length
 
@@ -117,7 +117,7 @@ export class RecentTokensWorker extends AbstractTokenWorker {
                     currentBlockchain
                 )
             }
-            
+
             page += 1
         } while (tokensCount > 0)
     }
@@ -145,9 +145,9 @@ export class RecentTokensWorker extends AbstractTokenWorker {
 
     private getDOMPageInfo(tokenPageInfo: string): DOMWindow {
         // remove useless part of html doc to prevent memory leak
-        const tableRegex: RegExp = /<table\b[^>]*class="table table-hover text-nowrap align-middle"[^>]*>(.*?)<\/table>/g;
+        const tableRegex: RegExp = /<table\b[^>]*class="table table-hover text-nowrap align-middle"[^>]*>(.*?)<\/table>/g
 
-        const purePageInfo = tokenPageInfo.replace(tableRegex, '');
+        const purePageInfo = tokenPageInfo.replace(tableRegex, '')
 
         return (new JSDOM(purePageInfo)).window
     }
@@ -181,7 +181,7 @@ export class RecentTokensWorker extends AbstractTokenWorker {
     private geTokenDivs(allTokensDOM: DOMWindow): HTMLCollectionOf<Element> {
         return allTokensDOM
             .document
-            .getElementsByClassName('table-coin-info');
+            .getElementsByClassName('table-coin-info')
     }
 
     private getTargetBlockchain(currentBlockchain: Blockchain): string {
