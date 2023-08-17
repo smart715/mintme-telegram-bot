@@ -8,7 +8,7 @@ export class RecentTokensService {
 
         const response = await axios.get(apiUrl)
 
-        return response.data
+        return response.data.replace(/(\r\n|\n|\r)/gm, '')
     }
 
     public async getTokenInfoPage(tokenLink: string): Promise<string> {
@@ -16,6 +16,6 @@ export class RecentTokensService {
 
         const response = await axios.get(apiUrl)
 
-        return response.data
+        return response.data.replace(/(\r\n|\n|\r)/gm, '')
     }
 }

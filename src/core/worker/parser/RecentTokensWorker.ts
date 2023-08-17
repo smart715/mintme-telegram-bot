@@ -1,7 +1,7 @@
-import { DOMWindow, JSDOM } from 'jsdom'
-import { AbstractTokenWorker } from '../AbstractTokenWorker'
-import { Blockchain, findContractAddress, logger } from '../../../utils'
-import { RecentTokensService, TokensService } from '../../service'
+import {DOMWindow, JSDOM} from 'jsdom'
+import {AbstractTokenWorker} from '../AbstractTokenWorker'
+import {Blockchain, findContractAddress, getHrefFromTagString, getHrefValuesFromTagString, logger} from '../../../utils'
+import {RecentTokensService, TokensService} from '../../service'
 
 export class RecentTokensWorker extends AbstractTokenWorker {
     private readonly workerName = 'RecentTokens'
@@ -74,15 +74,82 @@ export class RecentTokensWorker extends AbstractTokenWorker {
                     continue
                 }
 
-                const tokenPageDOM = (new JSDOM(tokenPageInfo)).window
+                const tokenInDb = await this.tokenService.findByAddress(tokenAddress, currentBlockchain)
+
+                if (tokenInDb) {
+                    continue
+                }
+
+                const tokenPageDOM = this.getDOMPageInfo(tokenPageInfo)
 
                 const tokenName = this.getTokenName(tokenPageDOM)
 
-                logger.info(`name: ${tokenName}. addr: ${tokenAddress}`)
-            }
+                if (!tokenName) {
+                    continue
+                }
 
+                const website = this.getWebsite(tokenPageInfo)
+                const links = this.getLinks(tokenPageInfo)
+
+                logger.info(`${this.prefixLog} Check ${tokenName}`)
+
+                if (0 === links.length) {
+                    continue
+                }
+
+                await this.tokenService.add(
+                    tokenAddress,
+                    tokenName,
+                    [ website ],
+                    [ '' ],
+                    links,
+                    this.workerName,
+                    currentBlockchain
+                )
+
+                logger.info(
+                    `${this.prefixLog} Added to DB:`,
+                    tokenAddress,
+                    tokenName,
+                    website,
+                    links,
+                    this.workerName,
+                    currentBlockchain
+                )
+            }
+            
             page += 1
         } while (tokensCount > 0)
+    }
+
+    private getLinks(tokenPageInfo: string): string[] {
+        const matchedSocialTr = tokenPageInfo.match(/<tr>(?:\t*)<td class="px-0">Social profiles:<\/td>(.+?)<\/tr>/)
+
+        if (!matchedSocialTr) {
+            return []
+        }
+
+        return getHrefValuesFromTagString(matchedSocialTr)
+    }
+
+    private getWebsite(tokenPageInfo: string): string {
+        const matchedWebsiteTd = tokenPageInfo
+            .match(/<td class="px-0">Official site:<\/td>(.+?)<td class="px-0">Social profiles:<\/td>/)
+
+        if (null === matchedWebsiteTd) {
+            return ''
+        }
+
+        return getHrefFromTagString(matchedWebsiteTd)
+    }
+
+    private getDOMPageInfo(tokenPageInfo: string): DOMWindow {
+        // remove useless part of html doc to prevent memory leak
+        const tableRegex: RegExp = /<table\b[^>]*class="table table-hover text-nowrap align-middle"[^>]*>(.*?)<\/table>/g;
+
+        const purePageInfo = tokenPageInfo.replace(tableRegex, '');
+
+        return (new JSDOM(purePageInfo)).window
     }
 
     private getTokenName(tokenPageDOM: DOMWindow): string|null {
@@ -96,7 +163,9 @@ export class RecentTokensWorker extends AbstractTokenWorker {
             return null
         }
 
-        return titleMatchedRegEx[1]
+        const symbolAndName = titleMatchedRegEx[1].split(' - ')
+
+        return symbolAndName[1] + '(' + symbolAndName[0] + ')'
     }
 
     private getTokenLink(token: Element): string|null {
