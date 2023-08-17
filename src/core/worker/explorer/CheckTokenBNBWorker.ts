@@ -33,7 +33,7 @@ export class CheckTokenBNBWorker extends AbstractTokenWorker {
                 continue
             }
 
-            for(const token of tokensToCheck) {
+            for (const token of tokensToCheck) {
                 await this.checkToken(webDriver, token)
             }
         }

@@ -79,7 +79,7 @@ export class TelegramWorker {
         const contactingPromises: Promise<void>[] = []
 
         clients.forEach((client) => {
-            if(!client.isInitialized) {
+            if (!client.isInitialized) {
                 logger.warn(
                     `[Telegram Worker ID: ${client.telegramAccount.id}] ` +
                     `Not initialized.`

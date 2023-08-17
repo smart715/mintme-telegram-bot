@@ -1,7 +1,8 @@
 import { singleton } from 'tsyringe'
 import { TokenRepository } from '../repository'
 import { Token } from '../entity'
-import { Blockchain, isValidEmail, isValidTgLink, isValidTwitterLink } from '../../utils'
+import { Blockchain, getValidLinks, isValidEmail } from '../../utils'
+import { ContactMethod } from '../types'
 
 @singleton()
 export class TokensService {
@@ -76,10 +77,10 @@ export class TokensService {
     }
 
     public getTwitterAccounts(token: Token): string[] {
-        return token.links.filter(link => isValidTwitterLink(link))
+        return getValidLinks(token.links, ContactMethod.TWITTER)
     }
 
     public getTelegramAccounts(token: Token): string[] {
-        return token.links.filter(link => isValidTgLink(link))
+        return getValidLinks(token.links, ContactMethod.TELEGRAM)
     }
 }
