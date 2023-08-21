@@ -21,6 +21,7 @@ export class ContactQueueService {
         blockchain: Blockchain,
         channel: string,
         isFutureContact: boolean = false,
+        contactMethod: ContactMethod
     ): Promise<QueuedContact> {
         const queuedContact = new QueuedContact()
 
@@ -28,6 +29,7 @@ export class ContactQueueService {
         queuedContact.blockchain = blockchain
         queuedContact.channel = channel
         queuedContact.isPlanned = isFutureContact
+        queuedContact.contactMethod = contactMethod
 
         await this.queuedContactRepository.insert(queuedContact)
 
@@ -49,24 +51,10 @@ export class ContactQueueService {
             this.isFetchingQueue = true
             const delayInSeconds = parseInt(config.get('contact_frequency_in_seconds'))
 
-            let contactFilter = ''
-            switch (contactMethod) {
-                case ContactMethod.EMAIL:
-                    //TODO
-                    break
-                case ContactMethod.TELEGRAM:
-                    contactFilter = 'channel LIKE \'%t.me/%\''
-                    break
-
-                case ContactMethod.TWITTER:
-                    contactFilter = 'channel LIKE \'%twitter.com/%\''
-                    break
-            }
-
             const result = await this.queuedContactRepository
                 .createQueryBuilder()
                 .where('is_processing = 0')
-                .andWhere(contactFilter)
+                .andWhere('contact_method = :contact_method', { contactMethod })
                 .andWhere(new Brackets((qb) => qb
                     .where('is_planned = 0')
                     .orWhere(

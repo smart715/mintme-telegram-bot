@@ -100,7 +100,12 @@ export class EnqueueTokensWorker extends AbstractTokenWorker {
         } else {
             token.contactStatus = TokenContactStatusType.QUEUED
 
-            await this.contactQueueService.addToQueue(token.address, token.blockchain, contactChannel, isFutureContact)
+            await this.contactQueueService.addToQueue(token.address,
+                token.blockchain,
+                contactChannel,
+                isFutureContact,
+                nextContactMethod
+            )
 
             return { enqueued: true, nextContactMethod, contactChannel }
         }
