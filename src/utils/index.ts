@@ -7,6 +7,7 @@ export * from './regexp'
 export * from './blockchains'
 export * from './constants'
 export { TokenNamesGenerator } from './TokenNamesGenerator'
+export { RetryAxios } from './RetryAxios'
 
 export {
     getHrefFromTagString,
@@ -26,7 +27,7 @@ export function parseContactMethod(channel: string): ContactMethod|undefined {
 }
 
 export function getMaxAttemptsPerMethod(method: ContactMethod): number {
-    switch(method) {
+    switch (method) {
         case ContactMethod.EMAIL:
             return config.get('contact_email_max_attempts')
         case ContactMethod.TWITTER:

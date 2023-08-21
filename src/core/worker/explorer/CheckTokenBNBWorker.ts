@@ -33,7 +33,7 @@ export class CheckTokenBNBWorker extends AbstractTokenWorker {
                 continue
             }
 
-            for(const token of tokensToCheck) {
+            for (const token of tokensToCheck) {
                 await this.checkToken(webDriver, token)
             }
         }
@@ -150,7 +150,7 @@ export class CheckTokenBNBWorker extends AbstractTokenWorker {
             return
         }
 
-        await this.tokensService.add(
+        await this.tokensService.addIfNotExists(
             tokenAddress.toLowerCase(),
             tokenName,
             [ website ],

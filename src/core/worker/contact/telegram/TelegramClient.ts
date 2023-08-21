@@ -330,7 +330,7 @@ export class TelegramClient {
             result === ContactHistoryStatusType.SENT_GROUP ||
             result === ContactHistoryStatusType.SENT_GROUP_BUT_DELETED)
 
-        if(isSuccess) {
+        if (isSuccess) {
             this.setNextMessageIndex()
         }
         return isSuccess

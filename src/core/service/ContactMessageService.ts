@@ -19,7 +19,7 @@ export class ContactMessageService {
     public async getAccountMessages(isTelegram: boolean, accountId: number): Promise<ContactMessage[]> {
         let messages = await this.contactMessageRepository.getAccountMessages(isTelegram, accountId)
 
-        if(messages.length < this.telegramMessagesPerAccount) {
+        if (messages.length < this.telegramMessagesPerAccount) {
             await this.assignAccountMessages(accountId, (this.telegramMessagesPerAccount - messages.length))
             messages = await this.contactMessageRepository.getAccountMessages(isTelegram, accountId)
         }

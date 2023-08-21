@@ -1,7 +1,8 @@
 import { singleton } from 'tsyringe'
 import { TokenRepository } from '../repository'
 import { Token } from '../entity'
-import { Blockchain, isValidEmail, isValidTgLink, isValidTwitterLink } from '../../utils'
+import { Blockchain, getValidLinks, isValidEmail } from '../../utils'
+import { ContactMethod } from '../types'
 
 @singleton()
 export class TokensService {
@@ -23,7 +24,7 @@ export class TokensService {
         return this.tokenRepository.findByNameAndBlockchain(name, blockchain)
     }
 
-    public async add(
+    public async addIfNotExists(
         tokenAddress: string,
         tokenName: string,
         websites: string[],
@@ -32,7 +33,13 @@ export class TokensService {
         workerSource: string,
         blockchain: Blockchain
     ): Promise<Token> {
-        const token = new Token()
+        let token = await this.findByAddress(tokenAddress, blockchain)
+
+        if (token) {
+            return token
+        }
+
+        token = new Token()
 
         token.address = tokenAddress
         token.blockchain = blockchain
@@ -83,10 +90,10 @@ export class TokensService {
     }
 
     public getTwitterAccounts(token: Token): string[] {
-        return token.links.filter(link => isValidTwitterLink(link))
+        return getValidLinks(token.links, ContactMethod.TWITTER)
     }
 
     public getTelegramAccounts(token: Token): string[] {
-        return token.links.filter(link => isValidTgLink(link))
+        return getValidLinks(token.links, ContactMethod.TELEGRAM)
     }
 }
