@@ -10,32 +10,17 @@ const colors: { [color: string]: typeof chalk.magenta } = {
     ERROR: chalk.red,
 }
 
-const journaldLogLevels: { [color: string]: string } = {
-    CRIT: '<2>',
-    ERROR: '<3>',
-    WARN: '<4>',
-    TRACE: '', // such journald logLevel prefix wouldn't work for TRACE console output
-    INFO: '<6>',
-    DEBUG: '<7>',
-}
-
-function getJournaldLogLevel(level: string): string {
-    return ''
-    //return journaldLogLevels[level]
-}
-
 prefix.reg(log)
 
 log.enableAll()
 
 prefix.apply(log, {
     format(level: string, name: string | undefined, timestamp: Date) {
-        const journaldLogLevel = getJournaldLogLevel(level.toUpperCase())
         const formattedTimestamp = chalk.gray(`[${timestamp}]`)
         const logLevel = colors[level.toUpperCase()](level)
         const formattedName = chalk.green(`${name}:`)
 
-        return `${journaldLogLevel}${formattedTimestamp} ${logLevel} ${formattedName}`
+        return `${formattedTimestamp} ${logLevel} ${formattedName}`
     },
     timestampFormatter(date: Date) {
         return date
@@ -47,9 +32,7 @@ prefix.apply(log, {
 
 prefix.apply(log.getLogger('critical'), {
     format(level: string, name: string | undefined, timestamp: Date) {
-        const journaldLogLevel = getJournaldLogLevel('CRIT')
-
-        return chalk.red.bold(`${journaldLogLevel}[${timestamp}] ${level} ${name}:`)
+        return chalk.red.bold(`[${timestamp}] ${level} ${name}:`)
     },
 })
 

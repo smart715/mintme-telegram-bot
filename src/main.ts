@@ -1,6 +1,6 @@
-import "reflect-metadata"
-import { Application, container } from "./app"
-import { Database, logger } from "./utils"
+import 'reflect-metadata'
+import { Application, container } from './app'
+import { Database, logger } from './utils'
 
 (async (): Promise<void> => {
     if (!await databaseHealthCheck()) {
@@ -20,7 +20,7 @@ async function databaseHealthCheck(): Promise<boolean> {
 
         return true
     } catch (err) {
-        logger.error('DataBase connection failed', err)
+        logger.info('DataBase connection failed', err)
 
         return false
     }
