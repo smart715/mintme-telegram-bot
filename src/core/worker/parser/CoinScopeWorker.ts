@@ -1,7 +1,7 @@
 import { singleton } from "tsyringe";
-import { AbstractTokenWorker } from "./AbstractTokenWorker";
-import { Blockchain, logger } from "../../utils";
-import { CoinScopeService, TokenCachedDataService, TokensService } from "../service";
+import { AbstractTokenWorker } from "../AbstractTokenWorker";
+import { Blockchain, logger } from "../../../utils";
+import { CoinScopeService, TokenCachedDataService, TokensService } from "../../service";
 import { Builder, WebDriver } from "selenium-webdriver";
 
 @singleton()

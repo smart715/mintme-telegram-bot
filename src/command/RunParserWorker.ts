@@ -3,7 +3,7 @@ import { Arguments, Argv } from 'yargs'
 import { CommandInterface, ParserWorkerName, RunParserWorkerCmdArgv } from './types'
 import { Blockchain, logger } from '../utils'
 import { CoinVoteWorker } from '../core/worker/parser/CoinVoteWorker'
-import { CoinsGodsWorker, CoinsHunterWorker } from '../core'
+import { Coin360Worker, CoinsGodsWorker, CoinsHunterWorker } from '../core'
 
 @singleton()
 export class RunParserWorker implements CommandInterface {
@@ -13,7 +13,8 @@ export class RunParserWorker implements CommandInterface {
     public constructor(
         private readonly coinVoteWorker: CoinVoteWorker,
         private readonly coinsHunterWorker: CoinsHunterWorker,
-        private readonly coinsGodsWorker: CoinsGodsWorker
+        private readonly coinsGodsWorker: CoinsGodsWorker,
+        private readonly coin360Worker: Coin360Worker
     ) { }
 
     public builder(yargs: Argv<RunParserWorkerCmdArgv>): void {
@@ -42,6 +43,9 @@ export class RunParserWorker implements CommandInterface {
             break
             case ParserWorkerName.COINS_GODS:
                 await this.coinsGodsWorker.run(argv.blockchain)
+            break
+            case ParserWorkerName.COIN_360:
+                await this.coin360Worker.run(argv.blockchain)
             break
             default:
                 logger.error('Wrong worker name provided')

@@ -81,6 +81,7 @@ import {
     RunParserWorker,
 } from '../../command'
 import { TokenNamesGenerator } from '../../utils'
+import { Coin360Worker } from '../../core/worker/parser/Coin360Worker'
 
 // Repositories
 
@@ -518,6 +519,16 @@ container.register(CoinsGodsWorker, {
     ),
 })
 
+container.register(Coin360Worker, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new Coin360Worker(
+            dependencyContainer.resolve(ParserWorkersService),
+            dependencyContainer.resolve(TokensService),
+            dependencyContainer.resolve(TokenCachedDataService),
+        )
+    ),
+})
+
 // CLI
 
 container.register(CliDependency.COMMAND, {
@@ -637,6 +648,7 @@ container.register(CliDependency.COMMAND, {
             dependencyContainer.resolve(CoinVoteWorker),
             dependencyContainer.resolve(CoinsHunterWorker),
             dependencyContainer.resolve(CoinsGodsWorker),
+            dependencyContainer.resolve(Coin360Worker),
         )
     ),
 })

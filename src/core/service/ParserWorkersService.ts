@@ -1,7 +1,7 @@
 import axios from 'axios'
 import { singleton } from 'tsyringe'
 import { Blockchain } from '../../utils'
-import { CoinsHunterToken } from '../../types'
+import { Coin360Token, CoinsHunterToken } from '../../types'
 
 @singleton()
 export class ParserWorkersService {
@@ -31,6 +31,18 @@ export class ParserWorkersService {
 
     public async loadCoinsGodsTokenPage(tokenId: string): Promise<string> {
         const response = await axios.get(`https://coinsgods.com/coin/${tokenId}`)
+
+        return response.data.replace(/(\r\n|\n|\r)/gm, '')
+    }
+
+    public async loadCoin360Tokens(): Promise<Coin360Token[]> {
+        const response = await axios.get(`https://coin360.com/site-api/coins`)
+
+        return response.data.data
+    }
+
+    public async loadCoin360Token(tokenId: string): Promise<string> {
+        const response = await axios.get(`https://coin360.com/coin/${tokenId}`)
 
         return response.data.replace(/(\r\n|\n|\r)/gm, '')
     }

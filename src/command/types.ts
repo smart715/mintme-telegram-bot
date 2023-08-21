@@ -44,6 +44,7 @@ export enum ParserWorkerName {
     COIN_VOTE = 'coin-vote',
     COINS_HUNTER = 'coins-hunter',
     COINS_GODS = 'coins-gods',
+    COIN_360 = 'coin-360',
 }
 
 export interface RunCoinGeckoWorkerCmdArgv {
