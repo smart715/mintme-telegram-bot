@@ -1,7 +1,9 @@
 import { singleton } from 'tsyringe'
 import { CMCService, TokensService } from '../../service'
 import { AbstractTokenWorker } from '../AbstractTokenWorker'
-import { logger, parseBlockchainName } from '../../../utils'
+import { Blockchain, logger, parseBlockchainName } from '../../../utils'
+import config from 'config'
+import { CMCCryptocurrency } from '../../../types'
 
 @singleton()
 export class CMCWorker extends AbstractTokenWorker {
@@ -12,7 +14,7 @@ export class CMCWorker extends AbstractTokenWorker {
         super()
     }
 
-    public async run(): Promise<any> {
+    public async run(currentBlockchain: Blockchain): Promise<any> {
         logger.info(`${CMCWorker.name} started`)
 
         const requestLimit = config.get<number>("cmc_request_limit")
@@ -74,7 +76,6 @@ export class CMCWorker extends AbstractTokenWorker {
             const email = ''
             const links = this.getUsefulLinks(tokenInfo.urls)
             const workerSource = 'CMC'
-            const blockchain = parseBlockchainName(token.platform.slug)
 
             const foundToken = await this.tokensService.findByAddress(
                 tokenAddress,
@@ -106,7 +107,7 @@ export class CMCWorker extends AbstractTokenWorker {
                     blockchain
                 )
             }
-        })
+        }
     }
 
     private getUsefulLinks(linksObj: {[type: string] : string[]}): string[] {

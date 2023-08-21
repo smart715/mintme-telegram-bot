@@ -53,6 +53,10 @@ import {
     CoinCodexService,
     BitQueryService,
     BitQueryWorker,
+    CoinVoteWorker,
+    CoinVoteService,
+    TokenCachedDataRepository,
+    TokenCachedDataService,
 } from '../../core'
 import { Application } from '../'
 import { CliDependency } from './types'
@@ -72,6 +76,7 @@ import {
     RunBitQueryWorker,
     RunTelegramWorker,
     RunLastTokenTxDateFetcher,
+    RunCoinVoteWorker,
 } from '../../command'
 import { TokenNamesGenerator } from '../../utils'
 
@@ -111,6 +116,10 @@ container.register(QueuedTokenAddressRepository, {
 
 container.register(QueuedWalletAddressRepository, {
     useFactory: instanceCachingFactory(() => getConnection().getCustomRepository(QueuedWalletAddressRepository)),
+})
+
+container.register(TokenCachedDataRepository, {
+    useFactory: instanceCachingFactory(() => getConnection().getCustomRepository(TokenCachedDataRepository)),
 })
 
 // Utils
@@ -220,6 +229,14 @@ container.register(ContactHistoryService, {
     ),
 })
 
+container.register(TokenCachedDataService, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new TokenCachedDataService(
+            dependencyContainer.resolve(TokenCachedDataRepository)
+        )
+    ),
+})
+
 container.register(CoinDiscoveryService, {
     useFactory: instanceCachingFactory(() => new CoinDiscoveryService()),
 })
@@ -246,6 +263,10 @@ container.register(CoinCodexService, {
 
 container.register(BitQueryService, {
     useFactory: instanceCachingFactory(() => new BitQueryService()),
+})
+
+container.register(CoinVoteService, {
+    useFactory: instanceCachingFactory(() => new CoinVoteService()),
 })
 
 // Workers
@@ -466,6 +487,16 @@ container.register(BitQueryWorker, {
     ),
 })
 
+container.register(CoinVoteWorker, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new CoinVoteWorker(
+            dependencyContainer.resolve(CoinVoteService),
+            dependencyContainer.resolve(TokensService),
+            dependencyContainer.resolve(TokenCachedDataService),
+        )
+    ),
+})
+
 container.register(CliDependency.COMMAND, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new RunTelegramWorker(
@@ -575,6 +606,14 @@ container.register(CliDependency.COMMAND, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new RunBitQueryWorker(
             dependencyContainer.resolve(BitQueryWorker),
+        )
+    ),
+})
+
+container.register(CliDependency.COMMAND, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new RunCoinVoteWorker(
+            dependencyContainer.resolve(CoinVoteWorker),
         )
     ),
 })

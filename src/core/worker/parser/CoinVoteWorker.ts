@@ -1,9 +1,9 @@
 import { singleton } from 'tsyringe'
-import { AbstractTokenWorker } from './AbstractTokenWorker'
-import { Blockchain, findContractAddress, getHrefFromTagString, getHrefValuesFromTagString, logger, sleep } from '../../utils'
-import { CoinVoteService, TokensService } from '../service'
+import { AbstractTokenWorker } from '../AbstractTokenWorker'
+import { Blockchain, findContractAddress, getHrefFromTagString, getHrefValuesFromTagString, logger, sleep } from '../../../utils'
+import { CoinVoteService, TokensService } from '../../service'
 import { DOMWindow, JSDOM } from 'jsdom'
-import { TokenCachedDataService } from '../service/TokenCachedDataService'
+import { TokenCachedDataService } from '../../service/TokenCachedDataService'
 
 @singleton()
 export class CoinVoteWorker extends AbstractTokenWorker {
@@ -29,7 +29,6 @@ export class CoinVoteWorker extends AbstractTokenWorker {
         }
 
         let page = 1
-        let normalizedBlockchain = currentBlockchain.toLowerCase()
 
         while(true) {
             logger.info(`${this.prefixLog} Parsing page ${page}`)
@@ -40,16 +39,16 @@ export class CoinVoteWorker extends AbstractTokenWorker {
             const coinsIds = this.parseCoinsIds(pageDOM)
 
             if (!coinsIds) {
-                logger.info(`${this.prefixLog} No coins ids found. Stopping fetching pages`)
+                logger.warn(`${this.prefixLog} No coins ids found. Stopping fetching pages`)
 
                 break
             }
 
-            sleep(2000)
+            await sleep(2000)
 
             for (const coinId of coinsIds) {
                 if (await this.tokenCachedDataService.isCached(coinId, this.workerName)) {
-                    logger.info(`${this.prefixLog} Data for coin ${coinId} already cached. Skipping`)
+                    logger.warn(`${this.prefixLog} Data for coin ${coinId} already cached. Skipping`)
 
                     continue
                 }
@@ -61,7 +60,7 @@ export class CoinVoteWorker extends AbstractTokenWorker {
 
                 if (tokenAddress) {
                     const tokenName = coinPageDOM.document.title.split(' price today,')[0]
-                    const linksEl = coinPageDOM.document.querySelector('coin-page-row')
+                    const linksEl = coinPageDOM.document.querySelector('.coin-page-row')
                     const website = linksEl ? this.getWebsite(linksEl.innerHTML) : ''
                     const links = linksEl ? this.getLinks(linksEl?.innerHTML) : [ ]
 
@@ -84,13 +83,15 @@ export class CoinVoteWorker extends AbstractTokenWorker {
                         currentBlockchain
                     )
                 } else {
-                    logger.info(`${this.prefixLog} Address for coin ${coinId} not found.`)
+                    logger.warn(`${this.prefixLog} Address for coin ${coinId} not found.`)
                 }
 
                 await this.tokenCachedDataService.cacheTokenData(coinId, this.workerName, tokenAddress || '')
 
-                sleep(2000)
+                await sleep(2000)
             }
+
+            page++
         }
 
         logger.info(`${this.prefixLog} worker finished`)
@@ -103,7 +104,7 @@ export class CoinVoteWorker extends AbstractTokenWorker {
             const href = el.getAttribute('data-href')
 
             if (href?.match(/en\/coin\/[a-zA-Z0-9-]{1,32}/)) {
-                acc.push(href.replace('en/coin', ''))
+                acc.push(href.replace('en/coin/', ''))
             }
 
             return acc
