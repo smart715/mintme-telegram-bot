@@ -45,6 +45,10 @@ export enum ParserWorkerName {
     COINS_HUNTER = 'coins-hunter',
     COINS_GODS = 'coins-gods',
     COIN_360 = 'coin-360',
+    COIN_SNIPER = 'coin-sniper',
+    COINMARKETCAP = 'coinmarketcap',
+    COIN_LORE = 'coin-lore',
+    COIN_SCOPE = 'coin-scope',
 }
 
 export interface RunCoinGeckoWorkerCmdArgv {

@@ -1,12 +1,12 @@
-import { singleton } from "tsyringe";
-import { AbstractTokenWorker } from "../AbstractTokenWorker";
-import { Blockchain, logger } from "../../../utils";
-import { CoinScopeService, TokenCachedDataService, TokensService } from "../../service";
-import { Builder, WebDriver } from "selenium-webdriver";
+import { singleton } from 'tsyringe'
+import { AbstractTokenWorker } from '../AbstractTokenWorker'
+import { Blockchain, logger } from '../../../utils'
+import { CoinScopeService, TokenCachedDataService, TokensService } from '../../service'
+import { Builder, WebDriver } from 'selenium-webdriver'
 
 @singleton()
 export class CoinScopeWorker extends AbstractTokenWorker {
-    public readonly workerName: string = "CoinScope"
+    public readonly workerName: string = 'CoinScope'
 
     public constructor(
         private readonly coinScopeService: CoinScopeService,
@@ -17,38 +17,36 @@ export class CoinScopeWorker extends AbstractTokenWorker {
     }
 
     public async run(currentBlockchain: Blockchain): Promise<any> {
-
-        logger.info("Creating selenium builder")
+        logger.info('Creating selenium builder')
         const cachedIds = (await this.tokenCachedDataRepository.getIdsBySource(this.workerName))
             .map((r) => (r as any).token_id)
 
-        let driver = await new Builder()
+        const driver = await new Builder()
             .forBrowser('chrome')
             .usingServer('http://selenium-hub:4444')
             .build()
 
-        logger.info("Selenium builder created")
+        logger.info('Selenium builder created')
 
         try {
             const reactFolder = await this.coinScopeService.getReactBuildFolderName(driver)
 
-            logger.info("react folder: ", reactFolder)
+            logger.info('react folder: ', reactFolder)
 
             let page = 1
 
+            // eslint-disable-next-line
             while (true) {
                 await new Promise(r => setTimeout(r, 2000))
                 const tokensData = await this.coinScopeService.getTokensData(reactFolder, page, currentBlockchain)
                 const coinSlugs = tokensData?.pageProps?.coinSlugs
 
-                console.log(page, tokensData.pageProps.coinSlugs)
-
                 page++
 
-                if (!coinSlugs || coinSlugs === 0) {
+                if (!coinSlugs || 0 === coinSlugs) {
                     break
                 }
-                
+
                 for (let i = 0; i < coinSlugs.length; i++) {
                     if (cachedIds.includes(coinSlugs[i].toLowerCase())) {
                         logger.warn(`Found cached data for ${coinSlugs[i]}. Skipping`)
@@ -83,8 +81,8 @@ export class CoinScopeWorker extends AbstractTokenWorker {
         await this.tokensService.addOrUpdateToken(
             tokenData.tokenAddress,
             `${tokenData.tokenName} (${tokenId.toUpperCase()})`,
-            [tokenData.website],
-            "",
+            [ tokenData.website ],
+            '',
             tokenData.links,
             this.workerName,
             currentBlockchain,

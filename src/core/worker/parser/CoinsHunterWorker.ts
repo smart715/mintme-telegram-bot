@@ -1,7 +1,7 @@
-import { singleton } from "tsyringe";
-import { AbstractTokenWorker } from "../AbstractTokenWorker";
-import { ParserWorkersService, TokensService } from "../../service";
-import { Blockchain, logger } from "../../../utils";
+import { singleton } from 'tsyringe'
+import { AbstractTokenWorker } from '../AbstractTokenWorker'
+import { ParserWorkersService, TokensService } from '../../service'
+import { Blockchain, logger, sleep } from '../../../utils'
 
 @singleton()
 export class CoinsHunterWorker extends AbstractTokenWorker {
@@ -19,6 +19,8 @@ export class CoinsHunterWorker extends AbstractTokenWorker {
         logger.info(`${this.prefixLog} Worker started`)
 
         let page = 1
+
+        // eslint-disable-next-line
         while (true) {
             const tokens = await this.parserWorkersService.loadCoinHunterCoins(currentBlockchain, page)
 
@@ -29,7 +31,7 @@ export class CoinsHunterWorker extends AbstractTokenWorker {
             }
 
             for (const token of tokens) {
-                if (!token.address || token.address.trim() === '0xnone' || !token.address.trim().startsWith('0x')) {
+                if (!token.address || '0xnone' === token.address.trim() || !token.address.trim().startsWith('0x')) {
                     logger.warn(`${this.prefixLog} No address for ${token.name}. Skipping`)
 
                     continue
@@ -44,7 +46,7 @@ export class CoinsHunterWorker extends AbstractTokenWorker {
                 const tokenAddress = token.address
                 const tokenName = `${token.name}(${token.symbol})`
                 const website = token.social_info.website
-                const links = [...Object.values(token.social_info), ...Object.values(token.contact_info)]
+                const links = [ ...Object.values(token.social_info), ...Object.values(token.contact_info) ]
 
                 await this.tokenService.add(
                     tokenAddress,
@@ -65,6 +67,10 @@ export class CoinsHunterWorker extends AbstractTokenWorker {
                     currentBlockchain
                 )
             }
+
+            page++
+
+            await sleep(2000)
         }
         logger.info(`${this.prefixLog} worker finished`)
     }

@@ -1,14 +1,14 @@
-import axios from "axios"
-import { WebDriver } from "selenium-webdriver"
-import { singleton } from "tsyringe"
-import { Blockchain } from "../../utils"
+import axios from 'axios'
+import { WebDriver } from 'selenium-webdriver'
+import { singleton } from 'tsyringe'
+import { Blockchain } from '../../../utils'
 
 @singleton()
 export class CoinScopeService {
     public async getReactBuildFolderName(driver: WebDriver): Promise<string> {
         await driver.get('https://www.coinscope.co/')
 
-        return await driver.executeScript(`
+        return driver.executeScript(`
             const scripts = document.getElementsByTagName('script')
             let buildFolder = ''
             for (let i = 0; i < scripts.length; i++) {
@@ -28,7 +28,7 @@ export class CoinScopeService {
             params: {
                 network: blockchain.toString(),
                 page,
-            }
+            },
         })
 
         return response.data
@@ -38,7 +38,7 @@ export class CoinScopeService {
         await driver.get(`https://www.coinscope.co/coin/${tokenId.toLowerCase()}`)
         await new Promise(r => setTimeout(r, 2000))
 
-        return await driver.executeScript(`
+        return driver.executeScript(`
             const tokenAddress = document
                 .querySelector('.StyledBox-sc-13pk1d4-0.fSCGoT .StyledText-sc-1sadyjn-0.kvWNBW')?.innerText
             const tokenName = document.title.split('| ')[1]

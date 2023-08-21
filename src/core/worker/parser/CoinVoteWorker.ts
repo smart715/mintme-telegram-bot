@@ -1,9 +1,8 @@
 import { singleton } from 'tsyringe'
 import { AbstractTokenWorker } from '../AbstractTokenWorker'
 import { Blockchain, findContractAddress, getHrefFromTagString, getHrefValuesFromTagString, logger, sleep } from '../../../utils'
-import { ParserWorkersService, TokensService } from '../../service'
+import { ParserWorkersService, TokenCachedDataService, TokensService } from '../../service'
 import { DOMWindow, JSDOM } from 'jsdom'
-import { TokenCachedDataService } from '../../service/TokenCachedDataService'
 
 @singleton()
 export class CoinVoteWorker extends AbstractTokenWorker {
@@ -30,7 +29,8 @@ export class CoinVoteWorker extends AbstractTokenWorker {
 
         let page = 1
 
-        while(true) {
+        // eslint-disable-next-line
+        while (true) {
             logger.info(`${this.prefixLog} Parsing page ${page}`)
 
             const pageSource = await this.parserWorkersService.loadCoinVoteListPage(currentBlockchain, page)
@@ -132,6 +132,6 @@ export class CoinVoteWorker extends AbstractTokenWorker {
     }
 
     private getLinks(tokenInfo: string): string[] {
-        return getHrefValuesFromTagString([tokenInfo])
+        return getHrefValuesFromTagString([ tokenInfo ])
     }
 }

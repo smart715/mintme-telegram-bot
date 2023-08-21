@@ -1,7 +1,7 @@
 import axios from 'axios'
 import config from 'config'
 import { singleton } from 'tsyringe'
-import { CMCApiGeneralResponse, CMCCryptocurrency, CMCTokenInfoResponse } from '../../types'
+import { CMCApiGeneralResponse, CMCCryptocurrency, CMCTokenInfoResponse } from '../../../types'
 
 @singleton()
 export class CMCService {
@@ -25,7 +25,7 @@ export class CMCService {
             params: {
                 CMC_PRO_API_KEY: this.apiKey,
                 slug,
-                aux: "urls,platform"
+                aux: 'urls,platform',
             },
         })
 

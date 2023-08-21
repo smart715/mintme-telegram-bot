@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/naming-convention */
+
 export interface CoinsHunterToken {
     address: string,
     name: string,

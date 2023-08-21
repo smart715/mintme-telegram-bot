@@ -59,6 +59,12 @@ import {
     ParserWorkersService,
     CoinsHunterWorker,
     CoinsGodsWorker,
+    CoinSniperWorker,
+    CoinLoreWorker,
+    CoinScopeWorker,
+    CoinLoreService,
+    CoinScopeService,
+    Coin360Worker,
 } from '../../core'
 import { Application } from '../'
 import { CliDependency } from './types'
@@ -81,7 +87,6 @@ import {
     RunParserWorker,
 } from '../../command'
 import { TokenNamesGenerator } from '../../utils'
-import { Coin360Worker } from '../../core/worker/parser/Coin360Worker'
 
 // Repositories
 
@@ -529,6 +534,35 @@ container.register(Coin360Worker, {
     ),
 })
 
+container.register(CoinSniperWorker, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new CoinSniperWorker(
+            dependencyContainer.resolve(ParserWorkersService),
+            dependencyContainer.resolve(TokensService),
+            dependencyContainer.resolve(TokenCachedDataService),
+        )
+    ),
+})
+
+container.register(CoinLoreWorker, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new CoinLoreWorker(
+            dependencyContainer.resolve(CoinLoreService),
+            dependencyContainer.resolve(TokensService),
+        )
+    ),
+})
+
+container.register(CoinScopeWorker, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new CoinScopeWorker(
+            dependencyContainer.resolve(CoinScopeService),
+            dependencyContainer.resolve(TokensService),
+            dependencyContainer.resolve(TokenCachedDataService),
+        )
+    ),
+})
+
 // CLI
 
 container.register(CliDependency.COMMAND, {
@@ -649,6 +683,10 @@ container.register(CliDependency.COMMAND, {
             dependencyContainer.resolve(CoinsHunterWorker),
             dependencyContainer.resolve(CoinsGodsWorker),
             dependencyContainer.resolve(Coin360Worker),
+            dependencyContainer.resolve(CoinSniperWorker),
+            dependencyContainer.resolve(CMCWorker),
+            dependencyContainer.resolve(CoinLoreWorker),
+            dependencyContainer.resolve(CoinScopeWorker)
         )
     ),
 })

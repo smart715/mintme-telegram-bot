@@ -17,10 +17,11 @@ export class CMCWorker extends AbstractTokenWorker {
     public async run(currentBlockchain: Blockchain): Promise<any> {
         logger.info(`${CMCWorker.name} started`)
 
-        const requestLimit = config.get<number>("cmc_request_limit")
-        let requestStart = config.get<number>("cmc_request_start")
+        const requestLimit = config.get<number>('cmc_request_limit')
+        let requestStart = config.get<number>('cmc_request_start')
 
-        while(true) {
+        // eslint-disable-next-line
+        while (true) {
             const tokens = await this.cmcService.getLastTokens(requestStart, requestLimit)
 
             await this.processTokens(tokens.data, currentBlockchain)
@@ -50,7 +51,7 @@ export class CMCWorker extends AbstractTokenWorker {
                 blockchain = parseBlockchainName(token.platform.slug)
             } catch (err) {
                 logger.warn(`Unknown blockchain (${token.platform.slug}) for ${token.name} . Skipping`)
-    
+
                 continue
             }
 

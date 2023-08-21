@@ -1,5 +1,5 @@
-import axios from "axios"
-import { singleton } from "tsyringe"
+import axios from 'axios'
+import { singleton } from 'tsyringe'
 
 @singleton()
 export class CoinLoreService {
@@ -13,13 +13,13 @@ export class CoinLoreService {
         const response = await axios.get('https://api.coinlore.net/api/tickers/', {
             params: {
                 start,
-                limit
+                limit,
             },
         })
 
         return response.data?.data
     }
-    
+
     public getTokenPageLink(nameId: string): string {
         return `https://www.coinlore.com/coin/${nameId}`
     }

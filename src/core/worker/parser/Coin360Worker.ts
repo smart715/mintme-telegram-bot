@@ -2,7 +2,7 @@ import { singleton } from 'tsyringe'
 import { AbstractTokenWorker } from '../AbstractTokenWorker'
 import { ParserWorkersService, TokenCachedDataService, TokensService } from '../../service'
 import { Blockchain, logger, parseBlockchainName, sleep } from '../../../utils'
-import { DOMWindow, JSDOM } from 'jsdom'
+import { JSDOM } from 'jsdom'
 
 @singleton()
 export class Coin360Worker extends AbstractTokenWorker {
@@ -26,9 +26,6 @@ export class Coin360Worker extends AbstractTokenWorker {
 
             return
         }
-
-        const pageContentSource = await this.parserWorkersService.loadCoinsGodsTokens()
-        const pageDOM = (new JSDOM(pageContentSource)).window
 
         const coins = await this.parserWorkersService.loadCoin360Tokens()
 
@@ -64,22 +61,24 @@ export class Coin360Worker extends AbstractTokenWorker {
             let links: string[] = []
 
             Array.from(infoElements).forEach(el => {
-                var linkType = el.getElementsByTagName('div')[0].innerText.toLowerCase()
+                const linkType = el.getElementsByTagName('div')[0].innerText.toLowerCase()
 
                 switch (linkType) {
                     case 'website':
                         website = el.getElementsByTagName('div')[1].getElementsByTagName('a')[0].href
-                    break
-                    case 'explorers':
-                        var link = el.getElementsByTagName('div')[1].getElementsByTagName('a')[0].href
+                        break
+                    case 'explorers': {
+                        const link = el.getElementsByTagName('div')[1].getElementsByTagName('a')[0].href
                         tokenAddress = link.split('/')[link.split('/').length -1].toLowerCase()
-                    break
-                    case 'community':
-                        var linksElements = el.getElementsByTagName('div')[1].getElementsByTagName('a')
+                        break
+                    }
+                    case 'community': {
+                        const linksElements = el.getElementsByTagName('div')[1].getElementsByTagName('a')
                         links = Array.from(linksElements).map((el) => el.href)
-                    break
+                        break
+                    }
                 }
-            });
+            })
 
             if (blockchain === currentBlockchain && tokenAddress?.startsWith('0x')) {
                 await this.tokenService.add(
@@ -110,15 +109,5 @@ export class Coin360Worker extends AbstractTokenWorker {
         }
 
         logger.info(`${this.prefixLog} worker finished`)
-    }
-
-    private getCoinsIds(dom: DOMWindow): string[] {
-        const links = dom.document.getElementsByClassName('singlecoinlink')
-
-        return Array.from(links).map((el) => {
-            const href = el.getAttribute('data-href')?.split('/') || []
-
-            return href[href?.length - 1]
-        })
     }
 }

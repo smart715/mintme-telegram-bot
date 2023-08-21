@@ -7,7 +7,7 @@ export class TokenCachedData {
     @PrimaryGeneratedColumn()
     public readonly id!: number
 
-    @Column({name: 'token_id'})
+    @Column({ name: 'token_id' })
     public tokenId: string
 
     @Column()
@@ -16,7 +16,7 @@ export class TokenCachedData {
     @Column({ default: '' })
     public data: string = ''
 
-    @Column({name: 'updated_at'})
+    @Column({ name: 'updated_at' })
     public updatedAt: number
 
     public constructor(tokenId: string, source: string, data: string) {

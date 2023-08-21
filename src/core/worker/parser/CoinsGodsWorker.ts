@@ -50,7 +50,7 @@ export class CoinsGodsWorker extends AbstractTokenWorker {
             const linksElements = coinPageDocument.getElementsByClassName('mt-2 mt-lg-0')[0].getElementsByTagName('a')
             let website = ''
             const links = Array.from(linksElements).map((el) => {
-                if (el.innerText.trim() == 'Website') {
+                if ('Website' === el.innerText.trim()) {
                     website = el.href
                 }
 

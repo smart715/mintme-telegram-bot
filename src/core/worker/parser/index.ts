@@ -12,3 +12,7 @@ export { CoinVoteWorker } from './CoinVoteWorker'
 export { CoinsHunterWorker } from './CoinsHunterWorker'
 export { CoinsGodsWorker } from './CoinsGodsWorker'
 export { Coin360Worker } from './Coin360Worker'
+export { CoinSniperWorker } from './CoinSniperWorker'
+export { CoinLoreWorker } from './CoinLoreWorker'
+export { CoinScopeWorker } from './CoinScopeWorker'
+

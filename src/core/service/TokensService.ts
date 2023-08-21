@@ -6,9 +6,6 @@ import { ContactMethod } from '../types'
 
 @singleton()
 export class TokensService {
-    public readonly LINKS_DELIMITER: string = "\r\n"
-    public readonly EMAIL_DELIMITER: string = ","
-
     public constructor(
         private tokenRepository: TokenRepository,
     ) {}
@@ -42,32 +39,6 @@ export class TokensService {
         await this.tokenRepository.insert(token)
 
         return token
-    }
-
-    public async addOrUpdateToken(
-        tokenAddress: string,
-        tokenName: string,
-        websites: string[],
-        email: string,
-        links: string[],
-        workerSource: string,
-        blockchain: Blockchain
-    ): Promise<void> {
-        websites = this.normalizeLinks(websites)
-
-        if (this.isAnyWebsiteForbidden(websites) || this.isTokenNameForbidden(tokenName)) {
-            throw new Error("Forbidden website or token name")
-        }
-
-        links = this.normalizeLinks(links)
-
-        const dbToken = await this.findByAddress(tokenAddress, blockchain)
-
-        if (dbToken) {
-            await this.updateToken(websites, email, links, blockchain, dbToken)
-        } else {
-            await this.insertToken(tokenAddress, tokenName, websites, email, links, workerSource, blockchain)
-        }
     }
 
     private async insertToken(

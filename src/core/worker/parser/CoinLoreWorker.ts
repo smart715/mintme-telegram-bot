@@ -1,15 +1,15 @@
-import { singleton } from "tsyringe";
-import { AbstractTokenWorker } from "../AbstractTokenWorker";
-import { CoinLoreService, TokensService } from "../../service";
-import { Builder, By, WebDriver } from "selenium-webdriver";
-import { Blockchain, logger } from "../../../utils";
-import config from "config";
+import { singleton } from 'tsyringe'
+import { AbstractTokenWorker } from '../AbstractTokenWorker'
+import { CoinLoreService, TokensService } from '../../service'
+import { Builder, By, WebDriver } from 'selenium-webdriver'
+import { Blockchain, logger } from '../../../utils'
+import config from 'config'
 
 @singleton()
 export class CoinLoreWorker extends AbstractTokenWorker {
-    public readonly workerName: string = "coinlore"
-    
-    readonly BATCH_SIZE: number = config.get("coinlore_request_batch_size")
+    public readonly workerName: string = 'coinlore'
+
+    private readonly batchSize: number = config.get('coinlore_request_batch_size')
 
     public constructor(
         private coinLoreService: CoinLoreService,
@@ -18,24 +18,24 @@ export class CoinLoreWorker extends AbstractTokenWorker {
         super()
     }
 
-    public async run(): Promise<void> {
+    public async run(currentBlockchain: Blockchain): Promise<void> {
         let coinsCount = await this.coinLoreService.getCoinsCount()
 
-        logger.info("Creating selenium builder")
+        logger.info('Creating selenium builder')
 
-        let driver = await new Builder()
+        const driver = await new Builder()
             .forBrowser('chrome')
             .usingServer('http://selenium-hub:4444')
             .build()
 
-        logger.info("Selenium builder created")
+        logger.info('Selenium builder created ' + currentBlockchain)
 
         while (coinsCount > 0) {
-            const coins = await this.coinLoreService.loadTokensList(coinsCount - this.BATCH_SIZE, this.BATCH_SIZE)
+            const coins = await this.coinLoreService.loadTokensList(coinsCount - this.batchSize, this.batchSize)
 
             await this.processTokens(coins, driver)
 
-            coinsCount -= this.BATCH_SIZE
+            coinsCount -= this.batchSize
         }
 
         await driver.quit()
@@ -59,9 +59,9 @@ export class CoinLoreWorker extends AbstractTokenWorker {
 
                 let coinBlockchain
                 links.forEach((link) => {
-                    if (link.includes("bscscan.com")) {
+                    if (link.includes('bscscan.com')) {
                         coinBlockchain = Blockchain.BSC
-                    } else if (link.includes("etherscan.io")) {
+                    } else if (link.includes('etherscan.io')) {
                         coinBlockchain = Blockchain.ETH
                     }
                 })
@@ -74,10 +74,10 @@ export class CoinLoreWorker extends AbstractTokenWorker {
                 await this.tokensService.addOrUpdateToken(
                     tokenAddress,
                     `${coin.name} (${coin.symbol})`,
-                    [links.shift() || ""],
-                    "",
+                    [ links.shift() || '' ],
+                    '',
                     links,
-                    "coinlore",
+                    'coinlore',
                     coinBlockchain
                 )
                 logger.info(`${coin.name} (${coin.symbol}) :: added :: ${tokenAddress}`)

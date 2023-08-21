@@ -1,16 +1,15 @@
-import { singleton } from "tsyringe"
-import { TokenCachedDataRepository } from "../repository"
-import { TokenCachedData } from "../entity/TokenCachedData"
+import { singleton } from 'tsyringe'
+import { TokenCachedDataRepository } from '../repository'
+import { TokenCachedData } from '../entity'
 
 @singleton()
 export class TokenCachedDataService {
-
     public constructor(
         private tokenCachedDataRepository: TokenCachedDataRepository
     ) {}
 
     public async getIdsBySource(source: string): Promise<TokenCachedData[]> {
-        return await this.tokenCachedDataRepository.findIdsBySource(source)
+        return this.tokenCachedDataRepository.findIdsBySource(source)
     }
 
     public async cacheTokenData(tokenId: string, source: string, data: string): Promise<TokenCachedData> {
@@ -22,6 +21,8 @@ export class TokenCachedDataService {
     }
 
     public async isCached(tokenId: string, source: string): Promise<boolean> {
-        return (await this.tokenCachedDataRepository.count({tokenId, source})) > 0
+        const tokens = await this.tokenCachedDataRepository.count({ tokenId, source })
+
+        return tokens > 0
     }
 }
