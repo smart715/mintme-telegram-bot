@@ -1,4 +1,4 @@
-import { logger, sleep } from '../../../utils'
+import { Blockchain, logger, sleep } from '../../../utils'
 import { NewestCheckedTokenService } from '../../service'
 
 export abstract class NewestTokenChecker {
@@ -47,24 +47,24 @@ export abstract class NewestTokenChecker {
         logger.info(`[${this.workerName}] ${message}`)
     }
 
-    public async getNewestChecked(): Promise<string | null> {
-        return this.newestCheckedTokenService.getTokenId(this.workerName)
+    public async getNewestChecked(blockchain: Blockchain|null = null): Promise<string | null> {
+        return this.newestCheckedTokenService.getTokenId(this.workerName, blockchain)
     }
 
     protected abstract checkPage(page: number): Promise<void>
 
-    protected async newestCheckedCheck(tokenId: string): Promise<void> {
+    protected async newestCheckedCheck(tokenId: string, blockchain: Blockchain|null = null): Promise<void> {
         if (this.newestChecked && this.newestChecked === tokenId) {
             throw new StopCheckException(this.caughtNewestCheckedToken)
         }
 
         if (this.needToSaveNextNewestChecked && tokenId) {
-            await this.saveNewestChecked(tokenId)
+            await this.saveNewestChecked(tokenId, blockchain)
         }
     }
 
-    protected async saveNewestChecked(tokenId: string): Promise<void> {
-        await this.newestCheckedTokenService.save(this.workerName, tokenId)
+    protected async saveNewestChecked(tokenId: string, blockchain: Blockchain|null = null): Promise<void> {
+        await this.newestCheckedTokenService.save(this.workerName, tokenId, blockchain)
         this.needToSaveNextNewestChecked = false
     }
 }

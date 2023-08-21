@@ -27,7 +27,7 @@ export class RecentTokensWorker extends NewestTokenChecker {
         )
     }
 
-    public async run(currentBlockchain: Blockchain = Blockchain.ETH): Promise<void> {
+    public async run(currentBlockchain: Blockchain = Blockchain.BSC): Promise<void> {
         logger.info(`${this.prefixLog} Started`)
 
         this.blockchain = currentBlockchain
@@ -38,7 +38,7 @@ export class RecentTokensWorker extends NewestTokenChecker {
             return
         }
 
-        this.newestChecked = await this.getNewestChecked()
+        this.newestChecked = await this.getNewestChecked(this.blockchain)
         this.needToSaveNextNewestChecked = true
         let page = 1
 
@@ -86,7 +86,7 @@ export class RecentTokensWorker extends NewestTokenChecker {
             return
         }
 
-        await this.newestCheckedCheck(tokenLink)
+        await this.newestCheckedCheck(tokenLink, this.blockchain)
 
         let tokenPageInfo: string
 
