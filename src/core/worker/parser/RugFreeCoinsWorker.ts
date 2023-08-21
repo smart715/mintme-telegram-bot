@@ -91,7 +91,7 @@ export class RugFreeCoinsWorker extends AbstractTokenWorker {
             }
 
             page += 1
-        } while(resultsCount > 0)
+        } while (resultsCount > 0)
 
         logger.info(`${this.prefixLog} Finished`)
     }

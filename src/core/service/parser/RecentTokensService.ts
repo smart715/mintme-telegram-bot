@@ -5,7 +5,7 @@ import { singleton } from 'tsyringe'
 export class RecentTokensService {
     public async getAllTokensPage(blockchain: string, page: number): Promise<string> {
         const apiUrl = `https://recentcoin.com/${blockchain}/page-${page}`
-console.log(apiUrl)
+
         const response = await axios.get(apiUrl)
 
         return response.data.replace(/(\r\n|\n|\r)/gm, '')

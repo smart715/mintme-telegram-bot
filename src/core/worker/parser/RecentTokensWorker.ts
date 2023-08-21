@@ -1,11 +1,11 @@
-import {DOMWindow, JSDOM} from 'jsdom'
+import { DOMWindow, JSDOM } from 'jsdom'
 import {
     Blockchain,
     findContractAddress,
     getHrefFromTagString,
     getHrefValuesFromTagString,
     logger,
-    sleep
+    sleep,
 } from '../../../utils'
 import { NewestCheckedTokenService, RecentTokensService, TokensService } from '../../service'
 import { NewestTokenChecker, StopCheckException } from './NewestTokenChecker'
@@ -85,6 +85,8 @@ export class RecentTokensWorker extends NewestTokenChecker {
         if (!tokenLink) {
             return
         }
+
+        await this.newestCheckedCheck(tokenLink)
 
         let tokenPageInfo: string
 
