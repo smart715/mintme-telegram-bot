@@ -45,9 +45,10 @@ export class RecentTokensWorker extends NewestTokenChecker {
         try {
             while (true) { // eslint-disable-line
                 logger.info(`${this.prefixLog} Checking page: ${page}`)
-                await this.checkPage(page)
 
+                await this.checkPage(page)
                 await sleep(this.sleepTimeBetweenPages)
+
                 page += 1
             }
         } catch (error: any) {
@@ -113,7 +114,6 @@ export class RecentTokensWorker extends NewestTokenChecker {
         }
 
         const tokenPageDOM = this.getDOMPageInfo(tokenPageInfo)
-
         const tokenName = this.getTokenName(tokenPageDOM)
 
         if (!tokenName) {

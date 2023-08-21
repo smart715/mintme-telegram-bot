@@ -17,5 +17,5 @@ export class NewestCheckedToken {
         length: 32,
         nullable: true,
     })
-    public blockchain: Blockchain|null
+    public blockchain: Blockchain|null = null
 }

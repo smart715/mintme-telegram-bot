@@ -8,7 +8,6 @@ export class MyEtherListsService {
         const owner = 'MyEtherWallet'
         const repo = 'ethereum-lists'
         const folderPath = `src/tokens/${blockchain.toLowerCase()}`
-
         const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${folderPath}`
 
         const response = await axios.get(apiUrl)

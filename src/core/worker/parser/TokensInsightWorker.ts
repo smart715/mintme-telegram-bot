@@ -47,6 +47,7 @@ export class TokensInsightWorker extends AbstractTokenWorker {
             }
 
             let i = 0
+
             for (const coin of coins) {
                 ++i
                 const tokenName = coin.name + '(' + coin.symbol + ')'
