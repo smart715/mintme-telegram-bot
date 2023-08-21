@@ -54,9 +54,10 @@ import {
     BitQueryService,
     BitQueryWorker,
     CoinVoteWorker,
-    CoinVoteService,
     TokenCachedDataRepository,
     TokenCachedDataService,
+    ParserWorkersService,
+    CoinsHunterWorker,
 } from '../../core'
 import { Application } from '../'
 import { CliDependency } from './types'
@@ -76,7 +77,7 @@ import {
     RunBitQueryWorker,
     RunTelegramWorker,
     RunLastTokenTxDateFetcher,
-    RunCoinVoteWorker,
+    RunParserWorker,
 } from '../../command'
 import { TokenNamesGenerator } from '../../utils'
 
@@ -265,8 +266,8 @@ container.register(BitQueryService, {
     useFactory: instanceCachingFactory(() => new BitQueryService()),
 })
 
-container.register(CoinVoteService, {
-    useFactory: instanceCachingFactory(() => new CoinVoteService()),
+container.register(ParserWorkersService, {
+    useFactory: instanceCachingFactory(() => new ParserWorkersService()),
 })
 
 // Workers
@@ -490,9 +491,18 @@ container.register(BitQueryWorker, {
 container.register(CoinVoteWorker, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new CoinVoteWorker(
-            dependencyContainer.resolve(CoinVoteService),
+            dependencyContainer.resolve(ParserWorkersService),
             dependencyContainer.resolve(TokensService),
             dependencyContainer.resolve(TokenCachedDataService),
+        )
+    ),
+})
+
+container.register(CoinsHunterWorker, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new CoinsHunterWorker(
+            dependencyContainer.resolve(ParserWorkersService),
+            dependencyContainer.resolve(TokensService),
         )
     ),
 })
@@ -612,8 +622,9 @@ container.register(CliDependency.COMMAND, {
 
 container.register(CliDependency.COMMAND, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
-        new RunCoinVoteWorker(
+        new RunParserWorker(
             dependencyContainer.resolve(CoinVoteWorker),
+            dependencyContainer.resolve(CoinsHunterWorker),
         )
     ),
 })

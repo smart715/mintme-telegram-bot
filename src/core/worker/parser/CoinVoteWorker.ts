@@ -1,7 +1,7 @@
 import { singleton } from 'tsyringe'
 import { AbstractTokenWorker } from '../AbstractTokenWorker'
 import { Blockchain, findContractAddress, getHrefFromTagString, getHrefValuesFromTagString, logger, sleep } from '../../../utils'
-import { CoinVoteService, TokensService } from '../../service'
+import { ParserWorkersService, TokensService } from '../../service'
 import { DOMWindow, JSDOM } from 'jsdom'
 import { TokenCachedDataService } from '../../service/TokenCachedDataService'
 
@@ -12,7 +12,7 @@ export class CoinVoteWorker extends AbstractTokenWorker {
     private readonly unsupportedBlockchains: Blockchain[] = [ Blockchain.CRO ]
 
     public constructor(
-        private readonly coinVoteService: CoinVoteService,
+        private readonly parserWorkersService: ParserWorkersService,
         private readonly tokenService: TokensService,
         private readonly tokenCachedDataService: TokenCachedDataService,
     ) {
@@ -33,7 +33,7 @@ export class CoinVoteWorker extends AbstractTokenWorker {
         while(true) {
             logger.info(`${this.prefixLog} Parsing page ${page}`)
 
-            const pageSource = await this.coinVoteService.loadCoinsListPage(currentBlockchain, page)
+            const pageSource = await this.parserWorkersService.loadCoinVoteListPage(currentBlockchain, page)
             const pageDOM = (new JSDOM(pageSource)).window
 
             const coinsIds = this.parseCoinsIds(pageDOM)
@@ -53,7 +53,7 @@ export class CoinVoteWorker extends AbstractTokenWorker {
                     continue
                 }
 
-                const coinPageSource = await this.coinVoteService.loadCoinPage(coinId)
+                const coinPageSource = await this.parserWorkersService.loadCoinVoteTokenPage(coinId)
                 const coinPageDOM = (new JSDOM(coinPageSource)).window
 
                 const tokenAddress = this.getCoinAddress(coinPageDOM)
