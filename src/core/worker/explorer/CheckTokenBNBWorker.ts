@@ -150,7 +150,7 @@ export class CheckTokenBNBWorker extends AbstractTokenWorker {
             return
         }
 
-        await this.tokensService.add(
+        await this.tokensService.addIfNotExists(
             tokenAddress.toLowerCase(),
             tokenName,
             [ website ],

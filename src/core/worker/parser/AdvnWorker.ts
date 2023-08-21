@@ -85,7 +85,7 @@ export class AdvnWorker extends AbstractTokenWorker {
                     continue
                 }
 
-                await this.tokenService.add(
+                await this.tokenService.addIfNotExists(
                     tokenAddress,
                     name,
                     [ website ],

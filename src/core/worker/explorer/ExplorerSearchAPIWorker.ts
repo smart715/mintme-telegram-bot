@@ -43,7 +43,7 @@ export class ExplorerSearchAPIWorker extends AbstractTokenWorker {
             blockchain,
         )
 
-        return lastCheckedTokenName?.tokenName ?? ''
+        return lastCheckedTokenName ?? ''
     }
 
     private async saveLastCheckedCombination(blockchain: Blockchain, combination: string): Promise<void> {

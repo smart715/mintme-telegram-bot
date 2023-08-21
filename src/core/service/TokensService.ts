@@ -17,7 +17,7 @@ export class TokensService {
         return this.tokenRepository.findByAddressAndBlockchain(address, blockchain)
     }
 
-    public async add(
+    public async addIfNotExists(
         tokenAddress: string,
         tokenName: string,
         websites: string[],
@@ -26,7 +26,13 @@ export class TokensService {
         workerSource: string,
         blockchain: Blockchain
     ): Promise<Token> {
-        const token = new Token()
+        let token = await this.findByAddress(tokenAddress, blockchain)
+
+        if (token) {
+            return token
+        }
+
+        token = new Token()
 
         token.address = tokenAddress
         token.blockchain = blockchain

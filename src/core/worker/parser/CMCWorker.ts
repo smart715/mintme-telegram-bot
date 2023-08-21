@@ -50,7 +50,7 @@ export class CMCWorker extends AbstractTokenWorker {
 
                 return
             } else {
-                await this.tokensService.add(
+                await this.tokensService.addIfNotExists(
                     tokenAddress,
                     tokenName,
                     [ website ],
