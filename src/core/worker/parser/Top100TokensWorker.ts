@@ -70,7 +70,7 @@ export class Top100TokensWorker extends AbstractTokenWorker {
                     continue
                 }
 
-                await this.tokenService.add(
+                await this.tokenService.addIfNotExists(
                     tokenAddress,
                     tokenName,
                     [ website ],

@@ -93,7 +93,7 @@ export class TokensInsightWorker extends AbstractTokenWorker {
                     continue
                 }
 
-                await this.tokensService.add(
+                await this.tokensService.addIfNotExists(
                     tokenAddress,
                     tokenName,
                     websites,

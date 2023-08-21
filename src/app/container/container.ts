@@ -608,6 +608,7 @@ container.register(RecentTokensWorker, {
         new RecentTokensWorker(
             dependencyContainer.resolve(RecentTokensService),
             dependencyContainer.resolve(TokensService),
+            dependencyContainer.resolve(NewestCheckedTokenService),
         )
     ),
 })

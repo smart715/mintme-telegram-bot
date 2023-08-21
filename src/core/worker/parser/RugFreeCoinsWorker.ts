@@ -69,7 +69,7 @@ export class RugFreeCoinsWorker extends AbstractTokenWorker {
                 const links = this.getLinks(coin)
 
 
-                await this.tokenService.add(
+                await this.tokenService.addIfNotExists(
                     tokenAddress,
                     tokenName,
                     [ website ],

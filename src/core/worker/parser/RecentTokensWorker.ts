@@ -1,125 +1,175 @@
-import { DOMWindow, JSDOM } from 'jsdom'
-import { AbstractTokenWorker } from '../AbstractTokenWorker'
-import { Blockchain, findContractAddress, getHrefFromTagString, getHrefValuesFromTagString, logger } from '../../../utils'
-import { RecentTokensService, TokensService } from '../../service'
+import {DOMWindow, JSDOM} from 'jsdom'
+import {
+    Blockchain,
+    findContractAddress,
+    getHrefFromTagString,
+    getHrefValuesFromTagString,
+    logger,
+    sleep
+} from '../../../utils'
+import { NewestCheckedTokenService, RecentTokensService, TokensService } from '../../service'
+import { NewestTokenChecker, StopCheckException } from './NewestTokenChecker'
 
-export class RecentTokensWorker extends AbstractTokenWorker {
-    private readonly workerName = 'RecentTokens'
+export class RecentTokensWorker extends NewestTokenChecker {
+    protected readonly workerName = 'RecentTokens'
     private readonly prefixLog = `[${this.workerName}]`
     private readonly unsupportedBlockchains: Blockchain[] = [ Blockchain.CRO ]
+    private blockchain: Blockchain|null
 
     public constructor(
         private readonly recentTokensService: RecentTokensService,
         private readonly tokenService: TokensService,
+        protected readonly newestCheckedTokenService: NewestCheckedTokenService,
     ) {
-        super()
+        super(
+            RecentTokensWorker.name,
+            newestCheckedTokenService,
+        )
     }
 
-    public async run(currentBlockchain: Blockchain): Promise<void> {
-        logger.info(`${this.prefixLog} Worker started`)
+    public async run(currentBlockchain: Blockchain = Blockchain.ETH): Promise<void> {
+        logger.info(`${this.prefixLog} Started`)
 
-        if (this.unsupportedBlockchains.includes(currentBlockchain)) {
+        this.blockchain = currentBlockchain
+
+        if (this.unsupportedBlockchains.includes(this.blockchain)) {
             logger.error(`${this.prefixLog} Unsupported blockchain ${currentBlockchain}. Aborting`)
 
             return
         }
 
+        this.newestChecked = await this.getNewestChecked()
+        this.needToSaveNextNewestChecked = true
         let page = 1
-        let tokensCount = 0
-        const targetBlockchain = this.getTargetBlockchain(currentBlockchain)
 
-        do {
-            logger.info(`${this.prefixLog} Page: ${page}`)
+        try {
+            while (true) { // eslint-disable-line
+                logger.info(`${this.prefixLog} Checking page: ${page}`)
+                await this.checkPage(page)
 
-            let tokensPageStr: string
-
-            try {
-                tokensPageStr = await this.recentTokensService.getAllTokensPage(targetBlockchain, page)
-            } catch (ex: any) {
-                logger.error(
-                    `${this.prefixLog} Aborting. Failed to get all tokens page. Page: ${page} Reason: ${ex.message}`
-                )
-
-                return
+                await sleep(this.sleepTimeBetweenPages)
+                page += 1
             }
+        } catch (error: any) {
+            if (error instanceof StopCheckException) {
+                logger.info(`${this.prefixLog}}${error.message}`)
+            } else {
+                logger.error(`${this.prefixLog} ${error.message}`)
 
-            const allTokensDOM = (new JSDOM(tokensPageStr)).window
-
-            const tokens = this.geTokenDivs(allTokensDOM)
-
-            tokensCount = tokens.length
-
-            for (const token of tokens) {
-                const tokenLink = this.getTokenLink(token)
-
-                if (!tokenLink) {
-                    continue
-                }
-
-                let tokenPageInfo: string
-
-                try {
-                    tokenPageInfo = await this.recentTokensService.getTokenInfoPage(tokenLink)
-                } catch (ex: any) {
-                    logger.error(
-                        `${this.prefixLog} Failed to get token page. Page link: ${tokenLink} Reason: ${ex.message}. Skipping...`
-                    )
-
-                    continue
-                }
-
-                const tokenAddress = findContractAddress(tokenPageInfo)
-
-                if (!tokenAddress) {
-                    continue
-                }
-
-                const tokenInDb = await this.tokenService.findByAddress(tokenAddress, currentBlockchain)
-
-                if (tokenInDb) {
-                    continue
-                }
-
-                const tokenPageDOM = this.getDOMPageInfo(tokenPageInfo)
-
-                const tokenName = this.getTokenName(tokenPageDOM)
-
-                if (!tokenName) {
-                    continue
-                }
-
-                const website = this.getWebsite(tokenPageInfo)
-                const links = this.getLinks(tokenPageInfo)
-
-                logger.info(`${this.prefixLog} Check ${tokenName}`)
-
-                if (0 === links.length) {
-                    continue
-                }
-
-                await this.tokenService.add(
-                    tokenAddress,
-                    tokenName,
-                    [ website ],
-                    [ '' ],
-                    links,
-                    this.workerName,
-                    currentBlockchain
-                )
-
-                logger.info(
-                    `${this.prefixLog} Added to DB:`,
-                    tokenAddress,
-                    tokenName,
-                    website,
-                    links,
-                    this.workerName,
-                    currentBlockchain
-                )
+                throw error
             }
+        } finally {
+            logger.info(`${this.prefixLog} Finished`)
+        }
+    }
 
-            page += 1
-        } while (tokensCount > 0)
+    protected override async checkPage(page: number): Promise<void> {
+        const tokens = await this.fetchTokens(page)
+
+        if (this.noTokens(tokens)) {
+            throw new StopCheckException(this.allPagesAreChecked)
+        }
+
+        for (const token of tokens) {
+            await this.processToken(token)
+        }
+    }
+
+    private async processToken(token: Element): Promise<void> {
+        if (!this.blockchain) {
+            return
+        }
+
+        const tokenLink = this.getTokenLink(token)
+
+        if (!tokenLink) {
+            return
+        }
+
+        let tokenPageInfo: string
+
+        try {
+            tokenPageInfo = await this.recentTokensService.getTokenInfoPage(tokenLink)
+        } catch (ex: any) {
+            logger.error(
+                `${this.prefixLog} Failed to get token page. Page link: ${tokenLink} Reason: ${ex.message}. Skipping...`
+            )
+
+            return
+        }
+
+        const tokenAddress = findContractAddress(tokenPageInfo)
+
+        if (!tokenAddress) {
+            return
+        }
+
+        const tokenInDb = await this.tokenService.findByAddress(tokenAddress, this.blockchain)
+
+        if (tokenInDb) {
+            return
+        }
+
+        const tokenPageDOM = this.getDOMPageInfo(tokenPageInfo)
+
+        const tokenName = this.getTokenName(tokenPageDOM)
+
+        if (!tokenName) {
+            return
+        }
+
+        const website = this.getWebsite(tokenPageInfo)
+        const links = this.getLinks(tokenPageInfo)
+
+        logger.info(`${this.prefixLog} Check ${tokenName}`)
+
+        if (0 === links.length) {
+            return
+        }
+
+        await this.tokenService.addIfNotExists(
+            tokenAddress,
+            tokenName,
+            [ website ],
+            [ '' ],
+            links,
+            this.workerName,
+            this.blockchain
+        )
+
+        logger.info(
+            `${this.prefixLog} Added to DB:`,
+            tokenAddress,
+            tokenName,
+            website,
+            links,
+            this.workerName,
+            this.blockchain
+        )
+    }
+
+    private async fetchTokens(page: number): Promise<HTMLCollectionOf<Element>> {
+        const targetBlockchain = this.getTargetBlockchain()
+
+        let tokensPageStr: string
+
+        try {
+            tokensPageStr = await this.recentTokensService.getAllTokensPage(targetBlockchain, page)
+        } catch (ex: any) {
+            logger.error(
+                `${this.prefixLog} Aborting. Failed to get all tokens page. Page: ${page} Reason: ${ex.message}`
+            )
+
+            throw ex
+        }
+
+        const allTokensDOM = (new JSDOM(tokensPageStr)).window
+
+        return this.geTokenDivs(allTokensDOM)
+    }
+
+    private noTokens(tokens: HTMLCollectionOf<Element>): boolean {
+        return 0 === tokens.length
     }
 
     private getLinks(tokenPageInfo: string): string[] {
@@ -184,8 +234,8 @@ export class RecentTokensWorker extends AbstractTokenWorker {
             .getElementsByClassName('table-coin-info')
     }
 
-    private getTargetBlockchain(currentBlockchain: Blockchain): string {
-        switch (currentBlockchain) {
+    private getTargetBlockchain(): string {
+        switch (this.blockchain) {
             case Blockchain.ETH:
                 return 'ethereum'
             case Blockchain.BSC:

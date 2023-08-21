@@ -8,7 +8,7 @@ export abstract class NewestTokenChecker {
     protected newestChecked: string | null
     protected needToSaveNextNewestChecked: boolean
 
-    private readonly sleepTimeBetweenPages = 10 * 1000
+    protected readonly sleepTimeBetweenPages = 10 * 1000
 
     protected constructor(
         protected readonly workerName: string,
@@ -47,7 +47,7 @@ export abstract class NewestTokenChecker {
         logger.info(`[${this.workerName}] ${message}`)
     }
 
-    private async getNewestChecked(): Promise<string | null> {
+    public async getNewestChecked(): Promise<string | null> {
         return this.newestCheckedTokenService.getTokenId(this.workerName)
     }
 
