@@ -1,7 +1,136 @@
-import { singleton } from "tsyringe";
-import { AbstractTokenWorker } from "./AbstractTokenWorker";
+import { singleton } from 'tsyringe'
+import { AbstractTokenWorker } from './AbstractTokenWorker'
+import { Blockchain, findContractAddress, getHrefFromTagString, getHrefValuesFromTagString, logger, sleep } from '../../utils'
+import { CoinVoteService, TokensService } from '../service'
+import { DOMWindow, JSDOM } from 'jsdom'
+import { TokenCachedDataService } from '../service/TokenCachedDataService'
 
 @singleton()
 export class CoinVoteWorker extends AbstractTokenWorker {
-    // works, can be implemented
+    private readonly workerName = 'CoinVote'
+    private readonly prefixLog = `[${this.workerName}]`
+    private readonly unsupportedBlockchains: Blockchain[] = [ Blockchain.CRO ]
+
+    public constructor(
+        private readonly coinVoteService: CoinVoteService,
+        private readonly tokenService: TokensService,
+        private readonly tokenCachedDataService: TokenCachedDataService,
+    ) {
+        super()
+    }
+
+    public async run(currentBlockchain: Blockchain): Promise<void> {
+        logger.info(`${this.prefixLog} Worker started`)
+
+        if (this.unsupportedBlockchains.includes(currentBlockchain)) {
+            logger.error(`${this.prefixLog} Unsupported blockchain ${currentBlockchain}. Aborting`)
+
+            return
+        }
+
+        let page = 1
+        let normalizedBlockchain = currentBlockchain.toLowerCase()
+
+        while(true) {
+            logger.info(`${this.prefixLog} Parsing page ${page}`)
+
+            const pageSource = await this.coinVoteService.loadCoinsListPage(currentBlockchain, page)
+            const pageDOM = (new JSDOM(pageSource)).window
+
+            const coinsIds = this.parseCoinsIds(pageDOM)
+
+            if (!coinsIds) {
+                logger.info(`${this.prefixLog} No coins ids found. Stopping fetching pages`)
+
+                break
+            }
+
+            sleep(2000)
+
+            for (const coinId of coinsIds) {
+                if (await this.tokenCachedDataService.isCached(coinId, this.workerName)) {
+                    logger.info(`${this.prefixLog} Data for coin ${coinId} already cached. Skipping`)
+
+                    continue
+                }
+
+                const coinPageSource = await this.coinVoteService.loadCoinPage(coinId)
+                const coinPageDOM = (new JSDOM(coinPageSource)).window
+
+                const tokenAddress = this.getCoinAddress(coinPageDOM)
+
+                if (tokenAddress) {
+                    const tokenName = coinPageDOM.document.title.split(' price today,')[0]
+                    const linksEl = coinPageDOM.document.querySelector('coin-page-row')
+                    const website = linksEl ? this.getWebsite(linksEl.innerHTML) : ''
+                    const links = linksEl ? this.getLinks(linksEl?.innerHTML) : [ ]
+
+                    await this.tokenService.add(
+                        tokenAddress,
+                        tokenName,
+                        [ website ],
+                        [ '' ],
+                        links,
+                        this.workerName,
+                        currentBlockchain,
+                    )
+
+                    logger.info(
+                        `${this.prefixLog} Token saved to database:`,
+                        tokenAddress,
+                        tokenName,
+                        website,
+                        this.workerName,
+                        currentBlockchain
+                    )
+                } else {
+                    logger.info(`${this.prefixLog} Address for coin ${coinId} not found.`)
+                }
+
+                await this.tokenCachedDataService.cacheTokenData(coinId, this.workerName, tokenAddress || '')
+
+                sleep(2000)
+            }
+        }
+
+        logger.info(`${this.prefixLog} worker finished`)
+    }
+
+    private parseCoinsIds(dom: DOMWindow): string[] {
+        const listItems = dom.document.querySelectorAll('.regular-table .redirect-coin.app-hide')
+
+        return Array.from(listItems).reduce((acc, el) => {
+            const href = el.getAttribute('data-href')
+
+            if (href?.match(/en\/coin\/[a-zA-Z0-9-]{1,32}/)) {
+                acc.push(href.replace('en/coin', ''))
+            }
+
+            return acc
+        }, [] as string[])
+    }
+
+    private getCoinAddress(dom: DOMWindow): string | null {
+        const coinInfoEl = dom.document.querySelector('.coin-column')
+
+        if (!coinInfoEl) {
+            return null
+        }
+
+        return findContractAddress(coinInfoEl.innerHTML)
+    }
+
+    private getWebsite(tokenInfo: string): string {
+        const websiteRawTags = tokenInfo.match(/<a class="btn btn-primary btn-vote"(.+?)Website(.+?)<\/a/)
+
+        if (null === websiteRawTags) {
+            return ''
+        }
+
+        return getHrefFromTagString(websiteRawTags)
+    }
+
+    private getLinks(tokenInfo: string): string[] {
+        return getHrefValuesFromTagString([tokenInfo])
+    }
 }

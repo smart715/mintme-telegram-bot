@@ -20,4 +20,8 @@ export class TokenCachedDataService {
 
         return tokenCachedData
     }
+
+    public async isCached(tokenId: string, source: string): Promise<boolean> {
+        return (await this.tokenCachedDataRepository.count({tokenId, source})) > 0
+    }
 }
