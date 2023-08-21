@@ -84,7 +84,7 @@ export class CoinGeckoWorker extends AbstractTokenWorker {
                 continue
             }
 
-            await this.tokenService.add(
+            await this.tokenService.addIfNotExists(
                 address,
                 coinName,
                 websites,
