@@ -7,15 +7,23 @@ export class LastCheckedTokenNameService {
         private readonly lastCheckedTokenNameRepository: LastCheckedTokenNameRepository
     ) { }
 
-    public async getLastCheckedTokenName(
-        source: string,
+    public async findOne(source: string,
         blockchain: Blockchain
     ): Promise<LastCheckedTokenName | undefined> {
         return this.lastCheckedTokenNameRepository.findOne({ source, blockchain })
     }
 
+    public async getLastCheckedTokenName(
+        source: string,
+        blockchain: Blockchain
+    ): Promise<string | null> {
+        const lastCheckedTokenName = await this.findOne(source, blockchain)
+
+        return lastCheckedTokenName?.tokenName ?? null
+    }
+
     public async save(source: string, blockchain: Blockchain, tokenNameCombination: string): Promise<void> {
-        const lastCheckedTokenName = await this.getLastCheckedTokenName(source, blockchain)
+        const lastCheckedTokenName = await this.findOne(source, blockchain)
 
         if (!lastCheckedTokenName) {
             await this.insert(source, blockchain, tokenNameCombination)

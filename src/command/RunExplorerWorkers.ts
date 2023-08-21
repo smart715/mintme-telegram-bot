@@ -1,5 +1,5 @@
 import { singleton } from 'tsyringe'
-import { CommandInterface, ExplorerWorkerNames, RunExplorerWorkerCmdArgv, RunQueueWorkerCmdArgv } from './types'
+import { CommandInterface, ExplorerWorkerNames, RunExplorerWorkerCmdArgv } from './types'
 import { Arguments, Argv } from 'yargs'
 import { Blockchain, logger } from '../utils'
 import {
@@ -29,7 +29,7 @@ export class RunExplorerWorker implements CommandInterface {
         private readonly explorerSearchAPIWorker: ExplorerSearchAPIWorker,
     ) { }
 
-    public builder(yargs: Argv<RunQueueWorkerCmdArgv>): void {
+    public builder(yargs: Argv<RunExplorerWorkerCmdArgv>): void {
         yargs.option('name', {
             type: 'string',
             describe: `Worker name, has to be one of these: ${Object.values(ExplorerWorkerNames).join(', ')}`,

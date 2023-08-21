@@ -53,6 +53,14 @@ import {
     CoinCodexService,
     BitQueryService,
     BitQueryWorker,
+    CryptoVoteListWorker,
+    NewestCheckedTokenService,
+    NewestCheckedTokenRepository,
+    EthplorerWorker,
+    GemFinderWorker,
+    MemeCoinsWorker,
+    MyCoinVoteWorker,
+    MobulaWorker,
 } from '../../core'
 import { Application } from '../'
 import { CliDependency } from './types'
@@ -72,8 +80,9 @@ import {
     RunBitQueryWorker,
     RunTelegramWorker,
     RunLastTokenTxDateFetcher,
+    RunFetchTokenWorker,
 } from '../../command'
-import { TokenNamesGenerator } from '../../utils'
+import { RetryAxios, TokenNamesGenerator } from '../../utils'
 
 // Repositories
 
@@ -111,6 +120,9 @@ container.register(QueuedTokenAddressRepository, {
 
 container.register(QueuedWalletAddressRepository, {
     useFactory: instanceCachingFactory(() => getConnection().getCustomRepository(QueuedWalletAddressRepository)),
+})
+container.register(NewestCheckedTokenRepository, {
+    useFactory: instanceCachingFactory(() => getConnection().getCustomRepository(NewestCheckedTokenRepository)),
 })
 
 // Utils
@@ -179,6 +191,10 @@ container.register(TokenNamesGenerator, {
     useFactory: instanceCachingFactory(() => new TokenNamesGenerator()),
 })
 
+container.register(RetryAxios, {
+    useFactory: instanceCachingFactory(() => new RetryAxios()),
+})
+
 container.register(CMCWorker, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new CMCWorker(
@@ -217,6 +233,14 @@ container.register(ContactHistoryService, {
         new ContactHistoryService(
             dependencyContainer.resolve(ContactHistoryRepository)
         )
+    ),
+})
+
+container.register(NewestCheckedTokenService, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new NewestCheckedTokenService(
+            dependencyContainer.resolve(NewestCheckedTokenRepository),
+        ),
     ),
 })
 
@@ -439,6 +463,69 @@ container.register(CoinCapWorker, {
     ),
 })
 
+container.register(CryptoVoteListWorker, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new CryptoVoteListWorker(
+            dependencyContainer.resolve(TokensService),
+            dependencyContainer.resolve(NewestCheckedTokenService),
+            dependencyContainer.resolve(RetryAxios),
+        )
+    ),
+})
+
+container.register(EthplorerWorker, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new EthplorerWorker(
+            dependencyContainer.resolve(TokenNamesGenerator),
+            dependencyContainer.resolve(LastCheckedTokenNameService),
+            dependencyContainer.resolve(TokensService),
+        )
+    ),
+})
+
+container.register(GemFinderWorker, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new GemFinderWorker(
+            dependencyContainer.resolve(NewestCheckedTokenService),
+            dependencyContainer.resolve(TokensService),
+            dependencyContainer.resolve(RetryAxios),
+        )
+    ),
+})
+
+container.register(MemeCoinsWorker, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new MemeCoinsWorker(
+            dependencyContainer.resolve(NewestCheckedTokenService),
+            dependencyContainer.resolve(TokensService),
+            dependencyContainer.resolve(RetryAxios),
+        )
+    ),
+})
+
+container.register(MobulaWorker, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new MobulaWorker(
+            dependencyContainer.resolve(TokensService),
+            dependencyContainer.resolve(RetryAxios),
+        )
+    ),
+})
+
+container.register(MyCoinVoteWorker, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new MyCoinVoteWorker(
+            dependencyContainer.resolve(NewestCheckedTokenService),
+            dependencyContainer.resolve(TokensService),
+            dependencyContainer.resolve(RetryAxios),
+        )
+    ),
+})
+
+container.register(Application, {
+    useFactory: instanceCachingFactory(() => new Application()),
+})
+
 container.register(CoinCatapultWorker, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new CoinCatapultWorker(
@@ -579,18 +666,31 @@ container.register(CliDependency.COMMAND, {
     ),
 })
 
-// General
-
-container.register(Application, {
-    useFactory: instanceCachingFactory(() => new Application()),
-})
-
 container.register(CliDependency.COMMAND, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new RunLastTokenTxDateFetcher(
             dependencyContainer.resolve(LastTokenTxDateFetcher),
         )
     ),
+})
+
+container.register(CliDependency.COMMAND, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new RunFetchTokenWorker(
+            dependencyContainer.resolve(CryptoVoteListWorker),
+            dependencyContainer.resolve(EthplorerWorker),
+            dependencyContainer.resolve(GemFinderWorker),
+            dependencyContainer.resolve(MemeCoinsWorker),
+            dependencyContainer.resolve(MobulaWorker),
+            dependencyContainer.resolve(MyCoinVoteWorker),
+        )
+    ),
+})
+
+// General
+
+container.register(Application, {
+    useFactory: instanceCachingFactory(() => new Application()),
 })
 
 export { container }
