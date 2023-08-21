@@ -22,4 +22,16 @@ export class ParserWorkersService {
 
         return response.data.replace(/(\r\n|\n|\r)/gm, '')
     }
+
+    public async loadCoinsGodsTokens(): Promise<string> {
+        const response = await axios.get(`https://coinsgods.com/all-time-best`)
+
+        return response.data.replace(/(\r\n|\n|\r)/gm, '')
+    }
+
+    public async loadCoinsGodsTokenPage(tokenId: string): Promise<string> {
+        const response = await axios.get(`https://coinsgods.com/coin/${tokenId}`)
+
+        return response.data.replace(/(\r\n|\n|\r)/gm, '')
+    }
 }

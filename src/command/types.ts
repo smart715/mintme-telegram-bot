@@ -35,8 +35,15 @@ export enum ExplorerWorkerNames {
     EXPLORER_SEARCH = 'explorer-search-api-worker',
 }
 
-export interface RunNoArgsWorkerCmdArgv {
+export interface RunParserWorkerCmdArgv {
     blockchain: Blockchain,
+    worker: ParserWorkerName,
+}
+
+export enum ParserWorkerName {
+    COIN_VOTE = 'coin-vote',
+    COINS_HUNTER = 'coins-hunter',
+    COINS_GODS = 'coins-gods',
 }
 
 export interface RunCoinGeckoWorkerCmdArgv {

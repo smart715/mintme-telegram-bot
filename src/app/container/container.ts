@@ -58,6 +58,7 @@ import {
     TokenCachedDataService,
     ParserWorkersService,
     CoinsHunterWorker,
+    CoinsGodsWorker,
 } from '../../core'
 import { Application } from '../'
 import { CliDependency } from './types'
@@ -507,6 +508,18 @@ container.register(CoinsHunterWorker, {
     ),
 })
 
+container.register(CoinsGodsWorker, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new CoinsGodsWorker(
+            dependencyContainer.resolve(ParserWorkersService),
+            dependencyContainer.resolve(TokensService),
+            dependencyContainer.resolve(TokenCachedDataService),
+        )
+    ),
+})
+
+// CLI
+
 container.register(CliDependency.COMMAND, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new RunTelegramWorker(
@@ -514,8 +527,6 @@ container.register(CliDependency.COMMAND, {
         )
     ),
 })
-
-// CLI
 
 container.register(CliDependency.COMMAND, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
@@ -625,6 +636,7 @@ container.register(CliDependency.COMMAND, {
         new RunParserWorker(
             dependencyContainer.resolve(CoinVoteWorker),
             dependencyContainer.resolve(CoinsHunterWorker),
+            dependencyContainer.resolve(CoinsGodsWorker),
         )
     ),
 })
