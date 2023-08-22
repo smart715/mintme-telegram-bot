@@ -1,5 +1,6 @@
 import { Column, CreateDateColumn, Entity, Index, PrimaryGeneratedColumn } from 'typeorm'
 import { Blockchain } from '../../utils'
+import { ContactMethod } from '../types'
 
 @Entity()
 @Index('UQ_ADDRESS_BLOCKCHAIN', [ 'address', 'blockchain' ], { unique: true })
@@ -24,4 +25,7 @@ export class QueuedContact {
 
     @CreateDateColumn()
     public createdAt: Date
+
+    @Column({ length: 32 })
+    public contactMethod: ContactMethod
 }

@@ -70,3 +70,16 @@ export interface RunCoinCodexWorkerCmdArgv {
 export interface RunBitQueryWorkerCmdArgv {
     blockchain: Blockchain,
 }
+
+export interface RunCasualTokenWorkerCmdArgv {
+    name: CasualTokenWorkerNames,
+}
+
+export enum CasualTokenWorkerNames {
+    CRYPTO_VOTE_LIST = 'crypto-vote-list',
+    ETH_PLORER = 'eth-plorer',
+    GEM_FINDER = 'gem-finder',
+    MEME_COIN = 'meme-coin',
+    MOBULA = 'mobula',
+    MY_COIN_VOTE = 'my-coin-vote',
+}

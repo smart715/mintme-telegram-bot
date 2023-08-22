@@ -136,7 +136,7 @@ export class CoinBuddyWorker extends AbstractTokenWorker {
                     continue
                 }
 
-                await this.tokenService.add(
+                await this.tokenService.addIfNotExists(
                     tokenAddress,
                     tokenName,
                     [ website ],

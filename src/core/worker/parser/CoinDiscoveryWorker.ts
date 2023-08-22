@@ -74,7 +74,7 @@ export class CoinDiscoveryWorker extends AbstractTokenWorker {
                     website = links[0]
                 }
 
-                await this.tokenService.add(
+                await this.tokenService.addIfNotExists(
                     tokenAddress,
                     name,
                     [ website ],
