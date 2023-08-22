@@ -35,22 +35,6 @@ export enum ExplorerWorkerNames {
     EXPLORER_SEARCH = 'explorer-search-api-worker',
 }
 
-export interface RunParserWorkerCmdArgv {
-    blockchain: Blockchain,
-    worker: ParserWorkerName,
-}
-
-export enum ParserWorkerName {
-    COIN_VOTE = 'coin-vote',
-    COINS_HUNTER = 'coins-hunter',
-    COINS_GODS = 'coins-gods',
-    COIN_360 = 'coin-360',
-    COIN_SNIPER = 'coin-sniper',
-    COINMARKETCAP = 'coinmarketcap',
-    COIN_LORE = 'coin-lore',
-    COIN_SCOPE = 'coin-scope',
-}
-
 export interface RunCoinGeckoWorkerCmdArgv {
     blockchain: Blockchain,
 }
@@ -98,4 +82,12 @@ export enum CasualTokenWorkerNames {
     MEME_COIN = 'meme-coin',
     MOBULA = 'mobula',
     MY_COIN_VOTE = 'my-coin-vote',
+    COIN_VOTE = 'coin-vote',
+    COINS_HUNTER = 'coins-hunter',
+    COINS_GODS = 'coins-gods',
+    COIN_360 = 'coin-360',
+    COIN_SNIPER = 'coin-sniper',
+    COINMARKETCAP = 'coinmarketcap',
+    COIN_LORE = 'coin-lore',
+    COIN_SCOPE = 'coin-scope',
 }

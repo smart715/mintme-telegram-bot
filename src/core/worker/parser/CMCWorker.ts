@@ -1,5 +1,5 @@
 import { singleton } from 'tsyringe'
-import { CMCService, TokensService } from '../../service'
+import { ParserWorkersService, TokensService } from '../../service'
 import { AbstractTokenWorker } from '../AbstractTokenWorker'
 import { Blockchain, logger, parseBlockchainName } from '../../../utils'
 import config from 'config'
@@ -7,22 +7,25 @@ import { CMCCryptocurrency } from '../../../types'
 
 @singleton()
 export class CMCWorker extends AbstractTokenWorker {
+    private readonly workerName = 'CMC'
+    private readonly prefixLog = `[${this.workerName}]`
+
     public constructor(
-        private readonly cmcService: CMCService,
+        private readonly parserWorkersService: ParserWorkersService,
         private readonly tokensService: TokensService,
     ) {
         super()
     }
 
     public async run(currentBlockchain: Blockchain): Promise<any> {
-        logger.info(`${CMCWorker.name} started`)
+        logger.info(`${this.prefixLog} started`)
 
         const requestLimit = config.get<number>('cmc_request_limit')
         let requestStart = config.get<number>('cmc_request_start')
 
         // eslint-disable-next-line
         while (true) {
-            const tokens = await this.cmcService.getLastTokens(requestStart, requestLimit)
+            const tokens = await this.parserWorkersService.getCmcLastTokens(requestStart, requestLimit)
 
             await this.processTokens(tokens.data, currentBlockchain)
 
@@ -41,7 +44,7 @@ export class CMCWorker extends AbstractTokenWorker {
             token = tokens[i]
 
             if (!token.platform?.token_address) {
-                logger.warn(`No address info found for ${token.name} . Skipping`)
+                logger.warn(`${this.prefixLog} No address info found for ${token.name} . Skipping`)
 
                 continue
             }
@@ -50,21 +53,21 @@ export class CMCWorker extends AbstractTokenWorker {
             try {
                 blockchain = parseBlockchainName(token.platform.slug)
             } catch (err) {
-                logger.warn(`Unknown blockchain (${token.platform.slug}) for ${token.name} . Skipping`)
+                logger.warn(`${this.prefixLog} Unknown blockchain (${token.platform.slug}) for ${token.name} . Skipping`)
 
                 continue
             }
 
             if (currentBlockchain != blockchain) {
-                logger.warn(`Different blockchain found ${token.name} . Skipping`)
+                logger.warn(`${this.prefixLog} Different blockchain found ${token.name} . Skipping`)
 
                 continue
             }
 
-            const tokenInfos = await this.cmcService.getTokenInfo(token.slug)
+            const tokenInfos = await this.parserWorkersService.getCmcTokenInfo(token.slug)
 
             if (!tokenInfos.data || !tokenInfos.data[token.id]) {
-                logger.info(`no token info found for ${token.name} . Skipping`)
+                logger.info(`${this.prefixLog} No token info found for ${token.name} . Skipping`)
 
                 continue
             }
@@ -76,37 +79,29 @@ export class CMCWorker extends AbstractTokenWorker {
             const website = tokenInfo.urls.website?.length ? tokenInfo.urls.website[0] : ''
             const email = ''
             const links = this.getUsefulLinks(tokenInfo.urls)
-            const workerSource = 'CMC'
 
-            const foundToken = await this.tokensService.findByAddress(
-                tokenAddress,
-                blockchain,
-            )
-
-            if (foundToken) {
-                logger.info(` ${token.name} already added. Skipping`)
-
-                return
-            } else {
+            if (!await this.tokensService.findByAddress(tokenAddress, blockchain)) {
                 await this.tokensService.addIfNotExists(
                     tokenAddress,
                     tokenName,
                     [ website ],
                     [ email ],
                     links,
-                    workerSource,
+                    this.workerName,
                     blockchain,
                 )
+
                 logger.info(
-                    'Added to DB: ',
+                    `${this.prefixLog} Added to DB: `,
                     tokenAddress,
                     tokenName,
                     website,
                     email,
                     links.join(','),
-                    workerSource,
                     blockchain
                 )
+            } else {
+                logger.info(`${this.prefixLog} ${token.name} already added. Skipping`)
             }
         }
     }

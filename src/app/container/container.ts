@@ -1,6 +1,5 @@
 import { container, instanceCachingFactory } from 'tsyringe'
 import {
-    CMCService,
     CMCWorker,
     ContactHistoryService,
     ContactQueueService,
@@ -62,7 +61,6 @@ import {
     CoinSniperWorker,
     CoinLoreWorker,
     CoinScopeWorker,
-    CoinLoreService,
     CoinScopeService,
     Coin360Worker,
     NewestCheckedTokenService,
@@ -150,10 +148,6 @@ container.register(TokenNamesGenerator, {
 
 // Services
 
-container.register(CMCService, {
-    useFactory: instanceCachingFactory(() => new CMCService()),
-})
-
 container.register(MintmeService, {
     useFactory: instanceCachingFactory(() => new MintmeService()),
 })
@@ -210,15 +204,6 @@ container.register(TokenNamesGenerator, {
 
 container.register(RetryAxios, {
     useFactory: instanceCachingFactory(() => new RetryAxios()),
-})
-
-container.register(CMCWorker, {
-    useFactory: instanceCachingFactory((dependencyContainer) =>
-        new CMCWorker(
-            dependencyContainer.resolve(CMCService),
-            dependencyContainer.resolve(TokensService),
-        ),
-    ),
 })
 
 container.register(ContactMessageService, {
@@ -313,7 +298,7 @@ container.register(ExplorerEnqueuer, {
 container.register(CMCWorker, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new CMCWorker(
-            dependencyContainer.resolve(CMCService),
+            dependencyContainer.resolve(ParserWorkersService),
             dependencyContainer.resolve(TokensService),
         ),
     ),
@@ -634,7 +619,7 @@ container.register(CoinSniperWorker, {
 container.register(CoinLoreWorker, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new CoinLoreWorker(
-            dependencyContainer.resolve(CoinLoreService),
+            dependencyContainer.resolve(ParserWorkersService),
             dependencyContainer.resolve(TokensService),
         )
     ),
@@ -786,13 +771,6 @@ container.register(CliDependency.COMMAND, {
             dependencyContainer.resolve(MemeCoinsWorker),
             dependencyContainer.resolve(MobulaWorker),
             dependencyContainer.resolve(MyCoinVoteWorker),
-        )
-    ),
-})
-
-container.register(CliDependency.COMMAND, {
-    useFactory: instanceCachingFactory((dependencyContainer) =>
-        new RunParserWorker(
             dependencyContainer.resolve(CoinVoteWorker),
             dependencyContainer.resolve(CoinsHunterWorker),
             dependencyContainer.resolve(CoinsGodsWorker),
@@ -800,7 +778,7 @@ container.register(CliDependency.COMMAND, {
             dependencyContainer.resolve(CoinSniperWorker),
             dependencyContainer.resolve(CMCWorker),
             dependencyContainer.resolve(CoinLoreWorker),
-            dependencyContainer.resolve(CoinScopeWorker)
+            dependencyContainer.resolve(CoinScopeWorker),
         )
     ),
 })
