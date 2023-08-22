@@ -18,7 +18,9 @@ export function createLogger(filename: string = 'default'): Logger {
             moment(info.timestamp).format('YYYY-MM-DD HH:mm:ss.SSS')
         + ']')
 
-        return `${formattedTimestamp} ${colors[info.level.toUpperCase()](info.level)}: ${info.message} ${metaLog}`
+        const level = colors[info.level.toUpperCase()](info.level.toUpperCase())
+
+        return `${formattedTimestamp} ${level}: ${info.message} ${metaLog}`
     })
 
     // Create separate transports for console and file

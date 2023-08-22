@@ -82,7 +82,11 @@ import {
     RunLastTokenTxDateFetcher,
     RunFetchTokenWorker,
 } from '../../command'
-import { RetryAxios, TokenNamesGenerator } from '../../utils'
+import { RetryAxios, TokenNamesGenerator, createLogger } from '../../utils'
+
+// Loggers
+
+const coinGeckoLogger = createLogger(CoinGeckoWorker.name.toLowerCase())
 
 // Repositories
 
@@ -305,7 +309,8 @@ container.register(CoinGeckoWorker, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new CoinGeckoWorker(
             dependencyContainer.resolve(TokensService),
-            dependencyContainer.resolve(CoinGeckoService)
+            dependencyContainer.resolve(CoinGeckoService),
+            coinGeckoLogger
         ),
     ),
 })
@@ -598,6 +603,7 @@ container.register(CliDependency.COMMAND, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new RunCoinGeckoWorker(
             dependencyContainer.resolve(CoinGeckoWorker),
+            coinGeckoLogger,
         )
     ),
 })

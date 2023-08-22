@@ -1,7 +1,8 @@
 import { singleton } from 'tsyringe'
+import { Logger } from 'winston'
 import { AbstractTokenWorker } from '../AbstractTokenWorker'
 import { CoinGeckoService, TokensService } from '../../service'
-import { Blockchain, logger, sleep } from '../../../utils'
+import { Blockchain, sleep } from '../../../utils'
 import { AllCoinsTokenResponse, CoinInfo, LinksCoinInfo } from '../../../types'
 
 @singleton()
@@ -13,12 +14,14 @@ export class CoinGeckoWorker extends AbstractTokenWorker {
     public constructor(
         private readonly tokenService: TokensService,
         private readonly coinGeckoService: CoinGeckoService,
+        private readonly logger: Logger,
     ) {
         super()
     }
 
     public async run(currentBlockchain: Blockchain): Promise<void> {
-        logger.info(`${CoinGeckoWorker.name} started`)
+        this.logger.info(`${CoinGeckoWorker.name} started`)
+
 
         const link = this.getAllCoinsLink(currentBlockchain)
 
@@ -28,7 +31,7 @@ export class CoinGeckoWorker extends AbstractTokenWorker {
             const response = await this.coinGeckoService.getAll(link)
             tokens = response.tokens
         } catch (ex: any) {
-            logger.error(
+            this.logger.error(
                 `${this.prefixLog} Aborting. Failed to fetch all tokens. Link: ${link} Reason: ${ex.message}`
             )
 
@@ -55,7 +58,7 @@ export class CoinGeckoWorker extends AbstractTokenWorker {
             try {
                 coinInfo = await this.coinGeckoService.getCoinInfo(tokenId)
             } catch (ex: any) {
-                logger.warn(
+                this.logger.warn(
                     `Failed to fetch coin info for ${tokenId} tokenId. Reason ${ex.message}. Skipping...`
                 )
 
@@ -94,19 +97,20 @@ export class CoinGeckoWorker extends AbstractTokenWorker {
                 currentBlockchain
             )
 
-            logger.info(
+            this.logger.info(
                 `${this.prefixLog} Added to DB:`,
-                address,
-                coinName,
-                websites,
-                '',
-                allLinks,
-                this.workerName,
-                currentBlockchain
+                [
+                    address,
+                    coinName,
+                    websites,
+                    allLinks,
+                    this.workerName,
+                    currentBlockchain,
+                ]
             )
         }
 
-        logger.info(`${CoinGeckoWorker.name} finished`)
+        this.logger.info(`${CoinGeckoWorker.name} finished`)
     }
 
     private getAllCoinsLink(currentBlockchain: Blockchain): string {
