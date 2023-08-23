@@ -86,7 +86,20 @@ import { RetryAxios, TokenNamesGenerator, createLogger } from '../../utils'
 
 // Loggers
 
+const advnLogger = createLogger(AdvnWorker.name.toLowerCase())
+// const bitQueryLogger = createLogger(BitQueryWorker.name.toLowerCase())
+// const coinBrainLogger = createLogger(CoinBrainWorker.name.toLowerCase())
+// const coinBuddyLogger = createLogger(CoinBuddyWorker.name.toLowerCase())
+// const coinCapLogger = createLogger(CoinCapWorker.name.toLowerCase())
+// const coinCatapultLogger = createLogger(CoinCatapultWorker.name.toLowerCase())
+// const coinCodexLogger = createLogger(CoinCodexWorker.name.toLowerCase())
+// const coinDiscoveryLogger = createLogger(CoinDiscoveryWorker.name.toLowerCase())
 const coinGeckoLogger = createLogger(CoinGeckoWorker.name.toLowerCase())
+// const enqueueTokenLogger = createLogger(EnqueueTokensWorker.name.toLowerCase())
+// const explorerLogger = createLogger('explorerworkers')
+// const lastTokenTxDateFetcherLogger = createLogger(LastTokenTxDateFetcher.name.toLowerCase())
+// const queueLogger = createLogger(QueueWorker.name.toLowerCase())
+// const telegramLogger = createLogger(TelegramWorker.name.toLowerCase())
 
 // Repositories
 
@@ -428,6 +441,7 @@ container.register(AdvnWorker, {
         new AdvnWorker(
             dependencyContainer.resolve(AdvnService),
             dependencyContainer.resolve(TokensService),
+            advnLogger,
         )
     ),
 })
@@ -612,6 +626,7 @@ container.register(CliDependency.COMMAND, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new RunAdvnWorker(
             dependencyContainer.resolve(AdvnWorker),
+            advnLogger,
         )
     ),
 })
