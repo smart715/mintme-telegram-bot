@@ -1,20 +1,22 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
 
-export class TokenCachedData1688330815981 implements MigrationInterface {
+export class TokenCachedData1692783793615 implements MigrationInterface {
+    public name = 'TokenCachedData1692783793615'
+
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
             CREATE TABLE \`token_cached_data\`
             (
-                \`id\`          int          NOT NULL AUTO_INCREMENT,
-                \`token_id\`    varchar(255) NOT NULL,
-                \`source\`      varchar(255) NOT NULL,
-                \`data\`        TEXT         DEFAULT NULL,
-                \`updated_at\`  int          NOT NULL,
-                UNIQUE INDEX \`UQ_TOKEN_ID_SOURCE\` (\`token_id\`, \`source\`),
+                \`id\` int NOT NULL AUTO_INCREMENT,
+                \`token_id\` varchar(255) NOT NULL,
+                \`source\` varchar(255) NOT NULL,
+                \`data\` text NULL,
+                \`updated_at\` int NOT NULL,
                 INDEX \`IDX_SOURCE\` (\`source\`),
+                UNIQUE INDEX \`UQ_TOKEN_ID_SOURCE\` (\`token_id\`, \`source\`),
                 PRIMARY KEY (\`id\`)
-            ) ENGINE=InnoDB
-        `)
+            ) ENGINE=InnoDB`
+        )
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {

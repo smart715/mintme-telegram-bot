@@ -13,7 +13,7 @@ export class TokenCachedData {
     @Column()
     public source: string
 
-    @Column({ default: '' })
+    @Column({ nullable: true, type: 'text' })
     public data: string = ''
 
     @Column({ name: 'updated_at' })

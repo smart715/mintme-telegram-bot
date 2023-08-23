@@ -47,30 +47,6 @@ export class TokensService {
         return token
     }
 
-    private async insertToken(
-        tokenAddress: string,
-        tokenName: string,
-        websites: string[],
-        emails: string[],
-        links: string[],
-        workerSource: string,
-        blockchain: Blockchain
-    ): Promise<Token> {
-        const token = new Token()
-
-        token.address = tokenAddress
-        token.blockchain = blockchain
-        token.name = tokenName
-        token.websites = websites
-        token.emails = emails
-        token.links = links
-        token.source = workerSource
-
-        await this.tokenRepository.insert(token)
-
-        return token
-    }
-
     public async update(token: Token): Promise<void> {
         await this.tokenRepository.save(token)
     }
