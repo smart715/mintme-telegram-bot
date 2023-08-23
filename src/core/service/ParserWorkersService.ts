@@ -3,15 +3,16 @@ import { singleton } from 'tsyringe'
 import { Blockchain } from '../../utils'
 import { CMCApiGeneralResponse, CMCCryptocurrency, CMCTokenInfoResponse, Coin360Token, CoinsHunterToken } from '../../types'
 import config from 'config'
+import { CMCWorkerConfig } from '../types'
 
 @singleton()
 export class ParserWorkersService {
-    private cmcApiKey: string = config.get('coinmarketcap_api_key')
+    private cmcApiKey: string = config.get<CMCWorkerConfig>('cmcWorker')['apiKey']
 
     public async loadCoinHunterCoins(blockchain: Blockchain, page: number): Promise<CoinsHunterToken[]> {
-        const response = await axios.get(`https://coinhunt.cc/api/v2/coins?query=new&chain=${blockchain}&type=all&category=all&sortBy=launch_date:desc&time=all-time&limit=1500&page=${page}`)
+        const response = await axios.get(`https://coinhunt.cc/api/v2/coins?query=new&chain=${blockchain.toLowerCase()}&type=all&category=all&sortBy=launch_date:desc&time=all-time&limit=1500&page=${page}`)
 
-        return response.data.data.coins
+        return response.data?.data?.coins
     }
 
     public async loadCoinVoteListPage(blockchain: Blockchain, page: number): Promise<string> {

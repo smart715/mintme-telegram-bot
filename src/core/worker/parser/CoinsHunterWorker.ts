@@ -27,12 +27,11 @@ export class CoinsHunterWorker extends AbstractTokenWorker {
 
         let page = 1
 
-        // eslint-disable-next-line
-        while (true) {
+        while (true) { // eslint-disable-line
             const tokens = await this.parserWorkersService.loadCoinHunterCoins(currentBlockchain, page)
 
             if (!tokens || !tokens.length) {
-                logger.info(`${this.prefixLog} On page ${page} no tokens fount. Finishing`)
+                logger.info(`${this.prefixLog} On page ${page} no tokens found. Finishing`)
 
                 break
             }
@@ -69,8 +68,6 @@ export class CoinsHunterWorker extends AbstractTokenWorker {
                     `${this.prefixLog} Token saved to database:`,
                     tokenAddress,
                     tokenName,
-                    website,
-                    this.workerName,
                     currentBlockchain
                 )
             }

@@ -1,14 +1,17 @@
 import { singleton } from 'tsyringe'
 import { AbstractTokenWorker } from '../AbstractTokenWorker'
 import { Blockchain, logger, sleep } from '../../../utils'
-import { ParserWorkersService, TokenCachedDataService, TokensService } from '../../service'
+import { ParserWorkersService, SeleniumService, TokenCachedDataService, TokensService } from '../../service'
 import { JSDOM } from 'jsdom'
+import { WebDriver } from 'selenium-webdriver'
 
 @singleton()
 export class CoinScopeWorker extends AbstractTokenWorker {
     public readonly workerName: string = 'CoinScope'
     private readonly prefixLog = `[${this.workerName}]`
     private readonly supportedBlockchains: Blockchain[] = Object.values(Blockchain)
+
+    private webDriver: WebDriver
 
     public constructor(
         private readonly parserWorkersService: ParserWorkersService,
@@ -19,6 +22,8 @@ export class CoinScopeWorker extends AbstractTokenWorker {
     }
 
     public async run(): Promise<void> {
+        this.webDriver = await SeleniumService.createDriver()
+
         for (const blockchain of this.supportedBlockchains) {
             await this.runByBlockchain(blockchain)
         }
@@ -31,8 +36,7 @@ export class CoinScopeWorker extends AbstractTokenWorker {
 
         let page = 1
 
-        // eslint-disable-next-line
-        while (true) {
+        while (true) { // eslint-disable-line
             const tokensData = await this.parserWorkersService.getCoinScopeTokensData(
                 reactFolder,
                 page,
@@ -55,7 +59,7 @@ export class CoinScopeWorker extends AbstractTokenWorker {
 
                 await this.processTokenData(coinSlug, currentBlockchain)
 
-                await sleep(2000)
+                await sleep(3000)
             }
 
             await sleep(2000)
@@ -89,7 +93,14 @@ export class CoinScopeWorker extends AbstractTokenWorker {
             JSON.stringify(tokenData),
         )
 
-        logger.info(`Successfuly saved data about ${tokenId}`)
+        logger.info(
+            `${this.prefixLog} Token saved to database:`,
+            tokenData.tokenAddress,
+            `${tokenData.tokenName} (${tokenId.toUpperCase()})`,
+            tokenData.website,
+            this.workerName,
+            currentBlockchain
+        )
     }
 
     private async getReactBuildFolderName(): Promise<string> {
@@ -117,7 +128,10 @@ export class CoinScopeWorker extends AbstractTokenWorker {
         website: string,
         links: string[]
     }> {
-        const pageSource = await this.parserWorkersService.loadCoinScopeTokenPage(tokenId)
+        // using selenium here because of site's firewall, and parsing by jsdom because it is comfortable
+        await this.webDriver.get(`https://www.coinscope.co/coin/${tokenId.toLowerCase()}`)
+
+        const pageSource = await this.webDriver.getPageSource()
         const pageDOM = (new JSDOM(pageSource)).window
 
         const links = pageDOM.document

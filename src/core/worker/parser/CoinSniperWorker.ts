@@ -29,8 +29,8 @@ export class CoinSniperWorker extends AbstractTokenWorker {
 
         let page = 1
 
-        // eslint-disable-next-line
-        while (true) {
+        while (true) { // eslint-disable-line
+            // todo: fix cloudflare
             const pageContentSource = await this.parserWorkersService.loadCoinSniperTokens(currentBlockchain, page)
             const pageDOM = (new JSDOM(pageContentSource)).window
 
@@ -57,7 +57,7 @@ export class CoinSniperWorker extends AbstractTokenWorker {
                 let website = ''
                 const linksElements = coinPageDocument.getElementsByClassName('social-icons-desktop')[0].getElementsByTagName('a')
                 const links = Array.from(linksElements).map((el) => {
-                    if ('GO' === el.getElementsByTagName('div')[0].innerText) {
+                    if ('GO' === el.getElementsByTagName('div')[0].innerHTML) {
                         website = el.href
                     }
 

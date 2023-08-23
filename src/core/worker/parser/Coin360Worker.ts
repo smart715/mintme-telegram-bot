@@ -1,7 +1,7 @@
 import { singleton } from 'tsyringe'
 import { AbstractTokenWorker } from '../AbstractTokenWorker'
 import { ParserWorkersService, TokenCachedDataService, TokensService } from '../../service'
-import { Blockchain, logger, parseBlockchainName, sleep } from '../../../utils'
+import { Blockchain, logger, sleep } from '../../../utils'
 import { JSDOM } from 'jsdom'
 
 @singleton()
@@ -39,23 +39,15 @@ export class Coin360Worker extends AbstractTokenWorker {
             const coinPageSource = await this.parserWorkersService.loadCoin360Token(coinId)
             const coinPageDocument = (new JSDOM(coinPageSource)).window.document
 
-            let blockchain
-            try {
-                blockchain = parseBlockchainName(coinPageDocument.getElementsByClassName('mr-3')[0].innerHTML)
-            } catch (err) {
-                logger.warn(`${this.prefixLog} Unknown blockchain for coin ${coinId}. Skipping`)
-
-                continue
-            }
-
-            const infoElements = coinPageDocument.getElementsByClassName('styles_item___uOnu')
+            const infoElements = coinPageDocument.getElementsByClassName('HxZs6e')
             const tokenName = `${coin.n}(${coin.s})`
             let tokenAddress = ''
             let website = ''
             let links: string[] = []
+            let blockchain
 
             Array.from(infoElements).forEach(el => {
-                const linkType = el.getElementsByTagName('div')[0].innerText.toLowerCase()
+                const linkType = el.getElementsByTagName('div')[0].innerHTML.toLowerCase()
 
                 switch (linkType) {
                     case 'website':
@@ -64,6 +56,13 @@ export class Coin360Worker extends AbstractTokenWorker {
                     case 'explorers': {
                         const link = el.getElementsByTagName('div')[1].getElementsByTagName('a')[0].href
                         tokenAddress = link.split('/')[link.split('/').length -1].toLowerCase()
+
+                        if (link.includes('etherscan')) {
+                            blockchain = Blockchain.ETH
+                        } else if (link.includes('bscscan')) {
+                            blockchain = Blockchain.BSC
+                        }
+
                         break
                     }
                     case 'community': {
@@ -74,7 +73,7 @@ export class Coin360Worker extends AbstractTokenWorker {
                 }
             })
 
-            if (this.supportedBlockchains.includes(blockchain) && tokenAddress?.startsWith('0x')) {
+            if (blockchain && this.supportedBlockchains.includes(blockchain) && tokenAddress?.startsWith('0x')) {
                 await this.tokenService.addIfNotExists(
                     tokenAddress,
                     tokenName,
@@ -90,11 +89,10 @@ export class Coin360Worker extends AbstractTokenWorker {
                     tokenAddress,
                     tokenName,
                     website,
-                    this.workerName,
                     blockchain
                 )
             } else {
-                logger.error(`${this.prefixLog} Unsupported blockchain or wrong data for ${coinId}. Skipping`)
+                logger.warn(`${this.prefixLog} Unsupported blockchain or wrong data for ${coinId}. Skipping`)
             }
 
             await this.tokenCachedDataService.cacheTokenData(coinId, this.workerName, tokenAddress || '')

@@ -36,15 +36,15 @@ export class CoinsGodsWorker extends AbstractTokenWorker {
             const coinPageSource = await this.parserWorkersService.loadCoinsGodsTokenPage(coinId)
             const coinPageDocument = (new JSDOM(coinPageSource)).window.document
 
-            const tokenAddress = coinPageDocument.getElementById('coin-text-address')?.innerText
+            const tokenAddress = coinPageDocument.getElementById('coin-text-address')?.innerHTML
             const tokenName = coinPageDocument.getElementsByTagName('h3')[0].innerHTML.toString().split(' <small')[0]
                 + ' ('
-                    + coinPageDocument.getElementsByTagName('h3')[0].getElementsByTagName('small')[0].innerText
+                    + coinPageDocument.getElementsByTagName('h3')[0].getElementsByTagName('small')[0].innerHTML
                 + ')'
             const linksElements = coinPageDocument.getElementsByClassName('mt-2 mt-lg-0')[0].getElementsByTagName('a')
             let website = ''
             const links = Array.from(linksElements).map((el) => {
-                if ('Website' === el.innerText.trim()) {
+                if (el.innerHTML.includes('Website')) {
                     website = el.href
                 }
 
@@ -76,11 +76,12 @@ export class CoinsGodsWorker extends AbstractTokenWorker {
                     tokenAddress,
                     tokenName,
                     website,
-                    this.workerName,
-                    blockchain
                 )
             } else {
-                logger.error(`${this.prefixLog} Unsupported blockchain or wrong data for ${coinId}. Skipping`)
+                logger.warn(
+                    `${this.prefixLog} Unsupported blockchain or wrong data ` +
+                    `for ${coinId} (${tokenName}, ${blockchain} , ${tokenAddress}). Skipping`
+                )
             }
 
             await this.tokenCachedDataService.cacheTokenData(coinId, this.workerName, tokenAddress || '')

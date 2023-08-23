@@ -61,7 +61,7 @@ export class CoinLoreWorker extends AbstractTokenWorker {
             logger.info(
                 `${this.prefixLog} Token saved to database:`,
                 tokenAddress,
-                `${coin.name} (${coin.symbol}`,
+                `${coin.name} (${coin.symbol})`,
                 this.workerName,
                 coinBlockchain
             )

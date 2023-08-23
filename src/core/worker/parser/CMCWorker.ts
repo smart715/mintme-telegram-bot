@@ -1,9 +1,10 @@
 import { singleton } from 'tsyringe'
 import { ParserWorkersService, TokensService } from '../../service'
 import { AbstractTokenWorker } from '../AbstractTokenWorker'
-import { Blockchain, logger, parseBlockchainName } from '../../../utils'
+import { Blockchain, logger, parseBlockchainName, sleep } from '../../../utils'
 import config from 'config'
 import { CMCCryptocurrency } from '../../../types'
+import { CMCWorkerConfig } from '../../types'
 
 @singleton()
 export class CMCWorker extends AbstractTokenWorker {
@@ -19,14 +20,13 @@ export class CMCWorker extends AbstractTokenWorker {
     }
 
     public async run(): Promise<any> {
-        logger.info(`${this.prefixLog} started`)
+        logger.info(`${this.prefixLog} Worker started`)
 
-        const requestLimit = config.get<number>('cmc_request_limit')
-        let requestStart = config.get<number>('cmc_request_start')
+        const requestLimit = config.get<CMCWorkerConfig>('cmcWorker')['requestLimit']
+        let requestOffset = config.get<CMCWorkerConfig>('cmcWorker')['requestOffset']
 
-        // eslint-disable-next-line
-        while (true) {
-            const tokens = await this.parserWorkersService.getCmcLastTokens(requestStart, requestLimit)
+        while (true) { // eslint-disable-line
+            const tokens = await this.parserWorkersService.getCmcLastTokens(requestOffset, requestLimit)
 
             await this.processTokens(tokens.data)
 
@@ -34,16 +34,14 @@ export class CMCWorker extends AbstractTokenWorker {
                 break
             }
 
-            requestStart += requestLimit
+            requestOffset += requestLimit
         }
+
+        logger.info(`${this.prefixLog} worker finished`)
     }
 
     private async processTokens(tokens: CMCCryptocurrency[]): Promise<void> {
-        let token
-
-        for (let i = 0; i < tokens.length; i++) {
-            token = tokens[i]
-
+        for (const token of tokens) {
             if (!token.platform?.token_address) {
                 logger.warn(`${this.prefixLog} No address info found for ${token.name} . Skipping`)
 
@@ -93,17 +91,18 @@ export class CMCWorker extends AbstractTokenWorker {
                 )
 
                 logger.info(
-                    `${this.prefixLog} Added to DB: `,
+                    `${this.prefixLog} Token saved to database: `,
                     tokenAddress,
                     tokenName,
                     website,
                     email,
-                    links.join(','),
                     blockchain
                 )
             } else {
                 logger.info(`${this.prefixLog} ${token.name} already added. Skipping`)
             }
+
+            await sleep(2000)
         }
     }
 

@@ -10,6 +10,8 @@ export class CoinVoteWorker extends AbstractTokenWorker {
     private readonly prefixLog = `[${this.workerName}]`
     private readonly supportedBlockchains: Blockchain[] = [ Blockchain.ETH, Blockchain.BSC ]
 
+    private readonly maxItemsOnPage = 26
+
     public constructor(
         private readonly parserWorkersService: ParserWorkersService,
         private readonly tokenService: TokensService,
@@ -29,8 +31,7 @@ export class CoinVoteWorker extends AbstractTokenWorker {
 
         let page = 1
 
-        // eslint-disable-next-line
-        while (true) {
+        while (true) { // eslint-disable-line
             logger.info(`${this.prefixLog} Parsing page ${page}`)
 
             const pageSource = await this.parserWorkersService.loadCoinVoteListPage(currentBlockchain, page)
@@ -43,8 +44,6 @@ export class CoinVoteWorker extends AbstractTokenWorker {
 
                 break
             }
-
-            await sleep(2000)
 
             for (const coinId of coinsIds) {
                 if (await this.tokenCachedDataService.isCached(coinId, this.workerName)) {
@@ -79,7 +78,6 @@ export class CoinVoteWorker extends AbstractTokenWorker {
                         tokenAddress,
                         tokenName,
                         website,
-                        this.workerName,
                         currentBlockchain
                     )
                 } else {
@@ -89,6 +87,12 @@ export class CoinVoteWorker extends AbstractTokenWorker {
                 await this.tokenCachedDataService.cacheTokenData(coinId, this.workerName, tokenAddress || '')
 
                 await sleep(2000)
+            }
+
+            if (coinsIds.length < this.maxItemsOnPage) {
+                logger.warn(`${this.prefixLog} Coins amount (${coinsIds.length}) less than max. Its last page`)
+
+                break
             }
 
             page++

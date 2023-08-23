@@ -21,8 +21,8 @@ import { singleton } from 'tsyringe'
 
 @singleton()
 export class RunFetchTokenWorker implements CommandInterface {
-    public readonly command = 'run-casual-token-worker'
-    public readonly description = 'Runs casual token worker'
+    public readonly command = 'run-fetch-token-worker'
+    public readonly description = 'Runs fetch token worker'
 
     public constructor(
         private readonly cryptoVoteListWorker: CryptoVoteListWorker,
