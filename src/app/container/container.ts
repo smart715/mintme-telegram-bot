@@ -495,6 +495,7 @@ container.register(CryptoVoteListWorker, {
             dependencyContainer.resolve(TokensService),
             dependencyContainer.resolve(NewestCheckedTokenService),
             dependencyContainer.resolve(RetryAxios),
+            createLogger(CryptoVoteListWorker.name.toLowerCase())
         )
     ),
 })
@@ -505,7 +506,7 @@ container.register(EthplorerWorker, {
             dependencyContainer.resolve(TokenNamesGenerator),
             dependencyContainer.resolve(LastCheckedTokenNameService),
             dependencyContainer.resolve(TokensService),
-            createLogger(EthplorerWorker.name)
+            createLogger(EthplorerWorker.name.toLowerCase())
         )
     ),
 })
@@ -516,6 +517,7 @@ container.register(GemFinderWorker, {
             dependencyContainer.resolve(NewestCheckedTokenService),
             dependencyContainer.resolve(TokensService),
             dependencyContainer.resolve(RetryAxios),
+            createLogger(GemFinderWorker.name.toLowerCase())
         )
     ),
 })
@@ -526,6 +528,7 @@ container.register(MemeCoinsWorker, {
             dependencyContainer.resolve(NewestCheckedTokenService),
             dependencyContainer.resolve(TokensService),
             dependencyContainer.resolve(RetryAxios),
+            createLogger(MemeCoinsWorker.name.toLowerCase())
         )
     ),
 })
@@ -535,7 +538,7 @@ container.register(MobulaWorker, {
         new MobulaWorker(
             dependencyContainer.resolve(TokensService),
             dependencyContainer.resolve(RetryAxios),
-            createLogger(MobulaWorker.name)
+            createLogger(MobulaWorker.name.toLowerCase())
         )
     ),
 })
@@ -546,6 +549,7 @@ container.register(MyCoinVoteWorker, {
             dependencyContainer.resolve(NewestCheckedTokenService),
             dependencyContainer.resolve(TokensService),
             dependencyContainer.resolve(RetryAxios),
+            createLogger(MyCoinVoteWorker.name.toLowerCase())
         )
     ),
 })

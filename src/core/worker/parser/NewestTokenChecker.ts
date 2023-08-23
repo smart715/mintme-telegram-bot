@@ -1,4 +1,5 @@
-import { logger, sleep } from '../../../utils'
+import { Logger } from 'winston'
+import { sleep } from '../../../utils'
 import { NewestCheckedTokenService } from '../../service'
 
 export abstract class NewestTokenChecker {
@@ -13,10 +14,11 @@ export abstract class NewestTokenChecker {
     protected constructor(
         protected readonly workerName: string,
         protected readonly newestCheckedTokenService: NewestCheckedTokenService,
+        protected readonly logger: Logger
     ) { }
 
     public async run(): Promise<void> {
-        logger.info(`[${this.workerName}] Started`)
+        this.logger.info(`[${this.workerName}] Started`)
 
         this.newestChecked = await this.getNewestChecked()
         this.needToSaveNextNewestChecked = true
@@ -34,17 +36,17 @@ export abstract class NewestTokenChecker {
             if (error instanceof StopCheckException) {
                 this.logInfo(`${error.message}`)
             } else {
-                logger.error(`[${this.workerName}] ${error.message}`)
+                this.logger.error(`[${this.workerName}] ${error.message}`)
 
                 throw error
             }
         } finally {
-            logger.info(`[${this.workerName}] Finished`)
+            this.logger.info(`[${this.workerName}] Finished`)
         }
     }
 
     private logInfo(message: string): void {
-        logger.info(`[${this.workerName}] ${message}`)
+        this.logger.info(`[${this.workerName}] ${message}`)
     }
 
     private async getNewestChecked(): Promise<string | null> {

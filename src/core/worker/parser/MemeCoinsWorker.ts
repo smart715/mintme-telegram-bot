@@ -1,6 +1,7 @@
+import { singleton } from 'tsyringe'
+import { Logger } from 'winston'
 import { RetryAxios, Blockchain, tokenAddressRegexp } from '../../../utils'
 import { NewestCheckedTokenService, TokensService } from '../../service'
-import { singleton } from 'tsyringe'
 import { NewestTokenChecker, StopCheckException } from './NewestTokenChecker'
 
 @singleton()
@@ -9,10 +10,12 @@ export class MemeCoinsWorker extends NewestTokenChecker {
         protected readonly newestCheckedTokenService: NewestCheckedTokenService,
         private readonly tokensService: TokensService,
         private readonly retryAxios: RetryAxios,
+        protected readonly logger: Logger,
     ) {
         super(
             MemeCoinsWorker.name,
             newestCheckedTokenService,
+            logger,
         )
     }
 
