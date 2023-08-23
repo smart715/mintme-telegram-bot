@@ -8,11 +8,3 @@ run: ## Start watching node server
 .PHONY: build
 build: ## Build containers
 	@docker-compose -p ${DOCKER_PROJECT_NAME} -f ${COMPOSE_FILE} build
-
-.PHONY: ps
-ps: ## List running containers
-	@docker-compose -p ${DOCKER_PROJECT_NAME} -f ${COMPOSE_FILE} ps
-
-.PHONY: stop
-stop:
-	@docker-compose -p ${DOCKER_PROJECT_NAME} -f ${COMPOSE_FILE} stop
