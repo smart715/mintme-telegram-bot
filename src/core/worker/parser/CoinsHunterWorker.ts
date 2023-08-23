@@ -7,6 +7,7 @@ import { Blockchain, logger, sleep } from '../../../utils'
 export class CoinsHunterWorker extends AbstractTokenWorker {
     private readonly workerName = 'CoinsHunter'
     private readonly prefixLog = `[${this.workerName}]`
+    private readonly supportedBlockchains = Object.values(Blockchain)
 
     public constructor(
         private readonly parserWorkersService: ParserWorkersService,
@@ -15,8 +16,14 @@ export class CoinsHunterWorker extends AbstractTokenWorker {
         super()
     }
 
-    public async run(currentBlockchain: Blockchain): Promise<void> {
-        logger.info(`${this.prefixLog} Worker started`)
+    public async run(): Promise<void> {
+        for (const blockchain of this.supportedBlockchains) {
+            await this.runByBlockchain(blockchain)
+        }
+    }
+
+    public async runByBlockchain(currentBlockchain: Blockchain): Promise<void> {
+        logger.info(`${this.prefixLog} Worker started for ${currentBlockchain} blockchain`)
 
         let page = 1
 
@@ -48,7 +55,7 @@ export class CoinsHunterWorker extends AbstractTokenWorker {
                 const website = token.social_info.website
                 const links = [ ...Object.values(token.social_info), ...Object.values(token.contact_info) ]
 
-                await this.tokenService.add(
+                await this.tokenService.addIfNotExists(
                     tokenAddress,
                     tokenName,
                     [ website ],
@@ -72,6 +79,6 @@ export class CoinsHunterWorker extends AbstractTokenWorker {
 
             await sleep(2000)
         }
-        logger.info(`${this.prefixLog} worker finished`)
+        logger.info(`${this.prefixLog} worker finished for ${currentBlockchain} blockchain`)
     }
 }

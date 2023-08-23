@@ -104,7 +104,32 @@ export class ParserWorkersService {
         return response.data?.data
     }
 
-    public getCoinLoreTokenPageLink(nameId: string): string {
-        return `https://www.coinlore.com/coin/${nameId}`
+    public async getCoinLoreTokenPage(nameId: string): Promise<string> {
+        const response = await axios.get(`https://www.coinlore.com/coin/${nameId}`)
+
+        return response.data.replace(/(\r\n|\n|\r)/gm, '')
+    }
+
+    public async getCoinScopeMainPage(): Promise<string> {
+        const response = await axios.get(`https://www.coinscope.co/`)
+
+        return response.data.replace(/(\r\n|\n|\r)/gm, '')
+    }
+
+    public async getCoinScopeTokensData(buildFolder: string, page: number, blockchain: Blockchain): Promise<any> {
+        const response = await axios.get(`https://www.coinscope.co/_next/data/${buildFolder}/alltime.json`, {
+            params: {
+                network: blockchain.toString(),
+                page,
+            },
+        })
+
+        return response.data
+    }
+
+    public async loadCoinScopeTokenPage(tokenId: string): Promise<string> {
+        const response = await axios.get(`https://www.coinscope.co/coin/${tokenId.toLowerCase()}`)
+
+        return response.data.replace(/(\r\n|\n|\r)/gm, '')
     }
 }

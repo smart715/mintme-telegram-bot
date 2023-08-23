@@ -9,6 +9,7 @@ import { CMCCryptocurrency } from '../../../types'
 export class CMCWorker extends AbstractTokenWorker {
     private readonly workerName = 'CMC'
     private readonly prefixLog = `[${this.workerName}]`
+    private readonly supportedBlockchains = Object.values(Blockchain)
 
     public constructor(
         private readonly parserWorkersService: ParserWorkersService,
@@ -17,7 +18,7 @@ export class CMCWorker extends AbstractTokenWorker {
         super()
     }
 
-    public async run(currentBlockchain: Blockchain): Promise<any> {
+    public async run(): Promise<any> {
         logger.info(`${this.prefixLog} started`)
 
         const requestLimit = config.get<number>('cmc_request_limit')
@@ -27,7 +28,7 @@ export class CMCWorker extends AbstractTokenWorker {
         while (true) {
             const tokens = await this.parserWorkersService.getCmcLastTokens(requestStart, requestLimit)
 
-            await this.processTokens(tokens.data, currentBlockchain)
+            await this.processTokens(tokens.data)
 
             if (tokens.data.length < requestLimit) {
                 break
@@ -37,7 +38,7 @@ export class CMCWorker extends AbstractTokenWorker {
         }
     }
 
-    private async processTokens(tokens: CMCCryptocurrency[], currentBlockchain: Blockchain): Promise<void> {
+    private async processTokens(tokens: CMCCryptocurrency[]): Promise<void> {
         let token
 
         for (let i = 0; i < tokens.length; i++) {
@@ -58,7 +59,7 @@ export class CMCWorker extends AbstractTokenWorker {
                 continue
             }
 
-            if (currentBlockchain != blockchain) {
+            if (!this.supportedBlockchains.includes(blockchain)) {
                 logger.warn(`${this.prefixLog} Different blockchain found ${token.name} . Skipping`)
 
                 continue

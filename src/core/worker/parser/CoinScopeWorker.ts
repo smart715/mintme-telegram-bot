@@ -1,76 +1,71 @@
 import { singleton } from 'tsyringe'
 import { AbstractTokenWorker } from '../AbstractTokenWorker'
-import { Blockchain, logger } from '../../../utils'
-import { CoinScopeService, TokenCachedDataService, TokensService } from '../../service'
-import { Builder, WebDriver } from 'selenium-webdriver'
+import { Blockchain, logger, sleep } from '../../../utils'
+import { ParserWorkersService, TokenCachedDataService, TokensService } from '../../service'
+import { JSDOM } from 'jsdom'
 
 @singleton()
 export class CoinScopeWorker extends AbstractTokenWorker {
     public readonly workerName: string = 'CoinScope'
+    private readonly prefixLog = `[${this.workerName}]`
+    private readonly supportedBlockchains: Blockchain[] = Object.values(Blockchain)
 
     public constructor(
-        private readonly coinScopeService: CoinScopeService,
+        private readonly parserWorkersService: ParserWorkersService,
         private readonly tokensService: TokensService,
         private readonly tokenCachedDataRepository: TokenCachedDataService,
     ) {
         super()
     }
 
-    public async run(currentBlockchain: Blockchain): Promise<any> {
-        logger.info('Creating selenium builder')
-        const cachedIds = (await this.tokenCachedDataRepository.getIdsBySource(this.workerName))
-            .map((r) => (r as any).token_id)
-
-        const driver = await new Builder()
-            .forBrowser('chrome')
-            .usingServer('http://selenium-hub:4444')
-            .build()
-
-        logger.info('Selenium builder created')
-
-        try {
-            const reactFolder = await this.coinScopeService.getReactBuildFolderName(driver)
-
-            logger.info('react folder: ', reactFolder)
-
-            let page = 1
-
-            // eslint-disable-next-line
-            while (true) {
-                await new Promise(r => setTimeout(r, 2000))
-                const tokensData = await this.coinScopeService.getTokensData(reactFolder, page, currentBlockchain)
-                const coinSlugs = tokensData?.pageProps?.coinSlugs
-
-                page++
-
-                if (!coinSlugs || 0 === coinSlugs) {
-                    break
-                }
-
-                for (let i = 0; i < coinSlugs.length; i++) {
-                    if (cachedIds.includes(coinSlugs[i].toLowerCase())) {
-                        logger.warn(`Found cached data for ${coinSlugs[i]}. Skipping`)
-                        continue
-                    }
-
-                    await this.processTokenData(coinSlugs[i], driver, currentBlockchain)
-
-                    await new Promise(r => setTimeout(r, 2000))
-                }
-
-                break
-            }
-        } catch (err) {
-            driver.quit()
-
-            throw err
-        } finally {
-            driver.quit()
+    public async run(): Promise<void> {
+        for (const blockchain of this.supportedBlockchains) {
+            await this.runByBlockchain(blockchain)
         }
     }
 
-    private async processTokenData(tokenId: string, driver: WebDriver, currentBlockchain: Blockchain): Promise<void> {
-        const tokenData = await this.coinScopeService.scrapeTokenData(tokenId, driver)
+    public async runByBlockchain(currentBlockchain: Blockchain): Promise<any> {
+        logger.info(`${this.prefixLog} Worker started for ${currentBlockchain} blockchain`)
+
+        const reactFolder = await this.getReactBuildFolderName()
+
+        let page = 1
+
+        // eslint-disable-next-line
+        while (true) {
+            const tokensData = await this.parserWorkersService.getCoinScopeTokensData(
+                reactFolder,
+                page,
+                currentBlockchain
+            )
+            const coinSlugs = tokensData?.pageProps?.coinSlugs
+
+            page++
+
+            if (!coinSlugs || 0 === coinSlugs) {
+                break
+            }
+
+            for (const coinSlug of coinSlugs) {
+                if (await this.tokenCachedDataRepository.isCached(coinSlug.toLowerCase(), this.workerName)) {
+                    logger.warn(`Found cached data for ${coinSlug}. Skipping`)
+
+                    continue
+                }
+
+                await this.processTokenData(coinSlug, currentBlockchain)
+
+                await sleep(2000)
+            }
+
+            await sleep(2000)
+        }
+
+        logger.info(`${this.prefixLog} worker finished for ${currentBlockchain} blockchain`)
+    }
+
+    private async processTokenData(tokenId: string, currentBlockchain: Blockchain): Promise<void> {
+        const tokenData = await this.scrapeTokenData(tokenId)
 
         if (!tokenData.tokenAddress) {
             logger.warn(`Address not found for ${tokenId} (${tokenData.tokenName}). Skipping`)
@@ -78,11 +73,11 @@ export class CoinScopeWorker extends AbstractTokenWorker {
             return
         }
 
-        await this.tokensService.addOrUpdateToken(
+        await this.tokensService.addIfNotExists(
             tokenData.tokenAddress,
             `${tokenData.tokenName} (${tokenId.toUpperCase()})`,
             [ tokenData.website ],
-            '',
+            [ '' ],
             tokenData.links,
             this.workerName,
             currentBlockchain,
@@ -95,5 +90,55 @@ export class CoinScopeWorker extends AbstractTokenWorker {
         )
 
         logger.info(`Successfuly saved data about ${tokenId}`)
+    }
+
+    private async getReactBuildFolderName(): Promise<string> {
+        const pageSource = await this.parserWorkersService.getCoinScopeMainPage()
+        const pageDOM = (new JSDOM(pageSource)).window
+
+        const scripts = pageDOM.document.getElementsByTagName('script')
+        let buildFolder = ''
+
+        for (let i = 0; i < scripts.length; i++) {
+            if (!scripts[i].src.includes('_buildManifest')) {
+                continue
+            }
+
+            buildFolder = scripts[i].src.split('/')[scripts[i].src.split('/').length - 2]
+            break
+        }
+
+        return buildFolder
+    }
+
+    private async scrapeTokenData(tokenId: string): Promise<{
+        tokenAddress: string,
+        tokenName: string,
+        website: string,
+        links: string[]
+    }> {
+        const pageSource = await this.parserWorkersService.loadCoinScopeTokenPage(tokenId)
+        const pageDOM = (new JSDOM(pageSource)).window
+
+        const links = pageDOM.document
+            .getElementsByClassName('StyledBox-sc-13pk1d4-0 gxWSzQ')[0]?.getElementsByTagName('a')|| []
+        let website = ''
+        const otherLinks = []
+
+        for (const link of links) {
+            if ('Website link' === link.getAttribute('title')) {
+                website = link.href
+            }
+
+            otherLinks.push(link.href)
+        }
+
+        return {
+            tokenAddress: pageDOM.document
+                .querySelector('.StyledBox-sc-13pk1d4-0.fSCGoT .StyledText-sc-1sadyjn-0.kvWNBW')?.innerHTML || '',
+            tokenName: pageDOM.document.title.split('| ')[1],
+            website,
+            links: otherLinks,
+        }
     }
 }

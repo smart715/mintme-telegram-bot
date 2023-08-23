@@ -1,9 +1,9 @@
 import { singleton } from 'tsyringe'
 import { AbstractTokenWorker } from '../AbstractTokenWorker'
-import { CoinLoreService, ParserWorkersService, TokensService } from '../../service'
-import { Builder, By, WebDriver } from 'selenium-webdriver'
+import { ParserWorkersService, TokensService } from '../../service'
 import { Blockchain, logger } from '../../../utils'
 import config from 'config'
+import { DOMWindow, JSDOM } from 'jsdom'
 
 @singleton()
 export class CoinLoreWorker extends AbstractTokenWorker {
@@ -18,17 +18,8 @@ export class CoinLoreWorker extends AbstractTokenWorker {
         super()
     }
 
-    public async run(currentBlockchain: Blockchain): Promise<void> {
+    public async run(): Promise<void> {
         let coinsCount = await this.parserWorkersService.getCoinLoreCoinsCount()
-
-        logger.info('Creating selenium builder')
-
-        const driver = await new Builder()
-            .forBrowser('chrome')
-            .usingServer('http://selenium-hub:4444')
-            .build()
-
-        logger.info('Selenium builder created ' + currentBlockchain)
 
         while (coinsCount > 0) {
             const coins = await this.parserWorkersService.loadCoinLoreTokensList(
@@ -36,62 +27,68 @@ export class CoinLoreWorker extends AbstractTokenWorker {
                 this.batchSize
             )
 
-            await this.processTokens(coins, driver)
+            await this.processTokens(coins)
 
             coinsCount -= this.batchSize
         }
-
-        await driver.quit()
     }
 
-    public async processTokens(coins: any[], driver: WebDriver): Promise<any> {
-        let coin
-        for (let i = 0; i < coins.length; i++) {
-            coin = coins[i]
+    public async processTokens(coins: any[]): Promise<any> {
+        for (const coin of coins) {
+            const pageSource = await this.parserWorkersService.getCoinLoreTokenPage(coin.nameid)
+            const pageDOM = (new JSDOM(pageSource)).window
 
-            logger.info(`${this.prefixLog} Fetching :: ${coin.name} (${coin.symbol})`)
+            const tokenAddress = this.parseTokenAddress(pageDOM)
+            const links = this.parseLinks(pageDOM)
+            const coinBlockchain = this.parseBlockchainFromLinks(links)
 
-            await driver.get(this.parserWorkersService.getCoinLoreTokenPageLink(coin.nameid))
+            if (!coinBlockchain || !tokenAddress) {
+                logger.info(`${this.prefixLog} Wrong blockchain/address for ${coin.name} (${coin.symbol}). Skipping`)
 
-            try {
-                const tokenAddress = await driver.findElement(By.css('td.token-address')).getText()
-                const linksElements = await driver.findElements(By.css('.coin__links_list a'))
-
-                const links = []
-                for (let j = 0; j < linksElements.length; j++) {
-                    links.push(await linksElements[j].getAttribute('href'))
-                }
-
-                let coinBlockchain
-                links.forEach((link) => {
-                    if (link.includes('bscscan.com')) {
-                        coinBlockchain = Blockchain.BSC
-                    } else if (link.includes('etherscan.io')) {
-                        coinBlockchain = Blockchain.ETH
-                    }
-                })
-
-                if (!coinBlockchain) {
-                    logger.info(`${this.prefixLog} ${coin.name} (${coin.symbol}) :: didn't added :: wrong blockchain`)
-                    continue
-                }
-
-                await this.tokensService.addIfNotExists(
-                    tokenAddress,
-                    `${coin.name} (${coin.symbol})`,
-                    [ links.shift() || '' ],
-                    [ '' ],
-                    links,
-                    'coinlore',
-                    coinBlockchain
-                )
-
-                logger.info(`${this.prefixLog} ${coin.name} (${coin.symbol}) :: added :: ${tokenAddress}`)
-            } catch (err: any) {
-                logger.warn(`${this.prefixLog} ${coin.name} (${coin.symbol}) :: didn't added :: something went wrong`)
-
-                throw err
+                continue
             }
+
+            await this.tokensService.addIfNotExists(
+                tokenAddress,
+                `${coin.name} (${coin.symbol})`,
+                [ links.shift() || '' ],
+                [ '' ],
+                links,
+                this.workerName,
+                coinBlockchain
+            )
+
+            logger.info(
+                `${this.prefixLog} Token saved to database:`,
+                tokenAddress,
+                `${coin.name} (${coin.symbol}`,
+                this.workerName,
+                coinBlockchain
+            )
         }
+    }
+
+    private parseBlockchainFromLinks(links: string[]): Blockchain | null {
+        let blockchain = null
+
+        links.forEach((link) => {
+            if (link.includes('bscscan.com')) {
+                blockchain = Blockchain.BSC
+            } else if (link.includes('etherscan.io')) {
+                blockchain = Blockchain.ETH
+            }
+        })
+
+        return blockchain
+    }
+
+    private parseLinks(pageDOM: DOMWindow): string[] {
+        return Array.from(pageDOM.document.querySelectorAll('.coin__links_list a'))
+            .map((el) => el.getAttribute('href') || '')
+            .filter((val) => val)
+    }
+
+    private parseTokenAddress(pageDOM: DOMWindow): string {
+        return pageDOM.document.querySelector('td.token-address')?.innerHTML || ''
     }
 }

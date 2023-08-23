@@ -8,7 +8,7 @@ import { DOMWindow, JSDOM } from 'jsdom'
 export class CoinVoteWorker extends AbstractTokenWorker {
     private readonly workerName = 'CoinVote'
     private readonly prefixLog = `[${this.workerName}]`
-    private readonly unsupportedBlockchains: Blockchain[] = [ Blockchain.CRO ]
+    private readonly supportedBlockchains: Blockchain[] = [ Blockchain.ETH, Blockchain.BSC ]
 
     public constructor(
         private readonly parserWorkersService: ParserWorkersService,
@@ -18,14 +18,14 @@ export class CoinVoteWorker extends AbstractTokenWorker {
         super()
     }
 
-    public async run(currentBlockchain: Blockchain): Promise<void> {
-        logger.info(`${this.prefixLog} Worker started`)
-
-        if (this.unsupportedBlockchains.includes(currentBlockchain)) {
-            logger.error(`${this.prefixLog} Unsupported blockchain ${currentBlockchain}. Aborting`)
-
-            return
+    public async run(): Promise<void> {
+        for (const blockchain of this.supportedBlockchains) {
+            await this.runByBlockchain(blockchain)
         }
+    }
+
+    public async runByBlockchain(currentBlockchain: Blockchain): Promise<void> {
+        logger.info(`${this.prefixLog} Worker started for ${currentBlockchain} blockchain`)
 
         let page = 1
 
@@ -94,7 +94,7 @@ export class CoinVoteWorker extends AbstractTokenWorker {
             page++
         }
 
-        logger.info(`${this.prefixLog} worker finished`)
+        logger.info(`${this.prefixLog} worker finished for ${currentBlockchain} blockchain`)
     }
 
     private parseCoinsIds(dom: DOMWindow): string[] {

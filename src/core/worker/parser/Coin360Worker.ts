@@ -8,7 +8,7 @@ import { JSDOM } from 'jsdom'
 export class Coin360Worker extends AbstractTokenWorker {
     private readonly workerName = 'Coin360'
     private readonly prefixLog = `[${this.workerName}]`
-    private readonly unsupportedBlockchains: Blockchain[] = [ Blockchain.CRO ]
+    private readonly supportedBlockchains: Blockchain[] = [ Blockchain.ETH, Blockchain.BSC ]
 
     public constructor(
         private readonly parserWorkersService: ParserWorkersService,
@@ -18,14 +18,8 @@ export class Coin360Worker extends AbstractTokenWorker {
         super()
     }
 
-    public async run(currentBlockchain: Blockchain): Promise<void> {
+    public async run(): Promise<void> {
         logger.info(`${this.prefixLog} Worker started`)
-
-        if (this.unsupportedBlockchains.includes(currentBlockchain)) {
-            logger.error(`${this.prefixLog} Unsupported blockchain ${currentBlockchain}. Aborting`)
-
-            return
-        }
 
         const coins = await this.parserWorkersService.loadCoin360Tokens()
 
@@ -80,7 +74,7 @@ export class Coin360Worker extends AbstractTokenWorker {
                 }
             })
 
-            if (blockchain === currentBlockchain && tokenAddress?.startsWith('0x')) {
+            if (this.supportedBlockchains.includes(blockchain) && tokenAddress?.startsWith('0x')) {
                 await this.tokenService.addIfNotExists(
                     tokenAddress,
                     tokenName,
@@ -88,7 +82,7 @@ export class Coin360Worker extends AbstractTokenWorker {
                     [ '' ],
                     links,
                     this.workerName,
-                    currentBlockchain,
+                    blockchain,
                 )
 
                 logger.info(
@@ -97,7 +91,7 @@ export class Coin360Worker extends AbstractTokenWorker {
                     tokenName,
                     website,
                     this.workerName,
-                    currentBlockchain
+                    blockchain
                 )
             } else {
                 logger.error(`${this.prefixLog} Unsupported blockchain or wrong data for ${coinId}. Skipping`)

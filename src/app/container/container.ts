@@ -61,7 +61,6 @@ import {
     CoinSniperWorker,
     CoinLoreWorker,
     CoinScopeWorker,
-    CoinScopeService,
     Coin360Worker,
     NewestCheckedTokenService,
     NewestCheckedTokenRepository,
@@ -90,7 +89,6 @@ import {
     RunBitQueryWorker,
     RunTelegramWorker,
     RunLastTokenTxDateFetcher,
-    RunParserWorker,
     RunFetchTokenWorker,
 } from '../../command'
 import { RetryAxios, TokenNamesGenerator } from '../../utils'
@@ -628,7 +626,7 @@ container.register(CoinLoreWorker, {
 container.register(CoinScopeWorker, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new CoinScopeWorker(
-            dependencyContainer.resolve(CoinScopeService),
+            dependencyContainer.resolve(ParserWorkersService),
             dependencyContainer.resolve(TokensService),
             dependencyContainer.resolve(TokenCachedDataService),
         )
