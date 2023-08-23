@@ -104,25 +104,12 @@ export class Top100TokensWorker extends AbstractTokenWorker {
     }
 
     private getLinks(coin: Top100TokensToken): string[] {
-        const links: string[] = []
-
-        if (coin.reddit !== null && coin.reddit.length > 0) {
-            links.push(coin.reddit)
-        }
-
-        if (coin.twitter !== null && coin.twitter.length > 0) {
-            links.push(coin.twitter)
-        }
-
-        if (coin.discord !== null && coin.discord.length > 0) {
-            links.push(coin.discord)
-        }
-
-        if (coin.telegram !== null && coin.telegram.length > 0) {
-            links.push(coin.telegram)
-        }
-
-        return links
+        return [
+            coin.reddit,
+            coin.twitter,
+            coin.discord,
+            coin.telegram,
+        ].filter((link) => link) as string[]
     }
 
     private getTargetBlockchain(currentBlockchain: Blockchain): string {

@@ -97,25 +97,12 @@ export class RugFreeCoinsWorker extends AbstractTokenWorker {
     }
 
     private getLinks(coin: RugFreeCoinData): string[] {
-        const links: string[] = []
-
-        if (coin.twitter_link) {
-            links.push(coin.twitter_link)
-        }
-
-        if (coin.telegram_link) {
-            links.push(coin.telegram_link)
-        }
-
-        if (coin.reddit_link) {
-            links.push(coin.reddit_link)
-        }
-
-        if (coin.discord_link) {
-            links.push(coin.discord_link)
-        }
-
-        return links
+        return [
+            coin.twitter_link,
+            coin.telegram_link,
+            coin.reddit_link,
+            coin.discord_link,
+        ].filter((link) => link) as string[]
     }
 
     private getTokenAddress(coin: RugFreeCoinData, currentBlockchain: Blockchain): string|null {

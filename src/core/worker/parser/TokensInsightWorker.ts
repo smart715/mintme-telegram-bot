@@ -120,42 +120,18 @@ export class TokensInsightWorker extends AbstractTokenWorker {
     }
 
     private getLinks(coinData: TokensInsightCoinDataResponse): string[] {
-        const data = coinData.data
-        const links: string[] = []
+        const community = coinData.data.community
 
-        if ('' !== data.community.twitter) {
-            links.push(data.community.twitter)
-        }
-
-        if ('' !== data.community.facebook) {
-            links.push(data.community.facebook)
-        }
-
-        if ('' !== data.community.telegram) {
-            links.push(data.community.telegram)
-        }
-
-        if ('' !== data.community.reddit) {
-            links.push(data.community.reddit)
-        }
-
-        if ('' !== data.community.discord) {
-            links.push(data.community.discord)
-        }
-
-        if ('' !== data.community.linkedin) {
-            links.push(data.community.linkedin)
-        }
-
-        if ('' !== data.community.instagram) {
-            links.push(data.community.instagram)
-        }
-
-        if ('' !== data.community.youtube) {
-            links.push(data.community.youtube)
-        }
-
-        return links
+        return [
+            community.twitter,
+            community.facebook,
+            community.telegram,
+            community.reddit,
+            community.discord,
+            community.linkedin,
+            community.instagram,
+            community.youtube,
+        ].filter((link) => link)
     }
 
     private getPlatformRegEx(currentBlockchain: Blockchain): RegExp {
