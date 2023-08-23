@@ -1,7 +1,8 @@
 import { singleton } from 'tsyringe'
+import { Logger } from 'winston'
 import { CommandInterface, RunCoinBrainWorkerCmdArgv } from './types'
 import { Arguments, Argv } from 'yargs'
-import { Blockchain, logger } from '../utils'
+import { Blockchain } from '../utils'
 import { CoinBrainWorker } from '../core'
 
 @singleton()
@@ -11,6 +12,8 @@ export class RunCoinBrainWorker implements CommandInterface {
 
     public constructor(
         private readonly coinBrainWorker: CoinBrainWorker,
+        private readonly logger: Logger,
+
     ) { }
 
     public builder(yargs: Argv<RunCoinBrainWorkerCmdArgv>): void {
@@ -23,11 +26,11 @@ export class RunCoinBrainWorker implements CommandInterface {
     }
 
     public async handler(argv: Arguments<RunCoinBrainWorkerCmdArgv>): Promise<void> {
-        logger.info(`Started command ${this.command}`)
+        this.logger.info(`Started command ${this.command}`)
 
         await this.coinBrainWorker.run(argv.blockchain)
 
-        logger.info(`Command ${this.command} finished with success`)
+        this.logger.info(`Command ${this.command} finished with success`)
 
         process.exit()
     }

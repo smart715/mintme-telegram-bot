@@ -1,8 +1,9 @@
 import { singleton } from 'tsyringe'
+import { Logger } from 'winston'
 import { AbstractTokenWorker } from '../AbstractTokenWorker'
 import { QueuedTokenAddressService, BitQueryService } from '../../service'
 import { AddressResponse, BitQueryTransfersResponse } from '../../../types'
-import { Blockchain, findContractAddress, logger } from '../../../utils'
+import { Blockchain, findContractAddress } from '../../../utils'
 
 @singleton()
 export class BitQueryWorker extends AbstractTokenWorker {
@@ -11,7 +12,8 @@ export class BitQueryWorker extends AbstractTokenWorker {
 
     public constructor(
         private readonly bitQueryService: BitQueryService,
-        private readonly queuedTokenAddressService: QueuedTokenAddressService
+        private readonly queuedTokenAddressService: QueuedTokenAddressService,
+        private readonly logger: Logger,
     ) {
         super()
     }
@@ -25,7 +27,7 @@ export class BitQueryWorker extends AbstractTokenWorker {
         let currentOffsetRetries = 0
 
         do {
-            logger.info(`${this.prefixLog} Offset: ${offset} | Retries: ${currentOffsetRetries}`)
+            this.logger.info(`${this.prefixLog} Offset: ${offset} | Retries: ${currentOffsetRetries}`)
 
             // prevent infinite loop
             if (offset >= 100000000) {
@@ -45,7 +47,7 @@ export class BitQueryWorker extends AbstractTokenWorker {
                     currentOffsetRetries = 0
                     offset += 25000
 
-                    logger.warn(`${this.prefixLog} Failed to fetch all addresses for ${blockchainParam} with offset ${offset}. Reason: ${ex.message}. Skipping.`)
+                    this.logger.warn(`${this.prefixLog} Failed to fetch all addresses for ${blockchainParam} with offset ${offset}. Reason: ${ex.message}. Skipping.`)
                 }
 
                 continue
@@ -94,11 +96,9 @@ export class BitQueryWorker extends AbstractTokenWorker {
 
             await this.queuedTokenAddressService.push(foundAddress, currentBlockchain)
 
-            logger.info(
-                `${this.prefixLog} Pushed token address to queue service (${i}/${addresses.length + offset}:`,
-                foundAddress,
-                this.workerName,
-                currentBlockchain
+            this.logger.info(
+                `${this.prefixLog} Pushed token address to queue service (${i}/${addresses.length + offset}):`,
+                [ foundAddress, this.workerName, currentBlockchain ],
             )
         }
     }

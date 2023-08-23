@@ -1,6 +1,7 @@
 import { singleton } from 'tsyringe'
+import { Logger } from 'winston'
 import { AbstractTokenWorker } from '../AbstractTokenWorker'
-import { Blockchain, findContractAddress, logger } from '../../../utils'
+import { Blockchain, findContractAddress } from '../../../utils'
 import { CoinCodexService, TokensService } from '../../service'
 import { CoinCodexCoinResponse, CoinInfoResponse } from '../../../types'
 
@@ -13,15 +14,16 @@ export class CoinCodexWorker extends AbstractTokenWorker {
     public constructor(
         private readonly coinCodexService: CoinCodexService,
         private readonly tokenService: TokensService,
+        private readonly logger: Logger,
     ) {
         super()
     }
 
     public async run(currentBlockchain: Blockchain): Promise<void> {
-        logger.info(`${this.prefixLog} Worker started`)
+        this.logger.info(`${this.prefixLog} Worker started`)
 
         if (this.unsupportedBlockchains.includes(currentBlockchain)) {
-            logger.error(`${this.prefixLog} Unsupported blockchain ${currentBlockchain}. Aborting`)
+            this.logger.error(`${this.prefixLog} Unsupported blockchain ${currentBlockchain}. Aborting`)
 
             return
         }
@@ -35,7 +37,7 @@ export class CoinCodexWorker extends AbstractTokenWorker {
         try {
             coins = await this.coinCodexService.getAllCoins()
         } catch (ex: any) {
-            logger.error(
+            this.logger.error(
                 `${this.prefixLog} Aborting. Failed to fetch all coins.  Reason: ${ex.message}`
             )
 
@@ -52,7 +54,7 @@ export class CoinCodexWorker extends AbstractTokenWorker {
             try {
                 coinInfo = await this.coinCodexService.getCoinInfo(tokenId)
             } catch (ex: any) {
-                logger.error(
+                this.logger.error(
                     `${this.prefixLog} Aborting. Failed to fetch coin info.  Reason: ${ex.message}. Skipping.`
                 )
 
@@ -63,7 +65,7 @@ export class CoinCodexWorker extends AbstractTokenWorker {
                 continue
             }
 
-            logger.info(`${this.prefixLog} Checking token ${coinName} (${i}/${coins.length})`)
+            this.logger.info(`${this.prefixLog} Checking token ${coinName} (${i}/${coins.length})`)
 
             const website = coinInfo.website
 
@@ -98,14 +100,16 @@ export class CoinCodexWorker extends AbstractTokenWorker {
                 currentBlockchain
             )
 
-            logger.info(
+            this.logger.info(
                 `${this.prefixLog} Added to DB:`,
-                contractAddress,
-                coinName,
-                website,
-                links,
-                this.workerName,
-                currentBlockchain
+                [
+                    contractAddress,
+                    coinName,
+                    website,
+                    links,
+                    this.workerName,
+                    currentBlockchain,
+                ]
             )
         }
     }

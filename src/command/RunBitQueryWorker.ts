@@ -1,7 +1,8 @@
 import { singleton } from 'tsyringe'
+import { Logger } from 'winston'
 import { Arguments, Argv } from 'yargs'
 import { CommandInterface, RunBitQueryWorkerCmdArgv } from './types'
-import { Blockchain, logger } from '../utils'
+import { Blockchain } from '../utils'
 import { BitQueryWorker } from '../core'
 
 @singleton()
@@ -11,6 +12,8 @@ export class RunBitQueryWorker implements CommandInterface {
 
     public constructor(
         private readonly bitQueryWorker: BitQueryWorker,
+        private readonly logger: Logger,
+
     ) { }
 
     public builder(yargs: Argv<RunBitQueryWorkerCmdArgv>): void {
@@ -23,11 +26,11 @@ export class RunBitQueryWorker implements CommandInterface {
     }
 
     public async handler(argv: Arguments<RunBitQueryWorkerCmdArgv>): Promise<void> {
-        logger.info(`Started command ${this.command}`)
+        this.logger.info(`Started command ${this.command}`)
 
         await this.bitQueryWorker.run(argv.blockchain)
 
-        logger.info(`Command ${this.command} finished with success`)
+        this.logger.info(`Command ${this.command} finished with success`)
 
         process.exit()
     }

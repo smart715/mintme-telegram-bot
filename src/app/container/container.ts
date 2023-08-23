@@ -87,13 +87,13 @@ import { RetryAxios, TokenNamesGenerator, createLogger } from '../../utils'
 // Loggers
 
 const advnLogger = createLogger(AdvnWorker.name.toLowerCase())
-// const bitQueryLogger = createLogger(BitQueryWorker.name.toLowerCase())
-// const coinBrainLogger = createLogger(CoinBrainWorker.name.toLowerCase())
-// const coinBuddyLogger = createLogger(CoinBuddyWorker.name.toLowerCase())
-// const coinCapLogger = createLogger(CoinCapWorker.name.toLowerCase())
-// const coinCatapultLogger = createLogger(CoinCatapultWorker.name.toLowerCase())
-// const coinCodexLogger = createLogger(CoinCodexWorker.name.toLowerCase())
-// const coinDiscoveryLogger = createLogger(CoinDiscoveryWorker.name.toLowerCase())
+const bitQueryLogger = createLogger(BitQueryWorker.name.toLowerCase())
+const coinBrainLogger = createLogger(CoinBrainWorker.name.toLowerCase())
+const coinBuddyLogger = createLogger(CoinBuddyWorker.name.toLowerCase())
+const coinCapLogger = createLogger(CoinCapWorker.name.toLowerCase())
+const coinCatapultLogger = createLogger(CoinCatapultWorker.name.toLowerCase())
+const coinCodexLogger = createLogger(CoinCodexWorker.name.toLowerCase())
+const coinDiscoveryLogger = createLogger(CoinDiscoveryWorker.name.toLowerCase())
 const coinGeckoLogger = createLogger(CoinGeckoWorker.name.toLowerCase())
 // const enqueueTokenLogger = createLogger(EnqueueTokensWorker.name.toLowerCase())
 // const explorerLogger = createLogger('explorerworkers')
@@ -451,6 +451,7 @@ container.register(CoinDiscoveryWorker, {
         new CoinDiscoveryWorker(
             dependencyContainer.resolve(CoinDiscoveryService),
             dependencyContainer.resolve(TokensService),
+            coinDiscoveryLogger,
         )
     ),
 })
@@ -460,6 +461,7 @@ container.register(CoinBrainWorker, {
         new CoinBrainWorker(
             dependencyContainer.resolve(CoinBrainService),
             dependencyContainer.resolve(TokensService),
+            coinBrainLogger,
         )
     ),
 })
@@ -469,6 +471,7 @@ container.register(CoinBuddyWorker, {
         new CoinBuddyWorker(
             dependencyContainer.resolve(CoinBuddyService),
             dependencyContainer.resolve(TokensService),
+            coinBuddyLogger,
         )
     ),
 })
@@ -478,6 +481,7 @@ container.register(CoinCapWorker, {
         new CoinCapWorker(
             dependencyContainer.resolve(CoinCapService),
             dependencyContainer.resolve(QueuedTokenAddressService),
+            coinCapLogger,
         )
     ),
 })
@@ -550,6 +554,7 @@ container.register(CoinCatapultWorker, {
         new CoinCatapultWorker(
             dependencyContainer.resolve(CoinCatapultService),
             dependencyContainer.resolve(TokensService),
+            coinCatapultLogger,
         )
     ),
 })
@@ -559,6 +564,7 @@ container.register(CoinCodexWorker, {
         new CoinCodexWorker(
             dependencyContainer.resolve(CoinCodexService),
             dependencyContainer.resolve(TokensService),
+            coinCodexLogger,
         )
     ),
 })
@@ -568,6 +574,7 @@ container.register(BitQueryWorker, {
         new BitQueryWorker(
             dependencyContainer.resolve(BitQueryService),
             dependencyContainer.resolve(QueuedTokenAddressService),
+            bitQueryLogger,
         )
     ),
 })
@@ -635,6 +642,7 @@ container.register(CliDependency.COMMAND, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new RunCoinDiscoveryWorker(
             dependencyContainer.resolve(CoinDiscoveryWorker),
+            coinDiscoveryLogger,
         )
     ),
 })
@@ -643,6 +651,7 @@ container.register(CliDependency.COMMAND, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new RunCoinBrainWorker(
             dependencyContainer.resolve(CoinBrainWorker),
+            coinBrainLogger,
         )
     ),
 })
@@ -651,6 +660,7 @@ container.register(CliDependency.COMMAND, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new RunCoinBuddyWorker(
             dependencyContainer.resolve(CoinBuddyWorker),
+            coinBuddyLogger,
         )
     ),
 })
@@ -659,6 +669,7 @@ container.register(CliDependency.COMMAND, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new RunCoinCapWorker(
             dependencyContainer.resolve(CoinCapWorker),
+            coinCapLogger,
         )
     ),
 })
@@ -667,6 +678,7 @@ container.register(CliDependency.COMMAND, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new RunCoinCatapultWorker(
             dependencyContainer.resolve(CoinCatapultWorker),
+            coinCatapultLogger,
         )
     ),
 })
@@ -675,6 +687,7 @@ container.register(CliDependency.COMMAND, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new RunCoinCodexWorker(
             dependencyContainer.resolve(CoinCodexWorker),
+            coinCodexLogger,
         )
     ),
 })
@@ -683,6 +696,7 @@ container.register(CliDependency.COMMAND, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new RunBitQueryWorker(
             dependencyContainer.resolve(BitQueryWorker),
+            bitQueryLogger
         )
     ),
 })
