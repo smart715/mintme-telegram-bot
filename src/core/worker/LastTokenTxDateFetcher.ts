@@ -1,8 +1,9 @@
 import { TokensService } from '../service'
-import { Blockchain, explorerApiUrls, logger, sleep } from '../../utils'
+import { Blockchain, explorerApiUrls, sleep } from '../../utils'
 import { Token } from '../entity'
 import axios from 'axios'
 import config from 'config'
+import { Logger } from 'winston'
 
 interface ExplorerApiKeysInterface {
     [Blockchain.BSC]: string,
@@ -19,17 +20,18 @@ export class LastTokenTxDateFetcher {
 
     public constructor(
         private readonly tokensService: TokensService,
+        private readonly logger: Logger,
     ) { }
 
     public async run(): Promise<void> {
-        logger.info(`[${this.workerName}] Started`)
+        this.logger.info(`[${this.workerName}] Started`)
 
         // eslint-disable-next-line
         while(true) {
             const token = await this.tokensService.getNextWithoutTxDate()
 
             if (!token) {
-                logger.info(`[${this.workerName}] No tokens without lastTxDate, sleep`)
+                this.logger.info(`[${this.workerName}] No tokens without lastTxDate, sleep`)
                 await sleep(this.noTokensSleepTime)
 
                 continue
@@ -41,7 +43,7 @@ export class LastTokenTxDateFetcher {
     }
 
     private async processToken(token: Token): Promise<void> {
-        logger.info(`[${this.workerName}] Getting last tx for ${token.address}: ${token.blockchain}`)
+        this.logger.info(`[${this.workerName}] Getting last tx for ${token.address}: ${token.blockchain}`)
 
         token.lastTxDate = await this.getLastTxDate(token.address, token.blockchain)
         await this.tokensService.update(token)

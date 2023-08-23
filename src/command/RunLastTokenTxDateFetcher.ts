@@ -1,6 +1,6 @@
 import { singleton } from 'tsyringe'
+import { Logger } from 'winston'
 import { CommandInterface } from './types'
-import { logger } from '../utils'
 import { LastTokenTxDateFetcher } from '../core'
 
 @singleton()
@@ -10,15 +10,16 @@ export class RunLastTokenTxDateFetcher implements CommandInterface {
 
     public constructor(
         private readonly lastTokenTxDateFetcher: LastTokenTxDateFetcher,
+        private readonly logger: Logger,
     ) { }
 
     public builder(): void {}
 
     public async handler(): Promise<void> {
-        logger.info(`Started command ${this.command}`)
+        this.logger.info(`Started command ${this.command}`)
 
         await this.lastTokenTxDateFetcher.run()
 
-        logger.info(`Command ${this.command} finished with success`)
+        this.logger.info(`Command ${this.command} finished with success`)
     }
 }

@@ -1,8 +1,9 @@
 import { AbstractTokenWorker } from '../AbstractTokenWorker'
 import { singleton } from 'tsyringe'
-import { RetryAxios, Blockchain, logger, parseBlockchainName } from '../../../utils'
+import { RetryAxios, Blockchain, parseBlockchainName } from '../../../utils'
 import { TokensService } from '../../service'
 import { MobulaSearchResponse } from '../../../types'
+import { Logger } from 'winston'
 
 @singleton()
 export class MobulaWorker extends AbstractTokenWorker {
@@ -12,12 +13,13 @@ export class MobulaWorker extends AbstractTokenWorker {
     public constructor(
         private readonly tokensService: TokensService,
         private readonly retryAxios: RetryAxios,
+        private readonly logger: Logger,
     ) {
         super()
     }
 
     public async run(): Promise<void> {
-        logger.info(`[${this.workerName}] Started`)
+        this.logger.info(`[${this.workerName}] Started`)
 
         const tokens = await this.fetchTokens()
 
@@ -25,7 +27,7 @@ export class MobulaWorker extends AbstractTokenWorker {
             await this.addToken(token)
         }
 
-        logger.info(`[${this.workerName}] Finished`)
+        this.logger.info(`[${this.workerName}] Finished`)
     }
 
     private async fetchTokens(): Promise<MobulaSearchResponse[]> {

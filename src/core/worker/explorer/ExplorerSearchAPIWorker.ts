@@ -1,9 +1,10 @@
 import { AbstractTokenWorker } from '../AbstractTokenWorker'
-import { explorerDomains, TokenNamesGenerator, Blockchain, logger } from '../../../utils'
+import { explorerDomains, TokenNamesGenerator, Blockchain } from '../../../utils'
 import { LastCheckedTokenNameService, SeleniumService } from '../../service'
 import { WebDriver } from 'selenium-webdriver'
 import { singleton } from 'tsyringe'
 import { ExplorerEnqueuer } from './ExplorerEnqueuer'
+import { Logger } from 'winston'
 
 @singleton()
 export class ExplorerSearchAPIWorker extends AbstractTokenWorker {
@@ -13,6 +14,7 @@ export class ExplorerSearchAPIWorker extends AbstractTokenWorker {
         private readonly tokenNamesGenerator: TokenNamesGenerator,
         private readonly lastCheckedTokenNameService: LastCheckedTokenNameService,
         private readonly explorerParser: ExplorerEnqueuer,
+        private readonly logger: Logger,
     ) {
         super()
     }
@@ -21,7 +23,7 @@ export class ExplorerSearchAPIWorker extends AbstractTokenWorker {
         const explorerDomain = explorerDomains[blockchain]
         const webDriver = await SeleniumService.createDriver()
 
-        logger.info(`[${this.workerName}] Started for ${blockchain} blockchain`)
+        this.logger.info(`[${this.workerName}] Started for ${blockchain} blockchain`)
 
         let currentCombination = await this.getLastCheckedCombination(blockchain)
 
@@ -34,7 +36,7 @@ export class ExplorerSearchAPIWorker extends AbstractTokenWorker {
 
         await this.saveLastCheckedCombination(blockchain, currentCombination)
 
-        logger.info(`[${this.workerName}] all token name configurations for ${blockchain} blockchain are checked`)
+        this.logger.info(`[${this.workerName}] all token name configurations for ${blockchain} blockchain are checked`)
     }
 
     private async getLastCheckedCombination(blockchain: Blockchain): Promise<string> {

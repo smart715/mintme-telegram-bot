@@ -1,8 +1,9 @@
 import { singleton } from 'tsyringe'
 import { CommandInterface, RunQueueWorkerCmdArgv } from './types'
 import { Arguments, Argv } from 'yargs'
-import { Blockchain, logger } from '../utils'
+import { Blockchain } from '../utils'
 import { QueueWorker } from '../core'
+import { Logger } from 'winston'
 
 @singleton()
 export class RunQueueWorker implements CommandInterface {
@@ -11,6 +12,7 @@ export class RunQueueWorker implements CommandInterface {
 
     public constructor(
         private readonly queueWorker: QueueWorker,
+        private readonly logger: Logger,
     ) { }
 
     public builder(yargs: Argv<RunQueueWorkerCmdArgv>): void {
@@ -30,11 +32,11 @@ export class RunQueueWorker implements CommandInterface {
     }
 
     public async handler(argv: Arguments<RunQueueWorkerCmdArgv>): Promise<void> {
-        logger.info(`Started command ${this.command}`)
+        this.logger.info(`Started command ${this.command}`)
 
         await this.queueWorker.run(argv.blockchain, argv.repeat)
 
-        logger.info(`Command ${this.command} finished with success`)
+        this.logger.info(`Command ${this.command} finished with success`)
 
         process.exit()
     }

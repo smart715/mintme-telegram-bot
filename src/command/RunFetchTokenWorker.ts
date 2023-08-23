@@ -8,7 +8,7 @@ import {
     MyCoinVoteWorker,
 } from '../core'
 import { Arguments, Argv } from 'yargs'
-import { logger } from '../utils'
+import { createLogger } from '../utils'
 import { singleton } from 'tsyringe'
 
 @singleton()
@@ -49,10 +49,16 @@ export class RunFetchTokenWorker implements CommandInterface {
             [CasualTokenWorkerNames.MY_COIN_VOTE]: this.myCoinVoteWorker,
         }
 
+        const worker = workers[workerName]
+
+        const logger = createLogger(workers[workerName].constructor.name.toLowerCase())
+
         logger.info(`Started command ${this.command} --name ${workerName}`)
 
-        await workers[workerName].run()
+        await worker.run()
 
         logger.info(`Command ${this.command} finished with success`)
+
+        process.exit()
     }
 }

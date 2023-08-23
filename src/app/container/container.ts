@@ -95,11 +95,10 @@ const coinCatapultLogger = createLogger(CoinCatapultWorker.name.toLowerCase())
 const coinCodexLogger = createLogger(CoinCodexWorker.name.toLowerCase())
 const coinDiscoveryLogger = createLogger(CoinDiscoveryWorker.name.toLowerCase())
 const coinGeckoLogger = createLogger(CoinGeckoWorker.name.toLowerCase())
-// const enqueueTokenLogger = createLogger(EnqueueTokensWorker.name.toLowerCase())
-// const explorerLogger = createLogger('explorerworkers')
-// const lastTokenTxDateFetcherLogger = createLogger(LastTokenTxDateFetcher.name.toLowerCase())
-// const queueLogger = createLogger(QueueWorker.name.toLowerCase())
-// const telegramLogger = createLogger(TelegramWorker.name.toLowerCase())
+const enqueueTokenLogger = createLogger(EnqueueTokensWorker.name.toLowerCase())
+const lastTokenTxDateFetcherLogger = createLogger(LastTokenTxDateFetcher.name.toLowerCase())
+const queueLogger = createLogger(QueueWorker.name.toLowerCase())
+const telegramLogger = createLogger(TelegramWorker.name.toLowerCase())
 
 // Repositories
 
@@ -314,6 +313,7 @@ container.register(EnqueueTokensWorker, {
             dependencyContainer.resolve(MintmeService),
             dependencyContainer.resolve(ContactHistoryService),
             dependencyContainer.resolve(ContactQueueService),
+            enqueueTokenLogger,
         ),
     ),
 })
@@ -335,6 +335,7 @@ container.register(QueueWorker, {
             dependencyContainer.resolve(TokensService),
             dependencyContainer.resolve(ContactHistoryService),
             dependencyContainer.resolve(EnqueueTokensWorker),
+            queueLogger,
         ),
     ),
 })
@@ -344,6 +345,7 @@ container.register(BSCScanAddressTokensHoldingsWorker, {
         new BSCScanAddressTokensHoldingsWorker(
             dependencyContainer.resolve(QueuedWalletAddressService),
             dependencyContainer.resolve(ExplorerEnqueuer),
+            createLogger(BSCScanAddressTokensHoldingsWorker.name.toLowerCase())
         )
     ),
 })
@@ -353,6 +355,7 @@ container.register(EtherScanAddressTokensHoldingsWorker, {
         new EtherScanAddressTokensHoldingsWorker(
             dependencyContainer.resolve(QueuedWalletAddressService),
             dependencyContainer.resolve(ExplorerEnqueuer),
+            createLogger(EtherScanAddressTokensHoldingsWorker.name.toLowerCase())
         )
     ),
 })
@@ -361,14 +364,7 @@ container.register(BSCScanTokensTransactionsFetcher, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new BSCScanTokensTransactionsFetcher(
             dependencyContainer.resolve(ExplorerEnqueuer),
-        )
-    ),
-})
-
-container.register(BSCScanTokensTransactionsFetcher, {
-    useFactory: instanceCachingFactory((dependencyContainer) =>
-        new BSCScanTokensTransactionsFetcher(
-            dependencyContainer.resolve(ExplorerEnqueuer),
+            createLogger(BSCScanTokensTransactionsFetcher.name.toLowerCase())
         )
     ),
 })
@@ -377,6 +373,7 @@ container.register(BSCScanTopAccountsFetcher, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new BSCScanTopAccountsFetcher(
             dependencyContainer.resolve(ExplorerEnqueuer),
+            createLogger(BSCScanTopAccountsFetcher.name.toLowerCase())
         )
     ),
 })
@@ -385,6 +382,7 @@ container.register(BSCScanTopTokensFetcher, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new BSCScanTopTokensFetcher(
             dependencyContainer.resolve(ExplorerEnqueuer),
+            createLogger(BSCScanTopTokensFetcher.name.toLowerCase())
         )
     ),
 })
@@ -393,6 +391,7 @@ container.register(BSCScanValidatorsFetcher, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new BSCScanValidatorsFetcher(
             dependencyContainer.resolve(ExplorerEnqueuer),
+            createLogger(BSCScanValidatorsFetcher.name.toLowerCase())
         )
     ),
 })
@@ -402,6 +401,7 @@ container.register(CheckTokenBNBWorker, {
         new CheckTokenBNBWorker(
             dependencyContainer.resolve(QueuedTokenAddressService),
             dependencyContainer.resolve(TokensService),
+            createLogger(CheckTokenBNBWorker.name.toLowerCase())
         )
     ),
 })
@@ -412,6 +412,7 @@ container.register(ExplorerSearchAPIWorker, {
             dependencyContainer.resolve(TokenNamesGenerator),
             dependencyContainer.resolve(LastCheckedTokenNameService),
             dependencyContainer.resolve(ExplorerEnqueuer),
+            createLogger(ExplorerSearchAPIWorker.name.toLowerCase())
         )
     ),
 })
@@ -424,6 +425,7 @@ container.register(TelegramWorker, {
             dependencyContainer.resolve(ContactMessageService),
             dependencyContainer.resolve(ContactQueueService),
             dependencyContainer.resolve(TokensService),
+            telegramLogger,
         )
     ),
 })
@@ -432,6 +434,7 @@ container.register(LastTokenTxDateFetcher, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new LastTokenTxDateFetcher(
             dependencyContainer.resolve(TokensService),
+            lastTokenTxDateFetcherLogger,
         )
     ),
 })
@@ -502,6 +505,7 @@ container.register(EthplorerWorker, {
             dependencyContainer.resolve(TokenNamesGenerator),
             dependencyContainer.resolve(LastCheckedTokenNameService),
             dependencyContainer.resolve(TokensService),
+            createLogger(EthplorerWorker.name)
         )
     ),
 })
@@ -531,6 +535,7 @@ container.register(MobulaWorker, {
         new MobulaWorker(
             dependencyContainer.resolve(TokensService),
             dependencyContainer.resolve(RetryAxios),
+            createLogger(MobulaWorker.name)
         )
     ),
 })
@@ -583,6 +588,7 @@ container.register(CliDependency.COMMAND, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new RunTelegramWorker(
             dependencyContainer.resolve(TelegramWorker),
+            telegramLogger,
         )
     ),
 })
@@ -593,6 +599,7 @@ container.register(CliDependency.COMMAND, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new RunEnqueueTokenWorker(
             dependencyContainer.resolve(EnqueueTokensWorker),
+            enqueueTokenLogger
         ),
     ),
 })
@@ -601,6 +608,7 @@ container.register(CliDependency.COMMAND, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new RunQueueWorker(
             dependencyContainer.resolve(QueueWorker),
+            queueLogger,
         ),
     ),
 })
@@ -705,6 +713,7 @@ container.register(CliDependency.COMMAND, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new RunLastTokenTxDateFetcher(
             dependencyContainer.resolve(LastTokenTxDateFetcher),
+            lastTokenTxDateFetcherLogger,
         )
     ),
 })

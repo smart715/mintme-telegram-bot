@@ -2,9 +2,10 @@ import { singleton } from 'tsyringe'
 import { AbstractTokenWorker } from '../AbstractTokenWorker'
 import { By, WebDriver } from 'selenium-webdriver'
 import { QueuedWalletAddressService, SeleniumService } from '../../service'
-import { Blockchain, logger, sleep, explorerDomains } from '../../../utils'
+import { Blockchain, sleep, explorerDomains } from '../../../utils'
 import { QueuedWalletAddress } from '../../entity'
 import { ExplorerEnqueuer } from './ExplorerEnqueuer'
+import { Logger } from 'winston'
 
 //todo solve cloudflare check and test it
 @singleton()
@@ -18,6 +19,7 @@ export class EtherScanAddressTokensHoldingsWorker extends AbstractTokenWorker {
     public constructor(
         private readonly queuedWalletAddressService: QueuedWalletAddressService,
         private readonly explorerParser: ExplorerEnqueuer,
+        private readonly logger: Logger,
     ) {
         super()
     }
@@ -25,7 +27,7 @@ export class EtherScanAddressTokensHoldingsWorker extends AbstractTokenWorker {
     public async run(): Promise<void> {
         const webDriver = await SeleniumService.createDriver()
 
-        logger.info(`[${this.workerName}] started for ${this.blockchain} blockchain`)
+        this.logger.info(`[${this.workerName}] started for ${this.blockchain} blockchain`)
 
         let wallets: QueuedWalletAddress[]
 
@@ -34,7 +36,7 @@ export class EtherScanAddressTokensHoldingsWorker extends AbstractTokenWorker {
             wallets = await this.queuedWalletAddressService.getWalletsToCheck(this.blockchain, this.walletsBatchAmount)
 
             if (0 === wallets.length) {
-                logger.info(`[${this.workerName}] No wallets to check on ${this.blockchain} blockchain`)
+                this.logger.info(`[${this.workerName}] No wallets to check on ${this.blockchain} blockchain`)
                 await sleep(this.sleepDuration)
             }
 

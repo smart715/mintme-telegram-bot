@@ -1,5 +1,6 @@
 import { singleton } from 'tsyringe'
 import config from 'config'
+import { Logger } from 'winston'
 import { TelegramClient } from './telegram'
 import { TelegramAccount } from '../../entity'
 import {
@@ -9,7 +10,6 @@ import {
     ContactMessageService,
     ContactQueueService,
 } from '../../service'
-import { logger } from '../../../utils'
 
 @singleton()
 export class TelegramWorker {
@@ -24,6 +24,7 @@ export class TelegramWorker {
         private readonly contactMessageService: ContactMessageService,
         private readonly contactQueueService: ContactQueueService,
         private readonly tokenService: TokensService,
+        private readonly logger: Logger,
     ) { }
 
     private async initializeNewAccountManager(tgAccount: TelegramAccount): Promise<TelegramClient> {
@@ -55,7 +56,7 @@ export class TelegramWorker {
 
         await this.startContactingAllManagers(this.telegramClients)
 
-        logger.info('Initialized Telegram clients: ', this.telegramClients.length)
+        this.logger.info('Initialized Telegram clients: ', this.telegramClients.length)
     }
 
     public async disableAccount(telegramAccount: TelegramAccount): Promise<void> {
@@ -71,7 +72,7 @@ export class TelegramWorker {
         if (newAccount) {
             this.telegramClients.push(await this.initializeNewAccountManager(newAccount))
         } else {
-            logger.warn('No accounts stock available')
+            this.logger.warn('No accounts stock available')
         }
     }
 
@@ -80,7 +81,7 @@ export class TelegramWorker {
 
         clients.forEach((client) => {
             if (!client.isInitialized) {
-                logger.warn(
+                this.logger.warn(
                     `[Telegram Worker ID: ${client.telegramAccount.id}] ` +
                     `Not initialized.`
                 )
@@ -89,7 +90,7 @@ export class TelegramWorker {
             }
 
             if (!client.accountMessages?.length) {
-                logger.warn(
+                this.logger.warn(
                     `[Telegram Worker ID: ${client.telegramAccount.id}] ` +
                     `No messages stock available, Account not able to start messaging.`
                 )

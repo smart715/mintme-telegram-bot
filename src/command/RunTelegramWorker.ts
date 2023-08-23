@@ -1,6 +1,7 @@
 import { container, singleton } from 'tsyringe'
+import { Logger } from 'winston'
 import { CommandInterface } from './types'
-import { Database, logger } from '../utils'
+import { Database } from '../utils'
 import { TelegramWorker } from '../core'
 
 @singleton()
@@ -10,16 +11,17 @@ export class RunTelegramWorker implements CommandInterface {
 
     public constructor(
         private readonly telegramWorker: TelegramWorker,
+        private readonly logger: Logger,
     ) { }
 
     public builder(): void {}
 
     public async handler(): Promise<void> {
-        logger.info(`Started command ${this.command}`)
+        this.logger.info(`Started command ${this.command}`)
 
         await this.runTelegramWorker()
 
-        logger.info(`Command ${this.command} finished with success`)
+        this.logger.info(`Command ${this.command} finished with success`)
     }
 
     private async runTelegramWorker(): Promise<void> {

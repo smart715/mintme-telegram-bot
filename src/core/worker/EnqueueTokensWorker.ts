@@ -1,7 +1,8 @@
 import { singleton } from 'tsyringe'
+import { Logger } from 'winston'
 import { AbstractTokenWorker } from './AbstractTokenWorker'
 import { ContactQueueService, MintmeService, TokensService, ContactHistoryService } from '../service'
-import { Blockchain, getMaxAttemptsPerMethod, logger } from '../../utils'
+import { Blockchain, getMaxAttemptsPerMethod } from '../../utils'
 import { ContactHistoryStatusType, ContactMethod, TokenContactStatusType } from '../types'
 import { Token } from '../entity'
 
@@ -12,31 +13,32 @@ export class EnqueueTokensWorker extends AbstractTokenWorker {
         private readonly mintmeService: MintmeService,
         private readonly contactHistoryService: ContactHistoryService,
         private readonly contactQueueService: ContactQueueService,
+        private readonly logger: Logger,
     ) {
         super()
     }
 
     public async run(blockchain: Blockchain): Promise<any> {
-        logger.info(`[${EnqueueTokensWorker.name}] Started for ${blockchain} blockchain`)
+        this.logger.info(`[${EnqueueTokensWorker.name}] Started for ${blockchain} blockchain`)
 
         const listedTokensAdresses = await this.mintmeService.getCachedListedTokensAdresses()
-        logger.info(`[${EnqueueTokensWorker.name}] Fetched listed addresses, amount: ${listedTokensAdresses.length}`)
+        this.logger.info(`[${EnqueueTokensWorker.name}] Fetched listed addresses, amount: ${listedTokensAdresses.length}`)
 
         const tokensToContact = await this.tokensService.getLastNotContactedTokens(blockchain,
             getMaxAttemptsPerMethod(ContactMethod.EMAIL),
             getMaxAttemptsPerMethod(ContactMethod.TWITTER),
             getMaxAttemptsPerMethod(ContactMethod.TELEGRAM))
-        logger.info(`[${EnqueueTokensWorker.name}] Tokens to review: ${tokensToContact.length}`)
+        this.logger.info(`[${EnqueueTokensWorker.name}] Tokens to review: ${tokensToContact.length}`)
 
         let queuedTokensCount = 0
         let skippedTokensCount = 0
 
         for (let i = 0; i < tokensToContact.length; i++) {
             const token = tokensToContact[i]
-            logger.info(`Checking Token ${token.name}(${token.address}) - ${i+1}/${tokensToContact.length}`)
+            this.logger.info(`Checking Token ${token.name}(${token.address}) - ${i+1}/${tokensToContact.length}`)
 
             if (listedTokensAdresses.includes(token.address)) {
-                logger.warn(`[${EnqueueTokensWorker.name}] Address ${token.address} already listed`)
+                this.logger.warn(`[${EnqueueTokensWorker.name}] Address ${token.address} already listed`)
                 skippedTokensCount++
 
                 continue
@@ -45,7 +47,7 @@ export class EnqueueTokensWorker extends AbstractTokenWorker {
             if (await this.contactQueueService.isQueuedAddress(token.address)) {
                 token.contactStatus = TokenContactStatusType.QUEUED
                 await this.tokensService.saveTokenContactInfo(token)
-                logger.warn(`[${EnqueueTokensWorker.name}] Address ${token.address} was already queued`)
+                this.logger.warn(`[${EnqueueTokensWorker.name}] Address ${token.address} was already queued`)
                 skippedTokensCount++
                 continue
             }
@@ -56,20 +58,20 @@ export class EnqueueTokensWorker extends AbstractTokenWorker {
 
             if (enqueued) {
                 queuedTokensCount++
-                logger.info(`[${EnqueueTokensWorker.name}] ` +
+                this.logger.info(`[${EnqueueTokensWorker.name}] ` +
                     `Token ${token.address} was queded for ${nextContactMethod} (${contactChannel}). ` +
                     `Saved with status ${token.contactStatus}`
                 )
             } else {
                 skippedTokensCount++
-                logger.warn(`[${EnqueueTokensWorker.name}] ` +
+                this.logger.warn(`[${EnqueueTokensWorker.name}] ` +
                     `Token ${token.address} don't have any available contact method. ` +
                     `Saved with status ${token.contactStatus}`
                 )
             }
         }
 
-        logger.info(
+        this.logger.info(
             `[${EnqueueTokensWorker.name}] Finished. ` +
             `Queued tokens: ${queuedTokensCount}, skipped tokens: ${skippedTokensCount}`
         )
@@ -124,18 +126,18 @@ export class EnqueueTokensWorker extends AbstractTokenWorker {
         }
 
         if (!link.startsWith('https://t.me/')) {
-            logger.warn(`${link} is invalid`)
+            this.logger.warn(`${link} is invalid`)
             return undefined
         }
 
         if (await this.contactQueueService.isQueuedChannel(link)) {
-            logger.warn(`Telegram channel ${link} is already queued`)
+            this.logger.warn(`Telegram channel ${link} is already queued`)
             return undefined
         }
 
         if (await this.contactHistoryService.getChannelContactTimes(link) >=
         getMaxAttemptsPerMethod(ContactMethod.TELEGRAM)) {
-            logger.warn(`Telegram channel ${link} was contacted before and channel limit hit`)
+            this.logger.warn(`Telegram channel ${link} was contacted before and channel limit hit`)
             return undefined
         }
         return link
@@ -153,15 +155,15 @@ export class EnqueueTokensWorker extends AbstractTokenWorker {
                         continue
                     }
 
-                    logger.info(`Checking if telegram channel ${link} available`)
+                    this.logger.info(`Checking if telegram channel ${link} available`)
 
                     await new Promise(f => setTimeout(f, 1000))
 
                     if (await this.contactQueueService.isExistingTg(link)) {
-                        logger.info(`Telegram channel ${link} is active`)
+                        this.logger.info(`Telegram channel ${link} is active`)
                         return link
                     } else {
-                        logger.warn(`Telegram channel ${link} not active`)
+                        this.logger.warn(`Telegram channel ${link} not active`)
                         await this.contactHistoryService.addRecord(token.address,
                             token.blockchain,
                             ContactMethod.TELEGRAM,
@@ -174,19 +176,19 @@ export class EnqueueTokensWorker extends AbstractTokenWorker {
                 }
 
                 if (await this.contactQueueService.isQueuedChannel(channel)) {
-                    logger.warn(`channel ${channel} is already queued`)
+                    this.logger.warn(`channel ${channel} is already queued`)
                     continue
                 }
 
                 if (await this.contactHistoryService.getChannelContactTimes(channel) >=
                 getMaxAttemptsPerMethod(contactMethod)) {
-                    logger.warn(`channel ${channel} was contacted before and channel limit hit`)
+                    this.logger.warn(`channel ${channel} was contacted before and channel limit hit`)
                     continue
                 }
 
                 return channel
             } else {
-                logger.warn(`Skipping Channel ${channel} for previous faliure`)
+                this.logger.warn(`Skipping Channel ${channel} for previous faliure`)
                 continue
             }
         }
