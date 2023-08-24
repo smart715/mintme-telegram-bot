@@ -23,4 +23,13 @@ export class ContactMessageRepository extends Repository<ContactMessage> {
         })
         return messages
     }
+
+    public async getNextAttemptMessage(isTgOnly: boolean, currentAttempt: number): Promise<ContactMessage | undefined> {
+        return this.findOne({
+            where: {
+                isTgOnly: isTgOnly,
+                attempt: currentAttempt,
+            },
+        })
+    }
 }

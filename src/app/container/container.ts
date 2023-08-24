@@ -61,6 +61,8 @@ import {
     MemeCoinsWorker,
     MyCoinVoteWorker,
     MobulaWorker,
+    MailerService,
+    MailerWorker,
 } from '../../core'
 import { Application } from '../'
 import { CliDependency } from './types'
@@ -81,6 +83,7 @@ import {
     RunTelegramWorker,
     RunLastTokenTxDateFetcher,
     RunFetchTokenWorker,
+    RunMailerWorker,
 } from '../../command'
 import { RetryAxios, TokenNamesGenerator } from '../../utils'
 
@@ -270,6 +273,10 @@ container.register(CoinCodexService, {
 
 container.register(BitQueryService, {
     useFactory: instanceCachingFactory(() => new BitQueryService()),
+})
+
+container.register(MailerService, {
+    useFactory: instanceCachingFactory(() => new MailerService()),
 })
 
 // Workers
@@ -561,6 +568,19 @@ container.register(CliDependency.COMMAND, {
     ),
 })
 
+container.register(MailerWorker, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new MailerWorker(
+            dependencyContainer.resolve(ContactQueueService),
+            dependencyContainer.resolve(TokensService),
+            dependencyContainer.resolve(ContactMessageService),
+            dependencyContainer.resolve(ContactHistoryService),
+            dependencyContainer.resolve(EnqueueTokensWorker),
+            dependencyContainer.resolve(MailerService),
+        )
+    ),
+})
+
 // CLI
 
 container.register(CliDependency.COMMAND, {
@@ -662,6 +682,14 @@ container.register(CliDependency.COMMAND, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new RunBitQueryWorker(
             dependencyContainer.resolve(BitQueryWorker),
+        )
+    ),
+})
+
+container.register(CliDependency.COMMAND, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new RunMailerWorker(
+            dependencyContainer.resolve(MailerWorker),
         )
     ),
 })
