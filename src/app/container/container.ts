@@ -89,6 +89,7 @@ import { RetryAxios, TokenNamesGenerator, createLogger } from '../../utils'
 
 // Loggers
 
+const cmcLogger = createLogger(CMCWorker.name.toLowerCase())
 const advnLogger = createLogger(AdvnWorker.name.toLowerCase())
 const bitQueryLogger = createLogger(BitQueryWorker.name.toLowerCase())
 const coinBrainLogger = createLogger(CoinBrainWorker.name.toLowerCase())
@@ -215,15 +216,6 @@ container.register(RetryAxios, {
     useFactory: instanceCachingFactory(() => new RetryAxios()),
 })
 
-container.register(CMCWorker, {
-    useFactory: instanceCachingFactory((dependencyContainer) =>
-        new CMCWorker(
-            dependencyContainer.resolve(CMCService),
-            dependencyContainer.resolve(TokensService),
-        ),
-    ),
-})
-
 container.register(ContactMessageService, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new ContactMessageService(
@@ -310,6 +302,7 @@ container.register(CMCWorker, {
         new CMCWorker(
             dependencyContainer.resolve(CMCService),
             dependencyContainer.resolve(TokensService),
+            cmcLogger,
         ),
     ),
 })

@@ -36,7 +36,7 @@ export class MyCoinVoteWorker extends NewestTokenChecker {
     }
 
     private async fetchTokens(page: number): Promise<string[]> {
-        const response = await this.retryAxios.get(this.buildPageUrl(page))
+        const response = await this.retryAxios.get(this.buildPageUrl(page), this.logger)
 
         return response.data.newcoin.match(new RegExp('<tr>(.+?)</tr>', 'gs')) ?? []
     }
@@ -97,7 +97,7 @@ export class MyCoinVoteWorker extends NewestTokenChecker {
 
     private async fetchTokenPage(url: string): Promise<string | null> {
         try {
-            const response = await this.retryAxios.get(url)
+            const response = await this.retryAxios.get(url, this.logger)
 
             return response.data
         } catch (error: any) {

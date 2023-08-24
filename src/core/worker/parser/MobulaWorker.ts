@@ -31,7 +31,7 @@ export class MobulaWorker extends AbstractTokenWorker {
     }
 
     private async fetchTokens(): Promise<MobulaSearchResponse[]> {
-        const response = await this.retryAxios.get(this.searchUrl)
+        const response = await this.retryAxios.get(this.searchUrl, this.logger)
 
         return response.data
     }

@@ -10,10 +10,9 @@ import {
 } from '../../../service'
 import { By, Key, WebDriver } from 'selenium-webdriver'
 import * as fs from 'fs'
-import { logger } from '../../../../utils'
 import { ContactHistoryStatusType, ContactMethod, TokenContactStatusType } from '../../../types'
 import moment from 'moment'
-import { log } from 'loglevel'
+import { Logger } from 'winston'
 
 export class TelegramClient {
     private readonly maxMessagesPerDay: number = config.get('telegram_account_max_day_messages')
@@ -31,7 +30,8 @@ export class TelegramClient {
         private readonly contactQueueService: ContactQueueService,
         private readonly tokenService: TokensService,
         private readonly telegramService: TelegramService,
-        telegramAccount: TelegramAccount
+        telegramAccount: TelegramAccount,
+        private readonly logger: Logger
     ) {
         this.telegramAccount = telegramAccount
     }
@@ -101,16 +101,16 @@ export class TelegramClient {
                 return true
             } else {
                 if (retries < 3) {
-                    logger.info(`Retrying to login, Attempt #${retries}`)
+                    this.logger.info(`Retrying to login, Attempt #${retries}`)
                     return await this.login(retries + 1)
                 } else {
-                    logger.warn(`Account is banned, Err: USER_DEACTIVATED_BAN`)
+                    this.logger.warn(`Account is banned, Err: USER_DEACTIVATED_BAN`)
                     await this.disableAccount()
                     return false
                 }
             }
         } catch (e) {
-            logger.error(e)
+            this.logger.error(e)
             return false
         }
     }
@@ -290,7 +290,7 @@ export class TelegramClient {
                 return await this.sendGroupMessage(telegramLink, verified)
             }
         } catch (e) {
-            logger.error(e)
+            this.logger.error(e)
             return ContactHistoryStatusType.UNKNOWN
         }
     }
@@ -344,7 +344,7 @@ export class TelegramClient {
     }
 
     public async startContacting(): Promise<void> {
-        const queuedContact = await this.contactQueueService.getFirstFromQueue(ContactMethod.TELEGRAM)
+        const queuedContact = await this.contactQueueService.getFirstFromQueue(ContactMethod.TELEGRAM, this.logger)
 
         if (queuedContact) {
             const token = await this.tokenService.findByAddress(queuedContact.address, queuedContact.blockchain)
@@ -352,7 +352,7 @@ export class TelegramClient {
             if (!token) {
                 await this.contactQueueService.removeFromQueue(queuedContact.address, queuedContact.blockchain)
 
-                log(
+                this.log(
                     `No token for ${queuedContact.address} :: ${queuedContact.blockchain} . Skipping`
                 )
 
@@ -426,7 +426,7 @@ export class TelegramClient {
     }
 
     private log(message: string): void {
-        logger.info(
+        this.logger.info(
             `[Telegram Worker ${this.telegramAccount.id}] ` +
             message
         )

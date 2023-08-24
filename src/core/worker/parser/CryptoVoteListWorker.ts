@@ -35,7 +35,7 @@ export class CryptoVoteListWorker extends NewestTokenChecker {
     }
 
     private async fetchTokens(page: number): Promise<string[]> {
-        const response = await this.retryAxios.get(this.buildPageUrl(page))
+        const response = await this.retryAxios.get(this.buildPageUrl(page), this.logger)
 
         return response.data.match(RegExp('<tr>(.+?)</tr>', 'gs')) ?? []
     }

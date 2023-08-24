@@ -159,7 +159,7 @@ export class EnqueueTokensWorker extends AbstractTokenWorker {
 
                     await new Promise(f => setTimeout(f, 1000))
 
-                    if (await this.contactQueueService.isExistingTg(link)) {
+                    if (await this.contactQueueService.isExistingTg(link, this.logger)) {
                         this.logger.info(`Telegram channel ${link} is active`)
                         return link
                     } else {

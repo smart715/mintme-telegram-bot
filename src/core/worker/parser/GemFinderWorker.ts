@@ -35,7 +35,7 @@ export class GemFinderWorker extends NewestTokenChecker {
     }
 
     private async fetchTokenIds(page: number): Promise<string[]> {
-        const response = await this.retryAxios.get(this.buildPageUrl(page))
+        const response = await this.retryAxios.get(this.buildPageUrl(page), this.logger)
 
         return response.data.toLowerCase().match(this.tokenIdRegexp) ?? []
     }
@@ -70,7 +70,7 @@ export class GemFinderWorker extends NewestTokenChecker {
     }
 
     private async fetchTokenInfo(tokenId: string): Promise<string> {
-        const response = await this.retryAxios.get(this.buildTokenInfoUrl(tokenId))
+        const response = await this.retryAxios.get(this.buildTokenInfoUrl(tokenId), this.logger)
 
         return response.data.toLowerCase()
     }

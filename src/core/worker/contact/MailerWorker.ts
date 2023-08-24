@@ -33,7 +33,7 @@ export class MailerWorker {
 
         // eslint-disable-next-line
         while (true) {
-            const queueItem = await this.contactQueueService.getFirstFromQueue(ContactMethod.EMAIL)
+            const queueItem = await this.contactQueueService.getFirstFromQueue(ContactMethod.EMAIL, this.logger)
 
             if (!queueItem) {
                 this.logger.info(`[${this.workerName}] Email queue is empty, sleep...`)

@@ -2,7 +2,6 @@ import { ContactMethod } from '../core'
 import config from 'config'
 
 export { Database } from './orm'
-export { default as logger, Loggable } from './logger'
 export * from './regexp'
 export * from './blockchains'
 export * from './constants'

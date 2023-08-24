@@ -35,6 +35,7 @@ export class TelegramWorker {
             this.tokenService,
             this.telegramService,
             tgAccount,
+            this.logger
         )
 
         await tgAccountManager.initialize()

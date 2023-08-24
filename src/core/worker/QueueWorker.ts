@@ -29,7 +29,7 @@ export class QueueWorker {
     }
 
     private async runQueueRecursively(): Promise<void> {
-        const queueItem = await this.contactQueueService.getFirstFromQueue(ContactMethod.ALL)
+        const queueItem = await this.contactQueueService.getFirstFromQueue(ContactMethod.ALL, this.logger)
 
         if (!queueItem) {
             this.logger.info(`[${QueueWorker.name}] Queue is empty.`)

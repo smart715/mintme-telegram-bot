@@ -4,9 +4,10 @@ import { QueuedContact } from '../entity'
 import { Brackets } from 'typeorm'
 import config from 'config'
 import moment from 'moment'
-import { Blockchain, logger } from '../../utils'
+import { Blockchain } from '../../utils'
 import { ContactMethod } from '../types'
 import axios from 'axios'
+import { Logger } from 'winston'
 
 @singleton()
 export class ContactQueueService {
@@ -43,7 +44,7 @@ export class ContactQueueService {
         await this.queuedContactRepository.delete({ address, blockchain })
     }
 
-    public async getFirstFromQueue(contactMethod: ContactMethod): Promise<QueuedContact | undefined> {
+    public async getFirstFromQueue(contactMethod: ContactMethod, logger: Logger): Promise<QueuedContact | undefined> {
         try {
             while (this.isFetchingQueue) {
                 await new Promise(resolve => setTimeout(resolve, 500))
@@ -96,7 +97,7 @@ export class ContactQueueService {
         return (find > 0)
     }
 
-    public async isExistingTg(link: string): Promise<boolean> {
+    public async isExistingTg(link: string, logger: Logger): Promise<boolean> {
         try {
             const request = await axios.get(link)
             return (request.data.includes('tgme_page_title') && !request.data.includes(' subscribers'))
