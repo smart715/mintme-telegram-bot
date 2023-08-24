@@ -1,11 +1,13 @@
 import { singleton } from 'tsyringe'
 import { TelegramAccountsRepository } from '../repository'
-import { TelegramAccount } from '../entity'
+import { ProxyServer, TelegramAccount } from '../entity'
+import { ProxyService } from './ProxyServerService'
 
 @singleton()
 export class TelegramService {
     public constructor(
         private telegramAccountRepository: TelegramAccountsRepository,
+        private proxyService: ProxyService,
     ) { }
 
     public async assignNewAccountToServer(ip: string): Promise<TelegramAccount|undefined> {
@@ -19,12 +21,16 @@ export class TelegramService {
             await this.telegramAccountRepository.save(account)
             return account
         }
+
         return undefined
     }
 
     public async getServerAccounts(ip: string): Promise<TelegramAccount[]> {
-        const accounts = await this.telegramAccountRepository.getServerAccounts(ip)
-        return accounts
+        return this.telegramAccountRepository.getServerAccounts(ip)
+    }
+
+    public async getAllAccounts(): Promise<TelegramAccount[]> {
+        return this.telegramAccountRepository.getAllAccounts()
     }
 
     public async setAccountAsDisabled(tgAccount: TelegramAccount): Promise<void> {
@@ -35,5 +41,16 @@ export class TelegramService {
     public async setAccountLimitHitDate(tgAccount: TelegramAccount, date: Date): Promise<void> {
         tgAccount.limitHitResetDate = date
         await this.telegramAccountRepository.save(tgAccount)
+    }
+
+    public async assignNewProxyForAccount(tgAccount: TelegramAccount): Promise<ProxyServer|undefined> {
+        const proxy = await this.proxyService.getFirstNotUsedProxy()
+
+        if (proxy) {
+            tgAccount.proxy = proxy
+            await this.telegramAccountRepository.save(tgAccount)
+        }
+
+        return proxy
     }
 }
