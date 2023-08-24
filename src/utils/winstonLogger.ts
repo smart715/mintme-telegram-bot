@@ -67,6 +67,10 @@ function getMetaLog(info: { [key: string|number]: string|object }): string {
 }
 
 function parseObjectToStr(metaParam: object): string {
+    if (!metaParam) {
+        return String(metaParam)
+    }
+
     const params: string[] = Object.values(metaParam)
 
     let str: string = '[ '
