@@ -35,6 +35,8 @@ import {
     TelegramService,
     ContactMessageService,
     LastTokenTxDateFetcher,
+    ProxyServerRepository,
+    ProxyService,
     CoinGeckoService,
     CoinGeckoWorker,
     AdvnWorker,
@@ -127,6 +129,10 @@ container.register(TelegramAccountsRepository, {
     useFactory: instanceCachingFactory(() => getConnection().getCustomRepository(TelegramAccountsRepository)),
 })
 
+container.register(ProxyServerRepository, {
+    useFactory: instanceCachingFactory(() => getConnection().getCustomRepository(ProxyServerRepository)),
+})
+
 container.register(DuplicatesFoundRepository, {
     useFactory: instanceCachingFactory(() => getConnection().getCustomRepository(DuplicatesFoundRepository)),
 })
@@ -174,6 +180,14 @@ container.register(TokensService, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new TokensService(
             dependencyContainer.resolve(TokenRepository),
+        )
+    ),
+})
+
+container.register(ProxyService, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new ProxyService(
+            dependencyContainer.resolve(ProxyServerRepository),
         )
     ),
 })
@@ -426,6 +440,7 @@ container.register(TelegramWorker, {
             dependencyContainer.resolve(ContactMessageService),
             dependencyContainer.resolve(ContactQueueService),
             dependencyContainer.resolve(TokensService),
+            dependencyContainer.resolve(ProxyService),
             telegramLogger,
         )
     ),
@@ -589,15 +604,6 @@ container.register(BitQueryWorker, {
     ),
 })
 
-container.register(CliDependency.COMMAND, {
-    useFactory: instanceCachingFactory((dependencyContainer) =>
-        new RunTelegramWorker(
-            dependencyContainer.resolve(TelegramWorker),
-            telegramLogger,
-        )
-    ),
-})
-
 container.register(MailerWorker, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new MailerWorker(
@@ -613,6 +619,15 @@ container.register(MailerWorker, {
 })
 
 // CLI
+
+container.register(CliDependency.COMMAND, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new RunTelegramWorker(
+            dependencyContainer.resolve(TelegramWorker),
+            telegramLogger,
+        )
+    ),
+})
 
 container.register(CliDependency.COMMAND, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
