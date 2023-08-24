@@ -24,7 +24,7 @@ export class BSCScanAddressTokensHoldingsWorker extends AbstractTokenWorker {
 
     public async run(blockchain: Blockchain.BSC | Blockchain.CRO): Promise<void> {
         const explorerDomain = explorerDomains[blockchain]
-        const webDriver = await SeleniumService.createDriver()
+        const webDriver = await SeleniumService.createDriver('', undefined, this.logger)
 
         this.logger.info(`[${this.workerName}] started for ${blockchain} blockchain`)
 

@@ -55,7 +55,7 @@ export class TelegramClient {
         const isDriverCreated = await this.createDriverWithProxy()
 
         if (!isDriverCreated) {
-            logger.warn(`Couldn't initialize driver with proxy`)
+            this.logger.warn(`Couldn't initialize driver with proxy`)
             return
         }
 
@@ -71,21 +71,21 @@ export class TelegramClient {
 
     private async createDriverWithProxy(): Promise<boolean> {
         if (!this.telegramAccount.proxy || this.telegramAccount.proxy.isDisabled) {
-            logger.info(`Proxy is invalid or disabled, Getting new one`)
+            this.logger.info(`Proxy is invalid or disabled, Getting new one`)
             if (!await this.getNewProxy()) {
-                logger.warn(`No proxy stock available`)
+                this.logger.warn(`No proxy stock available`)
                 return false
             }
         }
 
-        logger.info(`Creating driver instance`)
-        this.driver = await SeleniumService.createDriver('', this.telegramAccount.proxy)
-        logger.info(`Testing if proxy working`)
+        this.logger.info(`Creating driver instance`)
+        this.driver = await SeleniumService.createDriver('', this.telegramAccount.proxy, this.logger)
+        this.logger.info(`Testing if proxy working`)
 
         if (await SeleniumService.isInternetWorking(this.driver)) {
             return true
         } else {
-            logger.warn(`Proxy ${this.telegramAccount.proxy.proxy} doesn't work, disabling the proxy and will retry with new one`)
+            this.logger.warn(`Proxy ${this.telegramAccount.proxy.proxy} doesn't work, disabling the proxy and will retry with new one`)
             await this.destroyDriver()
             await this.proxyService.setProxyDisabled(this.telegramAccount.proxy)
 

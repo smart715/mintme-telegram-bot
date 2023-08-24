@@ -25,7 +25,7 @@ export class EtherScanAddressTokensHoldingsWorker extends AbstractTokenWorker {
     }
 
     public async run(): Promise<void> {
-        const webDriver = await SeleniumService.createDriver()
+        const webDriver = await SeleniumService.createDriver('', undefined, this.logger)
 
         this.logger.info(`[${this.workerName}] started for ${this.blockchain} blockchain`)
 

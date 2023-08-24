@@ -18,7 +18,7 @@ export class BSCScanTopAccountsFetcher extends AbstractTokenWorker {
 
     public async run(blockchain: Blockchain): Promise<void> {
         const explorerDomain = explorerDomains[blockchain]
-        const webDriver = await SeleniumService.createDriver()
+        const webDriver = await SeleniumService.createDriver('', undefined, this.logger)
 
         this.logger.info(`[${this.workerName}] started for ${blockchain} blockchain`)
 
