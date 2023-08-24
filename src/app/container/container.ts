@@ -61,6 +61,8 @@ import {
     MemeCoinsWorker,
     MyCoinVoteWorker,
     MobulaWorker,
+    MailerService,
+    MailerWorker,
     RugFreeCoinsService,
     RugFreeCoinsWorker,
     Top100TokensService,
@@ -91,6 +93,7 @@ import {
     RunTelegramWorker,
     RunLastTokenTxDateFetcher,
     RunFetchTokenWorker,
+    RunMailerWorker,
     RunRugFreeCoinsWorker,
     RunTop100TokensWorker,
     RunTokensInsightWorker,
@@ -268,6 +271,10 @@ container.register(CoinCodexService, {
 
 container.register(BitQueryService, {
     useFactory: instanceCachingFactory(() => new BitQueryService()),
+})
+
+container.register(MailerService, {
+    useFactory: instanceCachingFactory(() => new MailerService()),
 })
 
 container.register(RugFreeCoinsService, {
@@ -613,6 +620,19 @@ container.register(RecentTokensWorker, {
     ),
 })
 
+container.register(MailerWorker, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new MailerWorker(
+            dependencyContainer.resolve(ContactQueueService),
+            dependencyContainer.resolve(TokensService),
+            dependencyContainer.resolve(ContactMessageService),
+            dependencyContainer.resolve(ContactHistoryService),
+            dependencyContainer.resolve(EnqueueTokensWorker),
+            dependencyContainer.resolve(MailerService),
+        )
+    ),
+})
+
 // CLI
 
 container.register(CliDependency.COMMAND, {
@@ -736,16 +756,18 @@ container.register(CliDependency.COMMAND, {
 
 container.register(CliDependency.COMMAND, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
-        new RunRecentTokensWorker(
-            dependencyContainer.resolve(RecentTokensWorker),
+        new RunMailerWorker(
+            dependencyContainer.resolve(MailerWorker),
         )
     ),
 })
 
-// General
-
-container.register(Application, {
-    useFactory: instanceCachingFactory(() => new Application()),
+container.register(CliDependency.COMMAND, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new RunRecentTokensWorker(
+            dependencyContainer.resolve(RecentTokensWorker),
+        )
+    ),
 })
 
 container.register(CliDependency.COMMAND, {

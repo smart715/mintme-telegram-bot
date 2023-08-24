@@ -2,6 +2,7 @@ import { singleton } from 'tsyringe'
 import { ContactMessageRepository } from '../repository'
 import { ContactMessage } from '../entity'
 import config from 'config'
+import { ContactMethod } from '../types'
 
 @singleton()
 export class ContactMessageService {
@@ -14,6 +15,15 @@ export class ContactMessageService {
     public async getAll(isTg: boolean): Promise<ContactMessage[]> {
         const messages = await this.contactMessageRepository.getAllMessages(isTg)
         return messages
+    }
+
+    public async getNextContactMessage(
+        contactMethod: ContactMethod,
+        currentAttempt: number
+    ): Promise<ContactMessage | undefined> {
+        const isTgOnly = ContactMethod.TELEGRAM === contactMethod
+
+        return this.contactMessageRepository.getNextAttemptMessage(isTgOnly, currentAttempt)
     }
 
     public async getAccountMessages(isTelegram: boolean, accountId: number): Promise<ContactMessage[]> {

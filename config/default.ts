@@ -29,4 +29,16 @@ export default {
         'ETH': 'XSYS3JRES31D8P4ZY261FNA5VWTWNZ5XVQ',
         'CRO': 'N97BBK59XJ5DK9B8AN87NPEH2DYKBGKHTA',
     },
+
+    mailer: {
+        senderName: 'mintme tokens fetcher',
+        senderEmail: 'mintme.token.fetcher@gmail.com',
+        host: 'smtp.ethereal.email',
+        port: 587,
+        secure: false,
+        auth: {
+            user: 'aweihcdxiqxsjmck@ethereal.email',
+            pass: 'QG2tmhS8KDhG9dD4Cy',
+        },
+    },
 }

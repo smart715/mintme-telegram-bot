@@ -86,7 +86,7 @@ export class TokensService {
     }
 
     public getEmails(token: Token): string[] {
-        return token.emails.filter(email => isValidEmail(email))
+        return token.emails?.filter(email => isValidEmail(email)) ?? []
     }
 
     public getTwitterAccounts(token: Token): string[] {
