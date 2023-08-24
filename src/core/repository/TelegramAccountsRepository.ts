@@ -6,22 +6,23 @@ import { TelegramAccount } from '../entity'
 @EntityRepository(TelegramAccount)
 export class TelegramAccountsRepository extends Repository<TelegramAccount> {
     public async getAllAccounts(): Promise<TelegramAccount[]> {
-        const accounts = await this.find()
-        return accounts
+        return this.find({
+            where: {
+                isDisabled: false,
+            },
+        })
     }
 
     public async findByID(accountID: number): Promise<TelegramAccount | undefined> {
-        const account = await this.findOne({ where: { id: accountID } })
-        return account
+        return this.findOne({ where: { id: accountID } })
     }
 
     public async getServerAccounts(ip: string): Promise<TelegramAccount[]> {
-        const accounts = await this.find({
+        return this.find({
             where: {
                 assignedServerIP: ip,
                 isDisabled: false,
             },
         })
-        return accounts
     }
 }
