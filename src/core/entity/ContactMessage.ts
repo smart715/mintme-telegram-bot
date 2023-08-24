@@ -5,6 +5,9 @@ export class ContactMessage {
     @PrimaryGeneratedColumn()
     public id: number
 
+    @Column()
+    public attempt: number
+
     @Column({ length: 512 })
     public title: string
 
