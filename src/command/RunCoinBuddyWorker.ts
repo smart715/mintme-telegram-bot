@@ -3,7 +3,7 @@ import { Logger } from 'winston'
 import { Arguments, Argv } from 'yargs'
 import { CommandInterface, RunCoinBuddyWorkerCmdArgv } from './types'
 import { CoinBuddyWorker } from '../core'
-import { Blockchain } from '../utils'
+import { Blockchain, sleep } from '../utils'
 
 @singleton()
 export class RunCoinBuddyWorker implements CommandInterface {
@@ -30,6 +30,8 @@ export class RunCoinBuddyWorker implements CommandInterface {
         await this.coinBuddyWorker.run(argv.blockchain)
 
         this.logger.info(`Command ${this.command} finished with success`)
+
+        await sleep(1000)
 
         process.exit()
     }

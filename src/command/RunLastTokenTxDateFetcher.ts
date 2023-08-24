@@ -2,6 +2,7 @@ import { singleton } from 'tsyringe'
 import { Logger } from 'winston'
 import { CommandInterface } from './types'
 import { LastTokenTxDateFetcher } from '../core'
+import { sleep } from '../utils'
 
 @singleton()
 export class RunLastTokenTxDateFetcher implements CommandInterface {
@@ -21,5 +22,9 @@ export class RunLastTokenTxDateFetcher implements CommandInterface {
         await this.lastTokenTxDateFetcher.run()
 
         this.logger.info(`Command ${this.command} finished with success`)
+
+        await sleep(1000)
+
+        process.exit()
     }
 }

@@ -8,7 +8,7 @@ import {
     MyCoinVoteWorker,
 } from '../core'
 import { Arguments, Argv } from 'yargs'
-import { createLogger } from '../utils'
+import { createLogger, sleep } from '../utils'
 import { singleton } from 'tsyringe'
 
 @singleton()
@@ -58,6 +58,8 @@ export class RunFetchTokenWorker implements CommandInterface {
         await worker.run()
 
         logger.info(`Command ${this.command} finished with success`)
+
+        await sleep(1000)
 
         process.exit()
     }

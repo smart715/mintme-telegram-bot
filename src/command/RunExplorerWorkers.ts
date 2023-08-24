@@ -1,7 +1,7 @@
 import { singleton } from 'tsyringe'
 import { CommandInterface, ExplorerWorkerNames, RunExplorerWorkerCmdArgv } from './types'
 import { Arguments, Argv } from 'yargs'
-import { Blockchain } from '../utils'
+import { Blockchain, sleep } from '../utils'
 import {
     BSCScanAddressTokensHoldingsWorker,
     BSCScanTokensTransactionsFetcher,
@@ -61,6 +61,10 @@ export class RunExplorerWorker implements CommandInterface {
         } else {
             await notHoldingWorkers[workerName].run(blockchain)
         }
+
+        await sleep(1000)
+
+        process.exit()
     }
 
     private async runHoldingWorker(blockchain: Blockchain): Promise<void> {

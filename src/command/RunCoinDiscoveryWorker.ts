@@ -2,7 +2,7 @@ import { singleton } from 'tsyringe'
 import { Arguments, Argv } from 'yargs'
 import { Logger } from 'winston'
 import { CommandInterface, RunCoinDiscoveryWorkerCmdArgv } from './types'
-import { Blockchain } from '../utils'
+import { Blockchain, sleep } from '../utils'
 import { CoinDiscoveryWorker } from '../core'
 
 @singleton()
@@ -30,6 +30,8 @@ export class RunCoinDiscoveryWorker implements CommandInterface {
         await this.coinDiscoveryWorker.run(argv.blockchain)
 
         this.logger.info(`Command ${this.command} finished with success`)
+
+        await sleep(1000)
 
         process.exit()
     }

@@ -26,8 +26,8 @@ export function createLogger(filename: string = 'default'): Logger {
     const logFormatFile = winston.format.printf((info) => {
         const metaLog = getMetaLog(info, false)
 
-        const formattedTimestamp = '[' +
-            moment(info.timestamp).format('YYYY-MM-DD HH:mm:ss.SSS')
+        const formattedTimestamp = '['
+            + moment(info.timestamp).format('YYYY-MM-DD HH:mm:ss.SSS')
             + ']'
 
         const level = info.level.toUpperCase()
@@ -43,16 +43,22 @@ export function createLogger(filename: string = 'default'): Logger {
         filename: `log/${filename}.log`,
         format: winston.format.combine(logFormatFile),
     })
+    const fileTransportError = new winston.transports.File({
+        level: 'error',
+        filename: `log/error.log`,
+        format: winston.format.combine(logFormatFile),
+    })
 
     // Create a logger instance
     const winstonLogger = winston.createLogger({
         level: 'info', // Set your desired log level
-        transports: [ consoleTransport, fileTransport ],
+        transports: [ consoleTransport, fileTransport, fileTransportError ],
     })
 
     return winstonLogger
 }
 
+// Parse metadata. Combine, colorize (if necessary) and parse objects to str
 function getMetaLog(info: { [key: string|number]: string|object }, colorize = true): string {
     const keys = Object.keys(info)
 

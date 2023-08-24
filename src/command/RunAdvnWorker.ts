@@ -2,7 +2,7 @@ import { singleton } from 'tsyringe'
 import { Logger } from 'winston'
 import { CommandInterface, RunAdvnWorkerCmdArgv } from './types'
 import { Arguments, Argv } from 'yargs'
-import { Blockchain } from '../utils'
+import { Blockchain, sleep } from '../utils'
 import { AdvnWorker } from '../core'
 
 @singleton()
@@ -30,6 +30,8 @@ export class RunAdvnWorker implements CommandInterface {
         await this.advnWorker.run(argv.blockchain)
 
         this.logger.info(`Command ${this.command} finished with success`)
+
+        await sleep(1000)
 
         process.exit()
     }

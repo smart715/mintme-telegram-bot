@@ -1,7 +1,7 @@
 import { singleton } from 'tsyringe'
 import { CommandInterface, RunQueueWorkerCmdArgv } from './types'
 import { Arguments, Argv } from 'yargs'
-import { Blockchain } from '../utils'
+import { Blockchain, sleep } from '../utils'
 import { QueueWorker } from '../core'
 import { Logger } from 'winston'
 
@@ -37,6 +37,8 @@ export class RunQueueWorker implements CommandInterface {
         await this.queueWorker.run(argv.blockchain, argv.repeat)
 
         this.logger.info(`Command ${this.command} finished with success`)
+
+        await sleep(1000)
 
         process.exit()
     }

@@ -1,7 +1,7 @@
 import { container, singleton } from 'tsyringe'
 import { Logger } from 'winston'
 import { CommandInterface } from './types'
-import { Database } from '../utils'
+import { Database, sleep } from '../utils'
 import { TelegramWorker } from '../core'
 
 @singleton()
@@ -35,6 +35,10 @@ export class RunTelegramWorker implements CommandInterface {
             }
 
             throw err
+        } finally {
+            await sleep(1000)
+
+            process.exit()
         }
     }
 }

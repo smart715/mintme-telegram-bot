@@ -2,6 +2,7 @@ import { Logger } from 'winston'
 import { singleton } from 'tsyringe'
 import { CommandInterface } from './types'
 import { MailerWorker } from '../core'
+import { sleep } from '../utils'
 
 @singleton()
 export class RunMailerWorker implements CommandInterface {
@@ -21,5 +22,9 @@ export class RunMailerWorker implements CommandInterface {
         await this.mailerWorker.run()
 
         this.logger.info(`Command ${this.command} finished with success`)
+
+        await sleep(1000)
+
+        process.exit()
     }
 }
