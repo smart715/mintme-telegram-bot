@@ -54,7 +54,7 @@ export class ContactQueueService {
             const result = await this.queuedContactRepository
                 .createQueryBuilder()
                 .where('is_processing = 0')
-                .andWhere('contact_method = :contact_method', { contactMethod })
+                .andWhere('contact_method = :contactMethod', { contactMethod })
                 .andWhere(new Brackets((qb) => qb
                     .where('is_planned = 0')
                     .orWhere(
@@ -77,8 +77,9 @@ export class ContactQueueService {
         }
     }
 
-    public async setProcessing(queuedContact: QueuedContact): Promise<QueuedContact> {
-        queuedContact.isProcessing = true
+    public async setProcessing(queuedContact: QueuedContact, value: boolean = true): Promise<QueuedContact> {
+        queuedContact.isProcessing = value
+
         return this.queuedContactRepository.save(queuedContact)
     }
 

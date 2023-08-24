@@ -11,7 +11,7 @@ export default {
     'tokensinsight_api_key': '65851ffff61d47fe9d600c6c69ef87e6',
 
     // telegram configs
-    'telegram_max_accounts': 1,
+    'telegram_max_accounts_simultaneous': 1,
     'telegram_messages_delay_in_seconds': 30,
     'telegram_account_max_day_messages': 30,
     'telegram_unique_messages_per_account': 3,
