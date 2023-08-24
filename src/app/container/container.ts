@@ -102,6 +102,7 @@ const enqueueTokenLogger = createLogger(EnqueueTokensWorker.name.toLowerCase())
 const lastTokenTxDateFetcherLogger = createLogger(LastTokenTxDateFetcher.name.toLowerCase())
 const queueLogger = createLogger(QueueWorker.name.toLowerCase())
 const telegramLogger = createLogger(TelegramWorker.name.toLowerCase())
+const mailerLogger = createLogger(MailerWorker.name.toLowerCase())
 
 // Repositories
 
@@ -613,6 +614,7 @@ container.register(MailerWorker, {
             dependencyContainer.resolve(ContactHistoryService),
             dependencyContainer.resolve(EnqueueTokensWorker),
             dependencyContainer.resolve(MailerService),
+            mailerLogger,
         )
     ),
 })
@@ -737,6 +739,7 @@ container.register(CliDependency.COMMAND, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new RunMailerWorker(
             dependencyContainer.resolve(MailerWorker),
+            mailerLogger,
         )
     ),
 })
