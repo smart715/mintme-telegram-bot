@@ -17,6 +17,13 @@ export class TokensService {
         return this.tokenRepository.findByAddressAndBlockchain(address, blockchain)
     }
 
+    public async findByName(
+        name: string,
+        blockchain: Blockchain,
+    ): Promise<Token | undefined> {
+        return this.tokenRepository.findByNameAndBlockchain(name, blockchain)
+    }
+
     public async addIfNotExists(
         tokenAddress: string,
         tokenName: string,

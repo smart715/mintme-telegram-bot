@@ -20,8 +20,8 @@ export function getHrefValuesFromTagString(source: RegExpMatchArray): string[] {
     for (const rawLink of rawLinks) {
         const result = rawLink.match(/href="([^"]*)/)
 
-        if (!result) {
-            return []
+        if (!result || result[1].includes('email-protection')) {
+            continue
         }
 
         links.push(result[1])
