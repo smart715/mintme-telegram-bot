@@ -16,6 +16,9 @@ export default {
     'telegram_account_max_day_messages': 30,
     'telegram_unique_messages_per_account': 3,
 
+    // twitter configs
+    'twitter_max_accounts_simultaneous': 1,
+
     // enqueue tokens worker
     'contact_email_max_attempts': 4,
     'contact_twitter_max_attempts': 2,

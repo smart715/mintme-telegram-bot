@@ -12,5 +12,5 @@ export class TwitterAccount {
     public assignedServerIP!: string
 
     @Column('text')
-    public localStorageJson!: string
+    public cookies!: string
 }
