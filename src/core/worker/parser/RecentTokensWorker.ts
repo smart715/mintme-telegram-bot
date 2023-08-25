@@ -1,10 +1,10 @@
 import { DOMWindow, JSDOM } from 'jsdom'
+import { Logger } from 'winston'
 import {
     Blockchain,
     findContractAddress,
     getHrefFromTagString,
     getHrefValuesFromTagString,
-    logger,
     sleep,
 } from '../../../utils'
 import { NewestCheckedTokenService, RecentTokensService, TokensService } from '../../service'
@@ -20,20 +20,22 @@ export class RecentTokensWorker extends NewestTokenChecker {
         private readonly recentTokensService: RecentTokensService,
         private readonly tokenService: TokensService,
         protected readonly newestCheckedTokenService: NewestCheckedTokenService,
+        protected readonly logger: Logger,
     ) {
         super(
             RecentTokensWorker.name,
             newestCheckedTokenService,
+            logger
         )
     }
 
     public async run(currentBlockchain: Blockchain = Blockchain.BSC): Promise<void> {
-        logger.info(`${this.prefixLog} Started`)
+        this.logger.info(`${this.prefixLog} Started`)
 
         this.blockchain = currentBlockchain
 
         if (this.unsupportedBlockchains.includes(this.blockchain)) {
-            logger.error(`${this.prefixLog} Unsupported blockchain ${currentBlockchain}. Aborting`)
+            this.logger.error(`${this.prefixLog} Unsupported blockchain ${currentBlockchain}. Aborting`)
 
             return
         }
@@ -44,7 +46,7 @@ export class RecentTokensWorker extends NewestTokenChecker {
 
         try {
             while (true) { // eslint-disable-line
-                logger.info(`${this.prefixLog} Checking page: ${page}`)
+                this.logger.info(`${this.prefixLog} Checking page: ${page}`)
 
                 await this.checkPage(page)
                 await sleep(this.sleepTimeBetweenPages)
@@ -53,14 +55,14 @@ export class RecentTokensWorker extends NewestTokenChecker {
             }
         } catch (error: any) {
             if (error instanceof StopCheckException) {
-                logger.info(`${this.prefixLog}}${error.message}`)
+                this.logger.info(`${this.prefixLog}}${error.message}`)
             } else {
-                logger.error(`${this.prefixLog} ${error.message}`)
+                this.logger.error(`${this.prefixLog} ${error.message}`)
 
                 throw error
             }
         } finally {
-            logger.info(`${this.prefixLog} Finished`)
+            this.logger.info(`${this.prefixLog} Finished`)
         }
     }
 
@@ -94,7 +96,7 @@ export class RecentTokensWorker extends NewestTokenChecker {
         try {
             tokenPageInfo = await this.recentTokensService.getTokenInfoPage(tokenLink)
         } catch (ex: any) {
-            logger.error(
+            this.logger.error(
                 `${this.prefixLog} Failed to get token page. Page link: ${tokenLink} Reason: ${ex.message}. Skipping...`
             )
 
@@ -123,7 +125,7 @@ export class RecentTokensWorker extends NewestTokenChecker {
         const website = this.getWebsite(tokenPageInfo)
         const links = this.getLinks(tokenPageInfo)
 
-        logger.info(`${this.prefixLog} Check ${tokenName}`)
+        this.logger.info(`${this.prefixLog} Check ${tokenName}`)
 
         if (0 === links.length) {
             return
@@ -139,14 +141,16 @@ export class RecentTokensWorker extends NewestTokenChecker {
             this.blockchain
         )
 
-        logger.info(
+        this.logger.info(
             `${this.prefixLog} Added to DB:`,
-            tokenAddress,
-            tokenName,
-            website,
-            links,
-            this.workerName,
-            this.blockchain
+            [
+                tokenAddress,
+                tokenName,
+                website,
+                links,
+                this.workerName,
+                this.blockchain,
+            ]
         )
     }
 
@@ -158,7 +162,7 @@ export class RecentTokensWorker extends NewestTokenChecker {
         try {
             tokensPageStr = await this.recentTokensService.getAllTokensPage(targetBlockchain, page)
         } catch (ex: any) {
-            logger.error(
+            this.logger.error(
                 `${this.prefixLog} Aborting. Failed to get all tokens page. Page: ${page} Reason: ${ex.message}`
             )
 

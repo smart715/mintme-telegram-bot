@@ -106,6 +106,11 @@ import { RetryAxios, TokenNamesGenerator, createLogger } from '../../utils'
 
 // Loggers
 
+const top100TokensLogger = createLogger(Top100TokensWorker.name.toLowerCase())
+const tokensInsightLogger = createLogger(TokensInsightWorker.name.toLowerCase())
+const rugFreeCoinsLogger = createLogger(RugFreeCoinsWorker.name.toLowerCase())
+const recentTokensLogger = createLogger(RecentTokensWorker.name.toLowerCase())
+const myEtherListsLogger = createLogger(MyEtherListsWorker.name.toLowerCase())
 const cmcLogger = createLogger(CMCWorker.name.toLowerCase())
 const advnLogger = createLogger(AdvnWorker.name.toLowerCase())
 const bitQueryLogger = createLogger(BitQueryWorker.name.toLowerCase())
@@ -602,6 +607,7 @@ container.register(RugFreeCoinsWorker, {
         new RugFreeCoinsWorker(
             dependencyContainer.resolve(RugFreeCoinsService),
             dependencyContainer.resolve(TokensService),
+            rugFreeCoinsLogger,
         )
     ),
 })
@@ -611,6 +617,7 @@ container.register(Top100TokensWorker, {
         new Top100TokensWorker(
             dependencyContainer.resolve(Top100TokensService),
             dependencyContainer.resolve(TokensService),
+            top100TokensLogger,
         )
     ),
 })
@@ -650,6 +657,7 @@ container.register(TokensInsightWorker, {
         new TokensInsightWorker(
             dependencyContainer.resolve(TokensInsightService),
             dependencyContainer.resolve(TokensService),
+            tokensInsightLogger,
         )
     ),
 })
@@ -659,6 +667,7 @@ container.register(MyEtherListsWorker, {
         new MyEtherListsWorker(
             dependencyContainer.resolve(MyEtherListsService),
             dependencyContainer.resolve(TokensService),
+            myEtherListsLogger,
         )
     ),
 })
@@ -669,6 +678,7 @@ container.register(RecentTokensWorker, {
             dependencyContainer.resolve(RecentTokensService),
             dependencyContainer.resolve(TokensService),
             dependencyContainer.resolve(NewestCheckedTokenService),
+            recentTokensLogger,
         )
     ),
 })
@@ -798,6 +808,7 @@ container.register(CliDependency.COMMAND, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new RunRugFreeCoinsWorker(
             dependencyContainer.resolve(RugFreeCoinsWorker),
+            rugFreeCoinsLogger,
         ),
     ),
 })
@@ -806,6 +817,7 @@ container.register(CliDependency.COMMAND, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new RunTop100TokensWorker(
             dependencyContainer.resolve(Top100TokensWorker),
+            top100TokensLogger,
         ),
     ),
 })
@@ -841,6 +853,7 @@ container.register(CliDependency.COMMAND, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new RunRecentTokensWorker(
             dependencyContainer.resolve(RecentTokensWorker),
+            recentTokensLogger,
         )
     ),
 })
@@ -871,6 +884,7 @@ container.register(CliDependency.COMMAND, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new RunTelegramWorker(
             dependencyContainer.resolve(TelegramWorker),
+            telegramLogger,
         )
     ),
 })
@@ -879,6 +893,7 @@ container.register(CliDependency.COMMAND, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new RunTokensInsightWorker(
             dependencyContainer.resolve(TokensInsightWorker),
+            tokensInsightLogger,
         )
     ),
 })
@@ -887,6 +902,7 @@ container.register(CliDependency.COMMAND, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new RunMyEtherListsWorker(
             dependencyContainer.resolve(MyEtherListsWorker),
+            myEtherListsLogger,
         )
     ),
 })
