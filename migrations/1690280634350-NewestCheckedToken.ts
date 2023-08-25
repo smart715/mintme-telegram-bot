@@ -9,6 +9,7 @@ export class NewestCheckedToken1690280634350 implements MigrationInterface {
                 \`id\` int NOT NULL AUTO_INCREMENT,
                 \`worker_name\` varchar(255) NOT NULL,
                 \`token_id\` varchar(255) NOT NULL,
+                \`blockchain\` varchar (32) NULL,
                 PRIMARY KEY (\`id\`)
             ) ENGINE = InnoDB
         `)

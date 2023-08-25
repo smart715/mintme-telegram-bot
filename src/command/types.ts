@@ -83,3 +83,23 @@ export enum CasualTokenWorkerNames {
     MOBULA = 'mobula',
     MY_COIN_VOTE = 'my-coin-vote',
 }
+
+export interface RunRugFreeCoinsWorkerCmdArgv {
+    blockchain: Blockchain,
+}
+
+export interface RunTop100TokensWorkerCmdArgv {
+    blockchain: Blockchain,
+}
+
+export interface RunTokensInsightWorkerCmdArgv {
+    blockchain: Blockchain,
+}
+
+export interface RunMyEtherListsWorkerCmdArgv {
+    blockchain: Blockchain,
+}
+
+export interface RunRecentTokensWorkerCmdArgv {
+    blockchain: Blockchain,
+}

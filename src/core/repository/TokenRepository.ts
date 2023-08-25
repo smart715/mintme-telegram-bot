@@ -13,6 +13,10 @@ export class TokenRepository extends Repository<Token> {
         return this.findOne({ where: { address, blockchain } })
     }
 
+    public async findByNameAndBlockchain(name: string, blockchain: Blockchain): Promise<Token | undefined> {
+        return this.findOne({ where: { name, blockchain } })
+    }
+
     public async getLastNotContactedTokens(blockchain: Blockchain,
         maxEmailAttempts: number,
         maxTwitterAttempts: number,
