@@ -1,5 +1,6 @@
-import { RetryAxios, Blockchain, tokenAddressRegexp } from '../../../utils'
 import { singleton } from 'tsyringe'
+import { Logger } from 'winston'
+import { RetryAxios, Blockchain, tokenAddressRegexp } from '../../../utils'
 import { NewestCheckedTokenService, TokensService } from '../../service'
 import { NewestTokenChecker, StopCheckException } from './NewestTokenChecker'
 
@@ -12,10 +13,12 @@ export class GemFinderWorker extends NewestTokenChecker {
         protected readonly newestCheckedTokenService: NewestCheckedTokenService,
         private readonly tokensService: TokensService,
         private readonly retryAxios: RetryAxios,
+        protected readonly logger: Logger,
     ) {
         super(
             GemFinderWorker.name,
             newestCheckedTokenService,
+            logger,
         )
     }
 
@@ -32,7 +35,7 @@ export class GemFinderWorker extends NewestTokenChecker {
     }
 
     private async fetchTokenIds(page: number): Promise<string[]> {
-        const response = await this.retryAxios.get(this.buildPageUrl(page))
+        const response = await this.retryAxios.get(this.buildPageUrl(page), this.logger)
 
         return response.data.toLowerCase().match(this.tokenIdRegexp) ?? []
     }
@@ -67,7 +70,7 @@ export class GemFinderWorker extends NewestTokenChecker {
     }
 
     private async fetchTokenInfo(tokenId: string): Promise<string> {
-        const response = await this.retryAxios.get(this.buildTokenInfoUrl(tokenId))
+        const response = await this.retryAxios.get(this.buildTokenInfoUrl(tokenId), this.logger)
 
         return response.data.toLowerCase()
     }

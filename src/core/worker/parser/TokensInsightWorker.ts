@@ -1,6 +1,7 @@
-import { AbstractTokenWorker } from '../AbstractTokenWorker'
 import { singleton } from 'tsyringe'
-import { Blockchain, logger, sleep } from '../../../utils'
+import { Logger } from 'winston'
+import { AbstractTokenWorker } from '../AbstractTokenWorker'
+import { Blockchain, sleep } from '../../../utils'
 import { TokensInsightService, TokensService } from '../../service'
 import {
     TokensInsightAllCoinsResponse,
@@ -17,6 +18,7 @@ export class TokensInsightWorker extends AbstractTokenWorker {
     public constructor(
         private readonly tokensInsightService: TokensInsightService,
         private readonly tokensService: TokensService,
+        private readonly logger: Logger,
     ) {
         super()
     }
@@ -31,7 +33,7 @@ export class TokensInsightWorker extends AbstractTokenWorker {
             try {
                 allCoinsRes = await this.tokensInsightService.getAllCoins(offset, this.limit)
             } catch (ex: any) {
-                logger.error(
+                this.logger.error(
                     `${this.prefixLog} Aborting. Failed to fetch all coins. Offset: ${offset}. Limit: ${this.limit} Reason: ${ex.message}`
                 )
 
@@ -52,7 +54,7 @@ export class TokensInsightWorker extends AbstractTokenWorker {
                 ++i
                 const tokenName = coin.name + '(' + coin.symbol + ')'
 
-                logger.info(`${this.prefixLog} Check ${tokenName}. ${i+offset}/${coinsLength+offset}`)
+                this.logger.info(`${this.prefixLog} Check ${tokenName}. ${i+offset}/${coinsLength+offset}`)
 
                 const tokenInDb = await this.tokensService.findByName(tokenName, currentBlockchain)
 
@@ -65,7 +67,7 @@ export class TokensInsightWorker extends AbstractTokenWorker {
                 try {
                     coinData = await this.tokensInsightService.getCoinData(coin.id)
                 } catch (ex: any) {
-                    logger.error(
+                    this.logger.error(
                         `${this.prefixLog} Failed to fetch coin data for ${coin.id}  id. Reason: ${ex.message}. Skipping`
                     )
 
@@ -104,14 +106,16 @@ export class TokensInsightWorker extends AbstractTokenWorker {
                     currentBlockchain
                 )
 
-                logger.info(
+                this.logger.info(
                     `${this.prefixLog} Added to DB:`,
-                    tokenAddress,
-                    tokenName,
-                    websites,
-                    links,
-                    this.workerName,
-                    currentBlockchain
+                    [
+                        tokenAddress,
+                        tokenName,
+                        websites,
+                        links,
+                        this.workerName,
+                        currentBlockchain,
+                    ]
                 )
             }
 

@@ -1,6 +1,7 @@
 import { singleton } from 'tsyringe'
+import { Logger } from 'winston'
 import { AbstractTokenWorker } from '../AbstractTokenWorker'
-import { Blockchain, logger } from '../../../utils'
+import { Blockchain } from '../../../utils'
 import { MyEtherListsService, TokensService } from '../../service'
 import { GitHubFile, GitHubRawTokenSocial } from '../../../types'
 
@@ -13,15 +14,16 @@ export class MyEtherListsWorker extends AbstractTokenWorker {
     public constructor(
         private readonly myEtherListsService: MyEtherListsService,
         private readonly tokensService: TokensService,
+        private readonly logger: Logger,
     ) {
         super()
     }
 
     public async run(currentBlockchain: Blockchain): Promise<void> {
-        logger.info(`${this.prefixLog} Worker started`)
+        this.logger.info(`${this.prefixLog} Worker started`)
 
         if (this.unsupportedBlockchains.includes(currentBlockchain)) {
-            logger.error(`${this.prefixLog} Unsupported blockchain ${currentBlockchain}. Aborting`)
+            this.logger.error(`${this.prefixLog} Unsupported blockchain ${currentBlockchain}. Aborting`)
 
             return
         }
@@ -31,7 +33,7 @@ export class MyEtherListsWorker extends AbstractTokenWorker {
         try {
             files = await this.myEtherListsService.getTokensList(currentBlockchain)
         } catch (ex: any) {
-            logger.error(
+            this.logger.error(
                 `${this.prefixLog} Aborting. Failed to fetch all files for given blockchain. Reason: ${ex.message}`
             )
 
@@ -46,7 +48,7 @@ export class MyEtherListsWorker extends AbstractTokenWorker {
             const rawToken = await this.myEtherListsService.getRawToken(file.download_url)
             const tokenName = rawToken.name + '(' + rawToken.symbol + ')'
 
-            logger.info(`${this.prefixLog} Check ${tokenName} ${i}/${files.length}`)
+            this.logger.info(`${this.prefixLog} Check ${tokenName} ${i}/${files.length}`)
 
             const tokenInDb = await this.tokensService.findByAddress(rawToken.address, currentBlockchain)
 
@@ -73,14 +75,16 @@ export class MyEtherListsWorker extends AbstractTokenWorker {
                 currentBlockchain
             )
 
-            logger.info(
+            this.logger.info(
                 `${this.prefixLog} Added to DB:`,
-                tokenAddress,
-                tokenName,
-                website,
-                links,
-                this.workerName,
-                currentBlockchain
+                [
+                    tokenAddress,
+                    tokenName,
+                    website,
+                    links,
+                    this.workerName,
+                    currentBlockchain,
+                ]
             )
         }
     }

@@ -3,11 +3,11 @@ import { Builder, Capabilities, ThenableWebDriver, WebDriver } from 'selenium-we
 // eslint-disable-next-line import/no-internal-modules
 import { Options } from 'selenium-webdriver/chrome'
 import { ProxyServer } from '../entity'
-import { logger } from '../../utils'
+import { Logger } from 'winston'
 
 @singleton()
 export class SeleniumService {
-    public static async createDriver(profile: string = '', proxyServer: ProxyServer|undefined = undefined): Promise<ThenableWebDriver> {
+    public static async createDriver(profile: string = '', proxyServer: ProxyServer|undefined = undefined, logger: Logger): Promise<ThenableWebDriver> {
         const options = new Options()
             .addArguments('--headless=new')
             .addArguments('--no-sandbox')

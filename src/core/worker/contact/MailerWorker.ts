@@ -7,9 +7,10 @@ import {
 } from '../../service'
 import { EnqueueTokensWorker } from '../EnqueueTokensWorker'
 import { ContactHistoryStatusType, ContactMethod, TokenContactStatusType } from '../../types'
-import { logger, sleep } from '../../../utils'
+import { sleep } from '../../../utils'
 import { ContactHistory, ContactMessage, QueuedContact, Token } from '../../entity'
 import { singleton } from 'tsyringe'
+import { Logger } from 'winston'
 
 @singleton()
 export class MailerWorker {
@@ -24,17 +25,18 @@ export class MailerWorker {
         private readonly contactHistoryService: ContactHistoryService,
         private readonly enqueueTokensWorker: EnqueueTokensWorker,
         private readonly mailer: MailerService,
+        private readonly logger: Logger,
     ) { }
 
     public async run(): Promise<void> {
-        logger.info(`[${this.workerName}] Started`)
+        this.logger.info(`[${this.workerName}] Started`)
 
         // eslint-disable-next-line
         while (true) {
-            const queueItem = await this.contactQueueService.getFirstFromQueue(ContactMethod.EMAIL)
+            const queueItem = await this.contactQueueService.getFirstFromQueue(ContactMethod.EMAIL, this.logger)
 
             if (!queueItem) {
-                logger.info(`[${this.workerName}] Email queue is empty, sleep...`)
+                this.logger.info(`[${this.workerName}] Email queue is empty, sleep...`)
                 await sleep(this.queueIsEmptySleepTime)
 
                 continue
@@ -50,7 +52,7 @@ export class MailerWorker {
 
         if (!token) {
             await this.contactQueueService.removeFromQueue(queueItem.address, queueItem.blockchain)
-            logger.info(`[${this.workerName}] No token for ${queueItem.address} :: ${queueItem.blockchain} . Skipping`)
+            this.logger.info(`[${this.workerName}] No token for ${queueItem.address} :: ${queueItem.blockchain} . Skipping`)
 
             return
         }
@@ -58,7 +60,7 @@ export class MailerWorker {
         if (TokenContactStatusType.RESPONDED === token.contactStatus) {
             await this.contactQueueService.removeFromQueue(queueItem.address, queueItem.blockchain)
 
-            logger.info(
+            this.logger.info(
                 `[${this.workerName}] ` +
                 `Token for ${queueItem.address} :: ${queueItem.blockchain} is marked as responded. Removed from queue. Skipping`
             )
@@ -66,7 +68,7 @@ export class MailerWorker {
             return
         }
 
-        logger.info(
+        this.logger.info(
             `[${this.workerName}] Started processing ${queueItem.address} ${queueItem.blockchain} :: ${queueItem.channel}. `
         )
 
@@ -76,7 +78,7 @@ export class MailerWorker {
 
         await this.tryToEnqueueToken(token, contactResult)
 
-        logger.info(`[${this.workerName}] ` +
+        this.logger.info(`[${this.workerName}] ` +
             `Proceeding of ${queueItem.address} :: ${queueItem.blockchain} finished`
         )
     }
@@ -93,7 +95,7 @@ export class MailerWorker {
             contactMessage,
         )
 
-        logger.info(`[${this.workerName}] ` +
+        this.logger.info(`[${this.workerName}] ` +
             `Token ${token.address} was contacted to ${email} with status ${contactResult}.`
         )
 
@@ -172,12 +174,12 @@ export class MailerWorker {
         } = await this.enqueueTokensWorker.tryToEnqueueToken(token, isFutureContact)
 
         if (enqueued) {
-            logger.info(`[${this.workerName}] ` +
+            this.logger.info(`[${this.workerName}] ` +
                 `Token ${token.address} was queued for for future contact via ${nextContactMethod} (${contactChannel}). ` +
                 `Saved with status ${token.contactStatus}`
             )
         } else {
-            logger.warn(`[${this.workerName}] ` +
+            this.logger.warn(`[${this.workerName}] ` +
                 `Token ${token.address} don't have any available contact method. ` +
                 `Saved with status ${token.contactStatus}`
             )

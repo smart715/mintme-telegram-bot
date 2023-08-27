@@ -11,10 +11,10 @@ import {
 } from '../../../service'
 import { By, Key, WebDriver, WebElement } from 'selenium-webdriver'
 import * as fs from 'fs'
-import { getRandomNumber, logger } from '../../../../utils'
+import { getRandomNumber } from '../../../../utils'
 import { ContactHistoryStatusType, ContactMethod, TokenContactStatusType } from '../../../types'
 import moment from 'moment'
-import { log } from 'loglevel'
+import { Logger } from 'winston'
 
 export class TelegramClient {
     private readonly maxMessagesPerDay: number = config.get('telegram_account_max_day_messages')
@@ -33,7 +33,8 @@ export class TelegramClient {
         private readonly tokenService: TokensService,
         private readonly telegramService: TelegramService,
         private readonly proxyService: ProxyService,
-        telegramAccount: TelegramAccount
+        telegramAccount: TelegramAccount,
+        private readonly logger: Logger
     ) {
         this.telegramAccount = telegramAccount
     }
@@ -54,7 +55,7 @@ export class TelegramClient {
         const isDriverCreated = await this.createDriverWithProxy()
 
         if (!isDriverCreated) {
-            logger.warn(`Couldn't initialize driver with proxy`)
+            this.logger.warn(`Couldn't initialize driver with proxy`)
             return
         }
 
@@ -70,21 +71,21 @@ export class TelegramClient {
 
     private async createDriverWithProxy(): Promise<boolean> {
         if (!this.telegramAccount.proxy || this.telegramAccount.proxy.isDisabled) {
-            logger.info(`Proxy is invalid or disabled, Getting new one`)
+            this.logger.info(`Proxy is invalid or disabled, Getting new one`)
             if (!await this.getNewProxy()) {
-                logger.warn(`No proxy stock available`)
+                this.logger.warn(`No proxy stock available`)
                 return false
             }
         }
 
-        logger.info(`Creating driver instance`)
-        this.driver = await SeleniumService.createDriver('', this.telegramAccount.proxy)
-        logger.info(`Testing if proxy working`)
+        this.logger.info(`Creating driver instance`)
+        this.driver = await SeleniumService.createDriver('', this.telegramAccount.proxy, this.logger)
+        this.logger.info(`Testing if proxy working`)
 
         if (await SeleniumService.isInternetWorking(this.driver)) {
             return true
         } else {
-            logger.warn(`Proxy ${this.telegramAccount.proxy.proxy} doesn't work, disabling the proxy and will retry with new one`)
+            this.logger.warn(`Proxy ${this.telegramAccount.proxy.proxy} doesn't work, disabling the proxy and will retry with new one`)
             await this.destroyDriver()
             await this.proxyService.setProxyDisabled(this.telegramAccount.proxy)
 
@@ -140,16 +141,16 @@ export class TelegramClient {
                 return true
             } else {
                 if (retries < 3) {
-                    logger.info(`Retrying to login, Attempt #${retries}`)
+                    this.logger.info(`Retrying to login, Attempt #${retries}`)
                     return await this.login(retries + 1)
                 } else {
-                    logger.warn(`Account is banned, Err: USER_DEACTIVATED_BAN`)
+                    this.logger.warn(`Account is banned, Err: USER_DEACTIVATED_BAN`)
                     await this.disableAccount()
                     return false
                 }
             }
         } catch (e) {
-            logger.error(e)
+            this.logger.error(e)
             return false
         }
     }
@@ -362,7 +363,7 @@ export class TelegramClient {
                 return await this.sendGroupMessage(telegramLink, verified)
             }
         } catch (e) {
-            logger.error(e)
+            this.logger.error(e)
             return ContactHistoryStatusType.UNKNOWN
         }
     }
@@ -423,7 +424,7 @@ export class TelegramClient {
     public async startContacting(): Promise<void> {
         await this.driver.sleep(getRandomNumber(1, 10)*1000)
 
-        const queuedContact = await this.contactQueueService.getFirstFromQueue(ContactMethod.TELEGRAM)
+        const queuedContact = await this.contactQueueService.getFirstFromQueue(ContactMethod.TELEGRAM, this.logger)
 
         if (queuedContact) {
             const token = await this.tokenService.findByAddress(queuedContact.address, queuedContact.blockchain)
@@ -431,7 +432,7 @@ export class TelegramClient {
             if (!token) {
                 await this.contactQueueService.removeFromQueue(queuedContact.address, queuedContact.blockchain)
 
-                log(
+                this.log(
                     `No token for ${queuedContact.address} :: ${queuedContact.blockchain} . Skipping`
                 )
 
@@ -512,7 +513,7 @@ export class TelegramClient {
     }
 
     private log(message: string): void {
-        logger.info(
+        this.logger.info(
             `[Telegram Worker ${this.telegramAccount.id}] ` +
             message
         )

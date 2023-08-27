@@ -1,5 +1,6 @@
 import { singleton } from 'tsyringe'
 import config from 'config'
+import { Logger } from 'winston'
 import { TelegramClient } from './telegram'
 import { TelegramAccount } from '../../entity'
 import {
@@ -10,7 +11,7 @@ import {
     ContactQueueService,
     ProxyService,
 } from '../../service'
-import { logger, sleep } from '../../../utils'
+import { sleep } from '../../../utils'
 
 @singleton()
 export class TelegramWorker {
@@ -26,6 +27,7 @@ export class TelegramWorker {
         private readonly contactQueueService: ContactQueueService,
         private readonly tokenService: TokensService,
         private readonly proxyService: ProxyService,
+        private readonly logger: Logger,
     ) { }
 
     private async initializeNewAccountManager(tgAccount: TelegramAccount): Promise<TelegramClient> {
@@ -37,6 +39,7 @@ export class TelegramWorker {
             this.telegramService,
             this.proxyService,
             tgAccount,
+            this.logger
         )
 
         await tgAccountManager.initialize()
@@ -81,7 +84,7 @@ export class TelegramWorker {
         if (newAccount) {
             this.telegramClients.push(await this.initializeNewAccountManager(newAccount))
         } else {
-            logger.warn('No accounts stock available')
+            this.logger.warn('No accounts stock available')
         }
     }
 
@@ -90,7 +93,7 @@ export class TelegramWorker {
 
         for (const client of clients) {
             if (!client.isInitialized) {
-                logger.warn(
+                this.logger.warn(
                     `[Telegram Worker ID: ${client.telegramAccount.id}] ` +
                     `Not initialized.`
                 )
@@ -99,7 +102,7 @@ export class TelegramWorker {
             }
 
             if (!client.accountMessages?.length) {
-                logger.warn(
+                this.logger.warn(
                     `[Telegram Worker ID: ${client.telegramAccount.id}] ` +
                     `No messages stock available, Account not able to start messaging.`
                 )

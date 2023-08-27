@@ -1,4 +1,5 @@
 import { singleton } from 'tsyringe'
+import { Logger } from 'winston'
 import { NewestCheckedTokenService, TokensService } from '../../service'
 import { RetryAxios, Blockchain, tokenAddressRegexp } from '../../../utils'
 import { NewestTokenChecker, StopCheckException } from './NewestTokenChecker'
@@ -12,10 +13,12 @@ export class CryptoVoteListWorker extends NewestTokenChecker {
         private readonly tokensService: TokensService,
         protected readonly newestCheckedTokenService: NewestCheckedTokenService,
         private readonly retryAxios: RetryAxios,
+        protected readonly logger: Logger,
     ) {
         super(
             CryptoVoteListWorker.name,
             newestCheckedTokenService,
+            logger,
         )
     }
 
@@ -32,7 +35,7 @@ export class CryptoVoteListWorker extends NewestTokenChecker {
     }
 
     private async fetchTokens(page: number): Promise<string[]> {
-        const response = await this.retryAxios.get(this.buildPageUrl(page))
+        const response = await this.retryAxios.get(this.buildPageUrl(page), this.logger)
 
         return response.data.match(RegExp('<tr>(.+?)</tr>', 'gs')) ?? []
     }

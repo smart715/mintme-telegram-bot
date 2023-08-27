@@ -1,8 +1,9 @@
 import { singleton } from 'tsyringe'
+import { Logger } from 'winston'
 import { CommandInterface, RunCoinGeckoWorkerCmdArgv } from './types'
 import { CoinGeckoWorker } from '../core'
 import { Arguments, Argv } from 'yargs'
-import { Blockchain, logger } from '../utils'
+import { Blockchain, sleep } from '../utils'
 
 @singleton()
 export class RunCoinGeckoWorker implements CommandInterface {
@@ -11,6 +12,7 @@ export class RunCoinGeckoWorker implements CommandInterface {
 
     public constructor(
         private readonly coinGeckoWorker: CoinGeckoWorker,
+        private readonly logger: Logger,
     ) { }
 
     public builder(yargs: Argv<RunCoinGeckoWorkerCmdArgv>): void {
@@ -23,11 +25,13 @@ export class RunCoinGeckoWorker implements CommandInterface {
     }
 
     public async handler(argv: Arguments<RunCoinGeckoWorkerCmdArgv>): Promise<void> {
-        logger.info(`Started command ${this.command}`)
+        this.logger.info(`Started command ${this.command}`)
 
         await this.coinGeckoWorker.run(argv.blockchain)
 
-        logger.info(`Command ${this.command} finished with success`)
+        this.logger.info(`Command ${this.command} finished with success`)
+
+        await sleep(1000)
 
         process.exit()
     }

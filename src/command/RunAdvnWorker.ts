@@ -1,7 +1,8 @@
 import { singleton } from 'tsyringe'
+import { Logger } from 'winston'
 import { CommandInterface, RunAdvnWorkerCmdArgv } from './types'
 import { Arguments, Argv } from 'yargs'
-import { Blockchain, logger } from '../utils'
+import { Blockchain, sleep } from '../utils'
 import { AdvnWorker } from '../core'
 
 @singleton()
@@ -11,6 +12,7 @@ export class RunAdvnWorker implements CommandInterface {
 
     public constructor(
         private readonly advnWorker: AdvnWorker,
+        private readonly logger: Logger,
     ) { }
 
     public builder(yargs: Argv<RunAdvnWorkerCmdArgv>): void {
@@ -23,11 +25,13 @@ export class RunAdvnWorker implements CommandInterface {
     }
 
     public async handler(argv: Arguments<RunAdvnWorkerCmdArgv>): Promise<void> {
-        logger.info(`Started command ${this.command}`)
+        this.logger.info(`Started command ${this.command}`)
 
         await this.advnWorker.run(argv.blockchain)
 
-        logger.info(`Command ${this.command} finished with success`)
+        this.logger.info(`Command ${this.command} finished with success`)
+
+        await sleep(1000)
 
         process.exit()
     }

@@ -1,8 +1,9 @@
 import { AbstractTokenWorker } from '../AbstractTokenWorker'
 import { SeleniumService } from '../../service'
-import { explorerDomains, Blockchain, logger } from '../../../utils'
+import { explorerDomains, Blockchain } from '../../../utils'
 import { singleton } from 'tsyringe'
 import { ExplorerEnqueuer } from './ExplorerEnqueuer'
+import { Logger } from 'winston'
 
 @singleton()
 export class BSCScanTopAccountsFetcher extends AbstractTokenWorker {
@@ -10,15 +11,16 @@ export class BSCScanTopAccountsFetcher extends AbstractTokenWorker {
 
     public constructor(
         private readonly explorerParser: ExplorerEnqueuer,
+        private readonly logger: Logger,
     ) {
         super()
     }
 
     public async run(blockchain: Blockchain): Promise<void> {
         const explorerDomain = explorerDomains[blockchain]
-        const webDriver = await SeleniumService.createDriver()
+        const webDriver = await SeleniumService.createDriver('', undefined, this.logger)
 
-        logger.info(`[${this.workerName}] started for ${blockchain} blockchain`)
+        this.logger.info(`[${this.workerName}] started for ${blockchain} blockchain`)
 
         for (let page = 1; page <= 100; page++) {
             await webDriver.get('https://' + explorerDomain + '/accounts/' + page + '?ps=100')
@@ -27,6 +29,6 @@ export class BSCScanTopAccountsFetcher extends AbstractTokenWorker {
             await this.explorerParser.enqueueWalletAddresses(pageSource, blockchain)
         }
 
-        logger.info(`[${this.workerName}] finished for ${blockchain} blockchain`)
+        this.logger.info(`[${this.workerName}] finished for ${blockchain} blockchain`)
     }
 }
