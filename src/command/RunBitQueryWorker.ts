@@ -13,7 +13,6 @@ export class RunBitQueryWorker implements CommandInterface {
     public constructor(
         private readonly bitQueryWorker: BitQueryWorker,
         private readonly logger: Logger,
-
     ) { }
 
     public builder(yargs: Argv<RunBitQueryWorkerCmdArgv>): void {

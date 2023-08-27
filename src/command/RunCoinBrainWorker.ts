@@ -13,7 +13,6 @@ export class RunCoinBrainWorker implements CommandInterface {
     public constructor(
         private readonly coinBrainWorker: CoinBrainWorker,
         private readonly logger: Logger,
-
     ) { }
 
     public builder(yargs: Argv<RunCoinBrainWorkerCmdArgv>): void {
