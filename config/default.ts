@@ -18,6 +18,8 @@ export default {
 
     // twitter configs
     'twitter_max_accounts_simultaneous': 1,
+    'twitter_dm_limit': 300,
+    'twitter_total_attempts': 1000,
 
     // enqueue tokens worker
     'contact_email_max_attempts': 4,

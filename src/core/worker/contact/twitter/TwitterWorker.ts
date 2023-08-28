@@ -1,7 +1,7 @@
 import config from 'config'
 import { singleton } from 'tsyringe'
 import { Logger } from 'winston'
-import { TwitterService } from '../../../service'
+import {ContactHistoryService, TwitterService} from '../../../service'
 import { TwitterAccount } from '../../../entity'
 import { TwitterClient } from './TwitterClient'
 import { sleep } from '../../../../utils'
@@ -14,6 +14,7 @@ export class TwitterWorker {
 
     public constructor(
         private readonly twitterService: TwitterService,
+        private readonly contactHistoryService: ContactHistoryService,
         private readonly logger: Logger,
     ) {
     }
@@ -48,6 +49,8 @@ export class TwitterWorker {
         // init new twitter client
         const twitterClient = new TwitterClient(
             twitterAccount,
+            this.twitterService,
+            this.contactHistoryService,
             this.logger,
         )
 
@@ -72,7 +75,7 @@ export class TwitterWorker {
 
             if (!client.accountMessages?.length) {
                 this.logger.warn(
-                    `[Twitter Worker ID: ${client.telegramAccount.id}] ` +
+                    `[Twitter Worker ID: ${client.twitterAccount.id}] ` +
                     `No messages stock available, Account not able to start messaging.`
                 )
 

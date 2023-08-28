@@ -1,9 +1,10 @@
 import { singleton } from 'tsyringe'
 import { ContactHistoryRepository } from '../repository'
 import { ContactHistoryStatusType, ContactMethod } from '../types'
-import { ContactHistory } from '../entity'
+import {ContactHistory, TwitterAccount} from '../entity'
 import { Blockchain } from '../../utils'
 import moment from 'moment'
+import {Between} from "typeorm";
 
 @singleton()
 export class ContactHistoryService {
@@ -11,7 +12,7 @@ export class ContactHistoryService {
         private readonly contactHistoryRepository: ContactHistoryRepository,
     ) { }
 
-    public async getAmountOfSentMessagesPerAccount(accountId: number): Promise<{ group: number, dm: number }> {
+    public async getAmountOfTelegramSentMessagesPerAccount(accountId: number): Promise<{ group: number, dm: number }> {
         const result = await this.contactHistoryRepository
             .createQueryBuilder()
             .select([ `SUM(CASE WHEN status LIKE 'SENT_GROUP%' THEN 1 ELSE 0 END) AS count_group`, `SUM(CASE WHEN status = 'SENT_DM' THEN 1 ELSE 0 END) AS count_dm` ])
@@ -21,6 +22,21 @@ export class ContactHistoryService {
             .getRawOne()
 
         return { group: result.count_group || 0, dm: result.count_dm || 0 }
+    }
+
+    public async getCountSentTwitterMessages(twitterAccount: TwitterAccount): Promise<number> {
+        const now = new Date()
+        const oneDayAgo = new Date()
+        oneDayAgo.setHours(now.getHours() - 24)
+
+        return await this.contactHistoryRepository
+            .count({
+                where: {
+                    twitterAccountId: twitterAccount.id,
+                    isSuccess: true,
+                    createdAt: Between(oneDayAgo, now)
+                }
+            })
     }
 
     public async addRecord(

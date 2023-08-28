@@ -110,7 +110,7 @@ export class TelegramClient {
     }
 
     private async updateSentMessages(): Promise<void> {
-        const amounts = await this.contactHistoryService.getAmountOfSentMessagesPerAccount(this.telegramAccount.id)
+        const amounts = await this.contactHistoryService.getAmountOfTelegramSentMessagesPerAccount(this.telegramAccount.id)
 
         this.sentMessages = +amounts.dm + +amounts.group
     }

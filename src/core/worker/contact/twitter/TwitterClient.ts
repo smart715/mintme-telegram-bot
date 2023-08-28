@@ -1,9 +1,8 @@
-// @ts-nocheck
 import moment from 'moment'
 import { Logger } from 'winston'
 import { WebDriver } from 'selenium-webdriver'
 import { TwitterAccount } from '../../../entity'
-import {SeleniumService, TwitterService} from '../../../service'
+import { ContactHistoryService, SeleniumService, TwitterService } from '../../../service'
 
 export class TwitterClient {
     public isInitialized: boolean = false
@@ -14,6 +13,7 @@ export class TwitterClient {
     constructor(
         twitterAccount: TwitterAccount,
         private readonly twitterService: TwitterService,
+        private readonly contactHistoryService: ContactHistoryService,
         private readonly logger: Logger,
     ) {
         this.twitterAccount = twitterAccount
@@ -36,14 +36,20 @@ export class TwitterClient {
 
         const isLoggedIn = await this.login()
 
-        if (isLoggedIn) {
-            await this.updateSentMessages()
-            await this.getAccountMessages()
-            this.isInitialized = true
-            this.log(`
-                Logged in | 24h Sent messages: ${this.sentMessages} | Account Messages: ${this.accountMessages.length}`
-            )
+        if (!isLoggedIn) {
+            return
         }
+
+        await this.updateSentMessages()
+        await this.getAccountMessages()
+        this.isInitialized = true
+        this.log(`
+            Logged in | 24h Sent messages: ${this.sentMessages} | Account Messages: ${this.accountMessages.length}`
+        )
+    }
+
+    private async updateSentMessages(): Promise<void> {
+        this.sentMessages = await this.contactHistoryService.getCountSentTwitterMessages(this.twitterAccount)
     }
 
     private async createDriver(): Promise<boolean> {
