@@ -1,5 +1,5 @@
 import { singleton } from 'tsyringe'
-import {TelegramAccount, TwitterAccount} from '../entity'
+import { TwitterAccount } from '../entity'
 import { TwitterAccountRepository } from '../repository'
 
 @singleton()

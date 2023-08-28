@@ -1,8 +1,9 @@
+// @ts-nocheck
 import moment from 'moment'
 import { Logger } from 'winston'
 import { WebDriver } from 'selenium-webdriver'
 import { TwitterAccount } from '../../../entity'
-import { TwitterService } from '../../../service'
+import {SeleniumService, TwitterService} from '../../../service'
 
 export class TwitterClient {
     public isInitialized: boolean = false
@@ -31,14 +32,10 @@ export class TwitterClient {
             return
         }
 
-        const isDriverCreated = await this.createDriverWithProxy()
-
-        if (!isDriverCreated) {
-            this.logger.warn(`Couldn't initialize driver with proxy`)
-            return
-        }
+        await this.createDriver()
 
         const isLoggedIn = await this.login()
+
         if (isLoggedIn) {
             await this.updateSentMessages()
             await this.getAccountMessages()
@@ -49,6 +46,13 @@ export class TwitterClient {
         }
     }
 
+    private async createDriver(): Promise<boolean> {
+        this.logger.info(`Creating driver instance`)
+        this.driver = await SeleniumService.createDriver('', undefined, this.logger)
+
+        return true
+    }
+
     private async login(retries: number = 1): Promise<boolean> {
         try {
             this.log(`Logging in, Attempt #${retries}`)
@@ -56,11 +60,13 @@ export class TwitterClient {
             await this.driver.get('https://twitter.com/')
             await this.driver.sleep(10000)
 
-            const cookies = JSON.parse(this.twitterAccount.cookies)
-            Object.keys(localStorage).forEach(async function (key) {
-                await driver.executeScript(
-                    'document.cookie = `${arguments[0]}=${arguments[1]};path=/`', key, localStorage[key])
-            })
+            const cookies: object = JSON.parse(this.twitterAccount.cookiesJSON)
+
+            for (const [key, value] of Object.entries(cookies)) {
+                await this.driver.executeScript(
+                    'document.cookie = `${arguments[0]}=${arguments[1]};path=/`', key, value
+                )
+            }
 
             await this.driver.sleep(10000)
             await this.driver.navigate().refresh()
@@ -82,6 +88,12 @@ export class TwitterClient {
             this.logger.error(e)
             return false
         }
+    }
+
+    private async isLoggedIn(): Promise<boolean> {
+        const title = await this.driver.getTitle()
+
+        return title.toLowerCase().includes('home');
     }
 
     private async disableAccount(): Promise<void> {

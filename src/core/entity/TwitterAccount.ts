@@ -12,7 +12,7 @@ export class TwitterAccount {
     public assignedServerIP!: string
 
     @Column('text')
-    public cookies!: string
+    public cookiesJSON!: string
 
     @Column({ nullable: true })
     public limitHitResetDate!: Date
