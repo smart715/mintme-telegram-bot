@@ -1,5 +1,6 @@
+import { Logger } from 'winston'
 import { AbstractTokenWorker } from '../AbstractTokenWorker'
-import { Blockchain, logger } from '../../../utils'
+import { Blockchain } from '../../../utils'
 import { TokensService, Top100TokensService } from '../../service'
 import { Top100TokensToken, Top100TokensTopListResponse } from '../../../types'
 
@@ -10,6 +11,7 @@ export class Top100TokensWorker extends AbstractTokenWorker {
     public constructor(
         private readonly top100TokensService: Top100TokensService,
         private readonly tokenService: TokensService,
+        private readonly logger: Logger,
     ) {
         super()
     }
@@ -21,14 +23,14 @@ export class Top100TokensWorker extends AbstractTokenWorker {
         const targetBlockchain = this.getTargetBlockchain(currentBlockchain)
 
         do {
-            logger.info(`${this.prefixLog} Page: ${page}`)
+            this.logger.info(`${this.prefixLog} Page: ${page}`)
 
             let allTokensResponse: Top100TokensTopListResponse
 
             try {
                 allTokensResponse = await this.top100TokensService.getTokens(page)
             } catch (ex: any) {
-                logger.error(
+                this.logger.error(
                     `${this.prefixLog} Aborting. Failed to fetch all tokens. Page: ${page} Reason: ${ex.message}`
                 )
 
@@ -80,14 +82,16 @@ export class Top100TokensWorker extends AbstractTokenWorker {
                     currentBlockchain
                 )
 
-                logger.info(
+                this.logger.info(
                     `${this.prefixLog} Added to DB:`,
-                    tokenAddress,
-                    tokenName,
-                    [ website ],
-                    links,
-                    this.workerName,
-                    currentBlockchain
+                    [
+                        tokenAddress,
+                        tokenName,
+                        [ website ],
+                        links,
+                        this.workerName,
+                        currentBlockchain,
+                    ]
                 )
             }
 

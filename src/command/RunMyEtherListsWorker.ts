@@ -1,7 +1,8 @@
 import { singleton } from 'tsyringe'
+import { Logger } from 'winston'
 import { CommandInterface, RunMyEtherListsWorkerCmdArgv } from './types'
 import { Arguments, Argv } from 'yargs'
-import { Blockchain, logger } from '../utils'
+import { Blockchain } from '../utils'
 import { MyEtherListsWorker } from '../core'
 
 @singleton()
@@ -11,6 +12,7 @@ export class RunMyEtherListsWorker implements CommandInterface {
 
     public constructor(
         private readonly myEtherListsWorker: MyEtherListsWorker,
+        private readonly logger: Logger,
     ) { }
 
     public builder(yargs: Argv<RunMyEtherListsWorkerCmdArgv>): void {
@@ -23,11 +25,11 @@ export class RunMyEtherListsWorker implements CommandInterface {
     }
 
     public async handler(argv: Arguments<RunMyEtherListsWorkerCmdArgv>): Promise<void> {
-        logger.info(`Started command ${this.command}`)
+        this.logger.info(`Started command ${this.command}`)
 
         await this.myEtherListsWorker.run(argv.blockchain)
 
-        logger.info(`Command ${this.command} finished with success`)
+        this.logger.info(`Command ${this.command} finished with success`)
 
         process.exit()
     }

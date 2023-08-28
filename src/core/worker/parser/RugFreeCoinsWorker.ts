@@ -1,6 +1,7 @@
 import { singleton } from 'tsyringe'
+import { Logger } from 'winston'
 import { AbstractTokenWorker } from '../AbstractTokenWorker'
-import { Blockchain, findContractAddress, logger } from '../../../utils'
+import { Blockchain, findContractAddress } from '../../../utils'
 import { RugFreeCoinsService, TokensService } from '../../service'
 import { RugFreeCoinData, RugFreeCoinsAllCoins } from '../../../types'
 
@@ -13,13 +14,14 @@ export class RugFreeCoinsWorker extends AbstractTokenWorker {
     public constructor(
         private readonly rugFreeCoinsService: RugFreeCoinsService,
         private readonly tokenService: TokensService,
+        private readonly logger: Logger,
     ) {
         super()
     }
 
     public async run(currentBlockchain: Blockchain): Promise<void> {
         if (this.unsupportedBlockchains.includes(currentBlockchain)) {
-            logger.error(`${this.prefixLog} Unsupported blockchain: ${currentBlockchain}. Aborting.`)
+            this.logger.error(`${this.prefixLog} Unsupported blockchain: ${currentBlockchain}. Aborting.`)
 
             return
         }
@@ -28,14 +30,14 @@ export class RugFreeCoinsWorker extends AbstractTokenWorker {
         let resultsCount = 0
 
         do {
-            logger.info(`${this.prefixLog} Page: ${page}`)
+            this.logger.info(`${this.prefixLog} Page: ${page}`)
 
             let allCoinsRes: RugFreeCoinsAllCoins
 
             try {
                 allCoinsRes = await this.rugFreeCoinsService.getAllCoins(page)
             } catch (ex: any) {
-                logger.error(
+                this.logger.error(
                     `${this.prefixLog} Aborting. Failed to fetch all tokens. Page: ${page} Reason: ${ex.message}`
                 )
 
@@ -43,7 +45,7 @@ export class RugFreeCoinsWorker extends AbstractTokenWorker {
             }
 
             if ('success' !== allCoinsRes.message) {
-                logger.error(`${this.prefixLog} Failed to fetch all coins for page ${page}. Skipping`)
+                this.logger.error(`${this.prefixLog} Failed to fetch all coins for page ${page}. Skipping`)
 
                 page += 1
             }
@@ -79,21 +81,23 @@ export class RugFreeCoinsWorker extends AbstractTokenWorker {
                     currentBlockchain
                 )
 
-                logger.info(
+                this.logger.info(
                     `${this.prefixLog} Added to DB:`,
-                    tokenAddress,
-                    tokenName,
-                    website,
-                    links,
-                    this.workerName,
-                    currentBlockchain
+                    [
+                        tokenAddress,
+                        tokenName,
+                        website,
+                        links,
+                        this.workerName,
+                        currentBlockchain,
+                    ]
                 )
             }
 
             page += 1
         } while (resultsCount > 0)
 
-        logger.info(`${this.prefixLog} Finished`)
+        this.logger.info(`${this.prefixLog} Finished`)
     }
 
     private getLinks(coin: RugFreeCoinData): string[] {

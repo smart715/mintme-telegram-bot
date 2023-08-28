@@ -1,6 +1,7 @@
 import { singleton } from 'tsyringe'
+import { Logger } from 'winston'
 import { AbstractTokenWorker } from '../AbstractTokenWorker'
-import { Blockchain, findContractAddress, logger } from '../../../utils'
+import { Blockchain, findContractAddress } from '../../../utils'
 import { CoinCatapultService, TokensService } from '../../service'
 import { CoinCatapultAllCoinsResponse, CoinCatapultTokenInfoGeneralResponse } from '../../../types'
 
@@ -12,16 +13,17 @@ export class CoinCatapultWorker extends AbstractTokenWorker {
 
     public constructor(
         protected readonly coinCatapultService: CoinCatapultService,
-        protected readonly tokenService: TokensService
+        protected readonly tokenService: TokensService,
+        private readonly logger: Logger,
     ) {
         super()
     }
 
     public async run(currentBlockchain: Blockchain): Promise<void> {
-        logger.info(`${this.prefixLog} Worker started`)
+        this.logger.info(`${this.prefixLog} Worker started`)
 
         if (this.unsupportedBlockchains.includes(currentBlockchain)) {
-            logger.error(`${this.prefixLog} Unsupported blockchain ${currentBlockchain}. Aborting`)
+            this.logger.error(`${this.prefixLog} Unsupported blockchain ${currentBlockchain}. Aborting`)
 
             return
         }
@@ -33,7 +35,7 @@ export class CoinCatapultWorker extends AbstractTokenWorker {
         try {
             allCoinsResponse = await this.coinCatapultService.getAllCoins()
         } catch (ex: any) {
-            logger.error(
+            this.logger.error(
                 `${this.prefixLog} Aborting. Failed to fetch all coins. Reason: ${ex.message}`
             )
 
@@ -53,14 +55,14 @@ export class CoinCatapultWorker extends AbstractTokenWorker {
 
             const tokenName = coin.name + '(' + coin.symbol + ')'
 
-            logger.info(`${this.prefixLog} Checking ${tokenName} ${i}/${count}`)
+            this.logger.info(`${this.prefixLog} Checking ${tokenName} ${i}/${count}`)
 
             let tokenInfoResponse: CoinCatapultTokenInfoGeneralResponse
 
             try {
                 tokenInfoResponse = await this.coinCatapultService.getTokenInfo(coin.slug)
             } catch (ex: any) {
-                logger.warn(
+                this.logger.warn(
                     `${this.prefixLog} Failed to fetch token info for ${tokenName}. Reason: ${ex.message}. Skipping...`
                 )
 
@@ -108,14 +110,16 @@ export class CoinCatapultWorker extends AbstractTokenWorker {
                 currentBlockchain
             )
 
-            logger.info(
+            this.logger.info(
                 `${this.prefixLog} Added to DB:`,
-                address,
-                tokenName,
-                website,
-                links,
-                this.workerName,
-                currentBlockchain
+                [
+                    address,
+                    tokenName,
+                    website,
+                    links,
+                    this.workerName,
+                    currentBlockchain,
+                ]
             )
         }
     }

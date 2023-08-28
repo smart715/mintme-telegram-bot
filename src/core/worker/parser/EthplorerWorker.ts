@@ -1,8 +1,9 @@
 import { AbstractTokenWorker } from '../AbstractTokenWorker'
-import { Blockchain, logger, sleep, TokenNamesGenerator } from '../../../utils'
+import { Blockchain, sleep, TokenNamesGenerator } from '../../../utils'
 import { LastCheckedTokenNameService, TokensService } from '../../service'
 import axios from 'axios'
 import { EthprolerTokenInfoResponse } from '../../../types'
+import { Logger } from 'winston'
 
 export class EthplorerWorker extends AbstractTokenWorker {
     private readonly workerName = EthplorerWorker.name
@@ -15,12 +16,13 @@ export class EthplorerWorker extends AbstractTokenWorker {
         private readonly tokenNamesGenerator: TokenNamesGenerator,
         private readonly lastCheckedTokenNameService: LastCheckedTokenNameService,
         private readonly tokensService: TokensService,
+        private readonly logger: Logger,
     ) {
         super()
     }
 
     public async run(): Promise<void> {
-        logger.info(`[${this.workerName}] Started`)
+        this.logger.info(`[${this.workerName}] Started`)
 
         const [ lastNameCombination, lastPage ] = await this.getLastCheckedConfiguration()
         let currentNameCombination = lastNameCombination
@@ -33,7 +35,7 @@ export class EthplorerWorker extends AbstractTokenWorker {
             currentNameCombination = this.tokenNamesGenerator.getNextCombination(currentNameCombination)
         }
 
-        logger.info(`[${this.workerName}] Finished`)
+        this.logger.info(`[${this.workerName}] Finished`)
     }
 
     private async getLastCheckedConfiguration(): Promise<[string, number]> {
@@ -55,7 +57,7 @@ export class EthplorerWorker extends AbstractTokenWorker {
         let page = startPage
 
         while (true) { // eslint-disable-line
-            logger.info(`[${this.workerName}] Search: ${nameCombination}, Page: ${page}`)
+            this.logger.info(`[${this.workerName}] Search: ${nameCombination}, Page: ${page}`)
 
             const tokens = await this.fetchTokens(nameCombination, page)
 
@@ -89,7 +91,7 @@ export class EthplorerWorker extends AbstractTokenWorker {
 
                 return response.data.results
             } catch (error) {
-                logger.warn(`[${this.workerName}] Error response during fetching tokens page, sleep`)
+                this.logger.warn(`[${this.workerName}] Error response during fetching tokens page, sleep`)
             }
 
             await sleep(this.sleepTimeBetweenAxiosRequests)
@@ -101,7 +103,7 @@ export class EthplorerWorker extends AbstractTokenWorker {
     }
 
     private async processTokenAddress(tokenAddress: string, page: number): Promise<void> {
-        logger.info(`[${this.workerName}] Checking Address: ${tokenAddress}, Page: ${page}`)
+        this.logger.info(`[${this.workerName}] Checking Address: ${tokenAddress}, Page: ${page}`)
 
         const tokenInfo = await this.fetchTokenInfo(tokenAddress)
         const tokenName = this.getTokenName(tokenInfo)
@@ -130,7 +132,7 @@ export class EthplorerWorker extends AbstractTokenWorker {
 
                 return response.data
             } catch (error) {
-                logger.warn(`[${this.workerName}] Error response during fetching token info, sleep`)
+                this.logger.warn(`[${this.workerName}] Error response during fetching token info, sleep`)
             }
 
             await sleep(this.sleepTimeBetweenAxiosRequests)

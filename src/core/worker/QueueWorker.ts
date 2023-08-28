@@ -1,5 +1,6 @@
 import { singleton } from 'tsyringe'
-import { Blockchain, logger, parseContactMethod } from '../../utils'
+import { Logger } from 'winston'
+import { Blockchain, parseContactMethod } from '../../utils'
 import { ContactHistoryStatusType, ContactMethod, TokenContactStatusType } from '../types'
 import { ContactHistoryService, ContactQueueService, TokensService } from '../service'
 import { ContactMessage, Token } from '../entity'
@@ -12,10 +13,11 @@ export class QueueWorker {
         private readonly tokensService: TokensService,
         private readonly contactHistoryService: ContactHistoryService,
         private readonly enqueueTokensWorker: EnqueueTokensWorker,
+        private readonly logger: Logger,
     ) { }
 
     public async run(blockchain: Blockchain, repeatSeconds: number): Promise<void> {
-        logger.info(`[${QueueWorker.name}] Started for ${blockchain} blockchain`)
+        this.logger.info(`[${QueueWorker.name}] Started for ${blockchain} blockchain`)
 
         if (repeatSeconds > 0) {
             await this.runQueueRepeatable(repeatSeconds)
@@ -23,14 +25,14 @@ export class QueueWorker {
             await this.runQueueRecursively()
         }
 
-        logger.info(`[${QueueWorker.name}] Finished.`)
+        this.logger.info(`[${QueueWorker.name}] Finished.`)
     }
 
     private async runQueueRecursively(): Promise<void> {
-        const queueItem = await this.contactQueueService.getFirstFromQueue(ContactMethod.ALL)
+        const queueItem = await this.contactQueueService.getFirstFromQueue(ContactMethod.ALL, this.logger)
 
         if (!queueItem) {
-            logger.info(`[${QueueWorker.name}] Queue is empty.`)
+            this.logger.info(`[${QueueWorker.name}] Queue is empty.`)
             return
         }
 
@@ -39,7 +41,7 @@ export class QueueWorker {
         if (!token) {
             await this.contactQueueService.removeFromQueue(queueItem.address, queueItem.blockchain)
 
-            logger.info(`[${QueueWorker.name}] No token for ${queueItem.address} :: ${queueItem.blockchain} . Skipping`)
+            this.logger.info(`[${QueueWorker.name}] No token for ${queueItem.address} :: ${queueItem.blockchain} . Skipping`)
 
             return this.runQueueRecursively()
         }
@@ -47,7 +49,7 @@ export class QueueWorker {
         if (TokenContactStatusType.RESPONDED === token.contactStatus) {
             await this.contactQueueService.removeFromQueue(queueItem.address, queueItem.blockchain)
 
-            logger.info(
+            this.logger.info(
                 `[${QueueWorker.name}] ` +
                 `Token for ${queueItem.address} :: ${queueItem.blockchain} is marked as responded. Skipping`
             )
@@ -55,7 +57,7 @@ export class QueueWorker {
             return this.runQueueRecursively()
         }
 
-        logger.info(
+        this.logger.info(
             `[${QueueWorker.name}] Started proccessing ${queueItem.address} :: ${queueItem.channel}. `+
             `Status saved as processing`
         )
@@ -71,7 +73,7 @@ export class QueueWorker {
         } else if (ContactMethod.TWITTER === contactMethod) {
             contactResult = await this.contactViaTwitter(queueItem.channel, message)
         } else {
-            logger.warn(
+            this.logger.warn(
                 `[${QueueWorker.name}] Unknown contact method for ${queueItem.address} :: ${queueItem.channel}. ` +
                 `Skipping`
             )
@@ -88,7 +90,7 @@ export class QueueWorker {
             tgAccountId,
         )
 
-        logger.info(`[${QueueWorker.name}] ` +
+        this.logger.info(`[${QueueWorker.name}] ` +
             `Token ${token.address} was contacted to ${queueItem.channel} with status ${contactResult}.`
         )
 
@@ -106,18 +108,18 @@ export class QueueWorker {
         await this.tokensService.saveTokenContactInfo(token)
 
         if (enqueued) {
-            logger.info(`[${QueueWorker.name}] ` +
+            this.logger.info(`[${QueueWorker.name}] ` +
                 `Token ${token.address} was queded for for future contact via ${nextContactMethod} (${contactChannel}). ` +
                 `Saved with status ${token.contactStatus}`
             )
         } else {
-            logger.warn(`[${QueueWorker.name}] ` +
+            this.logger.warn(`[${QueueWorker.name}] ` +
                 `Token ${token.address} don't have any available contact method. ` +
                 `Saved with status ${token.contactStatus}`
             )
         }
 
-        logger.info(`[${QueueWorker.name}] ` +
+        this.logger.info(`[${QueueWorker.name}] ` +
             `Proceeding of ${queueItem.address} :: ${queueItem.blockchain} finished`
         )
 
@@ -127,7 +129,7 @@ export class QueueWorker {
     private async runQueueRepeatable(repeatInSeconds: number): Promise<void> {
         await this.runQueueRecursively()
 
-        logger.info(`[${QueueWorker.name}] Sleeping for ${repeatInSeconds} seconds`)
+        this.logger.info(`[${QueueWorker.name}] Sleeping for ${repeatInSeconds} seconds`)
 
         await new Promise(resolve => setTimeout(resolve, repeatInSeconds * 1000))
 
@@ -138,7 +140,7 @@ export class QueueWorker {
     private async contactViaEmail(email: string, message: ContactMessage): Promise<ContactHistoryStatusType> {
         await new Promise(resolve => setTimeout(resolve, 3000))
 
-        logger.info(`[${QueueWorker.name}] contact via email ${email} ${message.id}`)
+        this.logger.info(`[${QueueWorker.name}] contact via email ${email} ${message.id}`)
 
         return ContactHistoryStatusType.SENT
     }
@@ -146,7 +148,7 @@ export class QueueWorker {
     private async contactViaTwitter(twitterUrl: string, message: ContactMessage): Promise<ContactHistoryStatusType> {
         await new Promise(resolve => setTimeout(resolve, 3000))
 
-        logger.info(`[${QueueWorker.name}] contact via twitter ${twitterUrl} ${message.id}`)
+        this.logger.info(`[${QueueWorker.name}] contact via twitter ${twitterUrl} ${message.id}`)
 
         return ContactHistoryStatusType.SENT
     }

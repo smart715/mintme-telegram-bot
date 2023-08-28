@@ -1,7 +1,8 @@
 import { singleton } from 'tsyringe'
 import { Arguments, Argv } from 'yargs'
+import { Logger } from 'winston'
 import { CommandInterface, RunTop100TokensWorkerCmdArgv } from './types'
-import { Blockchain, logger } from '../utils'
+import { Blockchain } from '../utils'
 import { Top100TokensWorker } from '../core'
 
 @singleton()
@@ -11,6 +12,7 @@ export class RunTop100TokensWorker implements CommandInterface {
 
     public constructor(
         private readonly top100TokensWorker: Top100TokensWorker,
+        private readonly logger: Logger,
     ) { }
 
     public builder(yargs: Argv<RunTop100TokensWorkerCmdArgv>): void {
@@ -23,11 +25,11 @@ export class RunTop100TokensWorker implements CommandInterface {
     }
 
     public async handler(argv: Arguments<RunTop100TokensWorkerCmdArgv>): Promise<void> {
-        logger.info(`Started command ${this.command}`)
+        this.logger.info(`Started command ${this.command}`)
 
         await this.top100TokensWorker.run(argv.blockchain)
 
-        logger.info(`Command ${this.command} finished with success`)
+        this.logger.info(`Command ${this.command} finished with success`)
 
         process.exit()
     }

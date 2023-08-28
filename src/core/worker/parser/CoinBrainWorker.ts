@@ -1,6 +1,7 @@
 import { singleton } from 'tsyringe'
+import { Logger } from 'winston'
 import { AbstractTokenWorker } from '../AbstractTokenWorker'
-import { Blockchain, logger } from '../../../utils'
+import { Blockchain } from '../../../utils'
 import { CoinBrainService, TokensService } from '../../service'
 import { CoinBrainGetTokensGeneralResponse } from '../../../types'
 import { DOMWindow, JSDOM } from 'jsdom'
@@ -13,16 +14,17 @@ export class CoinBrainWorker extends AbstractTokenWorker {
 
     public constructor(
         private readonly coinBrainService: CoinBrainService,
-        private readonly tokenService: TokensService
+        private readonly tokenService: TokensService,
+        private readonly logger: Logger,
     ) {
         super()
     }
 
     public async run(currentBlockchain: Blockchain): Promise<void> {
-        logger.info(`${this.prefixLog} Worker started`)
+        this.logger.info(`${this.prefixLog} Worker started`)
 
         if (this.unsupportedBlockchains.includes(currentBlockchain)) {
-            logger.error(`${this.prefixLog} Unsupported blockchain ${currentBlockchain}. Aborting`)
+            this.logger.error(`${this.prefixLog} Unsupported blockchain ${currentBlockchain}. Aborting`)
 
             return
         }
@@ -44,7 +46,7 @@ export class CoinBrainWorker extends AbstractTokenWorker {
         let page = 1
 
         do {
-            logger.info(`${this.prefixLog} Page: ${page}`)
+            this.logger.info(`${this.prefixLog} Page: ${page}`)
             page += 1
 
             let res: CoinBrainGetTokensGeneralResponse
@@ -52,7 +54,7 @@ export class CoinBrainWorker extends AbstractTokenWorker {
             try {
                 res = await this.coinBrainService.getTokens(endCursor)
             } catch (ex: any) {
-                logger.error(
+                this.logger.error(
                     `${this.prefixLog} Aborting. Failed to fetch all tokens. Page: ${page}. EndCursor: ${endCursor}. Reason: ${ex.message}`
                 )
 
@@ -108,14 +110,16 @@ export class CoinBrainWorker extends AbstractTokenWorker {
                     currentBlockchain
                 )
 
-                logger.info(
+                this.logger.info(
                     `${this.prefixLog} Added to DB:`,
-                    address,
-                    tokenName,
-                    website,
-                    links,
-                    this.workerName,
-                    currentBlockchain
+                    [
+                        address,
+                        tokenName,
+                        website,
+                        links,
+                        this.workerName,
+                        currentBlockchain,
+                    ]
                 )
             }
         } while (hasNextPage)
@@ -136,7 +140,7 @@ export class CoinBrainWorker extends AbstractTokenWorker {
         }
 
         if (null === currentChainId) {
-            logger.error(`${this.prefixLog} current blockchain ${currentBlockchain} doesn't have chainId specified. Pls specify it in code. Aborting.`)
+            this.logger.error(`${this.prefixLog} current blockchain ${currentBlockchain} doesn't have chainId specified. Pls specify it in code. Aborting.`)
 
             return null
         }
@@ -159,7 +163,7 @@ export class CoinBrainWorker extends AbstractTokenWorker {
         }
 
         if (null === cryptoPagePrefix) {
-            logger.error(`${this.prefixLog} current blockchain ${currentBlockchain} doesn't have crypto prefix specified. Pls specify it in code. Aborting.`)
+            this.logger.error(`${this.prefixLog} current blockchain ${currentBlockchain} doesn't have crypto prefix specified. Pls specify it in code. Aborting.`)
 
             return null
         }

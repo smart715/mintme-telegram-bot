@@ -1,7 +1,8 @@
 import { DOMWindow, JSDOM } from 'jsdom'
 import { singleton } from 'tsyringe'
+import { Logger } from 'winston'
 import { AbstractTokenWorker } from '../AbstractTokenWorker'
-import { Blockchain, findContractAddress, logger } from '../../../utils'
+import { Blockchain, findContractAddress } from '../../../utils'
 import { CoinBuddyService, TokensService } from '../../service'
 
 @singleton()
@@ -12,16 +13,17 @@ export class CoinBuddyWorker extends AbstractTokenWorker {
 
     public constructor(
         private readonly coinBuddyService: CoinBuddyService,
-        private readonly tokenService: TokensService
+        private readonly tokenService: TokensService,
+        private readonly logger: Logger,
     ) {
         super()
     }
 
     public async run(currentBlockchain: Blockchain): Promise<void> {
-        logger.info(`${this.prefixLog} Worker started`)
+        this.logger.info(`${this.prefixLog} Worker started`)
 
         if (this.unsupportedBlockchains.includes(currentBlockchain)) {
-            logger.error(`${this.prefixLog} Unsupported blockchain ${currentBlockchain}. Aborting`)
+            this.logger.error(`${this.prefixLog} Unsupported blockchain ${currentBlockchain}. Aborting`)
 
             return
         }
@@ -29,7 +31,7 @@ export class CoinBuddyWorker extends AbstractTokenWorker {
         const tag = this.getTagByBlockchain(currentBlockchain)
 
         if (null === tag) {
-            logger.error(`${this.prefixLog} Tag for ${currentBlockchain} doesn't exists. Pls specify it in code. Aborting`)
+            this.logger.error(`${this.prefixLog} Tag for ${currentBlockchain} doesn't exists. Pls specify it in code. Aborting`)
 
             return
         }
@@ -38,13 +40,13 @@ export class CoinBuddyWorker extends AbstractTokenWorker {
         let results = 50
 
         do {
-            logger.info(`${this.prefixLog} Page start ${page}`)
+            this.logger.info(`${this.prefixLog} Page start ${page}`)
 
             let coinsSrc = ''
             try {
                 coinsSrc = await this.coinBuddyService.getAllCoins(tag, page)
             } catch (ex: any) {
-                logger.error(
+                this.logger.error(
                     `${this.prefixLog} Aborting. Failed to fetch all coins. Tag: ${tag}. Page: ${page}. Reason: ${ex.message}`
                 )
 
@@ -52,7 +54,7 @@ export class CoinBuddyWorker extends AbstractTokenWorker {
             }
 
             if ('' === coinsSrc) {
-                logger.error(`${this.prefixLog} Aborting. Response for all coins returns empty string. Tag: ${tag}. Page: ${page}`)
+                this.logger.error(`${this.prefixLog} Aborting. Response for all coins returns empty string. Tag: ${tag}. Page: ${page}`)
 
                 return
             }
@@ -76,7 +78,7 @@ export class CoinBuddyWorker extends AbstractTokenWorker {
                 try {
                     coinInfo = await this.coinBuddyService.getCoinInfo(path)
                 } catch (ex: any) {
-                    logger.error(
+                    this.logger.error(
                         `${this.prefixLog} Aborting. Failed to fetch coin info. Tag: ${tag}. Page: ${page}. Reason: ${ex.message}`
                     )
 
@@ -85,10 +87,10 @@ export class CoinBuddyWorker extends AbstractTokenWorker {
 
                 const coinId = path.replace('/coins/', '')
 
-                logger.info(`${this.prefixLog} Checking coin: ${coinId}`)
+                this.logger.info(`${this.prefixLog} Checking coin: ${coinId}`)
 
                 if ('' === coinInfo) {
-                    logger.info(`${this.prefixLog} Empty response for ${coinId}. Skipping`)
+                    this.logger.info(`${this.prefixLog} Empty response for ${coinId}. Skipping`)
 
                     continue
                 }
@@ -146,21 +148,23 @@ export class CoinBuddyWorker extends AbstractTokenWorker {
                     currentBlockchain
                 )
 
-                logger.info(
+                this.logger.info(
                     `${this.prefixLog} Added to DB:`,
-                    tokenAddress,
-                    tokenName,
-                    website,
-                    otherLinks,
-                    this.workerName,
-                    currentBlockchain
+                    [
+                        tokenAddress,
+                        tokenName,
+                        website,
+                        otherLinks,
+                        this.workerName,
+                        currentBlockchain,
+                    ]
                 )
             }
 
             page += 1
         } while (results > 0)
 
-        logger.info(`${this.prefixLog} worker finished`)
+        this.logger.info(`${this.prefixLog} worker finished`)
     }
 
     private getTagByBlockchain(currentBlockchain: Blockchain): string|null {

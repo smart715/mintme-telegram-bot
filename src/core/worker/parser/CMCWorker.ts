@@ -1,19 +1,21 @@
 import { singleton } from 'tsyringe'
 import { CMCService, TokensService } from '../../service'
 import { AbstractTokenWorker } from '../AbstractTokenWorker'
-import { logger, parseBlockchainName } from '../../../utils'
+import { parseBlockchainName } from '../../../utils'
+import { Logger } from 'winston'
 
 @singleton()
 export class CMCWorker extends AbstractTokenWorker {
     public constructor(
         private readonly cmcService: CMCService,
         private readonly tokensService: TokensService,
+        private readonly logger: Logger
     ) {
         super()
     }
 
     public async run(): Promise<any> {
-        logger.info(`${CMCWorker.name} started`)
+        this.logger.info(`${CMCWorker.name} started`)
 
         const tokens = await this.cmcService.getLastTokens(10325, 10)
 
@@ -25,7 +27,7 @@ export class CMCWorker extends AbstractTokenWorker {
             const tokenInfos = await this.cmcService.getTokenInfo(token.slug)
 
             if (!tokenInfos.data || !tokenInfos.data[token.id]) {
-                logger.info(`no token info found for ${token.name} . Skipping`)
+                this.logger.info(`no token info found for ${token.name} . Skipping`)
 
                 return
             }
@@ -46,7 +48,7 @@ export class CMCWorker extends AbstractTokenWorker {
             )
 
             if (foundToken) {
-                logger.info(` ${token.name} already added. Skipping`)
+                this.logger.info(` ${token.name} already added. Skipping`)
 
                 return
             } else {
@@ -59,15 +61,17 @@ export class CMCWorker extends AbstractTokenWorker {
                     workerSource,
                     blockchain,
                 )
-                logger.info(
+                this.logger.info(
                     'Added to DB: ',
-                    tokenAddress,
-                    tokenName,
-                    website,
-                    email,
-                    links.join(','),
-                    workerSource,
-                    blockchain
+                    [
+                        tokenAddress,
+                        tokenName,
+                        website,
+                        email,
+                        links.join(','),
+                        workerSource,
+                        blockchain,
+                    ]
                 )
             }
         })

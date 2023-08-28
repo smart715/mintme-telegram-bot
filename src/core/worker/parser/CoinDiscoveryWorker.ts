@@ -1,7 +1,8 @@
 import { singleton } from 'tsyringe'
+import { Logger } from 'winston'
 import { AbstractTokenWorker } from '../AbstractTokenWorker'
 import { TokensService, CoinDiscoveryService } from '../../service'
-import { Blockchain, getHrefValuesFromTagString, logger } from '../../../utils'
+import { Blockchain, getHrefValuesFromTagString } from '../../../utils'
 import { CoinDiscoveryGetTokensResponse } from '../../../types'
 
 @singleton()
@@ -13,15 +14,16 @@ export class CoinDiscoveryWorker extends AbstractTokenWorker {
     public constructor(
         private readonly coinDiscoveryService: CoinDiscoveryService,
         private readonly tokenService: TokensService,
+        private readonly logger: Logger,
     ) {
         super()
     }
 
     public async run(currentBlockchain: Blockchain): Promise<void> {
-        logger.info(`${this.prefixLog} Worker started`)
+        this.logger.info(`${this.prefixLog} Worker started`)
 
         if (this.unsupportedBlockchains.includes(currentBlockchain)) {
-            logger.error(`${this.prefixLog} Unsupported blockchain ${currentBlockchain}. Aborting`)
+            this.logger.error(`${this.prefixLog} Unsupported blockchain ${currentBlockchain}. Aborting`)
 
             return
         }
@@ -30,14 +32,14 @@ export class CoinDiscoveryWorker extends AbstractTokenWorker {
         let start: number = 0
 
         do {
-            logger.info(`${this.prefixLog} Start position ${start}`)
+            this.logger.info(`${this.prefixLog} Start position ${start}`)
 
             let allCoinsRes: CoinDiscoveryGetTokensResponse
 
             try {
                 allCoinsRes = await this.coinDiscoveryService.getTokens(start)
             } catch (ex: any) {
-                logger.error(
+                this.logger.error(
                     `${this.prefixLog} Aborting. Failed to fetch all tokens. Start: ${start} Reason: ${ex.message}`
                 )
 
@@ -84,21 +86,23 @@ export class CoinDiscoveryWorker extends AbstractTokenWorker {
                     currentBlockchain
                 )
 
-                logger.info(
+                this.logger.info(
                     `${this.prefixLog} Added to DB:`,
-                    tokenAddress,
-                    name,
-                    website,
-                    links,
-                    this.workerName,
-                    currentBlockchain
+                    [
+                        tokenAddress,
+                        name,
+                        website,
+                        links,
+                        this.workerName,
+                        currentBlockchain,
+                    ]
                 )
             }
 
             start += 500
         } while (count > 0)
 
-        logger.info(`${this.prefixLog} finished`)
+        this.logger.info(`${this.prefixLog} finished`)
     }
 
     private getBlockchain(chain: string): string|null {
