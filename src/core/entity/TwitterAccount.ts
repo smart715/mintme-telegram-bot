@@ -13,4 +13,7 @@ export class TwitterAccount {
 
     @Column('text')
     public cookies!: string
+
+    @Column({ nullable: true })
+    public limitHitResetDate!: Date
 }
