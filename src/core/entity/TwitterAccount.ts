@@ -16,4 +16,7 @@ export class TwitterAccount {
 
     @Column({ nullable: true })
     public limitHitResetDate!: Date
+
+    @Column()
+    public isDisabled!: boolean
 }
