@@ -1,8 +1,8 @@
+import config from 'config'
 import { singleton } from 'tsyringe'
-import { TwitterService } from '../../service'
-import config from "config";
-import {TwitterAccount} from "../../entity";
-import {TelegramClient} from "./telegram";
+import { TwitterService } from '../../../service'
+import { TwitterAccount } from '../../../entity'
+import { TwitterClient } from './TwitterClient'
 
 @singleton()
 export class TwitterWorker {

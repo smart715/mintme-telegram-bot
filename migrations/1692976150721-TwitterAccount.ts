@@ -1,7 +1,7 @@
-import {MigrationInterface, QueryRunner} from "typeorm";
+import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class TwitterAccount1692976150721 implements MigrationInterface {
-    name = 'TwitterAccount1692976150721'
+    public name = 'TwitterAccount1692976150721'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
@@ -13,11 +13,10 @@ export class TwitterAccount1692976150721 implements MigrationInterface {
                 \`cookies\`            text         NOT NULL,
                 PRIMARY KEY (\`id\`)
             ) ENGINE = InnoDB
-        `);
+        `)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`DROP TABLE \`twitter_account\``);
+        await queryRunner.query(`DROP TABLE \`twitter_account\``)
     }
-
 }

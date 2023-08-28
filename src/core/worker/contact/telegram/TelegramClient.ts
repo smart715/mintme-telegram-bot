@@ -65,7 +65,8 @@ export class TelegramClient {
             await this.getAccountMessages()
             this.isInitialized = true
             this.log(`
-                Logged in | 24h Sent messages: ${this.sentMessages} | Account Messages: ${this.accountMessages.length}`)
+                Logged in | 24h Sent messages: ${this.sentMessages} | Account Messages: ${this.accountMessages.length}`
+            )
         }
     }
 
