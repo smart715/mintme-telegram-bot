@@ -1,8 +1,9 @@
 import { singleton } from 'tsyringe'
 import { AbstractTokenWorker } from '../AbstractTokenWorker'
-import { ParserWorkersService, TokenCachedDataService, TokensService } from '../../service'
-import { Blockchain, logger, parseBlockchainName, sleep } from '../../../utils'
+import { CoinsGodsService, ParserCheckedTokenService, TokensService } from '../../service'
+import { Blockchain, parseBlockchainName, sleep } from '../../../utils'
 import { DOMWindow, JSDOM } from 'jsdom'
+import { Logger } from 'winston'
 
 @singleton()
 export class CoinsGodsWorker extends AbstractTokenWorker {
@@ -11,29 +12,30 @@ export class CoinsGodsWorker extends AbstractTokenWorker {
     private readonly supportedBlockchains: Blockchain[] = [ Blockchain.ETH, Blockchain.BSC ]
 
     public constructor(
-        private readonly parserWorkersService: ParserWorkersService,
+        private readonly coinsGodsService: CoinsGodsService,
         private readonly tokenService: TokensService,
-        private readonly tokenCachedDataService: TokenCachedDataService
+        private readonly parserCheckedTokenService: ParserCheckedTokenService,
+        private readonly logger: Logger,
     ) {
         super()
     }
 
     public async run(): Promise<void> {
-        logger.info(`${this.prefixLog} Worker started`)
+        this.logger.info(`${this.prefixLog} Worker started`)
 
-        const pageContentSource = await this.parserWorkersService.loadCoinsGodsTokens()
+        const pageContentSource = await this.coinsGodsService.loadTokens()
         const pageDOM = (new JSDOM(pageContentSource)).window
 
         const coinsIds = this.getCoinsIds(pageDOM)
 
         for (const coinId of coinsIds) {
-            if (await this.tokenCachedDataService.isCached(coinId, this.workerName)) {
-                logger.warn(`${this.prefixLog} Data for coin ${coinId} already cached. Skipping`)
+            if (await this.parserCheckedTokenService.isCached(coinId, this.workerName)) {
+                this.logger.warn(`${this.prefixLog} Data for coin ${coinId} already cached. Skipping`)
 
                 continue
             }
 
-            const coinPageSource = await this.parserWorkersService.loadCoinsGodsTokenPage(coinId)
+            const coinPageSource = await this.coinsGodsService.loadTokenPage(coinId)
             const coinPageDocument = (new JSDOM(coinPageSource)).window.document
 
             const tokenAddress = coinPageDocument.getElementById('coin-text-address')?.innerHTML
@@ -55,7 +57,7 @@ export class CoinsGodsWorker extends AbstractTokenWorker {
             try {
                 blockchain = parseBlockchainName(coinPageDocument.getElementsByClassName('mr-3')[0].innerHTML)
             } catch (err) {
-                logger.warn(`${this.prefixLog} Unknown blockchain for coin ${coinId}. Skipping`)
+                this.logger.warn(`${this.prefixLog} Unknown blockchain for coin ${coinId}. Skipping`)
 
                 continue
             }
@@ -71,25 +73,25 @@ export class CoinsGodsWorker extends AbstractTokenWorker {
                     blockchain,
                 )
 
-                logger.info(
+                this.logger.info(
                     `${this.prefixLog} Token saved to database:`,
                     tokenAddress,
                     tokenName,
                     website,
                 )
             } else {
-                logger.warn(
+                this.logger.warn(
                     `${this.prefixLog} Unsupported blockchain or wrong data ` +
                     `for ${coinId} (${tokenName}, ${blockchain} , ${tokenAddress}). Skipping`
                 )
             }
 
-            await this.tokenCachedDataService.cacheTokenData(coinId, this.workerName, tokenAddress || '')
+            await this.parserCheckedTokenService.cacheTokenData(coinId, this.workerName)
 
             await sleep(2000)
         }
 
-        logger.info(`${this.prefixLog} worker finished`)
+        this.logger.info(`${this.prefixLog} worker finished`)
     }
 
     private getCoinsIds(dom: DOMWindow): string[] {

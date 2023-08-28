@@ -3,7 +3,7 @@ import { BeforeInsert, BeforeUpdate, Column, Entity, Index, PrimaryGeneratedColu
 @Entity()
 @Unique('UQ_TOKEN_ID_SOURCE', [ 'tokenId', 'source' ])
 @Index('IDX_SOURCE', [ 'source' ])
-export class TokenCachedData {
+export class ParserCheckedToken {
     @PrimaryGeneratedColumn()
     public readonly id!: number
 
@@ -13,16 +13,12 @@ export class TokenCachedData {
     @Column()
     public source: string
 
-    @Column({ nullable: true, type: 'text' })
-    public data: string = ''
-
     @Column({ name: 'updated_at' })
     public updatedAt: number
 
-    public constructor(tokenId: string, source: string, data: string) {
+    public constructor(tokenId: string, source: string) {
         this.tokenId = tokenId
         this.source = source
-        this.data = data
     }
 
     @BeforeInsert()

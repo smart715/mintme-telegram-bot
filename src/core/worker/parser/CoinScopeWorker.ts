@@ -1,9 +1,10 @@
 import { singleton } from 'tsyringe'
 import { AbstractTokenWorker } from '../AbstractTokenWorker'
-import { Blockchain, logger, sleep } from '../../../utils'
-import { ParserWorkersService, SeleniumService, TokenCachedDataService, TokensService } from '../../service'
+import { Blockchain, sleep } from '../../../utils'
+import { CoinScopeService, ParserCheckedTokenService, SeleniumService, TokensService } from '../../service'
 import { JSDOM } from 'jsdom'
 import { WebDriver } from 'selenium-webdriver'
+import { Logger } from 'winston'
 
 @singleton()
 export class CoinScopeWorker extends AbstractTokenWorker {
@@ -14,15 +15,16 @@ export class CoinScopeWorker extends AbstractTokenWorker {
     private webDriver: WebDriver
 
     public constructor(
-        private readonly parserWorkersService: ParserWorkersService,
+        private readonly coinScopeService: CoinScopeService,
         private readonly tokensService: TokensService,
-        private readonly tokenCachedDataRepository: TokenCachedDataService,
+        private readonly parserCheckedTokenService: ParserCheckedTokenService,
+        private readonly logger: Logger,
     ) {
         super()
     }
 
     public async run(): Promise<void> {
-        this.webDriver = await SeleniumService.createDriver()
+        this.webDriver = await SeleniumService.createDriver('', undefined, this.logger)
 
         for (const blockchain of this.supportedBlockchains) {
             await this.runByBlockchain(blockchain)
@@ -30,14 +32,14 @@ export class CoinScopeWorker extends AbstractTokenWorker {
     }
 
     public async runByBlockchain(currentBlockchain: Blockchain): Promise<any> {
-        logger.info(`${this.prefixLog} Worker started for ${currentBlockchain} blockchain`)
+        this.logger.info(`${this.prefixLog} Worker started for ${currentBlockchain} blockchain`)
 
         const reactFolder = await this.getReactBuildFolderName()
 
         let page = 1
 
         while (true) { // eslint-disable-line
-            const tokensData = await this.parserWorkersService.getCoinScopeTokensData(
+            const tokensData = await this.coinScopeService.getTokensData(
                 reactFolder,
                 page,
                 currentBlockchain
@@ -46,13 +48,13 @@ export class CoinScopeWorker extends AbstractTokenWorker {
 
             page++
 
-            if (!coinSlugs || 0 === coinSlugs) {
+            if (!coinSlugs || 0 === coinSlugs.length) {
                 break
             }
 
             for (const coinSlug of coinSlugs) {
-                if (await this.tokenCachedDataRepository.isCached(coinSlug.toLowerCase(), this.workerName)) {
-                    logger.warn(`Found cached data for ${coinSlug}. Skipping`)
+                if (await this.parserCheckedTokenService.isCached(coinSlug.toLowerCase(), this.workerName)) {
+                    this.logger.warn(`Found cached data for ${coinSlug}. Skipping`)
 
                     continue
                 }
@@ -65,14 +67,19 @@ export class CoinScopeWorker extends AbstractTokenWorker {
             await sleep(2000)
         }
 
-        logger.info(`${this.prefixLog} worker finished for ${currentBlockchain} blockchain`)
+        this.logger.info(`${this.prefixLog} worker finished for ${currentBlockchain} blockchain`)
     }
 
     private async processTokenData(tokenId: string, currentBlockchain: Blockchain): Promise<void> {
         const tokenData = await this.scrapeTokenData(tokenId)
 
+        await this.parserCheckedTokenService.cacheTokenData(
+            tokenId.toLowerCase(),
+            this.workerName,
+        )
+
         if (!tokenData.tokenAddress) {
-            logger.warn(`Address not found for ${tokenId} (${tokenData.tokenName}). Skipping`)
+            this.logger.warn(`Address not found for ${tokenId} (${tokenData.tokenName}). Skipping`)
 
             return
         }
@@ -87,13 +94,7 @@ export class CoinScopeWorker extends AbstractTokenWorker {
             currentBlockchain,
         )
 
-        await this.tokenCachedDataRepository.cacheTokenData(
-            tokenId.toLowerCase(),
-            this.workerName,
-            JSON.stringify(tokenData),
-        )
-
-        logger.info(
+        this.logger.info(
             `${this.prefixLog} Token saved to database:`,
             tokenData.tokenAddress,
             `${tokenData.tokenName} (${tokenId.toUpperCase()})`,
@@ -104,22 +105,20 @@ export class CoinScopeWorker extends AbstractTokenWorker {
     }
 
     private async getReactBuildFolderName(): Promise<string> {
-        const pageSource = await this.parserWorkersService.getCoinScopeMainPage()
+        const pageSource = await this.coinScopeService.getMainPage()
         const pageDOM = (new JSDOM(pageSource)).window
 
         const scripts = pageDOM.document.getElementsByTagName('script')
-        let buildFolder = ''
 
         for (let i = 0; i < scripts.length; i++) {
             if (!scripts[i].src.includes('_buildManifest')) {
                 continue
             }
 
-            buildFolder = scripts[i].src.split('/')[scripts[i].src.split('/').length - 2]
-            break
+            return scripts[i].src.split('/')[scripts[i].src.split('/').length - 2]
         }
 
-        return buildFolder
+        return ''
     }
 
     private async scrapeTokenData(tokenId: string): Promise<{

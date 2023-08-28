@@ -1,7 +1,8 @@
 import { singleton } from 'tsyringe'
 import { AbstractTokenWorker } from '../AbstractTokenWorker'
-import { ParserWorkersService, TokensService } from '../../service'
-import { Blockchain, logger, sleep } from '../../../utils'
+import { CoinsHunterService, TokensService } from '../../service'
+import { Blockchain, sleep } from '../../../utils'
+import { Logger } from 'winston'
 
 @singleton()
 export class CoinsHunterWorker extends AbstractTokenWorker {
@@ -10,8 +11,9 @@ export class CoinsHunterWorker extends AbstractTokenWorker {
     private readonly supportedBlockchains = Object.values(Blockchain)
 
     public constructor(
-        private readonly parserWorkersService: ParserWorkersService,
+        private readonly coinsHunterService: CoinsHunterService,
         private readonly tokenService: TokensService,
+        private readonly logger: Logger,
     ) {
         super()
     }
@@ -23,28 +25,28 @@ export class CoinsHunterWorker extends AbstractTokenWorker {
     }
 
     public async runByBlockchain(currentBlockchain: Blockchain): Promise<void> {
-        logger.info(`${this.prefixLog} Worker started for ${currentBlockchain} blockchain`)
+        this.logger.info(`${this.prefixLog} Worker started for ${currentBlockchain} blockchain`)
 
         let page = 1
 
         while (true) { // eslint-disable-line
-            const tokens = await this.parserWorkersService.loadCoinHunterCoins(currentBlockchain, page)
+            const tokens = await this.coinsHunterService.loadCoins(currentBlockchain, page)
 
             if (!tokens || !tokens.length) {
-                logger.info(`${this.prefixLog} On page ${page} no tokens found. Finishing`)
+                this.logger.info(`${this.prefixLog} On page ${page} no tokens found. Finishing`)
 
                 break
             }
 
             for (const token of tokens) {
                 if (!token.address || '0xnone' === token.address.trim() || !token.address.trim().startsWith('0x')) {
-                    logger.warn(`${this.prefixLog} No address for ${token.name}. Skipping`)
+                    this.logger.warn(`${this.prefixLog} No address for ${token.name}. Skipping`)
 
                     continue
                 }
 
                 if (await this.tokenService.findByAddress(token.address, currentBlockchain)) {
-                    logger.warn(`${this.prefixLog} Token ${token.name} :: ${token.address} already added. Skipping`)
+                    this.logger.warn(`${this.prefixLog} Token ${token.name} :: ${token.address} already added. Skipping`)
 
                     continue
                 }
@@ -64,11 +66,9 @@ export class CoinsHunterWorker extends AbstractTokenWorker {
                     currentBlockchain,
                 )
 
-                logger.info(
+                this.logger.info(
                     `${this.prefixLog} Token saved to database:`,
-                    tokenAddress,
-                    tokenName,
-                    currentBlockchain
+                    [ tokenAddress, tokenName, currentBlockchain ],
                 )
             }
 
@@ -76,6 +76,7 @@ export class CoinsHunterWorker extends AbstractTokenWorker {
 
             await sleep(2000)
         }
-        logger.info(`${this.prefixLog} worker finished for ${currentBlockchain} blockchain`)
+
+        this.logger.info(`${this.prefixLog} worker finished for ${currentBlockchain} blockchain`)
     }
 }

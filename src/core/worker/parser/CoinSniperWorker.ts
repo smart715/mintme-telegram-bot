@@ -1,8 +1,9 @@
 import { singleton } from 'tsyringe'
 import { AbstractTokenWorker } from '../AbstractTokenWorker'
-import { Blockchain, logger, sleep } from '../../../utils'
-import { ParserWorkersService, TokenCachedDataService, TokensService } from '../../service'
+import { Blockchain, sleep } from '../../../utils'
+import { CoinSniperService, ParserCheckedTokenService, TokensService } from '../../service'
 import { DOMWindow, JSDOM } from 'jsdom'
+import { Logger } from 'winston'
 
 @singleton()
 export class CoinSniperWorker extends AbstractTokenWorker {
@@ -11,9 +12,10 @@ export class CoinSniperWorker extends AbstractTokenWorker {
     private readonly supportedBlockchains: Blockchain[] = [ Blockchain.ETH, Blockchain.BSC ]
 
     public constructor(
-        private readonly parserWorkersService: ParserWorkersService,
+        private readonly coinSniperService: CoinSniperService,
         private readonly tokenService: TokensService,
-        private readonly tokenCachedDataService: TokenCachedDataService
+        private readonly parserCheckedTokenService: ParserCheckedTokenService,
+        private readonly logger: Logger,
     ) {
         super()
     }
@@ -25,13 +27,13 @@ export class CoinSniperWorker extends AbstractTokenWorker {
     }
 
     public async runByBlockchain(currentBlockchain: Blockchain): Promise<void> {
-        logger.info(`${this.prefixLog} Worker started for ${currentBlockchain} blockchain`)
+        this.logger.info(`${this.prefixLog} Worker started for ${currentBlockchain} blockchain`)
 
         let page = 1
 
         while (true) { // eslint-disable-line
             // todo: fix cloudflare
-            const pageContentSource = await this.parserWorkersService.loadCoinSniperTokens(currentBlockchain, page)
+            const pageContentSource = await this.coinSniperService.loadTokens(currentBlockchain, page)
             const pageDOM = (new JSDOM(pageContentSource)).window
 
             const coinsIds = this.getCoinsIds(pageDOM)
@@ -41,13 +43,13 @@ export class CoinSniperWorker extends AbstractTokenWorker {
             }
 
             for (const coinId of coinsIds) {
-                if (await this.tokenCachedDataService.isCached(coinId, this.workerName)) {
-                    logger.warn(`${this.prefixLog} Data for coin ${coinId} already cached. Skipping`)
+                if (await this.parserCheckedTokenService.isCached(coinId, this.workerName)) {
+                    this.logger.warn(`${this.prefixLog} Data for coin ${coinId} already cached. Skipping`)
 
                     continue
                 }
 
-                const coinPageSource = await this.parserWorkersService.loadCoinSniperToken(coinId)
+                const coinPageSource = await this.coinSniperService.loadToken(coinId)
                 const coinPageDocument = (new JSDOM(coinPageSource)).window.document
 
                 const tokenAddress = (coinPageDocument.getElementsByClassName('address')[0])
@@ -75,19 +77,21 @@ export class CoinSniperWorker extends AbstractTokenWorker {
                         currentBlockchain,
                     )
 
-                    logger.info(
+                    this.logger.info(
                         `${this.prefixLog} Token saved to database:`,
-                        tokenAddress,
-                        tokenName,
-                        website,
-                        this.workerName,
-                        currentBlockchain
+                        [
+                            tokenAddress,
+                            tokenName,
+                            website,
+                            this.workerName,
+                            currentBlockchain,
+                        ],
                     )
                 } else {
-                    logger.error(`${this.prefixLog} Unsupported blockchain or wrong data for ${coinId}. Skipping`)
+                    this.logger.error(`${this.prefixLog} Unsupported blockchain or wrong data for ${coinId}. Skipping`)
                 }
 
-                await this.tokenCachedDataService.cacheTokenData(coinId, this.workerName, tokenAddress || '')
+                await this.parserCheckedTokenService.cacheTokenData(coinId, this.workerName)
 
                 await sleep(2000)
             }
@@ -95,7 +99,7 @@ export class CoinSniperWorker extends AbstractTokenWorker {
             page++
         }
 
-        logger.info(`${this.prefixLog} worker finished for ${currentBlockchain} blockchain`)
+        this.logger.info(`${this.prefixLog} worker finished for ${currentBlockchain} blockchain`)
     }
 
     private getCoinsIds(dom: DOMWindow): string[] {

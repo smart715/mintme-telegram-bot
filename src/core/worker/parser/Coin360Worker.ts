@@ -1,8 +1,9 @@
 import { singleton } from 'tsyringe'
 import { AbstractTokenWorker } from '../AbstractTokenWorker'
-import { ParserWorkersService, TokenCachedDataService, TokensService } from '../../service'
-import { Blockchain, logger, sleep } from '../../../utils'
+import { Coins360Service, ParserCheckedTokenService, TokensService } from '../../service'
+import { Blockchain, sleep } from '../../../utils'
 import { JSDOM } from 'jsdom'
+import { Logger } from 'winston'
 
 @singleton()
 export class Coin360Worker extends AbstractTokenWorker {
@@ -11,17 +12,18 @@ export class Coin360Worker extends AbstractTokenWorker {
     private readonly supportedBlockchains: Blockchain[] = [ Blockchain.ETH, Blockchain.BSC ]
 
     public constructor(
-        private readonly parserWorkersService: ParserWorkersService,
+        private readonly coins360Service: Coins360Service,
         private readonly tokenService: TokensService,
-        private readonly tokenCachedDataService: TokenCachedDataService
+        private readonly parserCheckedTokenService: ParserCheckedTokenService,
+        private readonly logger: Logger,
     ) {
         super()
     }
 
     public async run(): Promise<void> {
-        logger.info(`${this.prefixLog} Worker started`)
+        this.logger.info(`${this.prefixLog} Worker started`)
 
-        const coins = await this.parserWorkersService.loadCoin360Tokens()
+        const coins = await this.coins360Service.loadTokens()
 
         for (const coin of coins) {
             if (coin.c != 'token') {
@@ -30,13 +32,13 @@ export class Coin360Worker extends AbstractTokenWorker {
 
             const coinId = coin.n.toLowerCase().replace(' ', '-') + '-' + coin.s.toLowerCase().trim()
 
-            if (await this.tokenCachedDataService.isCached(coinId, this.workerName)) {
-                logger.warn(`${this.prefixLog} Data for coin ${coinId} already cached. Skipping`)
+            if (await this.parserCheckedTokenService.isCached(coinId, this.workerName)) {
+                this.logger.warn(`${this.prefixLog} Data for coin ${coinId} already cached. Skipping`)
 
                 continue
             }
 
-            const coinPageSource = await this.parserWorkersService.loadCoin360Token(coinId)
+            const coinPageSource = await this.coins360Service.loadToken(coinId)
             const coinPageDocument = (new JSDOM(coinPageSource)).window.document
 
             const infoElements = coinPageDocument.getElementsByClassName('HxZs6e')
@@ -84,22 +86,24 @@ export class Coin360Worker extends AbstractTokenWorker {
                     blockchain,
                 )
 
-                logger.info(
+                this.logger.info(
                     `${this.prefixLog} Token saved to database:`,
-                    tokenAddress,
-                    tokenName,
-                    website,
-                    blockchain
+                    [
+                        tokenAddress,
+                        tokenName,
+                        website,
+                        blockchain,
+                    ],
                 )
             } else {
-                logger.warn(`${this.prefixLog} Unsupported blockchain or wrong data for ${coinId}. Skipping`)
+                this.logger.warn(`${this.prefixLog} Unsupported blockchain or wrong data for ${coinId}. Skipping`)
             }
 
-            await this.tokenCachedDataService.cacheTokenData(coinId, this.workerName, tokenAddress || '')
+            await this.parserCheckedTokenService.cacheTokenData(coinId, this.workerName)
 
             await sleep(2000)
         }
 
-        logger.info(`${this.prefixLog} worker finished`)
+        this.logger.info(`${this.prefixLog} worker finished`)
     }
 }

@@ -1,5 +1,5 @@
 import { singleton } from 'tsyringe'
-import { ParserWorkersService, TokensService } from '../../service'
+import { CMCService, ParserCheckedTokenService, TokensService } from '../../service'
 import { AbstractTokenWorker } from '../AbstractTokenWorker'
 import { Blockchain, parseBlockchainName, sleep } from '../../../utils'
 import config from 'config'
@@ -14,8 +14,9 @@ export class CMCWorker extends AbstractTokenWorker {
     private readonly supportedBlockchains = Object.values(Blockchain)
 
     public constructor(
-        private readonly parserWorkersService: ParserWorkersService,
+        private readonly cmcService: CMCService,
         private readonly tokensService: TokensService,
+        private readonly parserCheckedTokenService: ParserCheckedTokenService,
         private readonly logger: Logger
     ) {
         super()
@@ -28,7 +29,7 @@ export class CMCWorker extends AbstractTokenWorker {
         let requestOffset = config.get<CMCWorkerConfig>('cmcWorker')['requestOffset']
 
         while (true) { // eslint-disable-line
-            const tokens = await this.parserWorkersService.getCmcLastTokens(requestOffset, requestLimit)
+            const tokens = await this.cmcService.getLastTokens(requestOffset, requestLimit)
 
             await this.processTokens(tokens.data)
 
@@ -44,6 +45,14 @@ export class CMCWorker extends AbstractTokenWorker {
 
     private async processTokens(tokens: CMCCryptocurrency[]): Promise<void> {
         for (const token of tokens) {
+            if (await this.parserCheckedTokenService.isCached(token.slug, this.workerName)) {
+                this.logger.warn(`${this.prefixLog} ${token.slug} already checked. Skipping`)
+
+                continue
+            }
+
+            await this.parserCheckedTokenService.cacheTokenData(token.slug, this.workerName)
+
             if (!token.platform?.token_address) {
                 this.logger.warn(`${this.prefixLog} No address info found for ${token.name} . Skipping`)
 
@@ -65,7 +74,7 @@ export class CMCWorker extends AbstractTokenWorker {
                 continue
             }
 
-            const tokenInfos = await this.parserWorkersService.getCmcTokenInfo(token.slug)
+            const tokenInfos = await this.cmcService.getTokenInfo(token.slug)
 
             if (!tokenInfos.data || !tokenInfos.data[token.id]) {
                 this.logger.warn(`${this.prefixLog} No token info found for ${token.name} . Skipping`)
@@ -81,30 +90,26 @@ export class CMCWorker extends AbstractTokenWorker {
             const email = ''
             const links = this.getUsefulLinks(tokenInfo.urls)
 
-            if (!await this.tokensService.findByAddress(tokenAddress, blockchain)) {
-                await this.tokensService.addIfNotExists(
+            await this.tokensService.addIfNotExists(
+                tokenAddress,
+                tokenName,
+                [ website ],
+                [ email ],
+                links,
+                this.workerName,
+                blockchain,
+            )
+
+            this.logger.info(
+                `${this.prefixLog} Token saved to database: `,
+                [
                     tokenAddress,
                     tokenName,
-                    [ website ],
-                    [ email ],
-                    links,
-                    this.workerName,
+                    website,
+                    email,
                     blockchain,
-                )
-
-                this.logger.info(
-                    `${this.prefixLog} Token saved to database: `,
-                    [
-                        tokenAddress,
-                        tokenName,
-                        website,
-                        email,
-                        blockchain
-                    ]
-                )
-            } else {
-                this.logger.info(`${this.prefixLog} ${token.name} already added. Skipping`)
-            }
+                ]
+            )
 
             await sleep(2000)
         }

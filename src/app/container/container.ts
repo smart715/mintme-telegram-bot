@@ -55,9 +55,6 @@ import {
     BitQueryService,
     BitQueryWorker,
     CoinVoteWorker,
-    TokenCachedDataRepository,
-    TokenCachedDataService,
-    ParserWorkersService,
     CoinsHunterWorker,
     CoinsGodsWorker,
     CoinSniperWorker,
@@ -84,6 +81,16 @@ import {
     MyEtherListsWorker,
     RecentTokensService,
     RecentTokensWorker,
+    ParserCheckedTokenRepository,
+    ParserCheckedTokenService,
+    CoinLoreService,
+    CMCService,
+    CoinScopeService,
+    CoinSniperService,
+    CoinVoteService,
+    Coins360Service,
+    CoinsGodsService,
+    CoinsHunterService,
 } from '../../core'
 import { Application } from '../'
 import { CliDependency } from './types'
@@ -120,7 +127,6 @@ const tokensInsightLogger = createLogger(TokensInsightWorker.name.toLowerCase())
 const rugFreeCoinsLogger = createLogger(RugFreeCoinsWorker.name.toLowerCase())
 const recentTokensLogger = createLogger(RecentTokensWorker.name.toLowerCase())
 const myEtherListsLogger = createLogger(MyEtherListsWorker.name.toLowerCase())
-const cmcLogger = createLogger(CMCWorker.name.toLowerCase())
 const advnLogger = createLogger(AdvnWorker.name.toLowerCase())
 const bitQueryLogger = createLogger(BitQueryWorker.name.toLowerCase())
 const coinBrainLogger = createLogger(CoinBrainWorker.name.toLowerCase())
@@ -181,8 +187,8 @@ container.register(NewestCheckedTokenRepository, {
     useFactory: instanceCachingFactory(() => getConnection().getCustomRepository(NewestCheckedTokenRepository)),
 })
 
-container.register(TokenCachedDataRepository, {
-    useFactory: instanceCachingFactory(() => getConnection().getCustomRepository(TokenCachedDataRepository)),
+container.register(ParserCheckedTokenRepository, {
+    useFactory: instanceCachingFactory(() => getConnection().getCustomRepository(ParserCheckedTokenRepository)),
 })
 
 // Utils
@@ -291,10 +297,10 @@ container.register(ContactHistoryService, {
     ),
 })
 
-container.register(TokenCachedDataService, {
+container.register(ParserCheckedTokenService, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
-        new TokenCachedDataService(
-            dependencyContainer.resolve(TokenCachedDataRepository)
+        new ParserCheckedTokenService(
+            dependencyContainer.resolve(ParserCheckedTokenRepository)
         ),
     ),
 })
@@ -335,10 +341,6 @@ container.register(BitQueryService, {
     useFactory: instanceCachingFactory(() => new BitQueryService()),
 })
 
-container.register(ParserWorkersService, {
-    useFactory: instanceCachingFactory(() => new ParserWorkersService()),
-})
-
 container.register(MailerService, {
     useFactory: instanceCachingFactory(() => new MailerService()),
 })
@@ -363,14 +365,47 @@ container.register(RecentTokensService, {
     useFactory: instanceCachingFactory(() => new RecentTokensService()),
 })
 
+container.register(CoinLoreService, {
+    useFactory: instanceCachingFactory(() => new CoinLoreService()),
+})
+
+container.register(CMCService, {
+    useFactory: instanceCachingFactory(() => new CMCService()),
+})
+
+container.register(CoinScopeService, {
+    useFactory: instanceCachingFactory(() => new CoinScopeService()),
+})
+
+container.register(CoinSniperService, {
+    useFactory: instanceCachingFactory(() => new CoinSniperService()),
+})
+
+container.register(CoinVoteService, {
+    useFactory: instanceCachingFactory(() => new CoinVoteService()),
+})
+
+container.register(Coins360Service, {
+    useFactory: instanceCachingFactory(() => new Coins360Service()),
+})
+
+container.register(CoinsGodsService, {
+    useFactory: instanceCachingFactory(() => new CoinsGodsService()),
+})
+
+container.register(CoinsHunterService, {
+    useFactory: instanceCachingFactory(() => new CoinsHunterService()),
+})
+
 // Workers
 
 container.register(CMCWorker, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new CMCWorker(
-            dependencyContainer.resolve(ParserWorkersService),
+            dependencyContainer.resolve(CMCService),
             dependencyContainer.resolve(TokensService),
-            cmcLogger,
+            dependencyContainer.resolve(ParserCheckedTokenService),
+            createLogger(CMCWorker.name.toLowerCase()),
         ),
     ),
 })
@@ -694,9 +729,10 @@ container.register(TokensInsightWorker, {
 container.register(CoinVoteWorker, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new CoinVoteWorker(
-            dependencyContainer.resolve(ParserWorkersService),
+            dependencyContainer.resolve(CoinVoteService),
             dependencyContainer.resolve(TokensService),
-            dependencyContainer.resolve(TokenCachedDataService),
+            dependencyContainer.resolve(ParserCheckedTokenService),
+            createLogger(CoinVoteWorker.name.toLowerCase()),
         )
     ),
 })
@@ -714,8 +750,9 @@ container.register(MyEtherListsWorker, {
 container.register(CoinsHunterWorker, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new CoinsHunterWorker(
-            dependencyContainer.resolve(ParserWorkersService),
+            dependencyContainer.resolve(CoinsHunterService),
             dependencyContainer.resolve(TokensService),
+            createLogger(CoinsHunterWorker.name.toLowerCase()),
         )
     ),
 })
@@ -734,9 +771,10 @@ container.register(RecentTokensWorker, {
 container.register(CoinsGodsWorker, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new CoinsGodsWorker(
-            dependencyContainer.resolve(ParserWorkersService),
+            dependencyContainer.resolve(CoinsGodsService),
             dependencyContainer.resolve(TokensService),
-            dependencyContainer.resolve(TokenCachedDataService),
+            dependencyContainer.resolve(ParserCheckedTokenService),
+            createLogger(CoinsGodsWorker.name.toLowerCase()),
         )
     ),
 })
@@ -744,9 +782,10 @@ container.register(CoinsGodsWorker, {
 container.register(Coin360Worker, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new Coin360Worker(
-            dependencyContainer.resolve(ParserWorkersService),
+            dependencyContainer.resolve(Coins360Service),
             dependencyContainer.resolve(TokensService),
-            dependencyContainer.resolve(TokenCachedDataService),
+            dependencyContainer.resolve(ParserCheckedTokenService),
+            createLogger(Coin360Worker.name.toLowerCase()),
         )
     ),
 })
@@ -754,9 +793,10 @@ container.register(Coin360Worker, {
 container.register(CoinSniperWorker, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new CoinSniperWorker(
-            dependencyContainer.resolve(ParserWorkersService),
+            dependencyContainer.resolve(CoinSniperService),
             dependencyContainer.resolve(TokensService),
-            dependencyContainer.resolve(TokenCachedDataService),
+            dependencyContainer.resolve(ParserCheckedTokenService),
+            createLogger(CoinSniperWorker.name.toLowerCase()),
         )
     ),
 })
@@ -764,8 +804,10 @@ container.register(CoinSniperWorker, {
 container.register(CoinLoreWorker, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new CoinLoreWorker(
-            dependencyContainer.resolve(ParserWorkersService),
+            dependencyContainer.resolve(CoinLoreService),
             dependencyContainer.resolve(TokensService),
+            dependencyContainer.resolve(ParserCheckedTokenService),
+            createLogger(CoinLoreWorker.name.toLowerCase()),
         )
     ),
 })
@@ -773,9 +815,10 @@ container.register(CoinLoreWorker, {
 container.register(CoinScopeWorker, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new CoinScopeWorker(
-            dependencyContainer.resolve(ParserWorkersService),
+            dependencyContainer.resolve(CoinScopeService),
             dependencyContainer.resolve(TokensService),
-            dependencyContainer.resolve(TokenCachedDataService),
+            dependencyContainer.resolve(ParserCheckedTokenService),
+            createLogger(CoinScopeWorker.name.toLowerCase()),
         )
     ),
 })

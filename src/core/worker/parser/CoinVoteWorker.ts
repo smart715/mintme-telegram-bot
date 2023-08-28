@@ -1,8 +1,9 @@
 import { singleton } from 'tsyringe'
 import { AbstractTokenWorker } from '../AbstractTokenWorker'
-import { Blockchain, findContractAddress, getHrefFromTagString, getHrefValuesFromTagString, logger, sleep } from '../../../utils'
-import { ParserWorkersService, TokenCachedDataService, TokensService } from '../../service'
+import { Blockchain, findContractAddress, getHrefFromTagString, getHrefValuesFromTagString, sleep } from '../../../utils'
+import { CoinVoteService, ParserCheckedTokenService, TokensService } from '../../service'
 import { DOMWindow, JSDOM } from 'jsdom'
+import { Logger } from 'winston'
 
 @singleton()
 export class CoinVoteWorker extends AbstractTokenWorker {
@@ -13,9 +14,10 @@ export class CoinVoteWorker extends AbstractTokenWorker {
     private readonly maxItemsOnPage = 26
 
     public constructor(
-        private readonly parserWorkersService: ParserWorkersService,
+        private readonly coinVoteService: CoinVoteService,
         private readonly tokenService: TokensService,
-        private readonly tokenCachedDataService: TokenCachedDataService,
+        private readonly parserCheckedTokenService: ParserCheckedTokenService,
+        private readonly logger: Logger,
     ) {
         super()
     }
@@ -27,32 +29,32 @@ export class CoinVoteWorker extends AbstractTokenWorker {
     }
 
     public async runByBlockchain(currentBlockchain: Blockchain): Promise<void> {
-        logger.info(`${this.prefixLog} Worker started for ${currentBlockchain} blockchain`)
+        this.logger.info(`${this.prefixLog} Worker started for ${currentBlockchain} blockchain`)
 
         let page = 1
 
         while (true) { // eslint-disable-line
-            logger.info(`${this.prefixLog} Parsing page ${page}`)
+            this.logger.info(`${this.prefixLog} Parsing page ${page}`)
 
-            const pageSource = await this.parserWorkersService.loadCoinVoteListPage(currentBlockchain, page)
+            const pageSource = await this.coinVoteService.loadListPage(currentBlockchain, page)
             const pageDOM = (new JSDOM(pageSource)).window
 
             const coinsIds = this.parseCoinsIds(pageDOM)
 
             if (!coinsIds) {
-                logger.warn(`${this.prefixLog} No coins ids found. Stopping fetching pages`)
+                this.logger.warn(`${this.prefixLog} No coins ids found. Stopping fetching pages`)
 
                 break
             }
 
             for (const coinId of coinsIds) {
-                if (await this.tokenCachedDataService.isCached(coinId, this.workerName)) {
-                    logger.warn(`${this.prefixLog} Data for coin ${coinId} already cached. Skipping`)
+                if (await this.parserCheckedTokenService.isCached(coinId, this.workerName)) {
+                    this.logger.warn(`${this.prefixLog} Data for coin ${coinId} already cached. Skipping`)
 
                     continue
                 }
 
-                const coinPageSource = await this.parserWorkersService.loadCoinVoteTokenPage(coinId)
+                const coinPageSource = await this.coinVoteService.loadTokenPage(coinId)
                 const coinPageDOM = (new JSDOM(coinPageSource)).window
 
                 const tokenAddress = this.getCoinAddress(coinPageDOM)
@@ -73,24 +75,26 @@ export class CoinVoteWorker extends AbstractTokenWorker {
                         currentBlockchain,
                     )
 
-                    logger.info(
+                    this.logger.info(
                         `${this.prefixLog} Token saved to database:`,
-                        tokenAddress,
-                        tokenName,
-                        website,
-                        currentBlockchain
+                        [
+                            tokenAddress,
+                            tokenName,
+                            website,
+                            currentBlockchain,
+                        ],
                     )
                 } else {
-                    logger.warn(`${this.prefixLog} Address for coin ${coinId} not found.`)
+                    this.logger.warn(`${this.prefixLog} Address for coin ${coinId} not found.`)
                 }
 
-                await this.tokenCachedDataService.cacheTokenData(coinId, this.workerName, tokenAddress || '')
+                await this.parserCheckedTokenService.cacheTokenData(coinId, this.workerName)
 
                 await sleep(2000)
             }
 
             if (coinsIds.length < this.maxItemsOnPage) {
-                logger.warn(`${this.prefixLog} Coins amount (${coinsIds.length}) less than max. Its last page`)
+                this.logger.warn(`${this.prefixLog} Coins amount (${coinsIds.length}) less than max. Its last page`)
 
                 break
             }
@@ -98,7 +102,7 @@ export class CoinVoteWorker extends AbstractTokenWorker {
             page++
         }
 
-        logger.info(`${this.prefixLog} worker finished for ${currentBlockchain} blockchain`)
+        this.logger.info(`${this.prefixLog} worker finished for ${currentBlockchain} blockchain`)
     }
 
     private parseCoinsIds(dom: DOMWindow): string[] {
