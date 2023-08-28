@@ -1,7 +1,7 @@
 import config from 'config'
 import { singleton } from 'tsyringe'
 import { Logger } from 'winston'
-import {ContactHistoryService, TwitterService} from '../../../service'
+import {ContactHistoryService, ContactMessageService, ContactQueueService, TwitterService} from '../../../service'
 import { TwitterAccount } from '../../../entity'
 import { TwitterClient } from './TwitterClient'
 import { sleep } from '../../../../utils'
@@ -15,6 +15,8 @@ export class TwitterWorker {
     public constructor(
         private readonly twitterService: TwitterService,
         private readonly contactHistoryService: ContactHistoryService,
+        private readonly contactMessageService: ContactMessageService,
+        private readonly contactQueueService: ContactQueueService,
         private readonly logger: Logger,
     ) {
     }
@@ -46,11 +48,12 @@ export class TwitterWorker {
     }
 
     private async initNewClient(twitterAccount: TwitterAccount): Promise<TwitterClient> {
-        // init new twitter client
         const twitterClient = new TwitterClient(
             twitterAccount,
             this.twitterService,
             this.contactHistoryService,
+            this.contactMessageService,
+            this.contactQueueService,
             this.logger,
         )
 
@@ -60,8 +63,7 @@ export class TwitterWorker {
     }
 
     private startContactingAllManagers(): Promise<void[]> {
-        // start contacting all managers
-        const contactingPromises: Promise<void>[] = []
+       const contactingPromises: Promise<void>[] = []
 
         for (const client of this.twitterClients) {
             if (!client.isInitialized) {
@@ -73,7 +75,7 @@ export class TwitterWorker {
                 continue
             }
 
-            if (!client.accountMessages?.length) {
+            if ('' === client.message) {
                 this.logger.warn(
                     `[Twitter Worker ID: ${client.twitterAccount.id}] ` +
                     `No messages stock available, Account not able to start messaging.`

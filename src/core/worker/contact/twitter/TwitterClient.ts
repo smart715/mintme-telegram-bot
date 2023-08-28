@@ -1,10 +1,25 @@
+// @ts-nocheck
 import moment from 'moment'
+import config from 'config'
 import { Logger } from 'winston'
 import { WebDriver } from 'selenium-webdriver'
 import { TwitterAccount } from '../../../entity'
-import { ContactHistoryService, SeleniumService, TwitterService } from '../../../service'
+import {
+    ContactHistoryService,
+    ContactMessageService,
+    ContactQueueService,
+    SeleniumService,
+    TwitterService
+} from '../../../service'
+import {getRandomNumber} from '../../../../utils'
+import { ContactMethod} from '../../../types'
 
 export class TwitterClient {
+    private readonly maxMessagesDaily: number = config.get('twitter_dm_limit_daily')
+    private readonly maxAttemptsDaily: number = config.get('twitter_total_attempts_daily')
+    private readonly messageDelaySec: number = config.get('twitter_messages_delay_in_seconds')
+    public message: string = ''
+
     public isInitialized: boolean = false
     public twitterAccount: TwitterAccount
     private sentMessages: number
@@ -14,6 +29,8 @@ export class TwitterClient {
         twitterAccount: TwitterAccount,
         private readonly twitterService: TwitterService,
         private readonly contactHistoryService: ContactHistoryService,
+        private readonly contactMessageService: ContactMessageService,
+        private readonly contactQueueService: ContactQueueService,
         private readonly logger: Logger,
     ) {
         this.twitterAccount = twitterAccount
@@ -41,15 +58,26 @@ export class TwitterClient {
         }
 
         await this.updateSentMessages()
-        await this.getAccountMessages()
+        await this.initMessage()
+
         this.isInitialized = true
         this.log(`
             Logged in | 24h Sent messages: ${this.sentMessages} | Account Messages: ${this.accountMessages.length}`
         )
     }
 
+    private async initMessage(): Promise<void> {
+        const contentMessage = await this.contactMessageService.getOneContactMessage()
+
+        if (!contentMessage) {
+            return
+        }
+
+        this.message = contentMessage.content
+    }
+
     private async updateSentMessages(): Promise<void> {
-        this.sentMessages = await this.contactHistoryService.getCountSentTwitterMessages(this.twitterAccount)
+        this.sentMessages = await this.contactHistoryService.getCountSentTwitterMessagesDaily(this.twitterAccount)
     }
 
     private async createDriver(): Promise<boolean> {
@@ -107,8 +135,36 @@ export class TwitterClient {
         await this.twitterService.setAccountAsDisabled(this.twitterAccount)
     }
 
-    public async startContacting(): Promise<void> {
+    private async postSendingCheck(): Promise<void> {
+        if (!this.twitterAccount.isDisabled) {
+            await this.driver.sleep(this.messageDelaySec * 1000)
+            const contactMethod = await this.startContacting()
+            return contactMethod
+        }
+    }
 
+    public async startContacting(): Promise<void> {
+        await this.driver.sleep(getRandomNumber(1, 10) * 1000)
+
+        const queuedContact = await this.contactQueueService.getFirstFromQueue(ContactMethod.TWITTER, this.logger)
+
+        if (!queuedContact) {
+            return await this.postSendingCheck()
+        }
+
+        const token = await this.tokenService.findByAddress(queuedContact.address, queuedContact.blockchain)
+
+        if (!token) {
+            await this.contactQueueService.removeFromQueue(queuedContact.address, queuedContact.blockchain)
+
+            this.log(
+                `No token for ${queuedContact.address} :: ${queuedContact.blockchain} . Skipping`
+            )
+
+            return this.startContacting()
+        }
+
+        ///
     }
 
     public async destroyDriver(): Promise<void> {

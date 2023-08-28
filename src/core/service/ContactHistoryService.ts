@@ -24,7 +24,7 @@ export class ContactHistoryService {
         return { group: result.count_group || 0, dm: result.count_dm || 0 }
     }
 
-    public async getCountSentTwitterMessages(twitterAccount: TwitterAccount): Promise<number> {
+    public async getCountSentTwitterMessagesDaily(twitterAccount: TwitterAccount): Promise<number> {
         const now = new Date()
         const oneDayAgo = new Date()
         oneDayAgo.setHours(now.getHours() - 24)
