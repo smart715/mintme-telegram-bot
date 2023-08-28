@@ -1,7 +1,7 @@
 import { singleton } from 'tsyringe'
 import ormconfig from '../../config/ormconfig'
 import { Connection, createConnection, getConnection } from 'typeorm'
-import { logger } from '.'
+import { createLogger } from './winstonLogger'
 
 @singleton()
 export class Database {
@@ -22,6 +22,8 @@ export class Database {
     }
 
     public async retryConnection(): Promise<void> {
+        const logger = createLogger()
+
         if (this.getConnection().isConnected) {
             await this.getConnection().close()
         }

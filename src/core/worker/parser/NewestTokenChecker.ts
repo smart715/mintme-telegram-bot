@@ -1,4 +1,5 @@
-import { logger, sleep } from '../../../utils'
+import { Blockchain, sleep } from '../../../utils'
+import { Logger } from 'winston'
 import { NewestCheckedTokenService } from '../../service'
 
 export abstract class NewestTokenChecker {
@@ -8,15 +9,16 @@ export abstract class NewestTokenChecker {
     protected newestChecked: string | null
     protected needToSaveNextNewestChecked: boolean
 
-    private readonly sleepTimeBetweenPages = 10 * 1000
+    protected readonly sleepTimeBetweenPages = 10 * 1000
 
     protected constructor(
         protected readonly workerName: string,
         protected readonly newestCheckedTokenService: NewestCheckedTokenService,
+        protected readonly logger: Logger
     ) { }
 
     public async run(): Promise<void> {
-        logger.info(`[${this.workerName}] Started`)
+        this.logger.info(`[${this.workerName}] Started`)
 
         this.newestChecked = await this.getNewestChecked()
         this.needToSaveNextNewestChecked = true
@@ -34,37 +36,37 @@ export abstract class NewestTokenChecker {
             if (error instanceof StopCheckException) {
                 this.logInfo(`${error.message}`)
             } else {
-                logger.error(`[${this.workerName}] ${error.message}`)
+                this.logger.error(`[${this.workerName}] ${error.message}`)
 
                 throw error
             }
         } finally {
-            logger.info(`[${this.workerName}] Finished`)
+            this.logger.info(`[${this.workerName}] Finished`)
         }
     }
 
     private logInfo(message: string): void {
-        logger.info(`[${this.workerName}] ${message}`)
+        this.logger.info(`[${this.workerName}] ${message}`)
     }
 
-    private async getNewestChecked(): Promise<string | null> {
-        return this.newestCheckedTokenService.getTokenId(this.workerName)
+    public async getNewestChecked(blockchain: Blockchain|null = null): Promise<string | null> {
+        return this.newestCheckedTokenService.getTokenId(this.workerName, blockchain)
     }
 
     protected abstract checkPage(page: number): Promise<void>
 
-    protected async newestCheckedCheck(tokenId: string): Promise<void> {
+    protected async newestCheckedCheck(tokenId: string, blockchain: Blockchain|null = null): Promise<void> {
         if (this.newestChecked && this.newestChecked === tokenId) {
             throw new StopCheckException(this.caughtNewestCheckedToken)
         }
 
         if (this.needToSaveNextNewestChecked && tokenId) {
-            await this.saveNewestChecked(tokenId)
+            await this.saveNewestChecked(tokenId, blockchain)
         }
     }
 
-    protected async saveNewestChecked(tokenId: string): Promise<void> {
-        await this.newestCheckedTokenService.save(this.workerName, tokenId)
+    protected async saveNewestChecked(tokenId: string, blockchain: Blockchain|null = null): Promise<void> {
+        await this.newestCheckedTokenService.save(this.workerName, tokenId, blockchain)
         this.needToSaveNextNewestChecked = false
     }
 }

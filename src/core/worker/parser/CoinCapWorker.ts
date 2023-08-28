@@ -1,6 +1,7 @@
 import { singleton } from 'tsyringe'
+import { Logger } from 'winston'
 import { AbstractTokenWorker } from '../AbstractTokenWorker'
-import { Blockchain, explorerDomains, findContractAddress, logger } from '../../../utils'
+import { Blockchain, explorerDomains, findContractAddress } from '../../../utils'
 import { CoinCapService, QueuedTokenAddressService } from '../../service'
 import { CoinCapCoinInfoResponse } from '../../../types'
 
@@ -12,16 +13,17 @@ export class CoinCapWorker extends AbstractTokenWorker {
 
     public constructor(
         private readonly coinCapService: CoinCapService,
-        private readonly queuedTokenAddressService: QueuedTokenAddressService
+        private readonly queuedTokenAddressService: QueuedTokenAddressService,
+        private readonly logger: Logger,
     ) {
         super()
     }
 
     public async run(currentBlockchain: Blockchain): Promise<void> {
-        logger.info(`${this.prefixLog} Worker started`)
+        this.logger.info(`${this.prefixLog} Worker started`)
 
         if (this.unsupportedBlockchains.includes(currentBlockchain)) {
-            logger.error(`${this.prefixLog} Unsupported blockchain ${currentBlockchain}. Aborting`)
+            this.logger.error(`${this.prefixLog} Unsupported blockchain ${currentBlockchain}. Aborting`)
 
             return
         }
@@ -31,14 +33,14 @@ export class CoinCapWorker extends AbstractTokenWorker {
         const limit = 2000
 
         do {
-            logger.info(`${this.prefixLog} Page: ${page}. Limit: ${limit}`)
+            this.logger.info(`${this.prefixLog} Page: ${page}. Limit: ${limit}`)
 
             let coinsInfoResponse: CoinCapCoinInfoResponse
 
             try {
                 coinsInfoResponse = await this.coinCapService.getCoinsInfo(page, limit)
             } catch (ex: any) {
-                logger.error(
+                this.logger.error(
                     `${this.prefixLog} Aborting. Failed to fetch coins info. Page: ${page}. Limit: ${limit}. Reason: ${ex.message}`
                 )
 
@@ -67,16 +69,14 @@ export class CoinCapWorker extends AbstractTokenWorker {
 
                 await this.queuedTokenAddressService.push(tokenAddress, currentBlockchain)
 
-                logger.info(
+                this.logger.info(
                     `${this.prefixLog} Pushed token address to queue service:`,
-                    tokenAddress,
-                    this.workerName,
-                    currentBlockchain
+                    [ tokenAddress, this.workerName, currentBlockchain ]
                 )
             }
         } while (result > 0)
 
-        logger.info(`${this.prefixLog} finished`)
+        this.logger.info(`${this.prefixLog} finished`)
     }
 
     private getTargetExplorer(currentBlockchain: Blockchain): string {

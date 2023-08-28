@@ -1,9 +1,10 @@
 import { AbstractTokenWorker } from '../AbstractTokenWorker'
 import { By, WebDriver, WebElement } from 'selenium-webdriver'
 import { QueuedTokenAddressService, SeleniumService, TokensService } from '../../service'
-import { Blockchain, explorerDomains, logger, sleep } from '../../../utils'
+import { Blockchain, explorerDomains, sleep } from '../../../utils'
 import { QueuedTokenAddress, Token } from '../../entity'
 import { singleton } from 'tsyringe'
+import { Logger } from 'winston'
 
 @singleton()
 export class CheckTokenBNBWorker extends AbstractTokenWorker {
@@ -15,19 +16,20 @@ export class CheckTokenBNBWorker extends AbstractTokenWorker {
     public constructor(
         private readonly queuedTokenAddressService: QueuedTokenAddressService,
         private readonly tokensService: TokensService,
+        private readonly logger: Logger,
     ) {
         super()
     }
 
     public async run(blockchain: Blockchain): Promise<void> {
-        const webDriver = await SeleniumService.createDriver()
-        logger.info(`[${this.workerName}] started for ${blockchain} blockchain`)
+        const webDriver = await SeleniumService.createDriver('', undefined, this.logger)
+        this.logger.info(`[${this.workerName}] started for ${blockchain} blockchain`)
 
         // eslint-disable-next-line
         while (true) {
             const tokensToCheck = await this.queuedTokenAddressService.getTokensToCheck(blockchain, this.tokensBatch)
             if (!tokensToCheck.length) {
-                logger.info(`[${this.workerName}] no tokens to check for ${blockchain} blockchain, sleep`)
+                this.logger.info(`[${this.workerName}] no tokens to check for ${blockchain} blockchain, sleep`)
 
                 await sleep(this.sleepTime)
                 continue

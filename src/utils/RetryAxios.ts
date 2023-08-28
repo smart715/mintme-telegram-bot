@@ -1,11 +1,12 @@
 import axios, { AxiosResponse } from 'axios'
-import { logger, sleep } from './index'
+import { sleep } from './index'
+import { Logger } from 'winston'
 
 export class RetryAxios {
     private readonly maxAttemptsPerRequest = 5
     private readonly sleepTimeBetweenAttempts = 5 * 1000
 
-    public async get(url: string, attempt: number = 1): Promise<AxiosResponse<any, any>> {
+    public async get(url: string, logger: Logger, attempt: number = 1): Promise<AxiosResponse<any, any>> {
         try {
             return await axios.get(url)
         } catch (error) {
@@ -17,7 +18,7 @@ export class RetryAxios {
 
             await sleep(this.sleepTimeBetweenAttempts)
 
-            return this.get(url, attempt + 1)
+            return this.get(url, logger, attempt + 1)
         }
     }
 }

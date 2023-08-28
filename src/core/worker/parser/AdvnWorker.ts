@@ -1,6 +1,7 @@
 import { singleton } from 'tsyringe'
+import { Logger } from 'winston'
 import { AbstractTokenWorker } from '../AbstractTokenWorker'
-import { Blockchain, findContractAddress, getHrefFromTagString, getHrefValuesFromTagString, logger } from '../../../utils'
+import { Blockchain, findContractAddress, getHrefFromTagString, getHrefValuesFromTagString } from '../../../utils'
 import { TokensService, AdvnService } from '../../service'
 import { AdvnGeneralResponse } from '../../../types'
 
@@ -13,15 +14,16 @@ export class AdvnWorker extends AbstractTokenWorker {
     public constructor(
         private readonly advnService: AdvnService,
         private readonly tokenService: TokensService,
+        private readonly logger: Logger,
     ) {
         super()
     }
 
     public async run(currentBlockchain: Blockchain): Promise<void> {
-        logger.info(`${this.prefixLog} started`)
+        this.logger.info(`${this.prefixLog} started`)
 
         if (this.unsupportedBlockchains.includes(currentBlockchain)) {
-            logger.error(`${this.prefixLog} Unsupported blockchain: ${currentBlockchain}. Aborting.`)
+            this.logger.error(`${this.prefixLog} Unsupported blockchain: ${currentBlockchain}. Aborting.`)
 
             return
         }
@@ -32,14 +34,14 @@ export class AdvnWorker extends AbstractTokenWorker {
         let start: number = 0
 
         do {
-            logger.info(`${this.prefixLog} Page start ${start}`)
+            this.logger.info(`${this.prefixLog} Page start ${start}`)
 
             let tokens: AdvnGeneralResponse
 
             try {
                 tokens = await this.advnService.getTokens(start)
             } catch (ex: any) {
-                logger.error(
+                this.logger.error(
                     `${this.prefixLog} Aborting. Failed to fetch all tokens. Start: ${start} Reason: ${ex.message}`
                 )
 
@@ -63,7 +65,7 @@ export class AdvnWorker extends AbstractTokenWorker {
                 try {
                     tokenInfo = await this.advnService.getTokenInfo(id)
                 } catch (ex: any) {
-                    logger.warn(
+                    this.logger.warn(
                         `${this.prefixLog} Failed to fetch token info for ${id} Reason: ${ex.message}. Skipping...`
                     )
 
@@ -95,14 +97,16 @@ export class AdvnWorker extends AbstractTokenWorker {
                     currentBlockchain,
                 )
 
-                logger.info(
+                this.logger.info(
                     `${this.prefixLog} Added to DB:`,
-                    tokenAddress,
-                    name,
-                    website,
-                    links,
-                    this.workerName,
-                    currentBlockchain
+                    [
+                        tokenAddress,
+                        name,
+                        website,
+                        links,
+                        this.workerName,
+                        currentBlockchain,
+                    ]
                 )
             }
 
@@ -110,7 +114,7 @@ export class AdvnWorker extends AbstractTokenWorker {
             start += 3000
         } while (count > 0)
 
-        logger.info(`${this.prefixLog} Finished`)
+        this.logger.info(`${this.prefixLog} Finished`)
     }
 
     private getTarget(blockchain: Blockchain): string {

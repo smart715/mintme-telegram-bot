@@ -17,6 +17,13 @@ export class TokensService {
         return this.tokenRepository.findByAddressAndBlockchain(address, blockchain)
     }
 
+    public async findByName(
+        name: string,
+        blockchain: Blockchain,
+    ): Promise<Token | undefined> {
+        return this.tokenRepository.findByNameAndBlockchain(name, blockchain)
+    }
+
     public async addIfNotExists(
         tokenAddress: string,
         tokenName: string,
@@ -79,7 +86,7 @@ export class TokensService {
     }
 
     public getEmails(token: Token): string[] {
-        return token.emails.filter(email => isValidEmail(email))
+        return token.emails?.filter(email => isValidEmail(email)) ?? []
     }
 
     public getTwitterAccounts(token: Token): string[] {

@@ -91,3 +91,23 @@ export enum CasualTokenWorkerNames {
     COIN_LORE = 'coin-lore',
     COIN_SCOPE = 'coin-scope',
 }
+
+export interface RunRugFreeCoinsWorkerCmdArgv {
+    blockchain: Blockchain,
+}
+
+export interface RunTop100TokensWorkerCmdArgv {
+    blockchain: Blockchain,
+}
+
+export interface RunTokensInsightWorkerCmdArgv {
+    blockchain: Blockchain,
+}
+
+export interface RunMyEtherListsWorkerCmdArgv {
+    blockchain: Blockchain,
+}
+
+export interface RunRecentTokensWorkerCmdArgv {
+    blockchain: Blockchain,
+}

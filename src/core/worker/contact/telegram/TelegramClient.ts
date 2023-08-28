@@ -7,13 +7,14 @@ import {
     ContactMessageService,
     ContactQueueService,
     TelegramService,
+    ProxyService,
 } from '../../../service'
-import { By, Key, WebDriver } from 'selenium-webdriver'
+import { By, Key, WebDriver, WebElement } from 'selenium-webdriver'
 import * as fs from 'fs'
-import { logger } from '../../../../utils'
+import { getRandomNumber } from '../../../../utils'
 import { ContactHistoryStatusType, ContactMethod, TokenContactStatusType } from '../../../types'
 import moment from 'moment'
-import { log } from 'loglevel'
+import { Logger } from 'winston'
 
 export class TelegramClient {
     private readonly maxMessagesPerDay: number = config.get('telegram_account_max_day_messages')
@@ -31,7 +32,9 @@ export class TelegramClient {
         private readonly contactQueueService: ContactQueueService,
         private readonly tokenService: TokensService,
         private readonly telegramService: TelegramService,
-        telegramAccount: TelegramAccount
+        private readonly proxyService: ProxyService,
+        telegramAccount: TelegramAccount,
+        private readonly logger: Logger
     ) {
         this.telegramAccount = telegramAccount
     }
@@ -44,16 +47,18 @@ export class TelegramClient {
             const diffMs = limitHitDate.diff(currentDate, 'milliseconds')
             const msInDay = 86400000
             this.log(
-                `Waiting ${diffMs / msInDay} days to initialize, Last limit hit: ${limitHitDate.format()}`
+                `${diffMs / msInDay} days to use this account again, Last limit hit: ${limitHitDate.format()}`
             )
-            setTimeout(async () => {
-                await this.initialize()
-                await this.startContacting()
-            }, diffMs)
             return
         }
 
-        this.driver = await SeleniumService.createDriver()
+        const isDriverCreated = await this.createDriverWithProxy()
+
+        if (!isDriverCreated) {
+            this.logger.warn(`Couldn't initialize driver with proxy`)
+            return
+        }
+
         const isLoggedIn = await this.login()
         if (isLoggedIn) {
             await this.updateSentMessages()
@@ -64,6 +69,40 @@ export class TelegramClient {
         }
     }
 
+    private async createDriverWithProxy(): Promise<boolean> {
+        if (!this.telegramAccount.proxy || this.telegramAccount.proxy.isDisabled) {
+            this.logger.info(`Proxy is invalid or disabled, Getting new one`)
+            if (!await this.getNewProxy()) {
+                this.logger.warn(`No proxy stock available`)
+                return false
+            }
+        }
+
+        this.logger.info(`Creating driver instance`)
+        this.driver = await SeleniumService.createDriver('', this.telegramAccount.proxy, this.logger)
+        this.logger.info(`Testing if proxy working`)
+
+        if (await SeleniumService.isInternetWorking(this.driver)) {
+            return true
+        } else {
+            this.logger.warn(`Proxy ${this.telegramAccount.proxy.proxy} doesn't work, disabling the proxy and will retry with new one`)
+            await this.destroyDriver()
+            await this.proxyService.setProxyDisabled(this.telegramAccount.proxy)
+
+            const retry = await this.createDriverWithProxy()
+            return retry
+        }
+    }
+
+    private async getNewProxy(): Promise<boolean> {
+        const newProxy = await this.telegramService.assignNewProxyForAccount(this.telegramAccount)
+        if (!newProxy) {
+            this.log(`No proxy stock available, Failed to initialize`)
+            return false
+        }
+        this.telegramAccount.proxy = newProxy
+        return true
+    }
 
     private async getAccountMessages(): Promise<void> {
         this.accountMessages = await this.contactMessageService.getAccountMessages(true, this.telegramAccount.id)
@@ -72,7 +111,7 @@ export class TelegramClient {
     private async updateSentMessages(): Promise<void> {
         const amounts = await this.contactHistoryService.getAmountOfSentMessagesPerAccount(this.telegramAccount.id)
 
-        this.sentMessages = amounts.dm + amounts.group
+        this.sentMessages = +amounts.dm + +amounts.group
     }
 
     private async isLoggedIn(): Promise<boolean> {
@@ -87,6 +126,7 @@ export class TelegramClient {
 
     public async login(retries: number = 1): Promise<boolean> {
         try {
+            this.log(`Logging in, Attempt #${retries}`)
             const driver = this.driver
             await driver.get('https://web.telegram.org/a/')
             await driver.sleep(10000)
@@ -101,16 +141,16 @@ export class TelegramClient {
                 return true
             } else {
                 if (retries < 3) {
-                    logger.info(`Retrying to login, Attempt #${retries}`)
+                    this.logger.info(`Retrying to login, Attempt #${retries}`)
                     return await this.login(retries + 1)
                 } else {
-                    logger.warn(`Account is banned, Err: USER_DEACTIVATED_BAN`)
+                    this.logger.warn(`Account is banned, Err: USER_DEACTIVATED_BAN`)
                     await this.disableAccount()
                     return false
                 }
             }
         } catch (e) {
-            logger.error(e)
+            this.logger.error(e)
             return false
         }
     }
@@ -176,38 +216,66 @@ export class TelegramClient {
         }
     }
 
-    private async joinAndVerifyGroup(): Promise<void> {
-        await this.driver.executeScript(await this.getScript('JoinGroup'))
-        await this.driver.sleep(15000)
+    private async getJoinGroupBtn(): Promise<WebElement|undefined> {
+        const btns = await this.driver.findElements(By.css('button'))
 
-        const scrollBtn = await this.driver.findElements(By.className('icon-arrow-down'))
-        if (scrollBtn.length > 0) {
-            await this.driver.actions().click(scrollBtn[0]).perform()
-            await this.driver.sleep(2000)
+        for (const btn of btns) {
+            const btnText = await btn.getText()
+            if ('join group' === btnText.toLowerCase()) {
+                return btn
+            }
         }
+        return undefined
+    }
 
-        const verifyStrs = [
-            'you\'re human',
-            'not robot',
-            'unblock',
-            'unlock ',
-            'verify',
-            'human',
-            'unmute me',
-            'a bot',
-            'tap to verify',
-        ]
+    private async joinAndVerifyGroup(retries: number = 1): Promise<void> {
+        const joinBtn = await this.getJoinGroupBtn()
+        if (joinBtn) {
+            await this.driver.actions().click(joinBtn).perform()
+            await this.driver.sleep(10000)
 
-        const pageSrc = await this.driver.getPageSource()
+            if (await this.getJoinGroupBtn()) {
+                this.log(`Group joining limit hit, Attempt ${retries}/2`)
+                if (retries <= 2) {
+                    await this.driver.sleep(30000)
+                    const retry = await this.joinAndVerifyGroup(retries + 1)
+                    return retry
+                }
+                //set limit hit
+                this.sentMessages = this.maxMessagesPerDay
+            }
 
-        for (let i = 0; i < verifyStrs.length; i++) {
-            if (pageSrc.toLowerCase().includes(verifyStrs[i])) {
-                this.log(`Clicking on verify button`)
-                await this.driver.executeScript(await this.getScript('ClickVerifyBtns'))
+            await this.driver.sleep(10000)
 
-                await this.driver.sleep(15000)
+            const scrollBtn = await this.driver.findElements(By.className('icon-arrow-down'))
+            if (scrollBtn.length > 0) {
+                await this.driver.actions().click(scrollBtn[0]).perform()
+                await this.driver.sleep(2000)
+            }
 
-                break
+            const verifyStrs = [
+                'you\'re human',
+                'not robot',
+                'unblock',
+                'unlock ',
+                'verify',
+                'human',
+                'unmute me',
+                'a bot',
+                'tap to verify',
+            ]
+
+            const pageSrc = await this.driver.getPageSource()
+
+            for (let i = 0; i < verifyStrs.length; i++) {
+                if (pageSrc.toLowerCase().includes(verifyStrs[i])) {
+                    this.log(`Clicking on verify button`)
+                    await this.driver.executeScript(await this.getScript('ClickVerifyBtns'))
+
+                    await this.driver.sleep(10000)
+
+                    break
+                }
             }
         }
     }
@@ -219,6 +287,11 @@ export class TelegramClient {
         if (!verified) {
             this.log(`Joining ${tgLink}`)
             await this.joinAndVerifyGroup()
+
+            if (this.isLimitHit()) {
+                this.log(`Account join limit hit, skipping account.`)
+                return ContactHistoryStatusType.ACCOUNT_GROUP_JOIN_LIMIT_HIT
+            }
 
             const pageSrc = await this.driver.getPageSource()
 
@@ -267,7 +340,7 @@ export class TelegramClient {
             }
 
             await driver.get('https://web.telegram.org/z/#?tgaddr=' + encodeURIComponent(`tg://resolve?domain=${user}`))
-            await driver.sleep(30000)
+            await driver.sleep(20000)
 
             if (!await this.isLoggedIn()) {
                 return ContactHistoryStatusType.ACCOUNT_NOT_AUTHORIZED
@@ -290,7 +363,7 @@ export class TelegramClient {
                 return await this.sendGroupMessage(telegramLink, verified)
             }
         } catch (e) {
-            logger.error(e)
+            this.logger.error(e)
             return ContactHistoryStatusType.UNKNOWN
         }
     }
@@ -310,8 +383,6 @@ export class TelegramClient {
 
     private async checkQueuedContact(queuedContact: QueuedContact, token: Token): Promise<void> {
         if (queuedContact) {
-            await this.driver.sleep(this.messagesDelay * 1000)
-
             if (token.contactStatus === TokenContactStatusType.RESPONDED) {
                 await this.contactQueueService.removeFromQueue(queuedContact.address, queuedContact.blockchain)
 
@@ -338,13 +409,22 @@ export class TelegramClient {
 
     private async postSendingCheck(): Promise<void> {
         if (!this.telegramAccount.isDisabled) {
+            await this.driver.sleep(this.messagesDelay * 1000)
             const contactMethod = await this.startContacting()
             return contactMethod
         }
     }
 
+    public async destroyDriver(): Promise<void> {
+        if (this.driver) {
+            await this.driver.quit()
+        }
+    }
+
     public async startContacting(): Promise<void> {
-        const queuedContact = await this.contactQueueService.getFirstFromQueue(ContactMethod.TELEGRAM)
+        await this.driver.sleep(getRandomNumber(1, 10)*1000)
+
+        const queuedContact = await this.contactQueueService.getFirstFromQueue(ContactMethod.TELEGRAM, this.logger)
 
         if (queuedContact) {
             const token = await this.tokenService.findByAddress(queuedContact.address, queuedContact.blockchain)
@@ -352,7 +432,7 @@ export class TelegramClient {
             if (!token) {
                 await this.contactQueueService.removeFromQueue(queuedContact.address, queuedContact.blockchain)
 
-                log(
+                this.log(
                     `No token for ${queuedContact.address} :: ${queuedContact.blockchain} . Skipping`
                 )
 
@@ -370,6 +450,8 @@ export class TelegramClient {
 
             switch (result) {
                 case ContactHistoryStatusType.ACCOUNT_NOT_AUTHORIZED:
+                    await this.contactQueueService.setProcessing(queuedContact, false)
+
                     await this.login()
                     await this.driver.sleep(60000)
                     if (!await this.isLoggedIn()) {
@@ -381,13 +463,20 @@ export class TelegramClient {
                     } else {
                         return this.startContacting()
                     }
+                case ContactHistoryStatusType.ACCOUNT_GROUP_JOIN_LIMIT_HIT:
+                    await this.contactQueueService.setProcessing(queuedContact, false)
+
+                    return
                 case ContactHistoryStatusType.ACCOUNT_LIMIT_HIT:
+                    await this.contactQueueService.setProcessing(queuedContact, false)
                     this.log(
                         `Account hit limit`
                     )
                     await this.telegramService.setAccountLimitHitDate(this.telegramAccount, moment().add(2, 'day').toDate())
                     return
                 case ContactHistoryStatusType.ACCOUNT_TEMP_BANNED:
+                    await this.contactQueueService.setProcessing(queuedContact, false)
+
                     this.log(
                         `Account temporarily banned`
                     )
@@ -420,13 +509,11 @@ export class TelegramClient {
 
             await this.tokenService.saveTokenContactInfo(token)
         }
-
-        await this.driver.sleep(30000)
         await this.postSendingCheck()
     }
 
     private log(message: string): void {
-        logger.info(
+        this.logger.info(
             `[Telegram Worker ${this.telegramAccount.id}] ` +
             message
         )

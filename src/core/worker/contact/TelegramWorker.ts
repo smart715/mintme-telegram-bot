@@ -1,5 +1,6 @@
 import { singleton } from 'tsyringe'
 import config from 'config'
+import { Logger } from 'winston'
 import { TelegramClient } from './telegram'
 import { TelegramAccount } from '../../entity'
 import {
@@ -8,12 +9,13 @@ import {
     TelegramService,
     ContactMessageService,
     ContactQueueService,
+    ProxyService,
 } from '../../service'
-import { logger } from '../../../utils'
+import { sleep } from '../../../utils'
 
 @singleton()
 export class TelegramWorker {
-    private readonly maxTelegramAccounts: number = config.get('telegram_max_accounts')
+    private readonly maxTelegramAccounts: number = config.get('telegram_max_accounts_simultaneous')
     private readonly serverIP: string = config.get('server_ip')
 
     private telegramClients: TelegramClient[] = []
@@ -24,6 +26,8 @@ export class TelegramWorker {
         private readonly contactMessageService: ContactMessageService,
         private readonly contactQueueService: ContactQueueService,
         private readonly tokenService: TokensService,
+        private readonly proxyService: ProxyService,
+        private readonly logger: Logger,
     ) { }
 
     private async initializeNewAccountManager(tgAccount: TelegramAccount): Promise<TelegramClient> {
@@ -33,7 +37,9 @@ export class TelegramWorker {
             this.contactQueueService,
             this.tokenService,
             this.telegramService,
+            this.proxyService,
             tgAccount,
+            this.logger
         )
 
         await tgAccountManager.initialize()
@@ -42,20 +48,27 @@ export class TelegramWorker {
     }
 
     public async run(): Promise<void> {
-        this.telegramClients = []
-        const currentServerAccounts = await this.telegramService.getServerAccounts(this.serverIP)
+        const allAccounts = await this.telegramService.getAllAccounts()
+        let currentAccountIndex: number = 0
+        while (currentAccountIndex < allAccounts.length) {
+            this.telegramClients = []
+            for (let i = 0; i < this.maxTelegramAccounts; i++) {
+                const account = allAccounts[currentAccountIndex]
+                if (account) {
+                    this.telegramClients.push(await this.initializeNewAccountManager(account))
+                }
+                currentAccountIndex++
+            }
 
-        for (let i = 0; i < this.maxTelegramAccounts; i++) {
-            if (currentServerAccounts[i]) {
-                this.telegramClients.push(await this.initializeNewAccountManager(currentServerAccounts[i]))
-            } else {
-                await this.requestNewAccount()
+            await this.startContactingAllManagers(this.telegramClients)
+
+            for (const client of this.telegramClients) {
+                await client.destroyDriver()
             }
         }
-
-        await this.startContactingAllManagers(this.telegramClients)
-
-        logger.info('Initialized Telegram clients: ', this.telegramClients.length)
+        await sleep(60000)
+        const restart = await this.run()
+        return restart
     }
 
     public async disableAccount(telegramAccount: TelegramAccount): Promise<void> {
@@ -71,34 +84,34 @@ export class TelegramWorker {
         if (newAccount) {
             this.telegramClients.push(await this.initializeNewAccountManager(newAccount))
         } else {
-            logger.warn('No accounts stock available')
+            this.logger.warn('No accounts stock available')
         }
     }
 
     private startContactingAllManagers(clients: TelegramClient[]): Promise<void[]> {
         const contactingPromises: Promise<void>[] = []
 
-        clients.forEach((client) => {
+        for (const client of clients) {
             if (!client.isInitialized) {
-                logger.warn(
+                this.logger.warn(
                     `[Telegram Worker ID: ${client.telegramAccount.id}] ` +
                     `Not initialized.`
                 )
 
-                return
+                continue
             }
 
             if (!client.accountMessages?.length) {
-                logger.warn(
+                this.logger.warn(
                     `[Telegram Worker ID: ${client.telegramAccount.id}] ` +
                     `No messages stock available, Account not able to start messaging.`
                 )
 
-                return
+                continue
             }
 
             contactingPromises.push(client.startContacting())
-        })
+        }
 
         return Promise.all(contactingPromises)
     }

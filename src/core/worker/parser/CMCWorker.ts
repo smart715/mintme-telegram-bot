@@ -1,10 +1,11 @@
 import { singleton } from 'tsyringe'
 import { ParserWorkersService, TokensService } from '../../service'
 import { AbstractTokenWorker } from '../AbstractTokenWorker'
-import { Blockchain, logger, parseBlockchainName, sleep } from '../../../utils'
+import { Blockchain, parseBlockchainName, sleep } from '../../../utils'
 import config from 'config'
 import { CMCCryptocurrency } from '../../../types'
 import { CMCWorkerConfig } from '../../types'
+import { Logger } from 'winston'
 
 @singleton()
 export class CMCWorker extends AbstractTokenWorker {
@@ -15,12 +16,13 @@ export class CMCWorker extends AbstractTokenWorker {
     public constructor(
         private readonly parserWorkersService: ParserWorkersService,
         private readonly tokensService: TokensService,
+        private readonly logger: Logger
     ) {
         super()
     }
 
     public async run(): Promise<any> {
-        logger.info(`${this.prefixLog} Worker started`)
+        this.logger.info(`${this.prefixLog} Worker started`)
 
         const requestLimit = config.get<CMCWorkerConfig>('cmcWorker')['requestLimit']
         let requestOffset = config.get<CMCWorkerConfig>('cmcWorker')['requestOffset']
@@ -37,13 +39,13 @@ export class CMCWorker extends AbstractTokenWorker {
             requestOffset += requestLimit
         }
 
-        logger.info(`${this.prefixLog} worker finished`)
+        this.logger.info(`${this.prefixLog} worker finished`)
     }
 
     private async processTokens(tokens: CMCCryptocurrency[]): Promise<void> {
         for (const token of tokens) {
             if (!token.platform?.token_address) {
-                logger.warn(`${this.prefixLog} No address info found for ${token.name} . Skipping`)
+                this.logger.warn(`${this.prefixLog} No address info found for ${token.name} . Skipping`)
 
                 continue
             }
@@ -52,13 +54,13 @@ export class CMCWorker extends AbstractTokenWorker {
             try {
                 blockchain = parseBlockchainName(token.platform.slug)
             } catch (err) {
-                logger.warn(`${this.prefixLog} Unknown blockchain (${token.platform.slug}) for ${token.name} . Skipping`)
+                this.logger.warn(`${this.prefixLog} Unknown blockchain (${token.platform.slug}) for ${token.name} . Skipping`)
 
                 continue
             }
 
             if (!this.supportedBlockchains.includes(blockchain)) {
-                logger.warn(`${this.prefixLog} Different blockchain found ${token.name} . Skipping`)
+                this.logger.warn(`${this.prefixLog} Different blockchain found ${token.name} . Skipping`)
 
                 continue
             }
@@ -66,7 +68,7 @@ export class CMCWorker extends AbstractTokenWorker {
             const tokenInfos = await this.parserWorkersService.getCmcTokenInfo(token.slug)
 
             if (!tokenInfos.data || !tokenInfos.data[token.id]) {
-                logger.info(`${this.prefixLog} No token info found for ${token.name} . Skipping`)
+                this.logger.warn(`${this.prefixLog} No token info found for ${token.name} . Skipping`)
 
                 continue
             }
@@ -90,16 +92,18 @@ export class CMCWorker extends AbstractTokenWorker {
                     blockchain,
                 )
 
-                logger.info(
+                this.logger.info(
                     `${this.prefixLog} Token saved to database: `,
-                    tokenAddress,
-                    tokenName,
-                    website,
-                    email,
-                    blockchain
+                    [
+                        tokenAddress,
+                        tokenName,
+                        website,
+                        email,
+                        blockchain
+                    ]
                 )
             } else {
-                logger.info(`${this.prefixLog} ${token.name} already added. Skipping`)
+                this.logger.info(`${this.prefixLog} ${token.name} already added. Skipping`)
             }
 
             await sleep(2000)
