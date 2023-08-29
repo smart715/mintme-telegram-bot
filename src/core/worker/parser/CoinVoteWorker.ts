@@ -1,7 +1,7 @@
 import { singleton } from 'tsyringe'
 import { AbstractTokenWorker } from '../AbstractTokenWorker'
 import { Blockchain, findContractAddress, getHrefFromTagString, getHrefValuesFromTagString, sleep } from '../../../utils'
-import { CoinVoteService, ParserCheckedTokenService, TokensService } from '../../service'
+import { CoinVoteService, CheckedTokenService, TokensService } from '../../service'
 import { DOMWindow, JSDOM } from 'jsdom'
 import { Logger } from 'winston'
 
@@ -16,7 +16,7 @@ export class CoinVoteWorker extends AbstractTokenWorker {
     public constructor(
         private readonly coinVoteService: CoinVoteService,
         private readonly tokenService: TokensService,
-        private readonly parserCheckedTokenService: ParserCheckedTokenService,
+        private readonly checkedTokenService: CheckedTokenService,
         private readonly logger: Logger,
     ) {
         super()
@@ -48,7 +48,7 @@ export class CoinVoteWorker extends AbstractTokenWorker {
             }
 
             for (const coinId of coinsIds) {
-                if (await this.parserCheckedTokenService.isChecked(coinId, this.workerName)) {
+                if (await this.checkedTokenService.isChecked(coinId, this.workerName)) {
                     this.logger.warn(`${this.prefixLog} Coin ${coinId} already checked. Skipping`)
 
                     continue
@@ -83,13 +83,13 @@ export class CoinVoteWorker extends AbstractTokenWorker {
                     this.logger.warn(`${this.prefixLog} Address for coin ${coinId} not found.`)
                 }
 
-                await this.parserCheckedTokenService.saveAsChecked(coinId, this.workerName)
+                await this.checkedTokenService.saveAsChecked(coinId, this.workerName)
 
                 await sleep(2000)
             }
 
             if (coinsIds.length < this.maxItemsOnPage) {
-                this.logger.warn(`${this.prefixLog} Coins amount (${coinsIds.length}) less than max. Its last page`)
+                this.logger.info(`${this.prefixLog} Coins amount (${coinsIds.length}) less than max. Its last page`)
 
                 break
             }

@@ -1,11 +1,11 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
 
-export class ParserCheckedToken1692783793615 implements MigrationInterface {
-    public name = 'ParserCheckedToken1692783793615'
+export class CheckedToken1692783793615 implements MigrationInterface {
+    public name = 'CheckedToken1692783793615'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
-            CREATE TABLE \`parser_checked_token\`
+            CREATE TABLE \`checked_token\`
             (
                 \`id\` int NOT NULL AUTO_INCREMENT,
                 \`token_id\` varchar(255) NOT NULL,

@@ -1,7 +1,7 @@
 import { singleton } from 'tsyringe'
 import { AbstractTokenWorker } from '../AbstractTokenWorker'
 import { Blockchain, sleep } from '../../../utils'
-import { CoinScopeService, ParserCheckedTokenService, SeleniumService, TokensService } from '../../service'
+import { CoinScopeService, CheckedTokenService, SeleniumService, TokensService } from '../../service'
 import { JSDOM } from 'jsdom'
 import { WebDriver } from 'selenium-webdriver'
 import { Logger } from 'winston'
@@ -17,7 +17,7 @@ export class CoinScopeWorker extends AbstractTokenWorker {
     public constructor(
         private readonly coinScopeService: CoinScopeService,
         private readonly tokensService: TokensService,
-        private readonly parserCheckedTokenService: ParserCheckedTokenService,
+        private readonly checkedTokenService: CheckedTokenService,
         private readonly logger: Logger,
     ) {
         super()
@@ -53,7 +53,7 @@ export class CoinScopeWorker extends AbstractTokenWorker {
             }
 
             for (const coinSlug of coinSlugs) {
-                if (await this.parserCheckedTokenService.isChecked(coinSlug.toLowerCase(), this.workerName)) {
+                if (await this.checkedTokenService.isChecked(coinSlug.toLowerCase(), this.workerName)) {
                     this.logger.warn(`Found cached data for ${coinSlug}. Skipping`)
 
                     continue
@@ -73,7 +73,7 @@ export class CoinScopeWorker extends AbstractTokenWorker {
     private async processTokenData(tokenId: string, currentBlockchain: Blockchain): Promise<void> {
         const tokenData = await this.scrapeTokenData(tokenId)
 
-        await this.parserCheckedTokenService.saveAsChecked(
+        await this.checkedTokenService.saveAsChecked(
             tokenId.toLowerCase(),
             this.workerName,
         )

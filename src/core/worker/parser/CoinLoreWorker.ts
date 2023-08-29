@@ -1,6 +1,6 @@
 import { singleton } from 'tsyringe'
 import { AbstractTokenWorker } from '../AbstractTokenWorker'
-import { CoinLoreService, ParserCheckedTokenService, TokensService } from '../../service'
+import { CoinLoreService, CheckedTokenService, TokensService } from '../../service'
 import { Blockchain } from '../../../utils'
 import config from 'config'
 import { DOMWindow, JSDOM } from 'jsdom'
@@ -16,7 +16,7 @@ export class CoinLoreWorker extends AbstractTokenWorker {
     public constructor(
         private coinLoreService: CoinLoreService,
         private tokensService: TokensService,
-        private parserCheckedTokenService: ParserCheckedTokenService,
+        private checkedTokenService: CheckedTokenService,
         private logger: Logger,
     ) {
         super()
@@ -39,7 +39,7 @@ export class CoinLoreWorker extends AbstractTokenWorker {
 
     public async processTokens(coins: any[]): Promise<any> {
         for (const coin of coins) {
-            if (await this.parserCheckedTokenService.isChecked(coin.nameid, this.workerName)) {
+            if (await this.checkedTokenService.isChecked(coin.nameid, this.workerName)) {
                 this.logger.warn(`${coin.nameid} already checked. Skipping`)
 
                 continue
@@ -52,7 +52,7 @@ export class CoinLoreWorker extends AbstractTokenWorker {
             const links = this.parseLinks(pageDOM)
             const coinBlockchain = this.parseBlockchain(pageDOM)
 
-            await this.parserCheckedTokenService.saveAsChecked(coin.nameid, this.workerName)
+            await this.checkedTokenService.saveAsChecked(coin.nameid, this.workerName)
 
             if (!coinBlockchain || !this.supportedBlockchains.includes(coinBlockchain) || !tokenAddress) {
                 this.logger.warn(

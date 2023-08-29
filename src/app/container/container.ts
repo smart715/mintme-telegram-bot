@@ -81,8 +81,8 @@ import {
     MyEtherListsWorker,
     RecentTokensService,
     RecentTokensWorker,
-    ParserCheckedTokenRepository,
-    ParserCheckedTokenService,
+    CheckedTokenRepository,
+    CheckedTokenService,
     CoinLoreService,
     CMCService,
     CoinScopeService,
@@ -187,8 +187,8 @@ container.register(NewestCheckedTokenRepository, {
     useFactory: instanceCachingFactory(() => getConnection().getCustomRepository(NewestCheckedTokenRepository)),
 })
 
-container.register(ParserCheckedTokenRepository, {
-    useFactory: instanceCachingFactory(() => getConnection().getCustomRepository(ParserCheckedTokenRepository)),
+container.register(CheckedTokenRepository, {
+    useFactory: instanceCachingFactory(() => getConnection().getCustomRepository(CheckedTokenRepository)),
 })
 
 // Utils
@@ -285,10 +285,10 @@ container.register(ContactHistoryService, {
     ),
 })
 
-container.register(ParserCheckedTokenService, {
+container.register(CheckedTokenService, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
-        new ParserCheckedTokenService(
-            dependencyContainer.resolve(ParserCheckedTokenRepository)
+        new CheckedTokenService(
+            dependencyContainer.resolve(CheckedTokenRepository)
         ),
     ),
 })
@@ -392,7 +392,7 @@ container.register(CMCWorker, {
         new CMCWorker(
             dependencyContainer.resolve(CMCService),
             dependencyContainer.resolve(TokensService),
-            dependencyContainer.resolve(ParserCheckedTokenService),
+            dependencyContainer.resolve(CheckedTokenService),
             createLogger(CMCWorker.name.toLowerCase()),
         ),
     ),
@@ -719,7 +719,7 @@ container.register(CoinVoteWorker, {
         new CoinVoteWorker(
             dependencyContainer.resolve(CoinVoteService),
             dependencyContainer.resolve(TokensService),
-            dependencyContainer.resolve(ParserCheckedTokenService),
+            dependencyContainer.resolve(CheckedTokenService),
             createLogger(CoinVoteWorker.name.toLowerCase()),
         )
     ),
@@ -762,7 +762,7 @@ container.register(CoinsGodsWorker, {
         new CoinsGodsWorker(
             dependencyContainer.resolve(CoinsGodsService),
             dependencyContainer.resolve(TokensService),
-            dependencyContainer.resolve(ParserCheckedTokenService),
+            dependencyContainer.resolve(CheckedTokenService),
             createLogger(CoinsGodsWorker.name.toLowerCase()),
         )
     ),
@@ -773,7 +773,7 @@ container.register(Coin360Worker, {
         new Coin360Worker(
             dependencyContainer.resolve(Coins360Service),
             dependencyContainer.resolve(TokensService),
-            dependencyContainer.resolve(ParserCheckedTokenService),
+            dependencyContainer.resolve(CheckedTokenService),
             createLogger(Coin360Worker.name.toLowerCase()),
         )
     ),
@@ -784,7 +784,6 @@ container.register(CoinSniperWorker, {
         new CoinSniperWorker(
             dependencyContainer.resolve(CoinSniperService),
             dependencyContainer.resolve(TokensService),
-            dependencyContainer.resolve(ParserCheckedTokenService),
             dependencyContainer.resolve(NewestCheckedTokenService),
             createLogger(CoinSniperWorker.name.toLowerCase()),
         )
@@ -796,7 +795,7 @@ container.register(CoinLoreWorker, {
         new CoinLoreWorker(
             dependencyContainer.resolve(CoinLoreService),
             dependencyContainer.resolve(TokensService),
-            dependencyContainer.resolve(ParserCheckedTokenService),
+            dependencyContainer.resolve(CheckedTokenService),
             createLogger(CoinLoreWorker.name.toLowerCase()),
         )
     ),
@@ -807,7 +806,7 @@ container.register(CoinScopeWorker, {
         new CoinScopeWorker(
             dependencyContainer.resolve(CoinScopeService),
             dependencyContainer.resolve(TokensService),
-            dependencyContainer.resolve(ParserCheckedTokenService),
+            dependencyContainer.resolve(CheckedTokenService),
             createLogger(CoinScopeWorker.name.toLowerCase()),
         )
     ),

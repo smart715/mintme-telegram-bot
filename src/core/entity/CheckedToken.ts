@@ -3,7 +3,7 @@ import { BeforeInsert, BeforeUpdate, Column, Entity, Index, PrimaryGeneratedColu
 @Entity()
 @Unique('UQ_TOKEN_ID_SOURCE', [ 'tokenId', 'source' ])
 @Index('IDX_SOURCE', [ 'source' ])
-export class ParserCheckedToken {
+export class CheckedToken {
     @PrimaryGeneratedColumn()
     public readonly id!: number
 

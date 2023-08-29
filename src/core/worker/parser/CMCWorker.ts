@@ -1,5 +1,5 @@
 import { singleton } from 'tsyringe'
-import { CMCService, ParserCheckedTokenService, TokensService } from '../../service'
+import { CMCService, CheckedTokenService, TokensService } from '../../service'
 import { AbstractTokenWorker } from '../AbstractTokenWorker'
 import { Blockchain, parseBlockchainName, sleep } from '../../../utils'
 import config from 'config'
@@ -16,7 +16,7 @@ export class CMCWorker extends AbstractTokenWorker {
     public constructor(
         private readonly cmcService: CMCService,
         private readonly tokensService: TokensService,
-        private readonly parserCheckedTokenService: ParserCheckedTokenService,
+        private readonly checkedTokenService: CheckedTokenService,
         private readonly logger: Logger
     ) {
         super()
@@ -45,13 +45,13 @@ export class CMCWorker extends AbstractTokenWorker {
 
     private async processTokens(tokens: CMCCryptocurrency[]): Promise<void> {
         for (const token of tokens) {
-            if (await this.parserCheckedTokenService.isChecked(token.slug, this.workerName)) {
+            if (await this.checkedTokenService.isChecked(token.slug, this.workerName)) {
                 this.logger.warn(`${this.prefixLog} ${token.slug} already checked. Skipping`)
 
                 continue
             }
 
-            await this.parserCheckedTokenService.saveAsChecked(token.slug, this.workerName)
+            await this.checkedTokenService.saveAsChecked(token.slug, this.workerName)
 
             if (!token.platform?.token_address) {
                 this.logger.warn(`${this.prefixLog} No address info found for ${token.name} . Skipping`)

@@ -1,6 +1,6 @@
 import { singleton } from 'tsyringe'
 import { AbstractTokenWorker } from '../AbstractTokenWorker'
-import { Coins360Service, ParserCheckedTokenService, TokensService } from '../../service'
+import { Coins360Service, CheckedTokenService, TokensService } from '../../service'
 import { Blockchain, sleep } from '../../../utils'
 import { JSDOM } from 'jsdom'
 import { Logger } from 'winston'
@@ -14,7 +14,7 @@ export class Coin360Worker extends AbstractTokenWorker {
     public constructor(
         private readonly coins360Service: Coins360Service,
         private readonly tokenService: TokensService,
-        private readonly parserCheckedTokenService: ParserCheckedTokenService,
+        private readonly checkedTokenService: CheckedTokenService,
         private readonly logger: Logger,
     ) {
         super()
@@ -32,7 +32,7 @@ export class Coin360Worker extends AbstractTokenWorker {
 
             const coinId = coin.n.toLowerCase().replace(' ', '-') + '-' + coin.s.toLowerCase().trim()
 
-            if (await this.parserCheckedTokenService.isChecked(coinId, this.workerName)) {
+            if (await this.checkedTokenService.isChecked(coinId, this.workerName)) {
                 this.logger.warn(`${this.prefixLog} Coin ${coinId} already checked. Skipping`)
 
                 continue
@@ -94,7 +94,7 @@ export class Coin360Worker extends AbstractTokenWorker {
                 this.logger.warn(`${this.prefixLog} Unsupported blockchain or wrong data for ${coinId}. Skipping`)
             }
 
-            await this.parserCheckedTokenService.saveAsChecked(coinId, this.workerName)
+            await this.checkedTokenService.saveAsChecked(coinId, this.workerName)
 
             await sleep(2000)
         }

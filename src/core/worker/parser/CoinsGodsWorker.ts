@@ -1,6 +1,6 @@
 import { singleton } from 'tsyringe'
 import { AbstractTokenWorker } from '../AbstractTokenWorker'
-import { CoinsGodsService, ParserCheckedTokenService, TokensService } from '../../service'
+import { CoinsGodsService, CheckedTokenService, TokensService } from '../../service'
 import { Blockchain, parseBlockchainName, sleep } from '../../../utils'
 import { DOMWindow, JSDOM } from 'jsdom'
 import { Logger } from 'winston'
@@ -14,7 +14,7 @@ export class CoinsGodsWorker extends AbstractTokenWorker {
     public constructor(
         private readonly coinsGodsService: CoinsGodsService,
         private readonly tokenService: TokensService,
-        private readonly parserCheckedTokenService: ParserCheckedTokenService,
+        private readonly checkedTokenService: CheckedTokenService,
         private readonly logger: Logger,
     ) {
         super()
@@ -29,7 +29,7 @@ export class CoinsGodsWorker extends AbstractTokenWorker {
         const coinsIds = this.getCoinsIds(pageDOM)
 
         for (const coinId of coinsIds) {
-            if (await this.parserCheckedTokenService.isChecked(coinId, this.workerName)) {
+            if (await this.checkedTokenService.isChecked(coinId, this.workerName)) {
                 this.logger.warn(`${this.prefixLog} Coin ${coinId} already checked. Skipping`)
 
                 continue
@@ -84,7 +84,7 @@ export class CoinsGodsWorker extends AbstractTokenWorker {
                 )
             }
 
-            await this.parserCheckedTokenService.saveAsChecked(coinId, this.workerName)
+            await this.checkedTokenService.saveAsChecked(coinId, this.workerName)
 
             await sleep(2000)
         }
