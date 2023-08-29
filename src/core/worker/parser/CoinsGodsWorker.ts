@@ -29,8 +29,8 @@ export class CoinsGodsWorker extends AbstractTokenWorker {
         const coinsIds = this.getCoinsIds(pageDOM)
 
         for (const coinId of coinsIds) {
-            if (await this.parserCheckedTokenService.isCached(coinId, this.workerName)) {
-                this.logger.warn(`${this.prefixLog} Data for coin ${coinId} already cached. Skipping`)
+            if (await this.parserCheckedTokenService.isChecked(coinId, this.workerName)) {
+                this.logger.warn(`${this.prefixLog} Coin ${coinId} already checked. Skipping`)
 
                 continue
             }
@@ -75,9 +75,7 @@ export class CoinsGodsWorker extends AbstractTokenWorker {
 
                 this.logger.info(
                     `${this.prefixLog} Token saved to database:`,
-                    tokenAddress,
-                    tokenName,
-                    website,
+                    [ tokenAddress, tokenName, blockchain ],
                 )
             } else {
                 this.logger.warn(
@@ -86,7 +84,7 @@ export class CoinsGodsWorker extends AbstractTokenWorker {
                 )
             }
 
-            await this.parserCheckedTokenService.cacheTokenData(coinId, this.workerName)
+            await this.parserCheckedTokenService.saveAsChecked(coinId, this.workerName)
 
             await sleep(2000)
         }

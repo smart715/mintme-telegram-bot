@@ -796,6 +796,7 @@ container.register(CoinSniperWorker, {
             dependencyContainer.resolve(CoinSniperService),
             dependencyContainer.resolve(TokensService),
             dependencyContainer.resolve(ParserCheckedTokenService),
+            dependencyContainer.resolve(NewestCheckedTokenService),
             createLogger(CoinSniperWorker.name.toLowerCase()),
         )
     ),

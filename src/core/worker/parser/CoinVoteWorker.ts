@@ -48,8 +48,8 @@ export class CoinVoteWorker extends AbstractTokenWorker {
             }
 
             for (const coinId of coinsIds) {
-                if (await this.parserCheckedTokenService.isCached(coinId, this.workerName)) {
-                    this.logger.warn(`${this.prefixLog} Data for coin ${coinId} already cached. Skipping`)
+                if (await this.parserCheckedTokenService.isChecked(coinId, this.workerName)) {
+                    this.logger.warn(`${this.prefixLog} Coin ${coinId} already checked. Skipping`)
 
                     continue
                 }
@@ -77,18 +77,13 @@ export class CoinVoteWorker extends AbstractTokenWorker {
 
                     this.logger.info(
                         `${this.prefixLog} Token saved to database:`,
-                        [
-                            tokenAddress,
-                            tokenName,
-                            website,
-                            currentBlockchain,
-                        ],
+                        [ tokenAddress, tokenName, currentBlockchain ],
                     )
                 } else {
                     this.logger.warn(`${this.prefixLog} Address for coin ${coinId} not found.`)
                 }
 
-                await this.parserCheckedTokenService.cacheTokenData(coinId, this.workerName)
+                await this.parserCheckedTokenService.saveAsChecked(coinId, this.workerName)
 
                 await sleep(2000)
             }

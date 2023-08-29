@@ -39,7 +39,7 @@ export class CoinLoreWorker extends AbstractTokenWorker {
 
     public async processTokens(coins: any[]): Promise<any> {
         for (const coin of coins) {
-            if (await this.parserCheckedTokenService.isCached(coin.nameid, this.workerName)) {
+            if (await this.parserCheckedTokenService.isChecked(coin.nameid, this.workerName)) {
                 this.logger.warn(`${coin.nameid} already checked. Skipping`)
 
                 continue
@@ -52,7 +52,7 @@ export class CoinLoreWorker extends AbstractTokenWorker {
             const links = this.parseLinks(pageDOM)
             const coinBlockchain = this.parseBlockchain(pageDOM)
 
-            await this.parserCheckedTokenService.cacheTokenData(coin.nameid, this.workerName)
+            await this.parserCheckedTokenService.saveAsChecked(coin.nameid, this.workerName)
 
             if (!coinBlockchain || !this.supportedBlockchains.includes(coinBlockchain) || !tokenAddress) {
                 this.logger.warn(
@@ -75,12 +75,7 @@ export class CoinLoreWorker extends AbstractTokenWorker {
 
             this.logger.info(
                 `${this.prefixLog} Token saved to database:`,
-                [
-                    tokenAddress,
-                    `${coin.name} (${coin.symbol})`,
-                    this.workerName,
-                    coinBlockchain,
-                ],
+                [ tokenAddress, `${coin.name} (${coin.symbol})`, coinBlockchain ],
             )
         }
     }

@@ -4,10 +4,12 @@ import { Blockchain } from '../../../utils'
 
 @singleton()
 export class CoinSniperService {
-    public async loadTokens(blockchain: Blockchain, page: number): Promise<any> {
-        const response = await axios.get(`https://coinsniper.net/set-filters?network=${blockchain.toLowerCase()}&page=${page}`)
+    public getBlockchainFilterPageUrl(blockchain: Blockchain): string {
+        return `https://coinsniper.net/set-filters?network=${blockchain}#all-coins`
+    }
 
-        return response.data.replace(/(\r\n|\n|\r)/gm, '')
+    public getNewTokensPageUrl(page: number): string {
+        return `https://coinsniper.net/new?page=${page}`
     }
 
     public async loadToken(tokenId: string): Promise<string> {

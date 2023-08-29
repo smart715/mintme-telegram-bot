@@ -85,7 +85,7 @@ export enum CasualTokenWorkerNames {
     COIN_VOTE = 'coin-vote',
     COINS_HUNTER = 'coins-hunter',
     COINS_GODS = 'coins-gods',
-    COIN_360 = 'coin-360',
+    COIN_360 = 'coins-360',
     COIN_SNIPER = 'coin-sniper',
     COINMARKETCAP = 'coinmarketcap',
     COIN_LORE = 'coin-lore',

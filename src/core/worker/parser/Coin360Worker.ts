@@ -32,8 +32,8 @@ export class Coin360Worker extends AbstractTokenWorker {
 
             const coinId = coin.n.toLowerCase().replace(' ', '-') + '-' + coin.s.toLowerCase().trim()
 
-            if (await this.parserCheckedTokenService.isCached(coinId, this.workerName)) {
-                this.logger.warn(`${this.prefixLog} Data for coin ${coinId} already cached. Skipping`)
+            if (await this.parserCheckedTokenService.isChecked(coinId, this.workerName)) {
+                this.logger.warn(`${this.prefixLog} Coin ${coinId} already checked. Skipping`)
 
                 continue
             }
@@ -88,18 +88,13 @@ export class Coin360Worker extends AbstractTokenWorker {
 
                 this.logger.info(
                     `${this.prefixLog} Token saved to database:`,
-                    [
-                        tokenAddress,
-                        tokenName,
-                        website,
-                        blockchain,
-                    ],
+                    [ tokenAddress, tokenName, blockchain ],
                 )
             } else {
                 this.logger.warn(`${this.prefixLog} Unsupported blockchain or wrong data for ${coinId}. Skipping`)
             }
 
-            await this.parserCheckedTokenService.cacheTokenData(coinId, this.workerName)
+            await this.parserCheckedTokenService.saveAsChecked(coinId, this.workerName)
 
             await sleep(2000)
         }

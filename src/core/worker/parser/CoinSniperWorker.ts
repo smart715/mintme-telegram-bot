@@ -1,27 +1,35 @@
 import { singleton } from 'tsyringe'
-import { AbstractTokenWorker } from '../AbstractTokenWorker'
 import { Blockchain, sleep } from '../../../utils'
-import { CoinSniperService, ParserCheckedTokenService, TokensService } from '../../service'
+import { CoinSniperService, NewestCheckedTokenService, ParserCheckedTokenService, SeleniumService, TokensService } from '../../service'
 import { DOMWindow, JSDOM } from 'jsdom'
 import { Logger } from 'winston'
+import { WebDriver } from 'selenium-webdriver'
+import { AbstractTokenWorker } from '../AbstractTokenWorker'
 
 @singleton()
 export class CoinSniperWorker extends AbstractTokenWorker {
-    private readonly workerName = 'CoinSniper'
+    protected readonly workerName = 'CoinSniper'
     private readonly prefixLog = `[${this.workerName}]`
     private readonly supportedBlockchains: Blockchain[] = [ Blockchain.ETH, Blockchain.BSC ]
+
+    private webDriver: WebDriver
 
     public constructor(
         private readonly coinSniperService: CoinSniperService,
         private readonly tokenService: TokensService,
         private readonly parserCheckedTokenService: ParserCheckedTokenService,
-        private readonly logger: Logger,
+        private readonly newestTokenCheckedService: NewestCheckedTokenService,
+        protected readonly logger: Logger,
     ) {
         super()
     }
 
     public async run(): Promise<void> {
+        this.webDriver = await SeleniumService.createDriver('', undefined, this.logger)
+
         for (const blockchain of this.supportedBlockchains) {
+            await this.webDriver.get(this.coinSniperService.getBlockchainFilterPageUrl(blockchain))
+
             await this.runByBlockchain(blockchain)
         }
     }
@@ -31,22 +39,40 @@ export class CoinSniperWorker extends AbstractTokenWorker {
 
         let page = 1
 
-        while (true) { // eslint-disable-line
+        const newestChecked = await this.newestTokenCheckedService.findOne(this.workerName, currentBlockchain)
+
+        let firstChecked = null
+        let parsingCompleted = false
+        while (!parsingCompleted) {
             // todo: fix cloudflare
-            const pageContentSource = await this.coinSniperService.loadTokens(currentBlockchain, page)
-            const pageDOM = (new JSDOM(pageContentSource)).window
+            await this.webDriver.get(this.coinSniperService.getNewTokensPageUrl(page))
+            const pageDOM = (new JSDOM(await this.webDriver.getPageSource())).window
 
             const coinsIds = this.getCoinsIds(pageDOM)
 
             if (!coinsIds.length) {
+                parsingCompleted = true
+
                 break
             }
 
             for (const coinId of coinsIds) {
-                if (await this.parserCheckedTokenService.isCached(coinId, this.workerName)) {
-                    this.logger.warn(`${this.prefixLog} Data for coin ${coinId} already cached. Skipping`)
+                if (!firstChecked) {
+                    firstChecked = coinId
+                }
+
+                if (await this.parserCheckedTokenService.isChecked(coinId, this.workerName)) {
+                    this.logger.warn(`${this.prefixLog} Coin ${coinId} already checked. Skipping`)
 
                     continue
+                }
+
+                if (newestChecked && newestChecked.tokenId === coinId) {
+                    parsingCompleted = true
+
+                    this.logger.warn(`${this.prefixLog} Reached newest checked (${coinId}). Breaking`)
+
+                    break
                 }
 
                 const coinPageSource = await this.coinSniperService.loadToken(coinId)
@@ -79,24 +105,24 @@ export class CoinSniperWorker extends AbstractTokenWorker {
 
                     this.logger.info(
                         `${this.prefixLog} Token saved to database:`,
-                        [
-                            tokenAddress,
-                            tokenName,
-                            website,
-                            this.workerName,
-                            currentBlockchain,
-                        ],
+                        [ tokenAddress, tokenName, currentBlockchain ],
                     )
                 } else {
                     this.logger.error(`${this.prefixLog} Unsupported blockchain or wrong data for ${coinId}. Skipping`)
                 }
 
-                await this.parserCheckedTokenService.cacheTokenData(coinId, this.workerName)
+                await this.parserCheckedTokenService.saveAsChecked(coinId, this.workerName)
 
                 await sleep(2000)
             }
 
             page++
+        }
+
+        if (parsingCompleted && firstChecked) {
+            this.newestTokenCheckedService.save(this.workerName, firstChecked, currentBlockchain)
+
+            this.logger.error(`${this.prefixLog} Saved ${firstChecked} as newest checked for ${currentBlockchain}.`)
         }
 
         this.logger.info(`${this.prefixLog} worker finished for ${currentBlockchain} blockchain`)

@@ -53,7 +53,7 @@ export class CoinScopeWorker extends AbstractTokenWorker {
             }
 
             for (const coinSlug of coinSlugs) {
-                if (await this.parserCheckedTokenService.isCached(coinSlug.toLowerCase(), this.workerName)) {
+                if (await this.parserCheckedTokenService.isChecked(coinSlug.toLowerCase(), this.workerName)) {
                     this.logger.warn(`Found cached data for ${coinSlug}. Skipping`)
 
                     continue
@@ -73,7 +73,7 @@ export class CoinScopeWorker extends AbstractTokenWorker {
     private async processTokenData(tokenId: string, currentBlockchain: Blockchain): Promise<void> {
         const tokenData = await this.scrapeTokenData(tokenId)
 
-        await this.parserCheckedTokenService.cacheTokenData(
+        await this.parserCheckedTokenService.saveAsChecked(
             tokenId.toLowerCase(),
             this.workerName,
         )
@@ -96,11 +96,7 @@ export class CoinScopeWorker extends AbstractTokenWorker {
 
         this.logger.info(
             `${this.prefixLog} Token saved to database:`,
-            tokenData.tokenAddress,
-            `${tokenData.tokenName} (${tokenId.toUpperCase()})`,
-            tokenData.website,
-            this.workerName,
-            currentBlockchain
+            [ tokenData.tokenAddress, `${tokenData.tokenName} (${tokenId.toUpperCase()})`, currentBlockchain ]
         )
     }
 

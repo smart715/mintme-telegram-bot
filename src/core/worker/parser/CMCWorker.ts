@@ -45,13 +45,13 @@ export class CMCWorker extends AbstractTokenWorker {
 
     private async processTokens(tokens: CMCCryptocurrency[]): Promise<void> {
         for (const token of tokens) {
-            if (await this.parserCheckedTokenService.isCached(token.slug, this.workerName)) {
+            if (await this.parserCheckedTokenService.isChecked(token.slug, this.workerName)) {
                 this.logger.warn(`${this.prefixLog} ${token.slug} already checked. Skipping`)
 
                 continue
             }
 
-            await this.parserCheckedTokenService.cacheTokenData(token.slug, this.workerName)
+            await this.parserCheckedTokenService.saveAsChecked(token.slug, this.workerName)
 
             if (!token.platform?.token_address) {
                 this.logger.warn(`${this.prefixLog} No address info found for ${token.name} . Skipping`)
@@ -102,13 +102,7 @@ export class CMCWorker extends AbstractTokenWorker {
 
             this.logger.info(
                 `${this.prefixLog} Token saved to database: `,
-                [
-                    tokenAddress,
-                    tokenName,
-                    website,
-                    email,
-                    blockchain,
-                ]
+                [ tokenAddress, tokenName, blockchain ]
             )
 
             await sleep(2000)
