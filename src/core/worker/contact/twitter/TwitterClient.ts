@@ -2,17 +2,17 @@
 import moment from 'moment'
 import config from 'config'
 import { Logger } from 'winston'
-import { WebDriver } from 'selenium-webdriver'
-import { TwitterAccount } from '../../../entity'
+import {By, until, WebDriver} from 'selenium-webdriver'
+import {QueuedContact, TwitterAccount} from '../../../entity'
 import {
     ContactHistoryService,
     ContactMessageService,
     ContactQueueService,
-    SeleniumService,
+    SeleniumService, TokensService,
     TwitterService
 } from '../../../service'
 import {getRandomNumber} from '../../../../utils'
-import { ContactMethod} from '../../../types'
+import {ContactHistoryStatusType, ContactMethod, TokenContactStatusType} from '../../../types'
 
 export class TwitterClient {
     private readonly maxMessagesDaily: number = config.get('twitter_dm_limit_daily')
@@ -31,6 +31,7 @@ export class TwitterClient {
         private readonly contactHistoryService: ContactHistoryService,
         private readonly contactMessageService: ContactMessageService,
         private readonly contactQueueService: ContactQueueService,
+        private readonly tokenService: TokensService,
         private readonly logger: Logger,
     ) {
         this.twitterAccount = twitterAccount
@@ -123,36 +124,65 @@ export class TwitterClient {
         await this.twitterService.setAccountAsDisabled(this.twitterAccount)
     }
 
-    private async postSendingCheck(): Promise<void> {
-        if (!this.twitterAccount.isDisabled) {
+    public async startContacting(): Promise<void> {
+        while (true) {
+            await this.driver.sleep(getRandomNumber(1, 10) * 1000)
+
+            const queuedContact = await this.contactQueueService.getFirstFromQueue(ContactMethod.TWITTER, this.logger)
+
+            if (!queuedContact) {
+                this.log('Queued contact doesn\'t have tokens to contact. Waiting ~5 mins...')
+
+                return
+            }
+
+            const token = await this.tokenService.findByAddress(queuedContact.address, queuedContact.blockchain)
+
+            if (!token) {
+                await this.contactQueueService.removeFromQueue(queuedContact.address, queuedContact.blockchain)
+
+                this.log(
+                    `No token for ${queuedContact.address} :: ${queuedContact.blockchain} . Skipping and removed contact from queue`
+                )
+
+                continue
+            }
+
+            if (TokenContactStatusType.RESPONDED === token.contactStatus) {
+                await this.contactQueueService.removeFromQueue(queuedContact.address, queuedContact.blockchain)
+
+                this.log(
+                    `token ${queuedContact.address} :: ${queuedContact.blockchain} was marked as responded . Skipping and removed from queue`
+                )
+
+                continue
+            }
+
+            await this.contactWithToken(queuedContact)
+
             await this.driver.sleep(this.messageDelaySec * 1000)
-            const contactMethod = await this.startContacting()
-            return contactMethod
         }
     }
 
-    public async startContacting(): Promise<void> {
-        await this.driver.sleep(getRandomNumber(1, 10) * 1000)
+    public async contactWithToken(queuedContact: QueuedContact): Promise<void> {
+        const link = queuedContact.channel
 
-        const queuedContact = await this.contactQueueService.getFirstFromQueue(ContactMethod.TWITTER, this.logger)
+        await this.driver.get(link)
 
-        if (!queuedContact) {
-            return await this.postSendingCheck()
+
+        const element = await this.driver.wait(
+            until.elementLocated(By.css(`[data-testid="sendDMFromProfile"]`))
+        );
+
+        if (!element) {
+            this.log(`${link} doesn't have dm opened`)
+
+            return
         }
 
-        const token = await this.tokenService.findByAddress(queuedContact.address, queuedContact.blockchain)
+        await element.click();
 
-        if (!token) {
-            await this.contactQueueService.removeFromQueue(queuedContact.address, queuedContact.blockchain)
-
-            this.log(
-                `No token for ${queuedContact.address} :: ${queuedContact.blockchain} . Skipping`
-            )
-
-            return this.startContacting()
-        }
-
-        ///
+        await this.driver.sleep(20000)
     }
 
     public async destroyDriver(): Promise<void> {
@@ -163,7 +193,7 @@ export class TwitterClient {
 
     private log(message: string): void {
         this.logger.info(
-            `[Telegram Worker ${this.twitterAccount.id}] ` +
+            `[Twitter Worker ${this.twitterAccount.id}] ` +
             message
         )
     }

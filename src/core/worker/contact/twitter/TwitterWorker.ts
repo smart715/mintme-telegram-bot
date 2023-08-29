@@ -1,7 +1,13 @@
 import config from 'config'
 import { singleton } from 'tsyringe'
 import { Logger } from 'winston'
-import {ContactHistoryService, ContactMessageService, ContactQueueService, TwitterService} from '../../../service'
+import {
+    ContactHistoryService,
+    ContactMessageService,
+    ContactQueueService,
+    TokensService,
+    TwitterService
+} from '../../../service'
 import { TwitterAccount } from '../../../entity'
 import { TwitterClient } from './TwitterClient'
 import { sleep } from '../../../../utils'
@@ -17,34 +23,36 @@ export class TwitterWorker {
         private readonly contactHistoryService: ContactHistoryService,
         private readonly contactMessageService: ContactMessageService,
         private readonly contactQueueService: ContactQueueService,
+        private readonly tokenService: TokensService,
         private readonly logger: Logger,
     ) {
     }
 
     public async run(): Promise<void> {
-        const allAccounts = await this.twitterService.getAllAccounts()
+        // eslint-disable-next-line
+        while (true) {
+            const allAccounts = await this.twitterService.getAllAccounts()
 
-        let currentAccountIndex = 0
+            let currentAccountIndex = 0
 
-        while (currentAccountIndex < allAccounts.length && currentAccountIndex < this.maxTwitterAccount) {
-            const account = allAccounts[currentAccountIndex]
+            while (currentAccountIndex < allAccounts.length && currentAccountIndex < this.maxTwitterAccount) {
+                const account = allAccounts[currentAccountIndex]
 
-            const twitterClient = await this.initNewClient(account)
+                const twitterClient = await this.initNewClient(account)
 
-            this.twitterClients.push(twitterClient)
+                this.twitterClients.push(twitterClient)
 
-            currentAccountIndex++
+                currentAccountIndex++
+            }
+
+            await this.startContactingAllManagers()
+
+            for (const client of this.twitterClients) {
+                await client.destroyDriver()
+            }
+
+            await sleep(60000)
         }
-
-        await this.startContactingAllManagers()
-
-        for (const client of this.twitterClients) {
-            await client.destroyDriver()
-        }
-
-        await sleep(60000)
-        const restart = await this.run()
-        return restart
     }
 
     private async initNewClient(twitterAccount: TwitterAccount): Promise<TwitterClient> {
@@ -54,6 +62,7 @@ export class TwitterWorker {
             this.contactHistoryService,
             this.contactMessageService,
             this.contactQueueService,
+            this.tokenService,
             this.logger,
         )
 
