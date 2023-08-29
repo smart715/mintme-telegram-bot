@@ -129,13 +129,14 @@ export class CoinSniperWorker extends AbstractTokenWorker {
     }
 
     private getCoinsIds(dom: DOMWindow): string[] {
-        const coinsRows = dom.document.getElementsByTagName('table')[dom.document.getElementsByTagName('table').length -1]
+        const coinsRows = dom.document
+            .getElementsByTagName('table')[dom.document.getElementsByTagName('table').length - 1]
             .querySelectorAll('[data-listingid]')
 
         return Array.from(coinsRows).map((el) => {
             const link = el.getElementsByTagName('a')[0].href
 
-            return link.split('/')[link.split('/').length-1]
+            return link.split('/')[link.split('/').length - 1]
         })
     }
 }

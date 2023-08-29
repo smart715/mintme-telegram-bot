@@ -1,17 +1,13 @@
-import axios from 'axios'
 import { singleton } from 'tsyringe'
+import { AbstractTokenFetcherService } from './AbstractTokenFetcherService'
 
 @singleton()
-export class CoinsGodsService {
+export class CoinsGodsService extends AbstractTokenFetcherService {
     public async loadTokens(): Promise<string> {
-        const response = await axios.get(`https://coinsgods.com/all-time-best`)
-
-        return response.data.replace(/(\r\n|\n|\r)/gm, '')
+        return this.loadPageContent(`https://coinsgods.com/all-time-best`)
     }
 
     public async loadTokenPage(tokenId: string): Promise<string> {
-        const response = await axios.get(`https://coinsgods.com/coin/${tokenId}`)
-
-        return response.data.replace(/(\r\n|\n|\r)/gm, '')
+        return this.loadPageContent(`https://coinsgods.com/coin/${tokenId}`)
     }
 }

@@ -1,18 +1,14 @@
-import axios from 'axios'
 import { singleton } from 'tsyringe'
 import { Blockchain } from '../../../utils'
+import { AbstractTokenFetcherService } from './AbstractTokenFetcherService'
 
 @singleton()
-export class CoinVoteService {
+export class CoinVoteService extends AbstractTokenFetcherService {
     public async loadListPage(blockchain: Blockchain, page: number): Promise<string> {
-        const response = await axios.get(`https://coinvote.cc/new&page=${page}&chain=${blockchain.toLowerCase()}`)
-
-        return response.data.replace(/(\r\n|\n|\r)/gm, '')
+        return this.loadPageContent(`https://coinvote.cc/new&page=${page}&chain=${blockchain.toLowerCase()}`)
     }
 
     public async loadTokenPage(coinId: string): Promise<string> {
-        const response = await axios.get(`https://coinvote.cc/coin/${coinId}`)
-
-        return response.data.replace(/(\r\n|\n|\r)/gm, '')
+        return this.loadPageContent(`https://coinvote.cc/coin/${coinId}`)
     }
 }

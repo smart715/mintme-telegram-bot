@@ -8,10 +8,6 @@ export class ParserCheckedTokenService {
         private parserCheckedTokenRepository: ParserCheckedTokenRepository
     ) {}
 
-    public async getIdsBySource(source: string): Promise<ParserCheckedToken[]> {
-        return this.parserCheckedTokenRepository.findIdsBySource(source)
-    }
-
     public async saveAsChecked(tokenId: string, source: string): Promise<ParserCheckedToken> {
         const checkedToken = new ParserCheckedToken(tokenId, source)
 

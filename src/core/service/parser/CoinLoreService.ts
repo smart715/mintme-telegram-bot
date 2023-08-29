@@ -1,8 +1,9 @@
 import axios from 'axios'
 import { singleton } from 'tsyringe'
+import { AbstractTokenFetcherService } from './AbstractTokenFetcherService'
 
 @singleton()
-export class CoinLoreService {
+export class CoinLoreService extends AbstractTokenFetcherService {
     public async getCoinsCount(): Promise<number> {
         const response = await axios.get('https://api.coinlore.net/api/global/')
 
@@ -21,8 +22,6 @@ export class CoinLoreService {
     }
 
     public async getTokenPage(nameId: string): Promise<string> {
-        const response = await axios.get(`https://www.coinlore.com/coin/${nameId}`)
-
-        return response.data.replace(/(\r\n|\n|\r)/gm, '')
+        return this.loadPageContent(`https://www.coinlore.com/coin/${nameId}`)
     }
 }

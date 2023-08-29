@@ -197,6 +197,10 @@ container.register(TokenNamesGenerator, {
     useFactory: instanceCachingFactory(() => new TokenNamesGenerator()),
 })
 
+container.register(RetryAxios, {
+    useFactory: instanceCachingFactory(() => new RetryAxios()),
+})
+
 // Services
 
 container.register(MintmeService, {
@@ -257,14 +261,6 @@ container.register(QueuedWalletAddressService, {
     )),
 })
 
-container.register(TokenNamesGenerator, {
-    useFactory: instanceCachingFactory(() => new TokenNamesGenerator()),
-})
-
-container.register(RetryAxios, {
-    useFactory: instanceCachingFactory(() => new RetryAxios()),
-})
-
 container.register(ContactMessageService, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new ContactMessageService(
@@ -277,14 +273,6 @@ container.register(ContactQueueService, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new ContactQueueService(
             dependencyContainer.resolve(QueuedContactRepository),
-        ),
-    ),
-})
-
-container.register(ContactHistoryService, {
-    useFactory: instanceCachingFactory((dependencyContainer) =>
-        new ContactHistoryService(
-            dependencyContainer.resolve(ContactHistoryRepository),
         ),
     ),
 })
@@ -997,12 +985,6 @@ container.register(CliDependency.COMMAND, {
             recentTokensLogger,
         )
     ),
-})
-
-// General
-
-container.register(Application, {
-    useFactory: instanceCachingFactory(() => new Application()),
 })
 
 container.register(CliDependency.COMMAND, {

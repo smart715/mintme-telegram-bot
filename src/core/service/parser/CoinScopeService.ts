@@ -2,13 +2,12 @@ import axios from 'axios'
 import { singleton } from 'tsyringe'
 import { Blockchain } from '../../../utils'
 import { CoinScopeApiResponse } from '../../../types'
+import { AbstractTokenFetcherService } from './AbstractTokenFetcherService'
 
 @singleton()
-export class CoinScopeService {
+export class CoinScopeService extends AbstractTokenFetcherService {
     public async getMainPage(): Promise<string> {
-        const response = await axios.get(`https://www.coinscope.co/`)
-
-        return response.data.replace(/(\r\n|\n|\r)/gm, '')
+        return this.loadPageContent(`https://www.coinscope.co/`)
     }
 
     public async getTokensData(
