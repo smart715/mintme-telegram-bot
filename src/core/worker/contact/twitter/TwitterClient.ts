@@ -68,7 +68,8 @@ export class TwitterClient {
     }
 
     private async createDriver(): Promise<boolean> {
-        this.logger.info(`Creating driver instance`)
+        this.log(`Creating driver instance`)
+
         this.driver = await SeleniumService.createDriver('', undefined, this.logger)
 
         return true
@@ -165,6 +166,8 @@ export class TwitterClient {
     public async contactWithToken(queuedContact: QueuedContact): Promise<void> {
         const link = queuedContact.channel
 
+        this.log(`Trying to contact with ${link}`)
+
         await this.driver.get(link)
 
 
@@ -193,7 +196,7 @@ export class TwitterClient {
 
     private log(message: string): void {
         this.logger.info(
-            `[Twitter Worker ${this.twitterAccount.id}] ` +
+            `[TwitterWorker ${this.twitterAccount.id}] ` +
             message
         )
     }
