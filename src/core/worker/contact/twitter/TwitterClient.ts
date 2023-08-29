@@ -36,19 +36,7 @@ export class TwitterClient {
         this.twitterAccount = twitterAccount
     }
 
-    public async initialize(): Promise<void> {
-        const currentDate = moment()
-        const limitHitDate = moment(this.twitterAccount.limitHitResetDate)
-
-        if (limitHitDate.isAfter(currentDate)) {
-            const diffMs = limitHitDate.diff(currentDate, 'milliseconds')
-            const msInDay = 86400000
-            this.log(
-                `${diffMs / msInDay} days to use this account again, Last limit hit: ${limitHitDate.format()}`
-            )
-            return
-        }
-
+    public async init(): Promise<void> {
         await this.createDriver()
 
         const isLoggedIn = await this.login()

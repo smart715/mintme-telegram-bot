@@ -4,11 +4,11 @@ import {
     ContactQueueService,
     MailerService,
     TokensService,
-} from '../../service'
-import { EnqueueTokensWorker } from '../EnqueueTokensWorker'
-import { ContactHistoryStatusType, ContactMethod, TokenContactStatusType } from '../../types'
-import { sleep } from '../../../utils'
-import { ContactHistory, ContactMessage, QueuedContact, Token } from '../../entity'
+} from '../../../service'
+import { EnqueueTokensWorker } from '../../EnqueueTokensWorker'
+import { ContactHistoryStatusType, ContactMethod, TokenContactStatusType } from '../../../types'
+import { sleep } from '../../../../utils'
+import { ContactHistory, ContactMessage, QueuedContact, Token } from '../../../entity'
 import { singleton } from 'tsyringe'
 import { Logger } from 'winston'
 

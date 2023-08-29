@@ -22,7 +22,6 @@ export default {
     'twitter_total_attempts_daily': 1000,
     'twitter_messages_delay_in_seconds': 30,
 
-
     // enqueue tokens worker
     'contact_email_max_attempts': 4,
     'contact_twitter_max_attempts': 2,

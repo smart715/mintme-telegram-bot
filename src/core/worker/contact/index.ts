@@ -1,3 +1,3 @@
-export { TelegramWorker } from './TelegramWorker'
-export { MailerWorker } from './MailerWorker'
+export * from './telegram'
 export * from './twitter'
+export * from './mailer'

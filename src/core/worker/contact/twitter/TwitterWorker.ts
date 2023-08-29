@@ -48,7 +48,7 @@ export class TwitterWorker {
     }
 
     private async initNewClient(twitterAccount: TwitterAccount): Promise<TwitterClient> {
-        const twitterClient = new TwitterClient(
+        const twitterClient = await new TwitterClient(
             twitterAccount,
             this.twitterService,
             this.contactHistoryService,
@@ -57,7 +57,7 @@ export class TwitterWorker {
             this.logger,
         )
 
-        await twitterClient.initialize()
+        await twitterClient.init()
 
         return twitterClient
     }

@@ -14,9 +14,6 @@ export class TwitterAccount {
     @Column('text')
     public cookiesJSON!: string
 
-    @Column({ nullable: true })
-    public limitHitResetDate!: Date
-
     @Column()
     public isDisabled!: boolean
 }
