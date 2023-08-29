@@ -75,6 +75,7 @@ import {
     MyEtherListsWorker,
     RecentTokensService,
     RecentTokensWorker,
+    TwitterWorker, TwitterAccountRepository, TwitterService,
 } from '../../core'
 import { Application } from '../'
 import { CliDependency } from './types'
@@ -103,6 +104,7 @@ import {
     RunRecentTokensWorker,
 } from '../../command'
 import { RetryAxios, TokenNamesGenerator, createLogger } from '../../utils'
+import {RunTwitterWorker} from "../../command/RunTwitterWorker";
 
 // Loggers
 
@@ -126,6 +128,7 @@ const lastTokenTxDateFetcherLogger = createLogger(LastTokenTxDateFetcher.name.to
 const queueLogger = createLogger(QueueWorker.name.toLowerCase())
 const telegramLogger = createLogger(TelegramWorker.name.toLowerCase())
 const mailerLogger = createLogger(MailerWorker.name.toLowerCase())
+const twitterLogger = createLogger(TwitterWorker.name.toLowerCase())
 
 // Repositories
 
@@ -168,8 +171,13 @@ container.register(QueuedTokenAddressRepository, {
 container.register(QueuedWalletAddressRepository, {
     useFactory: instanceCachingFactory(() => getConnection().getCustomRepository(QueuedWalletAddressRepository)),
 })
+
 container.register(NewestCheckedTokenRepository, {
     useFactory: instanceCachingFactory(() => getConnection().getCustomRepository(NewestCheckedTokenRepository)),
+})
+
+container.register(TwitterAccountRepository, {
+    useFactory: instanceCachingFactory(() => getConnection().getCustomRepository(TwitterAccountRepository)),
 })
 
 // Utils
@@ -332,6 +340,14 @@ container.register(MyEtherListsService, {
 
 container.register(RecentTokensService, {
     useFactory: instanceCachingFactory(() => new RecentTokensService()),
+})
+
+container.register(TwitterService, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new TwitterService(
+            dependencyContainer.resolve(TwitterAccountRepository),
+        ),
+    ),
 })
 
 // Workers
@@ -697,6 +713,19 @@ container.register(MailerWorker, {
     ),
 })
 
+container.register(TwitterWorker, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new TwitterWorker(
+            dependencyContainer.resolve(TwitterService),
+            dependencyContainer.resolve(ContactHistoryService),
+            dependencyContainer.resolve(ContactMessageService),
+            dependencyContainer.resolve(ContactQueueService),
+            dependencyContainer.resolve(TokensService),
+            twitterLogger,
+        )
+    ),
+})
+
 // CLI
 
 container.register(CliDependency.COMMAND, {
@@ -903,6 +932,15 @@ container.register(CliDependency.COMMAND, {
         new RunMyEtherListsWorker(
             dependencyContainer.resolve(MyEtherListsWorker),
             myEtherListsLogger,
+        )
+    ),
+})
+
+container.register(CliDependency.COMMAND, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new RunTwitterWorker(
+            dependencyContainer.resolve(TwitterWorker),
+            twitterLogger,
         )
     ),
 })

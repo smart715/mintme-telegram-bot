@@ -1,9 +1,7 @@
-// @ts-nocheck
-import moment from 'moment'
 import config from 'config'
 import { Logger } from 'winston'
-import {By, until, WebDriver} from 'selenium-webdriver'
-import {QueuedContact, TwitterAccount} from '../../../entity'
+import { By, until, WebDriver } from 'selenium-webdriver'
+import { QueuedContact, TwitterAccount } from '../../../entity'
 import {
     ContactHistoryService,
     ContactMessageService,
@@ -11,12 +9,12 @@ import {
     SeleniumService, TokensService,
     TwitterService
 } from '../../../service'
-import {getRandomNumber} from '../../../../utils'
-import {ContactHistoryStatusType, ContactMethod, TokenContactStatusType} from '../../../types'
+import { getRandomNumber } from '../../../../utils'
+import { ContactMethod, TokenContactStatusType } from '../../../types'
 
 export class TwitterClient {
-    private readonly maxMessagesDaily: number = config.get('twitter_dm_limit_daily')
-    private readonly maxAttemptsDaily: number = config.get('twitter_total_attempts_daily')
+    // private readonly maxMessagesDaily: number = config.get('twitter_dm_limit_daily')
+    // private readonly maxAttemptsDaily: number = config.get('twitter_total_attempts_daily')
     private readonly messageDelaySec: number = config.get('twitter_messages_delay_in_seconds')
     public message: string = ''
 
@@ -51,7 +49,7 @@ export class TwitterClient {
 
         this.isInitialized = true
         this.log(`
-            Logged in | 24h Sent messages: ${this.sentMessages} | Account Messages: ${this.accountMessages.length}`
+            Logged in | 24h Sent messages: ${this.sentMessages}`
         )
     }
 
@@ -183,6 +181,8 @@ export class TwitterClient {
         await element.click();
 
         await this.driver.sleep(20000)
+
+        this.logger.info(await this.driver.getTitle())
     }
 
     public async destroyDriver(): Promise<void> {

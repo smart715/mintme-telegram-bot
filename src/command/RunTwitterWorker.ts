@@ -4,7 +4,7 @@ import { TwitterWorker } from '../core'
 import { sleep } from '../utils'
 
 export class RunTwitterWorker implements CommandInterface {
-    public readonly command = 'run-mailer-worker'
+    public readonly command = 'run-twitter-worker'
     public readonly description = 'Runs Twitter worker'
 
     public constructor(

@@ -10,8 +10,7 @@ export class TwitterAccount1692976150721 implements MigrationInterface {
                 \`id\`                   int          NOT NULL AUTO_INCREMENT,
                 \`user_name\`            varchar(255) NOT NULL,
                 \`assigned_server_ip\`   varchar(255) NULL,
-                \`cookiesJSON\`              text         NOT NULL,
-                \`limit_hit_reset_date\` datetime     NULL,
+                \`cookies_json\`         text         NOT NULL,
                 \`is_disabled\`          tinyint      NOT NULL,
                 PRIMARY KEY (\`id\`)
             ) ENGINE = InnoDB

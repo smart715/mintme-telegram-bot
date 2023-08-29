@@ -14,6 +14,8 @@ import { sleep } from '../../../../utils'
 
 @singleton()
 export class TwitterWorker {
+    private readonly workerName = 'TwitterWorker'
+    private readonly prefixLog = `[${this.workerName}]`
     private readonly maxTwitterAccount: number = config.get('twitter_max_accounts_simultaneous')
 
     private twitterClients: TwitterClient[] = []
@@ -33,6 +35,12 @@ export class TwitterWorker {
         while (true) {
             const allAccounts = await this.twitterService.getAllAccounts()
 
+            if (0 === allAccounts.length) {
+                this.logger.error(`${this.prefixLog} DB doesn't have twitter accounts. Aborting.`)
+
+                return
+            }
+
             let currentAccountIndex = 0
 
             while (currentAccountIndex < allAccounts.length && currentAccountIndex < this.maxTwitterAccount) {
@@ -51,11 +59,13 @@ export class TwitterWorker {
                 await client.destroyDriver()
             }
 
-            await sleep(60000)
+            await sleep(60 * 1000)
         }
     }
 
     private async initNewClient(twitterAccount: TwitterAccount): Promise<TwitterClient> {
+        this.logger.info(`${this.prefixLog} Initializing new client for ${twitterAccount.id} twitter id account`)
+
         const twitterClient = await new TwitterClient(
             twitterAccount,
             this.twitterService,
