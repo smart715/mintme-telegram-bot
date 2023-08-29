@@ -740,6 +740,7 @@ container.register(CoinsHunterWorker, {
         new CoinsHunterWorker(
             dependencyContainer.resolve(CoinsHunterService),
             dependencyContainer.resolve(TokensService),
+            dependencyContainer.resolve(NewestCheckedTokenService),
             createLogger(CoinsHunterWorker.name.toLowerCase()),
         )
     ),

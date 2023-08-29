@@ -108,7 +108,7 @@ export class CoinSniperWorker extends AbstractTokenWorker {
                         [ tokenAddress, tokenName, currentBlockchain ],
                     )
                 } else {
-                    this.logger.error(`${this.prefixLog} Unsupported blockchain or wrong data for ${coinId}. Skipping`)
+                    this.logger.warn(`${this.prefixLog} Unsupported blockchain or wrong data for ${coinId}. Skipping`)
                 }
 
                 await this.parserCheckedTokenService.saveAsChecked(coinId, this.workerName)

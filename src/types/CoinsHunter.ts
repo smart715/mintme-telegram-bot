@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 
 export interface CoinsHunterToken {
+    coin_id: string,
     address: string,
     name: string,
     symbol: string,
