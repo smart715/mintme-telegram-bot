@@ -1,6 +1,5 @@
 import { container, instanceCachingFactory } from 'tsyringe'
 import {
-    CMCService,
     CMCWorker,
     ContactHistoryService,
     ContactQueueService,
@@ -55,14 +54,21 @@ import {
     CoinCodexService,
     BitQueryService,
     BitQueryWorker,
-    CryptoVoteListWorker,
+    CoinVoteWorker,
+    CoinsHunterWorker,
+    CoinsGodsWorker,
+    CoinSniperWorker,
+    CoinLoreWorker,
+    CoinScopeWorker,
+    Coin360Worker,
     NewestCheckedTokenService,
     NewestCheckedTokenRepository,
+    CryptoVoteListWorker,
     EthplorerWorker,
     GemFinderWorker,
     MemeCoinsWorker,
-    MyCoinVoteWorker,
     MobulaWorker,
+    MyCoinVoteWorker,
     MailerService,
     MailerWorker,
     RugFreeCoinsService,
@@ -75,6 +81,16 @@ import {
     MyEtherListsWorker,
     RecentTokensService,
     RecentTokensWorker,
+    CheckedTokenRepository,
+    CheckedTokenService,
+    CoinLoreService,
+    CMCService,
+    CoinScopeService,
+    CoinSniperService,
+    CoinVoteService,
+    Coins360Service,
+    CoinsGodsService,
+    CoinsHunterService,
 } from '../../core'
 import { Application } from '../'
 import { CliDependency } from './types'
@@ -111,7 +127,6 @@ const tokensInsightLogger = createLogger(TokensInsightWorker.name.toLowerCase())
 const rugFreeCoinsLogger = createLogger(RugFreeCoinsWorker.name.toLowerCase())
 const recentTokensLogger = createLogger(RecentTokensWorker.name.toLowerCase())
 const myEtherListsLogger = createLogger(MyEtherListsWorker.name.toLowerCase())
-const cmcLogger = createLogger(CMCWorker.name.toLowerCase())
 const advnLogger = createLogger(AdvnWorker.name.toLowerCase())
 const bitQueryLogger = createLogger(BitQueryWorker.name.toLowerCase())
 const coinBrainLogger = createLogger(CoinBrainWorker.name.toLowerCase())
@@ -172,17 +187,21 @@ container.register(NewestCheckedTokenRepository, {
     useFactory: instanceCachingFactory(() => getConnection().getCustomRepository(NewestCheckedTokenRepository)),
 })
 
+container.register(CheckedTokenRepository, {
+    useFactory: instanceCachingFactory(() => getConnection().getCustomRepository(CheckedTokenRepository)),
+})
+
 // Utils
 
 container.register(TokenNamesGenerator, {
     useFactory: instanceCachingFactory(() => new TokenNamesGenerator()),
 })
 
-// Services
-
-container.register(CMCService, {
-    useFactory: instanceCachingFactory(() => new CMCService()),
+container.register(RetryAxios, {
+    useFactory: instanceCachingFactory(() => new RetryAxios()),
 })
+
+// Services
 
 container.register(MintmeService, {
     useFactory: instanceCachingFactory(() => new MintmeService()),
@@ -242,14 +261,6 @@ container.register(QueuedWalletAddressService, {
     )),
 })
 
-container.register(TokenNamesGenerator, {
-    useFactory: instanceCachingFactory(() => new TokenNamesGenerator()),
-})
-
-container.register(RetryAxios, {
-    useFactory: instanceCachingFactory(() => new RetryAxios()),
-})
-
 container.register(ContactMessageService, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new ContactMessageService(
@@ -269,7 +280,15 @@ container.register(ContactQueueService, {
 container.register(ContactHistoryService, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new ContactHistoryService(
-            dependencyContainer.resolve(ContactHistoryRepository),
+            dependencyContainer.resolve(ContactHistoryRepository)
+        )
+    ),
+})
+
+container.register(CheckedTokenService, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new CheckedTokenService(
+            dependencyContainer.resolve(CheckedTokenRepository)
         ),
     ),
 })
@@ -334,6 +353,38 @@ container.register(RecentTokensService, {
     useFactory: instanceCachingFactory(() => new RecentTokensService()),
 })
 
+container.register(CoinLoreService, {
+    useFactory: instanceCachingFactory(() => new CoinLoreService()),
+})
+
+container.register(CMCService, {
+    useFactory: instanceCachingFactory(() => new CMCService()),
+})
+
+container.register(CoinScopeService, {
+    useFactory: instanceCachingFactory(() => new CoinScopeService()),
+})
+
+container.register(CoinSniperService, {
+    useFactory: instanceCachingFactory(() => new CoinSniperService()),
+})
+
+container.register(CoinVoteService, {
+    useFactory: instanceCachingFactory(() => new CoinVoteService()),
+})
+
+container.register(Coins360Service, {
+    useFactory: instanceCachingFactory(() => new Coins360Service()),
+})
+
+container.register(CoinsGodsService, {
+    useFactory: instanceCachingFactory(() => new CoinsGodsService()),
+})
+
+container.register(CoinsHunterService, {
+    useFactory: instanceCachingFactory(() => new CoinsHunterService()),
+})
+
 // Workers
 
 container.register(CMCWorker, {
@@ -341,7 +392,8 @@ container.register(CMCWorker, {
         new CMCWorker(
             dependencyContainer.resolve(CMCService),
             dependencyContainer.resolve(TokensService),
-            cmcLogger,
+            dependencyContainer.resolve(CheckedTokenService),
+            createLogger(CMCWorker.name.toLowerCase()),
         ),
     ),
 })
@@ -662,12 +714,34 @@ container.register(TokensInsightWorker, {
     ),
 })
 
+container.register(CoinVoteWorker, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new CoinVoteWorker(
+            dependencyContainer.resolve(CoinVoteService),
+            dependencyContainer.resolve(TokensService),
+            dependencyContainer.resolve(CheckedTokenService),
+            createLogger(CoinVoteWorker.name.toLowerCase()),
+        )
+    ),
+})
+
 container.register(MyEtherListsWorker, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new MyEtherListsWorker(
             dependencyContainer.resolve(MyEtherListsService),
             dependencyContainer.resolve(TokensService),
             myEtherListsLogger,
+        )
+    ),
+})
+
+container.register(CoinsHunterWorker, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new CoinsHunterWorker(
+            dependencyContainer.resolve(CoinsHunterService),
+            dependencyContainer.resolve(TokensService),
+            dependencyContainer.resolve(NewestCheckedTokenService),
+            createLogger(CoinsHunterWorker.name.toLowerCase()),
         )
     ),
 })
@@ -679,6 +753,61 @@ container.register(RecentTokensWorker, {
             dependencyContainer.resolve(TokensService),
             dependencyContainer.resolve(NewestCheckedTokenService),
             recentTokensLogger,
+        )
+    ),
+})
+
+container.register(CoinsGodsWorker, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new CoinsGodsWorker(
+            dependencyContainer.resolve(CoinsGodsService),
+            dependencyContainer.resolve(TokensService),
+            dependencyContainer.resolve(CheckedTokenService),
+            createLogger(CoinsGodsWorker.name.toLowerCase()),
+        )
+    ),
+})
+
+container.register(Coin360Worker, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new Coin360Worker(
+            dependencyContainer.resolve(Coins360Service),
+            dependencyContainer.resolve(TokensService),
+            dependencyContainer.resolve(CheckedTokenService),
+            createLogger(Coin360Worker.name.toLowerCase()),
+        )
+    ),
+})
+
+container.register(CoinSniperWorker, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new CoinSniperWorker(
+            dependencyContainer.resolve(CoinSniperService),
+            dependencyContainer.resolve(TokensService),
+            dependencyContainer.resolve(NewestCheckedTokenService),
+            createLogger(CoinSniperWorker.name.toLowerCase()),
+        )
+    ),
+})
+
+container.register(CoinLoreWorker, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new CoinLoreWorker(
+            dependencyContainer.resolve(CoinLoreService),
+            dependencyContainer.resolve(TokensService),
+            dependencyContainer.resolve(CheckedTokenService),
+            createLogger(CoinLoreWorker.name.toLowerCase()),
+        )
+    ),
+})
+
+container.register(CoinScopeWorker, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new CoinScopeWorker(
+            dependencyContainer.resolve(CoinScopeService),
+            dependencyContainer.resolve(TokensService),
+            dependencyContainer.resolve(CheckedTokenService),
+            createLogger(CoinScopeWorker.name.toLowerCase()),
         )
     ),
 })
@@ -876,6 +1005,14 @@ container.register(CliDependency.COMMAND, {
             dependencyContainer.resolve(MemeCoinsWorker),
             dependencyContainer.resolve(MobulaWorker),
             dependencyContainer.resolve(MyCoinVoteWorker),
+            dependencyContainer.resolve(CoinVoteWorker),
+            dependencyContainer.resolve(CoinsHunterWorker),
+            dependencyContainer.resolve(CoinsGodsWorker),
+            dependencyContainer.resolve(Coin360Worker),
+            dependencyContainer.resolve(CoinSniperWorker),
+            dependencyContainer.resolve(CMCWorker),
+            dependencyContainer.resolve(CoinLoreWorker),
+            dependencyContainer.resolve(CoinScopeWorker),
         )
     ),
 })

@@ -82,6 +82,14 @@ export enum CasualTokenWorkerNames {
     MEME_COIN = 'meme-coin',
     MOBULA = 'mobula',
     MY_COIN_VOTE = 'my-coin-vote',
+    COIN_VOTE = 'coin-vote',
+    COINS_HUNTER = 'coins-hunter',
+    COINS_GODS = 'coins-gods',
+    COIN_360 = 'coins-360',
+    COIN_SNIPER = 'coin-sniper',
+    COINMARKETCAP = 'coinmarketcap',
+    COIN_LORE = 'coin-lore',
+    COIN_SCOPE = 'coin-scope',
 }
 
 export interface RunRugFreeCoinsWorkerCmdArgv {

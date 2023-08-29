@@ -31,3 +31,9 @@ export enum ContactHistoryStatusType {
     ACCOUNT_PERM_BANNED = 'ACCOUNT_PERM_BANNED',
     ACCOUNT_GROUP_JOIN_LIMIT_HIT = 'ACCOUNT_GROUP_JOIN_LIMIT_HIT',
 }
+
+export interface CMCWorkerConfig {
+    apiKey: string,
+    requestOffset: number,
+    requestLimit: number,
+}
