@@ -5,8 +5,16 @@ export default {
     'db_password': 'root',
     'db_name': 'tokens_fetcher',
 
-    //CMC
-    'coinmarketcap_api_key': '0da9b092-fee6-4c91-875a-e93fbb6b78e0',
+    // Coinmarketcap worker settings
+    cmcWorker: {
+        'apiKey': '0da9b092-fee6-4c91-875a-e93fbb6b78e0',
+        'requestOffset': 5000,
+        'requestLimit': 5000,
+    },
+
+    // coinlore worker settings
+    'coinlore_request_batch_size': 100,
+
     'bitquery_api_key': 'BQYrOBkyfMSCQ6CJChTBQDQbRQhRbXS8',
     'tokensinsight_api_key': '65851ffff61d47fe9d600c6c69ef87e6',
 

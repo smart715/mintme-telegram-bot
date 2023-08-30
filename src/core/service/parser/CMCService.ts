@@ -1,11 +1,12 @@
 import axios from 'axios'
-import config from 'config'
 import { singleton } from 'tsyringe'
-import { CMCApiGeneralResponse, CMCCryptocurrency, CMCTokenInfoResponse } from '../../types'
+import config from 'config'
+import { CMCWorkerConfig } from '../../types'
+import { CMCApiGeneralResponse, CMCCryptocurrency, CMCTokenInfoResponse } from '../../../types'
 
 @singleton()
 export class CMCService {
-    private apiKey: string = config.get('coinmarketcap_api_key')
+    private apiKey: string = config.get<CMCWorkerConfig>('cmcWorker')['apiKey']
 
     public async getLastTokens(start: number, limit: number): Promise<CMCApiGeneralResponse<CMCCryptocurrency[]>> {
         const response = await axios.get('https://pro-api.coinmarketcap.com/v1/cryptocurrency/map', {
@@ -25,6 +26,7 @@ export class CMCService {
             params: {
                 CMC_PRO_API_KEY: this.apiKey,
                 slug,
+                aux: 'urls,platform',
             },
         })
 
