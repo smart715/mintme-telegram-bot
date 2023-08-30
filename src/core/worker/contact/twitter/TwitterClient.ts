@@ -1,6 +1,6 @@
 import config from 'config'
 import { Logger } from 'winston'
-import { By, until, WebDriver } from 'selenium-webdriver'
+import { By, WebDriver } from 'selenium-webdriver'
 import { QueuedContact, TwitterAccount } from '../../../entity'
 import {
     ContactHistoryService,
@@ -11,6 +11,7 @@ import {
 } from '../../../service'
 import { getRandomNumber } from '../../../../utils'
 import { ContactMethod, TokenContactStatusType } from '../../../types'
+import {NoSuchElementError} from "selenium-webdriver/lib/error";
 
 export class TwitterClient {
     // private readonly maxMessagesDaily: number = config.get('twitter_dm_limit_daily')
@@ -169,23 +170,27 @@ export class TwitterClient {
         this.log(`Trying to contact with ${link}`)
 
         await this.driver.get(link)
-
-
-        const element = await this.driver.wait(
-            until.elementLocated(By.css(`[data-testid="sendDMFromProfile"]`))
-        );
-
-        if (!element) {
-            this.log(`${link} doesn't have dm opened`)
-
-            return
-        }
-
-        await element.click();
-
         await this.driver.sleep(20000)
 
-        this.logger.info(await this.driver.getTitle())
+        try {
+            const element = await this.driver.findElement(
+                By.css(`div[data-testid="sendDMFromProfile"]`)
+            );
+
+            this.logger.info(await element.getText())
+
+            await element.click();
+
+            await this.driver.sleep(20000)
+        } catch (err) {
+            if (err instanceof NoSuchElementError) {
+                this.log(`${link} doesn't have dm opened`)
+
+                return
+            }
+
+            throw err
+        }
     }
 
     public async destroyDriver(): Promise<void> {
