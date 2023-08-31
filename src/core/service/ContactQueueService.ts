@@ -53,17 +53,19 @@ export class ContactQueueService {
             const delayInSeconds = parseInt(config.get('contact_frequency_in_seconds'))
 
             const result = await this.queuedContactRepository
-                .createQueryBuilder()
-                .where('is_processing = 0')
-                .andWhere('contact_method = :contactMethod', { contactMethod })
+                .createQueryBuilder('queued_contact')
+                .leftJoin('token', 'token', 'queued_contact.address = token.address AND queued_contact.blockchain = token.blockchain')
+                .where('queued_contact.is_processing = 0')
+                .andWhere('queued_contact.contact_method = :contactMethod', { contactMethod })
                 .andWhere(new Brackets((qb) => qb
-                    .where('is_planned = 0')
+                    .where('queued_contact.is_planned = 0')
                     .orWhere(
-                        'created_at < :thresholdDate',
+                        'queued_contact.created_at < :thresholdDate',
                         { thresholdDate: moment().utc().subtract(delayInSeconds, 'second').format() }
                     )
                 ))
-                .getOne()
+                .orderBy('token.created_at', 'DESC')
+                .getOne();
 
             if (result) {
                 await this.setProcessing(result)
