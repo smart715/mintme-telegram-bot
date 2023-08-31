@@ -14,11 +14,11 @@ export class TwitterAccount1692976150721 implements MigrationInterface {
                 \`is_disabled\`          tinyint      NOT NULL,
                 PRIMARY KEY (\`id\`)
             ) ENGINE = InnoDB
-        `);
+        `)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`DROP TABLE \`twitter_account\``);
+        await queryRunner.query(`DROP TABLE \`twitter_account\``)
     }
 }
 

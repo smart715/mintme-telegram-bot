@@ -11,7 +11,7 @@ export class TwitterAccount {
     @Column({ nullable: true })
     public assignedServerIP!: string
 
-    @Column({type: 'text', name: 'cookies_json'})
+    @Column({ type: 'text', name: 'cookies_json' })
     public cookiesJSON!: string
 
     @Column()

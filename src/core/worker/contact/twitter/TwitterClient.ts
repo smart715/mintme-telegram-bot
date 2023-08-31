@@ -1,6 +1,7 @@
 import config from 'config'
 import { Logger } from 'winston'
 import { By, Key, WebDriver, WebElement } from 'selenium-webdriver'
+// eslint-disable-next-line
 import { NoSuchElementError } from 'selenium-webdriver/lib/error'
 import { ContactMessage, TwitterAccount } from '../../../entity'
 import {
@@ -9,7 +10,7 @@ import {
     ContactQueueService,
     SeleniumService,
     TokensService,
-    TwitterService
+    TwitterService,
 } from '../../../service'
 import { Environment, getRandomNumber } from '../../../../utils'
 import { ContactHistoryStatusType, ContactMethod, TokenContactStatusType } from '../../../types'
@@ -95,7 +96,7 @@ export class TwitterClient {
 
             const cookies: object = JSON.parse(this.twitterAccount.cookiesJSON)
 
-            for (const [key, value] of Object.entries(cookies)) {
+            for (const [ key, value ] of Object.entries(cookies)) {
                 await this.driver.executeScript(
                     'document.cookie = `${arguments[0]}=${arguments[1]};path=/`', key, value
                 )
@@ -129,7 +130,7 @@ export class TwitterClient {
     private async isLoggedIn(): Promise<boolean> {
         const title = await this.driver.getTitle()
 
-        return title.toLowerCase().includes('home');
+        return title.toLowerCase().includes('home')
     }
 
     private async disableAccount(): Promise<void> {
@@ -138,7 +139,7 @@ export class TwitterClient {
     }
 
     public async startContacting(): Promise<void> {
-        while (true) {
+        while (true) {  // eslint-disable-line
             await this.driver.sleep(getRandomNumber(1, 10) * 1000)
 
             const queuedContact = await this.contactQueueService.getFirstFromQueue(ContactMethod.TWITTER, this.logger)
@@ -223,7 +224,7 @@ export class TwitterClient {
         try {
             element = await this.driver.findElement(
                 By.css(`div[data-testid="sendDMFromProfile"]`)
-            );
+            )
         } catch (err) {
             if (err instanceof NoSuchElementError) {
                 return ContactHistoryStatusType.DM_NOT_ENABLED

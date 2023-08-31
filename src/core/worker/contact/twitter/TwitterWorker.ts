@@ -6,11 +6,11 @@ import {
     ContactMessageService,
     ContactQueueService,
     TokensService,
-    TwitterService
+    TwitterService,
 } from '../../../service'
 import { TwitterAccount } from '../../../entity'
 import { TwitterClient } from './TwitterClient'
-import {Environment, sleep} from '../../../../utils'
+import { Environment, sleep } from '../../../../utils'
 
 @singleton()
 export class TwitterWorker {
@@ -84,7 +84,7 @@ export class TwitterWorker {
     }
 
     private startContactingAllManagers(): Promise<void[]> {
-       const contactingPromises: Promise<void>[] = []
+        const contactingPromises: Promise<void>[] = []
 
         for (const client of this.twitterClients) {
             if (!client.isInitialized) {

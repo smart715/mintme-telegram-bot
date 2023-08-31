@@ -1,10 +1,10 @@
+import moment from 'moment'
+import { Between } from 'typeorm'
 import { singleton } from 'tsyringe'
 import { ContactHistoryRepository } from '../repository'
 import { ContactHistoryStatusType, ContactMethod } from '../types'
-import {ContactHistory, TwitterAccount} from '../entity'
+import { ContactHistory, TwitterAccount } from '../entity'
 import { Blockchain } from '../../utils'
-import moment from 'moment'
-import {Between} from "typeorm";
 
 @singleton()
 export class ContactHistoryService {
@@ -29,13 +29,13 @@ export class ContactHistoryService {
         const oneDayAgo = new Date()
         oneDayAgo.setHours(now.getHours() - 24)
 
-        return await this.contactHistoryRepository
+        return this.contactHistoryRepository
             .count({
                 where: {
                     twitterAccountId: twitterAccount.id,
                     isSuccess: true,
-                    createdAt: Between(oneDayAgo, now)
-                }
+                    createdAt: Between(oneDayAgo, now),
+                },
             })
     }
 
