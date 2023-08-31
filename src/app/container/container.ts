@@ -1,3 +1,4 @@
+import config from 'config'
 import { container, instanceCachingFactory } from 'tsyringe'
 import {
     CMCWorker,
@@ -120,9 +121,16 @@ import {
     RunTokensInsightWorker,
     RunMyEtherListsWorker,
     RunRecentTokensWorker,
+    RunTwitterWorker,
 } from '../../command'
-import { RetryAxios, TokenNamesGenerator, createLogger } from '../../utils'
-import {RunTwitterWorker} from "../../command/RunTwitterWorker";
+import { RetryAxios, TokenNamesGenerator, createLogger, Environment } from '../../utils'
+
+// Env
+
+export const environment: Environment = 'production' === config.get('environment')
+    ? Environment.PRODUCTION
+    : Environment.DEVELOPMENT
+
 
 // Loggers
 
@@ -852,6 +860,7 @@ container.register(TwitterWorker, {
             dependencyContainer.resolve(ContactMessageService),
             dependencyContainer.resolve(ContactQueueService),
             dependencyContainer.resolve(TokensService),
+            environment,
             twitterLogger,
         )
     ),

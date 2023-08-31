@@ -10,7 +10,7 @@ import {
 } from '../../../service'
 import { TwitterAccount } from '../../../entity'
 import { TwitterClient } from './TwitterClient'
-import { sleep } from '../../../../utils'
+import {Environment, sleep} from '../../../../utils'
 
 @singleton()
 export class TwitterWorker {
@@ -26,6 +26,7 @@ export class TwitterWorker {
         private readonly contactMessageService: ContactMessageService,
         private readonly contactQueueService: ContactQueueService,
         private readonly tokenService: TokensService,
+        private readonly environment: Environment,
         private readonly logger: Logger,
     ) {
     }

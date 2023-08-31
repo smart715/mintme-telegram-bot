@@ -1,6 +1,8 @@
 export default {
+    'environment': process.env.NODE_ENV,
+
     //Database config
-    'db_host': 'db',
+    'db_host': 'localhost',
     'db_user': 'root',
     'db_password': 'root',
     'db_name': 'tokens_fetcher',

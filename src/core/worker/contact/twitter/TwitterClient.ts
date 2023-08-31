@@ -1,6 +1,6 @@
 import config from 'config'
 import { Logger } from 'winston'
-import { By, WebDriver, WebElement } from 'selenium-webdriver'
+import { By, Key, WebDriver, WebElement } from 'selenium-webdriver'
 import { NoSuchElementError } from 'selenium-webdriver/lib/error'
 import { QueuedContact, TwitterAccount } from '../../../entity'
 import {
@@ -10,7 +10,7 @@ import {
     SeleniumService, TokensService,
     TwitterService
 } from '../../../service'
-import { getRandomNumber } from '../../../../utils'
+import { Environment, getRandomNumber } from '../../../../utils'
 import { ContactMethod, TokenContactStatusType } from '../../../types'
 
 export class TwitterClient {
@@ -31,6 +31,7 @@ export class TwitterClient {
         private readonly contactMessageService: ContactMessageService,
         private readonly contactQueueService: ContactQueueService,
         private readonly tokenService: TokensService,
+        private readonly environment: Environment,
         private readonly logger: Logger,
     ) {
         this.twitterAccount = twitterAccount
@@ -192,10 +193,6 @@ export class TwitterClient {
 
         await this.driver.sleep(20000)
 
-        const container = await this.driver.findElement(
-            By.css(`div[data-testid="DmActivityContainer"]`)
-        );
-
         await this.sendMessage(queuedContact)
     }
 
@@ -219,8 +216,11 @@ export class TwitterClient {
         await messageInput.sendKeys(this.message)
         await this.driver.sleep(5000)
 
-        // enable only for prod
-        // await messageInput.sendKeys(Key.RETURN)
+        if (this.isProd()) {
+            await messageInput.sendKeys(Key.RETURN)
+        } else {
+            this.log('Environment is not production. Skipping sending message')
+        }
 
         this.sentMessages++
     }
@@ -236,5 +236,9 @@ export class TwitterClient {
             `[TwitterWorker ${this.twitterAccount.id}] ` +
             message
         )
+    }
+
+    private isProd(): boolean {
+        return Environment.PRODUCTION === this.environment
     }
 }
