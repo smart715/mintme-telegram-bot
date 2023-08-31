@@ -74,6 +74,7 @@ export class TwitterWorker {
             this.contactMessageService,
             this.contactQueueService,
             this.tokenService,
+            this.environment,
             this.logger,
         )
 
@@ -95,10 +96,19 @@ export class TwitterWorker {
                 continue
             }
 
-            if ('' === client.message) {
+            if (!client.message) {
                 this.logger.warn(
                     `[Twitter Worker ID: ${client.twitterAccount.id}] ` +
                     `No messages stock available, Account not able to start messaging.`
+                )
+
+                continue
+            }
+
+            if (!client.isAllowedToSentMessages()) {
+                this.logger.warn(
+                    `[Twitter Worker ID: ${client.twitterAccount.id}] ` +
+                    `Client is not allowed to sent messages. Max daily attempts or daily messages reached. Skipping...`
                 )
 
                 continue

@@ -2,22 +2,23 @@ import config from 'config'
 import { Logger } from 'winston'
 import { By, Key, WebDriver, WebElement } from 'selenium-webdriver'
 import { NoSuchElementError } from 'selenium-webdriver/lib/error'
-import { QueuedContact, TwitterAccount } from '../../../entity'
+import { ContactMessage, TwitterAccount } from '../../../entity'
 import {
     ContactHistoryService,
     ContactMessageService,
     ContactQueueService,
-    SeleniumService, TokensService,
+    SeleniumService,
+    TokensService,
     TwitterService
 } from '../../../service'
 import { Environment, getRandomNumber } from '../../../../utils'
-import { ContactMethod, TokenContactStatusType } from '../../../types'
+import { ContactHistoryStatusType, ContactMethod, TokenContactStatusType } from '../../../types'
 
 export class TwitterClient {
-    // private readonly maxMessagesDaily: number = config.get('twitter_dm_limit_daily')
-    // private readonly maxAttemptsDaily: number = config.get('twitter_total_attempts_daily')
+    private readonly maxMessagesDaily: number = config.get('twitter_dm_limit_daily')
+    private readonly maxAttemptsDaily: number = config.get('twitter_total_attempts_daily')
     private readonly messageDelaySec: number = config.get('twitter_messages_delay_in_seconds')
-    public message: string = ''
+    public message: ContactMessage
 
     public isInitialized: boolean = false
     public twitterAccount: TwitterAccount
@@ -53,6 +54,14 @@ export class TwitterClient {
         this.log(`Logged in | 24h Sent messages: ${this.sentMessages}`)
     }
 
+    public isAllowedToSentMessages(): boolean {
+        if (this.sentMessages >= this.maxAttemptsDaily || this.sentMessages >= this.maxMessagesDaily) {
+            return false
+        }
+
+        return true
+    }
+
     private async initMessage(): Promise<void> {
         const contentMessage = await this.contactMessageService.getOneContactMessage()
 
@@ -60,9 +69,9 @@ export class TwitterClient {
             return
         }
 
-        this.message = contentMessage.content
+        this.message = contentMessage
 
-        this.log(`Message content to send: ${this.message}`)
+        this.log(`Message content to send: ${this.message.content}`)
     }
 
     private async updateSentMessages(): Promise<void> {
@@ -98,15 +107,18 @@ export class TwitterClient {
 
             if (await this.isLoggedIn()) {
                 return true
+            }
+
+            if (retries < 3) {
+                this.logger.info(`Retrying to login, Attempt #${retries}`)
+                return await this.login(retries + 1)
             } else {
-                if (retries < 3) {
-                    this.logger.info(`Retrying to login, Attempt #${retries}`)
-                    return await this.login(retries + 1)
-                } else {
-                    this.logger.warn(`Account is banned, Err: USER_DEACTIVATED_BAN`)
-                    await this.disableAccount()
-                    return false
-                }
+                this.logger.warn(
+                    `Account is banned or credentials are wrong, Err: USER_DEACTIVATED. Disabling account`
+                )
+                await this.disableAccount()
+
+                return false
             }
         } catch (e) {
             this.logger.error(e)
@@ -159,14 +171,47 @@ export class TwitterClient {
                 continue
             }
 
-            await this.contactWithToken(queuedContact)
+            const result = await this.contactWithToken(queuedContact.channel)
+
+            if (ContactHistoryStatusType.DM_NOT_ENABLED === result) {
+                this.log(`${queuedContact.channel} doesn't have dm opened`)
+            }
+
+            if (ContactHistoryStatusType.ACCOUNT_LIMIT_HIT === result) {
+                await this.contactQueueService.setProcessing(queuedContact, false)
+
+                this.log('Client is not allowed to sent messages. Max daily attempts or daily messages reached.')
+
+                return
+            }
+
+            await this.contactQueueService.removeFromQueue(queuedContact.address, queuedContact.blockchain)
+
+            await this.contactHistoryService.addRecord(
+                queuedContact.address,
+                queuedContact.blockchain,
+                ContactMethod.TWITTER,
+                true,
+                this.message.id,
+                queuedContact.channel,
+                result,
+                undefined,
+                this.twitterAccount.id
+            )
+
+            token.lastContactMethod = ContactMethod.TWITTER
+            token.lastContactAttempt = new Date()
+
+            await this.tokenService.saveTokenContactInfo(token)
 
             await this.driver.sleep(this.messageDelaySec * 1000)
         }
     }
 
-    public async contactWithToken(queuedContact: QueuedContact): Promise<void> {
-        const link = queuedContact.channel
+    public async contactWithToken(link: string): Promise<ContactHistoryStatusType> {
+        if (!this.isAllowedToSentMessages()) {
+            return ContactHistoryStatusType.ACCOUNT_LIMIT_HIT
+        }
 
         this.log(`Trying to contact with ${link}`)
 
@@ -181,9 +226,7 @@ export class TwitterClient {
             );
         } catch (err) {
             if (err instanceof NoSuchElementError) {
-                this.log(`${link} doesn't have dm opened`)
-
-                return
+                return ContactHistoryStatusType.DM_NOT_ENABLED
             }
 
             throw err
@@ -193,12 +236,6 @@ export class TwitterClient {
 
         await this.driver.sleep(20000)
 
-        await this.sendMessage(queuedContact)
-    }
-
-    private async sendMessage(queuedContact: QueuedContact): Promise<void> {
-        const link = queuedContact.channel
-
         this.log(`Dm opened for ${link}. Sending message...`)
 
         let messageInput: WebElement
@@ -207,23 +244,28 @@ export class TwitterClient {
             messageInput = await this.driver.findElement(By.css('div[data-testid="dmComposerTextInput"]'))
         } catch (err) {
             if (err instanceof NoSuchElementError) {
-                this.log(`Can't din${link} doesn't have dm opened`)
-
-                return
+                return ContactHistoryStatusType.DM_NOT_ENABLED
             }
+
+            throw err
         }
 
-        await messageInput.sendKeys(this.message)
+        await messageInput.sendKeys(this.message.content)
         await this.driver.sleep(5000)
 
         if (this.isProd()) {
             await messageInput.sendKeys(Key.RETURN)
+
+            this.log(`Message sent to ${link}`)
         } else {
             this.log('Environment is not production. Skipping sending message')
         }
 
         this.sentMessages++
+
+        return ContactHistoryStatusType.SENT_DM
     }
+
 
     public async destroyDriver(): Promise<void> {
         if (this.driver) {

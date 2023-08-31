@@ -48,6 +48,7 @@ export class ContactHistoryService {
         channel: string,
         status: ContactHistoryStatusType,
         tgAccountId?: number,
+        twitterAccountId?: number,
     ): Promise<ContactHistory> {
         const contactHistoryRecord = new ContactHistory(
             address,
@@ -61,6 +62,10 @@ export class ContactHistoryService {
 
         if (tgAccountId) {
             contactHistoryRecord.tgAccountId = tgAccountId
+        }
+
+        if (twitterAccountId) {
+            contactHistoryRecord.twitterAccountId = twitterAccountId
         }
 
         await this.contactHistoryRepository.insert(contactHistoryRecord)
