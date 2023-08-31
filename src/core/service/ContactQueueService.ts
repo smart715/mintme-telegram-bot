@@ -65,7 +65,7 @@ export class ContactQueueService {
                     )
                 ))
                 .orderBy('token.created_at', 'DESC')
-                .getOne();
+                .getOne()
 
             if (result) {
                 await this.setProcessing(result)
