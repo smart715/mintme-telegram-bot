@@ -7,12 +7,12 @@ import { Logger } from 'winston'
 
 @singleton()
 export class SeleniumService {
-    public static async createDriver(profile: string = '', proxyServer: ProxyServer|undefined = undefined, logger: Logger): Promise<ThenableWebDriver> {
+    public static async createDriver(profile: string = '', proxyServer: ProxyServer|undefined = undefined, logger: Logger, userAgent?: string): Promise<ThenableWebDriver> {
         const options = new Options()
-            .addArguments('--headless=new')
-            .addArguments('--no-sandbox')
+            // .addArguments('--headless=new')
+            // .addArguments('--no-sandbox')
             .addArguments('--window-size=1920,1080')
-            .addArguments('user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36')
+            .addArguments(`user-agent=${userAgent || 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36'}`)
 
         if (profile) {
             options.addArguments(`--user-data-dir=${profile}`)

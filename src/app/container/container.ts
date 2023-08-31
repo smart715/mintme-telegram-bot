@@ -91,6 +91,7 @@ import {
     Coins360Service,
     CoinsGodsService,
     CoinsHunterService,
+    FirewallService,
 } from '../../core'
 import { Application } from '../'
 import { CliDependency } from './types'
@@ -202,6 +203,10 @@ container.register(RetryAxios, {
 })
 
 // Services
+
+container.register(FirewallService, {
+    useFactory: instanceCachingFactory(() => new FirewallService()),
+})
 
 container.register(MintmeService, {
     useFactory: instanceCachingFactory(() => new MintmeService()),
@@ -785,6 +790,7 @@ container.register(CoinSniperWorker, {
             dependencyContainer.resolve(CoinSniperService),
             dependencyContainer.resolve(TokensService),
             dependencyContainer.resolve(NewestCheckedTokenService),
+            dependencyContainer.resolve(FirewallService),
             createLogger(CoinSniperWorker.name.toLowerCase()),
         )
     ),

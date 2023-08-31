@@ -1,9 +1,9 @@
 import { singleton } from 'tsyringe'
 import { Blockchain, sleep } from '../../../utils'
-import { CoinSniperService, NewestCheckedTokenService, SeleniumService, TokensService } from '../../service'
+import { CoinSniperService, FirewallService, NewestCheckedTokenService, SeleniumService, TokensService } from '../../service'
 import { DOMWindow, JSDOM } from 'jsdom'
 import { Logger } from 'winston'
-import { WebDriver } from 'selenium-webdriver'
+import { By, WebDriver, until } from 'selenium-webdriver'
 import { NewestTokenChecker, StopCheckException } from './NewestTokenChecker'
 
 @singleton()
@@ -20,6 +20,7 @@ export class CoinSniperWorker extends NewestTokenChecker {
         private readonly coinSniperService: CoinSniperService,
         private readonly tokenService: TokensService,
         protected readonly newestTokenCheckedService: NewestCheckedTokenService,
+        private readonly firewallService: FirewallService,
         protected readonly logger: Logger,
     ) {
         super(
@@ -30,7 +31,7 @@ export class CoinSniperWorker extends NewestTokenChecker {
     }
 
     public async run(): Promise<void> {
-        this.webDriver = await SeleniumService.createDriver('', undefined, this.logger)
+        await this.createCloudFlareByPassedDriver()
 
         for (const blockchain of this.supportedBlockchains) {
             await this.webDriver.get(this.coinSniperService.getBlockchainFilterPageUrl(blockchain))
@@ -71,8 +72,13 @@ export class CoinSniperWorker extends NewestTokenChecker {
     }
 
     protected override async checkPage(page: number, blockchain?: Blockchain): Promise<void> {
-        // todo: fix cloudflare
         await this.webDriver.get(this.coinSniperService.getNewTokensPageUrl(page))
+
+        try {
+            await this.webDriver.wait(until.elementLocated(By.className('home')), 60000)
+        } catch (err) {}
+
+        return
         const pageDOM = (new JSDOM(await this.webDriver.getPageSource())).window
 
         const coinsIds = this.getCoinsIds(pageDOM)
@@ -134,5 +140,25 @@ export class CoinSniperWorker extends NewestTokenChecker {
 
             return link.split('/')[link.split('/').length - 1]
         })
+    }
+
+    private async createCloudFlareByPassedDriver(): Promise<void> {
+        const {cookies, userAgent} = await this.firewallService.getCloudflareCookies(
+            this.coinSniperService.getNewTokensPageUrl(1),
+        )
+
+        this.webDriver = await SeleniumService.createDriver('', undefined, this.logger, userAgent)
+
+        if (!cookies) {
+            throw new Error('Could not pass cloudflare defence')
+        }
+
+        await this.webDriver.get(this.coinSniperService.getNewTokensPageUrl(1))
+
+        console.log(cookies)
+
+        for(const cookie of cookies) {
+            await this.webDriver.manage().addCookie({name: cookie.name, value: cookie.value})
+        }
     }
 }
