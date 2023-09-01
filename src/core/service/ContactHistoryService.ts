@@ -1,5 +1,4 @@
 import moment from 'moment'
-import { Between } from 'typeorm'
 import { singleton } from 'tsyringe'
 import { ContactHistoryRepository } from '../repository'
 import { ContactHistoryStatusType, ContactMethod } from '../types'
@@ -25,19 +24,13 @@ export class ContactHistoryService {
     }
 
     public async getCountSentTwitterMessagesDaily(twitterAccount: TwitterAccount): Promise<number> {
-        const now = new Date()
-        const oneDayAgo = new Date()
-        oneDayAgo.setHours(now.getHours() - 24)
-
-        return this.contactHistoryRepository
-            .count({
-                where: {
-                    twitterAccountId: twitterAccount.id,
-                    isSuccess: true,
-                    createdAt: Between(oneDayAgo, now),
-                },
-            })
+        return this.contactHistoryRepository.getCountSentTwitterMessagesDaily(twitterAccount)
     }
+
+    public async getCountAttemptsTwitterDaily(twitterAccount: TwitterAccount): Promise<number> {
+        return this.contactHistoryRepository.getCountAttemptsTwitterDaily(twitterAccount)
+    }
+
 
     public async addRecord(
         address: string,

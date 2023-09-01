@@ -20,11 +20,12 @@ export class TwitterClient {
     private readonly maxAttemptsDaily: number = config.get('twitter_total_attempts_daily')
     private readonly messageDelaySec: number = config.get('twitter_messages_delay_in_seconds')
     public message: ContactMessage
+    private driver: WebDriver
+    public twitterAccount: TwitterAccount
 
     public isInitialized: boolean = false
-    public twitterAccount: TwitterAccount
     private sentMessages: number
-    private driver: WebDriver
+    private attempts: number
 
     public constructor(
         twitterAccount: TwitterAccount,
@@ -48,41 +49,17 @@ export class TwitterClient {
             return
         }
 
-        await this.updateSentMessages()
+        await this.updateSentMessagesAndTotalAttempt()
         await this.initMessage()
 
         this.isInitialized = true
-        this.log(`Logged in | 24h Sent messages: ${this.sentMessages}`)
+        this.log(`Logged in | 24h Sent messages: ${this.sentMessages} | 24h Attempts: ${this.attempts}`)
     }
 
     public isAllowedToSentMessages(): boolean {
-        if (this.sentMessages >= this.maxAttemptsDaily || this.sentMessages >= this.maxMessagesDaily) {
+        if (this.attempts >= this.maxAttemptsDaily || this.sentMessages >= this.maxMessagesDaily) {
             return false
         }
-
-        return true
-    }
-
-    private async initMessage(): Promise<void> {
-        const contentMessage = await this.contactMessageService.getOneContactMessage()
-
-        if (!contentMessage) {
-            return
-        }
-
-        this.message = contentMessage
-
-        this.log(`Message content to send: ${this.message.content}`)
-    }
-
-    private async updateSentMessages(): Promise<void> {
-        this.sentMessages = await this.contactHistoryService.getCountSentTwitterMessagesDaily(this.twitterAccount)
-    }
-
-    private async createDriver(): Promise<boolean> {
-        this.log(`Creating driver instance`)
-
-        this.driver = await SeleniumService.createDriver('', undefined, this.logger)
 
         return true
     }
@@ -126,17 +103,6 @@ export class TwitterClient {
             this.logger.error(e)
             return false
         }
-    }
-
-    private async isLoggedIn(): Promise<boolean> {
-        const title = await this.driver.getTitle()
-
-        return title.toLowerCase().includes('home')
-    }
-
-    private async disableAccount(): Promise<void> {
-        this.twitterAccount.isDisabled = true
-        await this.twitterService.setAccountAsDisabled(this.twitterAccount)
     }
 
     public async startContacting(): Promise<void> {
@@ -194,13 +160,17 @@ export class TwitterClient {
                 return
             }
 
+            this.attempts += 1
+
             await this.contactQueueService.removeFromQueue(queuedContact.address, queuedContact.blockchain)
+
+            const isSuccess = ContactHistoryStatusType.SENT_DM === result
 
             await this.contactHistoryService.addRecord(
                 queuedContact.address,
                 queuedContact.blockchain,
                 ContactMethod.TWITTER,
-                true,
+                isSuccess,
                 this.message.id,
                 queuedContact.channel,
                 result,
@@ -217,7 +187,7 @@ export class TwitterClient {
         }
     }
 
-    public async contactWithToken(link: string, message: string): Promise<ContactHistoryStatusType> {
+    private async contactWithToken(link: string, message: string): Promise<ContactHistoryStatusType> {
         if (!this.isAllowedToSentMessages()) {
             return ContactHistoryStatusType.ACCOUNT_LIMIT_HIT
         }
@@ -285,6 +255,42 @@ export class TwitterClient {
         this.sentMessages++
 
         return ContactHistoryStatusType.SENT_DM
+    }
+
+    private async initMessage(): Promise<void> {
+        const contentMessage = await this.contactMessageService.getOneContactMessage()
+
+        if (!contentMessage) {
+            return
+        }
+
+        this.message = contentMessage
+
+        this.log(`Message content to send: ${this.message.content}`)
+    }
+
+    private async updateSentMessagesAndTotalAttempt(): Promise<void> {
+        this.sentMessages = await this.contactHistoryService.getCountSentTwitterMessagesDaily(this.twitterAccount)
+        this.attempts = await this.contactHistoryService.getCountAttemptsTwitterDaily(this.twitterAccount)
+    }
+
+    private async createDriver(): Promise<boolean> {
+        this.log(`Creating driver instance`)
+
+        this.driver = await SeleniumService.createDriver('', undefined, this.logger)
+
+        return true
+    }
+
+    private async isLoggedIn(): Promise<boolean> {
+        const title = await this.driver.getTitle()
+
+        return title.toLowerCase().includes('home')
+    }
+
+    private async disableAccount(): Promise<void> {
+        this.twitterAccount.isDisabled = true
+        await this.twitterService.setAccountAsDisabled(this.twitterAccount)
     }
 
     private buildMessage(token: Token): string {
