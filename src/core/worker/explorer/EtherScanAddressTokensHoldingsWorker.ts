@@ -1,7 +1,7 @@
 import { singleton } from 'tsyringe'
 import { AbstractTokenWorker } from '../AbstractTokenWorker'
-import { By, WebDriver } from 'selenium-webdriver'
-import { QueuedWalletAddressService, SeleniumService } from '../../service'
+import { By, WebDriver, until } from 'selenium-webdriver'
+import { FirewallService, QueuedWalletAddressService, SeleniumService } from '../../service'
 import { Blockchain, sleep, explorerDomains } from '../../../utils'
 import { QueuedWalletAddress } from '../../entity'
 import { ExplorerEnqueuer } from './ExplorerEnqueuer'
@@ -15,17 +15,19 @@ export class EtherScanAddressTokensHoldingsWorker extends AbstractTokenWorker {
     private readonly explorerDomain = explorerDomains[this.blockchain]
     private readonly walletsBatchAmount = 1000
     private readonly sleepDuration = 60 * 1000
+    private readonly delayBetweenPages = 5 * 1000
 
     public constructor(
         private readonly queuedWalletAddressService: QueuedWalletAddressService,
         private readonly explorerParser: ExplorerEnqueuer,
+        private readonly firewallService: FirewallService,
         private readonly logger: Logger,
     ) {
         super()
     }
 
     public async run(): Promise<void> {
-        const webDriver = await SeleniumService.createDriver('', undefined, this.logger)
+        let webDriver
 
         this.logger.info(`[${this.workerName}] started for ${this.blockchain} blockchain`)
 
@@ -41,12 +43,22 @@ export class EtherScanAddressTokensHoldingsWorker extends AbstractTokenWorker {
             }
 
             for (const wallet of wallets) {
+                if (!webDriver) {
+                    webDriver = await SeleniumService.createCloudFlareByPassedDriver(
+                        this.buildExplorerUrl(wallet.walletAddress),
+                        this.firewallService,
+                        this.logger,
+                    )
+
+                    await sleep(this.delayBetweenPages)
+                }
+
                 await webDriver.get(this.buildExplorerUrl(wallet.walletAddress))
-                //todo pass cloudflare here
+                await webDriver.wait(until.elementLocated(By.id('assets-wallet')), 60000)
 
                 if (await this.isPageAvailable(webDriver)) {
                     while (await this.hasEtherscanLogo(webDriver)) {
-                        await sleep(5 * 1000)
+                        await sleep(this.delayBetweenPages)
                     }
 
                     await webDriver.executeScript("document.getElementsByName('mytable_length')[0].selectedIndex = 3; document.getElementsByName('mytable_length')[0].dispatchEvent(new CustomEvent('change'));")

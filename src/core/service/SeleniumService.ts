@@ -4,6 +4,7 @@ import { Builder, Capabilities, ThenableWebDriver, WebDriver } from 'selenium-we
 import { Options } from 'selenium-webdriver/chrome'
 import { ProxyServer } from '../entity'
 import { Logger } from 'winston'
+import { FirewallService } from './FirewallService'
 
 @singleton()
 export class SeleniumService {
@@ -72,6 +73,28 @@ export class SeleniumService {
         }
 
         return driver
+    }
+
+    public static async createCloudFlareByPassedDriver(
+        url: string,
+        firewallService: FirewallService,
+        logger: Logger,
+    ): Promise<WebDriver> {
+        const { cookies, userAgent } = await firewallService.getCloudflareCookies(url)
+
+        const webDriver = await SeleniumService.createDriver('', undefined, logger, userAgent, true)
+
+        if (!cookies) {
+            throw new Error('Could not pass cloudflare firewall')
+        }
+
+        await webDriver.get(url)
+
+        for (const cookie of cookies) {
+            await webDriver.manage().addCookie({ name: cookie.name, value: cookie.value })
+        }
+
+        return webDriver
     }
 
     public static async isInternetWorking(driver: WebDriver): Promise<boolean> {

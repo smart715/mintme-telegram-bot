@@ -449,6 +449,7 @@ container.register(BSCScanAddressTokensHoldingsWorker, {
         new BSCScanAddressTokensHoldingsWorker(
             dependencyContainer.resolve(QueuedWalletAddressService),
             dependencyContainer.resolve(ExplorerEnqueuer),
+            dependencyContainer.resolve(FirewallService),
             createLogger(BSCScanAddressTokensHoldingsWorker.name.toLowerCase())
         )
     ),
@@ -459,6 +460,7 @@ container.register(EtherScanAddressTokensHoldingsWorker, {
         new EtherScanAddressTokensHoldingsWorker(
             dependencyContainer.resolve(QueuedWalletAddressService),
             dependencyContainer.resolve(ExplorerEnqueuer),
+            dependencyContainer.resolve(FirewallService),
             createLogger(EtherScanAddressTokensHoldingsWorker.name.toLowerCase())
         )
     ),

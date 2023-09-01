@@ -15,10 +15,10 @@ export class FirewallService {
             url,
         })
 
-        if (response.data?.status === 'ok' && response.data?.solution?.cookies) {
-            return {cookies: response.data.solution.cookies, userAgent: response.data.solution.userAgent}
+        if ('ok' === response.data?.status && response.data?.solution?.cookies) {
+            return { cookies: response.data.solution.cookies, userAgent: response.data.solution.userAgent }
         }
 
-        throw new Error('somethin went wrogn')
+        throw new Error('Could not get cookies from flaresolverr response')
     }
 }
