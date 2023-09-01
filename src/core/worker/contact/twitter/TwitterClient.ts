@@ -1,8 +1,8 @@
 import config from 'config'
-import { Logger } from 'winston'
-import { By, Key, WebDriver, WebElement } from 'selenium-webdriver'
+import {Logger} from 'winston'
+import {By, Key, WebDriver, WebElement} from 'selenium-webdriver'
 // eslint-disable-next-line
-import { NoSuchElementError } from 'selenium-webdriver/lib/error'
+import {NoSuchElementError} from 'selenium-webdriver/lib/error'
 import {ContactMessage, Token, TwitterAccount} from '../../../entity'
 import {
     ContactHistoryService,
@@ -12,8 +12,8 @@ import {
     TokensService,
     TwitterService,
 } from '../../../service'
-import { Environment, getRandomNumber } from '../../../../utils'
-import { ContactHistoryStatusType, ContactMethod, TokenContactStatusType } from '../../../types'
+import {Environment, getRandomNumber} from '../../../../utils'
+import {ContactHistoryStatusType, ContactMethod, TokenContactStatusType} from '../../../types'
 
 export class TwitterClient {
     private readonly maxMessagesDaily: number = config.get('twitter_dm_limit_daily')
@@ -182,6 +182,10 @@ export class TwitterClient {
                 this.log(`${queuedContact.channel} doesn't have dm opened`)
             }
 
+            if (ContactHistoryStatusType.ACCOUNT_NOT_EXISTS === result) {
+                this.log(`${queuedContact.channel} account doesn't exists or suspended`)
+            }
+
             if (ContactHistoryStatusType.ACCOUNT_LIMIT_HIT === result) {
                 await this.contactQueueService.setProcessing(queuedContact, false)
 
@@ -223,6 +227,16 @@ export class TwitterClient {
         await this.driver.get(link)
         await this.driver.sleep(20000)
 
+        const mainColumn = await this.driver.findElement(
+            By.css(`div[data-testid="primaryColumn"]`)
+        )
+
+        const mainText = await mainColumn.getText()
+
+        if (mainText.includes('Account suspended') || mainText.includes('This account doesn’t exist')) {
+            return ContactHistoryStatusType.ACCOUNT_NOT_EXISTS
+        }
+
         let element: WebElement
 
         try {
@@ -249,6 +263,8 @@ export class TwitterClient {
             messageInput = await this.driver.findElement(By.css('div[data-testid="dmComposerTextInput"]'))
         } catch (err) {
             if (err instanceof NoSuchElementError) {
+                this.log(`Can't find dm input field. Dm not enabled or account doesn't have access to ${link}`)
+
                 return ContactHistoryStatusType.DM_NOT_ENABLED
             }
 

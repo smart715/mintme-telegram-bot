@@ -34,6 +34,8 @@ export class TwitterWorker {
     public async run(): Promise<void> {
         // eslint-disable-next-line
         while (true) {
+            this.twitterClients = []
+
             const allAccounts = await this.twitterService.getAllAccounts()
 
             if (0 === allAccounts.length) {
@@ -89,7 +91,7 @@ export class TwitterWorker {
         for (const client of this.twitterClients) {
             if (!client.isInitialized) {
                 this.logger.warn(
-                    `[Twitter Worker ID: ${client.twitterAccount.id}] ` +
+                    `[TwitterWorker ID: ${client.twitterAccount.id}] ` +
                     `Not initialized.`
                 )
 
@@ -98,7 +100,7 @@ export class TwitterWorker {
 
             if (!client.message) {
                 this.logger.warn(
-                    `[Twitter Worker ID: ${client.twitterAccount.id}] ` +
+                    `[TwitterWorker ID: ${client.twitterAccount.id}] ` +
                     `No messages stock available, Account not able to start messaging.`
                 )
 
@@ -107,7 +109,7 @@ export class TwitterWorker {
 
             if (!client.isAllowedToSentMessages()) {
                 this.logger.warn(
-                    `[Twitter Worker ID: ${client.twitterAccount.id}] ` +
+                    `[TwitterWorker ID: ${client.twitterAccount.id}] ` +
                     `Client is not allowed to sent messages. Max daily attempts or daily messages reached. Skipping...`
                 )
 
