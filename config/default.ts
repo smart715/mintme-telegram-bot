@@ -1,6 +1,6 @@
 export default {
     //Database config
-    'db_host': 'localhost',
+    'db_host': 'db',
     'db_user': 'root',
     'db_password': 'root',
     'db_name': 'tokens_fetcher',
