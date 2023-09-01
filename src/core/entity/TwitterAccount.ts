@@ -8,9 +8,6 @@ export class TwitterAccount {
     @Column()
     public userName!: string
 
-    @Column({ nullable: true })
-    public assignedServerIP!: string
-
     @Column({ type: 'text', name: 'cookies_json' })
     public cookiesJSON!: string
 

@@ -1,9 +1,9 @@
 import config from 'config'
-import {Logger} from 'winston'
-import {By, Key, WebDriver, WebElement} from 'selenium-webdriver'
+import { Logger } from 'winston'
+import { By, Key, WebDriver, WebElement } from 'selenium-webdriver'
 // eslint-disable-next-line
-import {NoSuchElementError} from 'selenium-webdriver/lib/error'
-import {ContactMessage, Token, TwitterAccount} from '../../../entity'
+import { NoSuchElementError } from 'selenium-webdriver/lib/error'
+import { ContactMessage, Token, TwitterAccount } from '../../../entity'
 import {
     ContactHistoryService,
     ContactMessageService,
@@ -12,8 +12,8 @@ import {
     TokensService,
     TwitterService,
 } from '../../../service'
-import {Environment, getRandomNumber} from '../../../../utils'
-import {ContactHistoryStatusType, ContactMethod, TokenContactStatusType} from '../../../types'
+import { Environment, getRandomNumber } from '../../../../utils'
+import { ContactHistoryStatusType, ContactMethod, TokenContactStatusType } from '../../../types'
 
 export class TwitterClient {
     private readonly maxMessagesDaily: number = config.get('twitter_dm_limit_daily')
@@ -246,6 +246,16 @@ export class TwitterClient {
 
         if (this.isProd()) {
             await messageInput.sendKeys(Key.RETURN)
+
+            await this.driver.sleep(5000)
+
+            const pageSrc = await this.driver.getPageSource()
+
+            if (pageSrc.includes('failed to send')) {
+                this.log('Failed to send message')
+
+                return ContactHistoryStatusType.DM_NOT_ENABLED
+            }
 
             this.log(`Message sent to ${link}`)
         } else {
