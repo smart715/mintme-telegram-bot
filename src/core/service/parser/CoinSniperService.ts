@@ -12,7 +12,7 @@ export class CoinSniperService extends AbstractTokenFetcherService {
         return `https://coinsniper.net/new?page=${page}`
     }
 
-    public async loadToken(tokenId: string): Promise<string> {
-        return this.loadPageContent(`https://coinsniper.net/coin/${tokenId}`)
+    public getTokenPageUrl(tokenId: string): string {
+        return `https://coinsniper.net/coin/${tokenId}`
     }
 }

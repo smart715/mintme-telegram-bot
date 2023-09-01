@@ -44,7 +44,8 @@ export class BSCScanAddressTokensHoldingsWorker extends AbstractTokenWorker {
             for (const wallet of wallets) {
                 await webDriver.get(this.buildExplorerUrl(explorerDomain, wallet.walletAddress))
                 //todo pass cloudflare here
-
+                console.log(`processing ${wallet}`, this.buildExplorerUrl(explorerDomain, wallet.walletAddress));
+                console.log(await webDriver.getPageSource())
                 if (await this.isPageAvailable(webDriver)) {
                     await this.processTokensOnPage(webDriver, blockchain)
 

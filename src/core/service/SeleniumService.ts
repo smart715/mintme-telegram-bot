@@ -7,12 +7,23 @@ import { Logger } from 'winston'
 
 @singleton()
 export class SeleniumService {
-    public static async createDriver(profile: string = '', proxyServer: ProxyServer|undefined = undefined, logger: Logger, userAgent?: string): Promise<ThenableWebDriver> {
+    private static defaultUserAgent: string = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36'
+
+    public static async createDriver(
+        profile: string = '',
+        proxyServer: ProxyServer|undefined = undefined,
+        logger: Logger,
+        userAgent: string = SeleniumService.defaultUserAgent,
+        disableSandboxFlag: boolean = false,
+    ): Promise<ThenableWebDriver> {
         const options = new Options()
-            // .addArguments('--headless=new')
-            // .addArguments('--no-sandbox')
+            .addArguments('--headless=new')
             .addArguments('--window-size=1920,1080')
-            .addArguments(`user-agent=${userAgent || 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36'}`)
+            .addArguments(`user-agent=${userAgent}`)
+
+        if (!disableSandboxFlag) { // somehow influence how cloudflare blocks request
+            options.addArguments('--no-sandbox')
+        }
 
         if (profile) {
             options.addArguments(`--user-data-dir=${profile}`)

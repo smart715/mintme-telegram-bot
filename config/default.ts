@@ -1,6 +1,6 @@
 export default {
     //Database config
-    'db_host': 'db',
+    'db_host': 'localhost',
     'db_user': 'root',
     'db_password': 'root',
     'db_name': 'tokens_fetcher',
@@ -31,6 +31,8 @@ export default {
     'contact_frequency_in_seconds': 60 * 60 * 24 * 7, // 7 days
 
     'server_ip': '{{ server_ip }}',
+
+    'flaresolverr_server_url': 'http://localhost:8191/v1',
 
     explorerApiKeys: {
         'BSC': 'M7KD3A8FB4137CMQZ7VV3C696V6WYHD6UE',

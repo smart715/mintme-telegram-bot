@@ -6,7 +6,9 @@ import config from 'config'
 export class FirewallService {
     private flaresolverrServerUrl: string = config.get<string>('flaresolverr_server_url')
 
-    public async getCloudflareCookies(url: string): Promise<{cookies: any[], userAgent: string}> {
+    public async getCloudflareCookies(
+        url: string,
+    ): Promise<{cookies: {name: string, value: string}[], userAgent: string}> {
         const response = await axios.post(this.flaresolverrServerUrl, {
             cmd: 'request.get',
             maxTimeout: 60000,
