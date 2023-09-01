@@ -13,7 +13,7 @@ export class ContactMessageService {
     ) { }
 
     public async getAll(isTg: boolean): Promise<ContactMessage[]> {
-        await this.contactMessageRepository.getAllMessages(isTg)
+        return this.contactMessageRepository.getAllMessages(isTg)
     }
 
     public async getNextContactMessage(

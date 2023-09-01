@@ -3,7 +3,7 @@ import { Logger } from 'winston'
 import { By, Key, WebDriver, WebElement } from 'selenium-webdriver'
 // eslint-disable-next-line
 import { NoSuchElementError } from 'selenium-webdriver/lib/error'
-import { ContactMessage, TwitterAccount } from '../../../entity'
+import {ContactMessage, Token, TwitterAccount} from '../../../entity'
 import {
     ContactHistoryService,
     ContactMessageService,
@@ -111,10 +111,11 @@ export class TwitterClient {
             }
 
             if (retries < 3) {
-                this.logger.info(`Retrying to login, Attempt #${retries}`)
+                this.log(`Retrying to login, Attempt #${retries}`)
                 return await this.login(retries + 1)
             } else {
                 this.logger.warn(
+                    `[TwitterWorker ${this.twitterAccount.id}] ` +
                     `Account is banned or credentials are wrong, Err: USER_DEACTIVATED. Disabling account`
                 )
                 await this.disableAccount()
@@ -172,7 +173,10 @@ export class TwitterClient {
                 continue
             }
 
-            const result = await this.contactWithToken(queuedContact.channel)
+            const result = await this.contactWithToken(
+                queuedContact.channel,
+                this.buildMessage(token)
+            )
 
             if (ContactHistoryStatusType.DM_NOT_ENABLED === result) {
                 this.log(`${queuedContact.channel} doesn't have dm opened`)
@@ -209,7 +213,7 @@ export class TwitterClient {
         }
     }
 
-    public async contactWithToken(link: string): Promise<ContactHistoryStatusType> {
+    public async contactWithToken(link: string, message: string): Promise<ContactHistoryStatusType> {
         if (!this.isAllowedToSentMessages()) {
             return ContactHistoryStatusType.ACCOUNT_LIMIT_HIT
         }
@@ -251,7 +255,7 @@ export class TwitterClient {
             throw err
         }
 
-        await messageInput.sendKeys(this.message.content)
+        await messageInput.sendKeys(message)
         await this.driver.sleep(5000)
 
         if (this.isProd()) {
@@ -267,6 +271,11 @@ export class TwitterClient {
         return ContactHistoryStatusType.SENT_DM
     }
 
+    private buildMessage(token: Token): string {
+        return this.message.content
+            .replace(/XXXCOINXXX/g, token.name)
+            .replace(/XXXBLOCKCHAINXXX/g, token.blockchain)
+    }
 
     public async destroyDriver(): Promise<void> {
         if (this.driver) {
