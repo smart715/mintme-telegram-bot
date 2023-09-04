@@ -9,11 +9,11 @@ import { NewestTokenChecker, StopCheckException } from './NewestTokenChecker'
 @singleton()
 export class CoinSniperWorker extends NewestTokenChecker {
     protected readonly workerName = 'CoinSniper'
-    private readonly prefixLog = `[${this.workerName}]`
-    private readonly supportedBlockchains: Blockchain[] = [ Blockchain.ETH, Blockchain.BSC ]
-
     protected override readonly sleepTimeBetweenPages = 2 * 1000
 
+    private readonly prefixLog = `[${this.workerName}]`
+    private readonly supportedBlockchains: Blockchain[] = [ Blockchain.ETH, Blockchain.BSC ]
+    private readonly sleepBetweenTokens = 4 * 1000
     private webDriver: WebDriver
 
     public constructor(
@@ -136,7 +136,7 @@ export class CoinSniperWorker extends NewestTokenChecker {
 
             await this.checkedTokenService.saveAsChecked(coinId, this.workerName)
 
-            await sleep(4000)
+            await sleep(this.sleepBetweenTokens)
         }
     }
 
