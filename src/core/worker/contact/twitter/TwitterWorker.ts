@@ -51,7 +51,9 @@ export class TwitterWorker {
 
                 const twitterClient = await this.initNewClient(account)
 
-                this.twitterClients.push(twitterClient)
+                if (twitterClient) {
+                    this.twitterClients.push(twitterClient)
+                }
 
                 currentAccountIndex++
             }
@@ -66,7 +68,7 @@ export class TwitterWorker {
         }
     }
 
-    private async initNewClient(twitterAccount: TwitterAccount): Promise<TwitterClient> {
+    private async initNewClient(twitterAccount: TwitterAccount): Promise<TwitterClient|null> {
         this.logger.info(`${this.prefixLog} Initializing new client for ${twitterAccount.id} twitter id account`)
 
         const twitterClient = await new TwitterClient(
@@ -80,7 +82,11 @@ export class TwitterWorker {
             this.logger,
         )
 
-        await twitterClient.init()
+        const initialized = await twitterClient.init()
+
+        if (!initialized) {
+            return null
+        }
 
         return twitterClient
     }
@@ -89,33 +95,6 @@ export class TwitterWorker {
         const contactingPromises: Promise<void>[] = []
 
         for (const client of this.twitterClients) {
-            if (!client.isInitialized) {
-                this.logger.warn(
-                    `[TwitterWorker ID: ${client.twitterAccount.id}] ` +
-                    `Not initialized.`
-                )
-
-                continue
-            }
-
-            if (!client.message) {
-                this.logger.warn(
-                    `[TwitterWorker ID: ${client.twitterAccount.id}] ` +
-                    `No messages stock available, Account not able to start messaging.`
-                )
-
-                continue
-            }
-
-            if (!client.isAllowedToSentMessages()) {
-                this.logger.warn(
-                    `[TwitterWorker ID: ${client.twitterAccount.id}] ` +
-                    `Client is not allowed to sent messages. Max daily attempts or daily messages reached. Skipping...`
-                )
-
-                continue
-            }
-
             contactingPromises.push(client.startContacting())
         }
 

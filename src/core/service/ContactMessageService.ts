@@ -25,14 +25,8 @@ export class ContactMessageService {
         return this.contactMessageRepository.getNextAttemptMessage(isTgOnly, currentAttempt)
     }
 
-    public async getOneContactMessage(): Promise<ContactMessage|null> {
-        const contactMessage = await this.contactMessageRepository.findOne({ isTgOnly: false })
-
-        if (!contactMessage) {
-            return null
-        }
-
-        return contactMessage
+    public async getOneContactMessage(): Promise<ContactMessage|undefined> {
+        return this.contactMessageRepository.findOne({ isTgOnly: false })
     }
 
     public async getAccountMessages(isTelegram: boolean, accountId: number): Promise<ContactMessage[]> {

@@ -19,11 +19,10 @@ export class TwitterClient {
     private readonly maxMessagesDaily: number = config.get('twitter_dm_limit_daily')
     private readonly maxAttemptsDaily: number = config.get('twitter_total_attempts_daily')
     private readonly messageDelaySec: number = config.get('twitter_messages_delay_in_seconds')
-    public message: ContactMessage
-    private driver: WebDriver
-    public twitterAccount: TwitterAccount
 
-    public isInitialized: boolean = false
+    private readonly twitterAccount: TwitterAccount
+    private message: ContactMessage
+    private driver: WebDriver
     private sentMessages: number
     private attempts: number
 
@@ -40,28 +39,47 @@ export class TwitterClient {
         this.twitterAccount = twitterAccount
     }
 
-    public async init(): Promise<void> {
-        await this.createDriver()
+    public async init(): Promise<boolean> {
+        await this.initMessage()
+
+        if (!this.message) {
+            this.logger.warn(
+                `[TwitterWorker ID: ${this.twitterAccount.id}] ` +
+                `No messages stock available, Account not able to start messaging. Skipping...`
+            )
+
+            return false
+        }
+
+        await this.updateSentMessagesAndTotalAttempt()
+
+        if (!this.isAllowedToSentMessages()) {
+            this.logger.warn(
+                `[TwitterWorker ID: ${this.twitterAccount.id}] ` +
+                `Client is not allowed to sent messages. Max daily attempts or daily messages reached. Skipping...`
+            )
+
+            return false
+        }
+
+        this.log(`Creating driver instance`)
+        this.driver = await SeleniumService.createDriver('', undefined, this.logger)
 
         const isLoggedIn = await this.login()
 
         if (!isLoggedIn) {
-            return
+            this.logger.warn(
+                `[TwitterWorker ID: ${this.twitterAccount.id}] not initialized. Can't login. Skipping...`
+            )
         }
 
-        await this.updateSentMessagesAndTotalAttempt()
-        await this.initMessage()
-
-        this.isInitialized = true
         this.log(`Logged in | 24h Sent messages: ${this.sentMessages} | 24h Attempts: ${this.attempts}`)
-    }
-
-    public isAllowedToSentMessages(): boolean {
-        if (this.attempts >= this.maxAttemptsDaily || this.sentMessages >= this.maxMessagesDaily) {
-            return false
-        }
 
         return true
+    }
+
+    private isAllowedToSentMessages(): boolean {
+        return !(this.attempts >= this.maxAttemptsDaily || this.sentMessages >= this.maxMessagesDaily)
     }
 
     private async login(retries: number = 1): Promise<boolean> {
@@ -282,14 +300,6 @@ export class TwitterClient {
     private async updateSentMessagesAndTotalAttempt(): Promise<void> {
         this.sentMessages = await this.contactHistoryService.getCountSentTwitterMessagesDaily(this.twitterAccount)
         this.attempts = await this.contactHistoryService.getCountAttemptsTwitterDaily(this.twitterAccount)
-    }
-
-    private async createDriver(): Promise<boolean> {
-        this.log(`Creating driver instance`)
-
-        this.driver = await SeleniumService.createDriver('', undefined, this.logger)
-
-        return true
     }
 
     private async isLoggedIn(): Promise<boolean> {

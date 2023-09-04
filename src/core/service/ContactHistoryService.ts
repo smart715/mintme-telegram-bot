@@ -31,7 +31,6 @@ export class ContactHistoryService {
         return this.contactHistoryRepository.getCountAttemptsTwitterDaily(twitterAccount)
     }
 
-
     public async addRecord(
         address: string,
         blockchain: Blockchain,
