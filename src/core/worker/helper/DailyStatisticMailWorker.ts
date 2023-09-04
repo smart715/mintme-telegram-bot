@@ -1,11 +1,16 @@
+import config from 'config'
 import { singleton } from 'tsyringe'
-import config from "config";
+import { TokensService} from '../../service'
 
 @singleton()
 export class DailyStatisticMailWorker {
     private readonly email: string = config.get('email_daily_statistic')
 
-    public async run(): Promise<void> {
+    constructor(
+        private readonly tokenService: TokensService,
+    ) { }
 
+    public async run(): Promise<void> {
+        const tokens = await this.tokenService.getCountGroupedBySourceAndBlockchain()
     }
 }
