@@ -5,6 +5,9 @@ export default {
     'db_password': 'root',
     'db_name': 'tokens_fetcher',
 
+    // Email to send daily statistic
+    'email_daily_statistic': 'exmaple@mail.com',
+
     // Coinmarketcap worker settings
     cmcWorker: {
         'apiKey': '0da9b092-fee6-4c91-875a-e93fbb6b78e0',
