@@ -90,7 +90,7 @@ import {
     CoinVoteService,
     Coins360Service,
     CoinsGodsService,
-    CoinsHunterService,
+    CoinsHunterService, DailyStatisticMailWorker,
 } from '../../core'
 import { Application } from '../'
 import { CliDependency } from './types'
@@ -116,7 +116,7 @@ import {
     RunTop100TokensWorker,
     RunTokensInsightWorker,
     RunMyEtherListsWorker,
-    RunRecentTokensWorker,
+    RunRecentTokensWorker, RunDailyStatisticMailWorker,
 } from '../../command'
 import { RetryAxios, TokenNamesGenerator, createLogger } from '../../utils'
 
@@ -141,6 +141,7 @@ const lastTokenTxDateFetcherLogger = createLogger(LastTokenTxDateFetcher.name.to
 const queueLogger = createLogger(QueueWorker.name.toLowerCase())
 const telegramLogger = createLogger(TelegramWorker.name.toLowerCase())
 const mailerLogger = createLogger(MailerWorker.name.toLowerCase())
+const dailyStatisticMailLogger = createLogger(DailyStatisticMailWorker.name.toLowerCase())
 
 // Repositories
 
@@ -826,6 +827,15 @@ container.register(MailerWorker, {
     ),
 })
 
+container.register(DailyStatisticMailWorker, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new DailyStatisticMailWorker(
+            dependencyContainer.resolve(TokensService),
+            dailyStatisticMailLogger,
+        )
+    ),
+})
+
 // CLI
 
 container.register(CliDependency.COMMAND, {
@@ -1040,6 +1050,15 @@ container.register(CliDependency.COMMAND, {
         new RunMyEtherListsWorker(
             dependencyContainer.resolve(MyEtherListsWorker),
             myEtherListsLogger,
+        )
+    ),
+})
+
+container.register(CliDependency.COMMAND, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new RunDailyStatisticMailWorker(
+            dependencyContainer.resolve(DailyStatisticMailWorker),
+            dailyStatisticMailLogger,
         )
     ),
 })

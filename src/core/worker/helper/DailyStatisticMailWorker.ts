@@ -1,3 +1,5 @@
+// @ts-nocheck
+import { Logger } from 'winston'
 import config from 'config'
 import { singleton } from 'tsyringe'
 import { TokensService} from '../../service'
@@ -8,9 +10,12 @@ export class DailyStatisticMailWorker {
 
     constructor(
         private readonly tokenService: TokensService,
+        private readonly logger: Logger
     ) { }
 
     public async run(): Promise<void> {
-        const tokens = await this.tokenService.getCountGroupedBySourceAndBlockchain()
+        const tokens = await this.tokenService.getCountGroupedBySource()
+
+        this.logger.info(JSON.stringify(tokens))
     }
 }

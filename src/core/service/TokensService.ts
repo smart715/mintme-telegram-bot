@@ -82,8 +82,8 @@ export class TokensService {
             maxTelegramAttempts)
     }
 
-    public async getCountGroupedBySourceAndBlockchain(): Promise<TokensCountGroupedBySourceAndBlockchain[]> {
-        return this.tokenRepository.findGroupedBySourceAndBlockchain()
+    public async getCountGroupedBySource(): Promise<TokensCountGroupedBySourceAndBlockchain[]> {
+        return this.tokenRepository.findGroupedBySource()
     }
 
     public async getNextWithoutTxDate(): Promise<Token | undefined> {

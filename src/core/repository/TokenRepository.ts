@@ -49,10 +49,10 @@ export class TokenRepository extends Repository<Token> {
             .getOne()
     }
 
-    public async findGroupedBySourceAndBlockchain(): Promise<TokensCountGroupedBySourceAndBlockchain[]> {
-        const result = await this.createQueryBuilder('token')
-            .select(['COUNT(*) as tokens', 'token.blockchain', 'token.source'])
-            .groupBy('token.source, token.blockchain')
+    public async findGroupedBySource(): Promise<TokensCountGroupedBySourceAndBlockchain[]> {
+        const result = await this.createQueryBuilder()
+            .select(['COUNT(*) as tokens', 'source'])
+            .groupBy('source')
             .getRawMany();
 
         return result as TokensCountGroupedBySourceAndBlockchain[]
