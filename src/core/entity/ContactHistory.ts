@@ -35,6 +35,9 @@ export class ContactHistory {
     @Column({ nullable: true })
     public tgAccountId: number
 
+    @Column({ nullable: true })
+    public twitterAccountId: number
+
     public constructor(
         address: string,
         blockchain: Blockchain,

@@ -1,8 +1,8 @@
 import { singleton } from 'tsyringe'
 import config from 'config'
 import { Logger } from 'winston'
-import { TelegramClient } from './telegram'
-import { TelegramAccount } from '../../entity'
+import { TelegramClient } from './index'
+import { TelegramAccount } from '../../../entity'
 import {
     ContactHistoryService,
     TokensService,
@@ -10,8 +10,8 @@ import {
     ContactMessageService,
     ContactQueueService,
     ProxyService,
-} from '../../service'
-import { sleep } from '../../../utils'
+} from '../../../service'
+import { sleep } from '../../../../utils'
 
 @singleton()
 export class TelegramWorker {

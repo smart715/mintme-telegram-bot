@@ -10,3 +10,4 @@ export { LastCheckedTokenNameRepository } from './LastCheckedTokenNameRepository
 export { CheckedTokenRepository } from './CheckedTokenRepository'
 export { ProxyServerRepository } from './ProxyServerRepository'
 export { NewestCheckedTokenRepository } from './NewestCheckedTokenRepository'
+export { TwitterAccountRepository } from './TwitterAccountRepository'
