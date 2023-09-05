@@ -3,7 +3,8 @@ import { TokenRepository } from '../repository'
 import { Token } from '../entity'
 import { Blockchain, getValidLinks, isValidEmail } from '../../utils'
 import { ContactMethod } from '../types'
-import {TokensCountGroupedBySourceAndBlockchain} from "../../types";
+import {TokensCountGroupedBySource} from "../../types";
+import {Moment} from "moment";
 
 @singleton()
 export class TokensService {
@@ -82,8 +83,8 @@ export class TokensService {
             maxTelegramAttempts)
     }
 
-    public async getCountGroupedBySource(): Promise<TokensCountGroupedBySourceAndBlockchain[]> {
-        return this.tokenRepository.findGroupedBySource()
+    public async getCountGroupedBySource(from: Moment): Promise<TokensCountGroupedBySource[]> {
+        return this.tokenRepository.findGroupedBySource(from)
     }
 
     public async getNextWithoutTxDate(): Promise<Token | undefined> {

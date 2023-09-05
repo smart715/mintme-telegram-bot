@@ -831,6 +831,7 @@ container.register(DailyStatisticMailWorker, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new DailyStatisticMailWorker(
             dependencyContainer.resolve(TokensService),
+            dependencyContainer.resolve(MailerService),
             dailyStatisticMailLogger,
         )
     ),
