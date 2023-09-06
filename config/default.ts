@@ -1,4 +1,6 @@
 export default {
+    'environment': process.env.NODE_ENV,
+
     //Database config
     'db_host': 'db',
     'db_user': 'root',
@@ -26,6 +28,12 @@ export default {
     'telegram_messages_delay_in_seconds': 30,
     'telegram_account_max_day_messages': 30,
     'telegram_unique_messages_per_account': 3,
+
+    // twitter configs
+    'twitter_max_accounts_simultaneous': 1,
+    'twitter_dm_limit_daily': 300,
+    'twitter_total_attempts_daily': 1000,
+    'twitter_messages_delay_in_seconds': 60,
 
     // enqueue tokens worker
     'contact_email_max_attempts': 4,
