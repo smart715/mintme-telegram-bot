@@ -2,14 +2,14 @@
 import config from 'config'
 import { Logger } from 'winston'
 import { singleton } from 'tsyringe'
-import {ContactHistoryService, MailerService, TokensService} from '../../service'
+import { ContactHistoryService, MailerService, TokensService } from '../../service'
 import { TokensCountGroupedBySource } from '../../../types'
 
 interface WebsiteParsersInfo {
-    total: number;
-    CRO: number;
-    BSC: number;
-    ETH: number
+    total: number,
+    CRO: number,
+    BSC: number,
+    ETH: number,
 }
 
 @singleton()
@@ -19,7 +19,7 @@ export class DailyStatisticMailWorker {
     constructor(
         private readonly tokenService: TokensService,
         private readonly mailerService: MailerService,
-        // private readonly contactHistoryService: ContactHistoryService,
+        private readonly contactHistoryService: ContactHistoryService,
         private readonly logger: Logger
     ) { }
 
@@ -29,13 +29,17 @@ export class DailyStatisticMailWorker {
         fromDate.setHours(now.getHours() - 170)
 
         const tokens = await this.tokenService.getCountGroupedBySourceAndBlockchain(fromDate)
+        const contacts = await this.contactHistoryService.getTotalCountGroupedByContactMethod(fromDate)
 
-        const websiteParsersInfo = this.buildWebsiteParsersInfo(tokens)
-        const tokensWorkerMsg = this.buildTokensWorkerMsg(websiteParsersInfo)
+        console.log(contacts)
+        console.log(JSON.stringify(contacts))
 
-        await this.mailerService.sendEmail(this.email, 'Daily Statistic', tokensWorkerMsg)
-
-        this.logger.info(JSON.stringify(tokens))
+        // const websiteParsersInfo = this.buildWebsiteParsersInfo(tokens)
+        // const tokensWorkerMsg = this.buildTokensWorkerMsg(websiteParsersInfo)
+        //
+        // await this.mailerService.sendEmail(this.email, 'Daily Statistic', tokensWorkerMsg)
+        //
+        // this.logger.info(JSON.stringify(tokens))
     }
 
     private buildWebsiteParsersInfo(tokens: TokensCountGroupedBySource[]): WebsiteParsersInfo[] {

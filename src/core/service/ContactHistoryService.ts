@@ -82,4 +82,8 @@ export class ContactHistoryService {
             .getCount()
         return contactTimes
     }
+
+    public async getTotalCountGroupedByContactMethod(fromDate: Date): Promise<any> {
+        return this.contactHistoryRepository.findTotalCountGroupedByContactMethod(fromDate)
+    }
 }

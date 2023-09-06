@@ -54,6 +54,7 @@ export class TokenRepository extends Repository<Token> {
             .select(['COUNT(*) as tokens', 'source', 'blockchain'])
             .andWhere('created_at > :from', { from: from })
             .groupBy('source, blockchain')
+            .orderBy('tokens', 'DESC')
             .getRawMany();
 
         return result as TokensCountGroupedBySource[]

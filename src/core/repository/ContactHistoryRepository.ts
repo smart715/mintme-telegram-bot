@@ -34,7 +34,14 @@ export class ContactHistoryRepository extends Repository<ContactHistory> {
             })
     }
 
-    // public async getTotalCountGroupedByContactMethod(): Promise<void> {
-    //
-    // }
+    public async findTotalCountGroupedByContactMethod(fromDate: Date): Promise<any> {
+        const result = await this.createQueryBuilder()
+            .select(['COUNT(*) as tokens', 'blockchain', 'contact_method', 'is_success'])
+            .andWhere('created_at > :from', { from: fromDate })
+            .groupBy('contact_method, is_success, blockchain')
+            .orderBy('tokens', 'DESC')
+            .getRawMany();
+
+        return result as any
+    }
 }

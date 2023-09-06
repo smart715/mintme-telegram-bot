@@ -874,6 +874,7 @@ container.register(DailyStatisticMailWorker, {
         new DailyStatisticMailWorker(
             dependencyContainer.resolve(TokensService),
             dependencyContainer.resolve(MailerService),
+            dependencyContainer.resolve(ContactHistoryService),
             dailyStatisticMailLogger,
         )
     ),
