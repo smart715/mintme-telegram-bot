@@ -43,7 +43,7 @@ export class EtherScanAddressTokensHoldingsWorker extends AbstractTokenWorker {
             }
 
             for (const wallet of wallets) {
-                if (!webDriver) {
+                if (!webDriver) { // by pass cloudflare of first wallet page, do it only once
                     webDriver = await SeleniumService.createCloudFlareByPassedDriver(
                         this.buildExplorerUrl(wallet.walletAddress),
                         this.firewallService,
