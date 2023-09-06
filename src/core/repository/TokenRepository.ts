@@ -2,7 +2,7 @@ import { singleton } from 'tsyringe'
 import { Brackets, EntityRepository, Repository } from 'typeorm'
 import { Token } from '../entity'
 import { Blockchain } from '../../utils'
-import moment, {Moment} from 'moment'
+import moment from 'moment'
 import config from 'config'
 import { TokenContactStatusType } from '../types'
 import {TokensCountGroupedBySource} from "../../types";
@@ -49,10 +49,10 @@ export class TokenRepository extends Repository<Token> {
             .getOne()
     }
 
-    public async findGroupedBySourceAndBlockchain(from: Moment): Promise<TokensCountGroupedBySource[]> {
+    public async findGroupedBySourceAndBlockchain(from: Date): Promise<TokensCountGroupedBySource[]> {
         const result = await this.createQueryBuilder()
             .select(['COUNT(*) as tokens', 'source', 'blockchain'])
-            .andWhere('created_at > :from', { from: from.format() })
+            .andWhere('created_at > :from', { from: from })
             .groupBy('source, blockchain')
             .getRawMany();
 

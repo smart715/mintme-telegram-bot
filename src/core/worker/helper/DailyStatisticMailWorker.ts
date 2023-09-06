@@ -1,8 +1,8 @@
+// @ts-nocheck
 import config from 'config'
-import moment from 'moment'
 import { Logger } from 'winston'
 import { singleton } from 'tsyringe'
-import { MailerService, TokensService } from '../../service'
+import {ContactHistoryService, MailerService, TokensService} from '../../service'
 import { TokensCountGroupedBySource } from '../../../types'
 
 interface WebsiteParsersInfo {
@@ -19,19 +19,21 @@ export class DailyStatisticMailWorker {
     constructor(
         private readonly tokenService: TokensService,
         private readonly mailerService: MailerService,
+        // private readonly contactHistoryService: ContactHistoryService,
         private readonly logger: Logger
     ) { }
 
     public async run(): Promise<void> {
-        const currentDate = moment();
-        const fromDate = currentDate.subtract(7, 'days');
+        const now = new Date()
+        const fromDate = new Date()
+        fromDate.setHours(now.getHours() - 170)
 
         const tokens = await this.tokenService.getCountGroupedBySourceAndBlockchain(fromDate)
 
         const websiteParsersInfo = this.buildWebsiteParsersInfo(tokens)
         const tokensWorkerMsg = this.buildTokensWorkerMsg(websiteParsersInfo)
 
-        await this.mailerService.sendEmail(this.email, 'test', tokensWorkerMsg)
+        await this.mailerService.sendEmail(this.email, 'Daily Statistic', tokensWorkerMsg)
 
         this.logger.info(JSON.stringify(tokens))
     }
@@ -56,9 +58,15 @@ export class DailyStatisticMailWorker {
     private buildTokensWorkerMsg(websiteParsers: WebsiteParsersInfo[]): string {
         let msg = 'Daily Statistic: <br>'
 
+        if (0 === Object.keys(websiteParsers).length) {
+            msg += `No tokens were added today`
+
+            return msg
+        }
+
         for (const [worker, workerInfo] of Object.entries(websiteParsers)) {
             msg += `<strong>${worker}</strong>: ETH - ${workerInfo.ETH}, BSC - ${workerInfo.BSC}, CRO - ${workerInfo.CRO}. ` +
-                `<strong>Total</strong> - ${workerInfo.total} tokens<br>`
+                `<strong>Total added</strong> - ${workerInfo.total} tokens<br>`
         }
 
         return msg

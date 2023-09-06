@@ -33,4 +33,8 @@ export class ContactHistoryRepository extends Repository<ContactHistory> {
                 },
             })
     }
+
+    // public async getTotalCountGroupedByContactMethod(): Promise<void> {
+    //
+    // }
 }
