@@ -14,3 +14,8 @@ export const explorerApiUrls = {
     [Blockchain.ETH]: 'api.etherscan.io',
     [Blockchain.CRO]: 'api.cronoscan.com',
 }
+
+export enum Environment {
+    DEVELOPMENT = 'development',
+    PRODUCTION = 'production',
+}

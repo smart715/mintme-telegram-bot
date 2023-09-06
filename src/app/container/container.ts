@@ -1,3 +1,4 @@
+import config from 'config'
 import { container, instanceCachingFactory } from 'tsyringe'
 import {
     CMCWorker,
@@ -92,6 +93,9 @@ import {
     CoinsGodsService,
     CoinsHunterService,
     FirewallService,
+    TwitterWorker,
+    TwitterAccountRepository,
+    TwitterService,
 } from '../../core'
 import { Application } from '../'
 import { CliDependency } from './types'
@@ -118,8 +122,16 @@ import {
     RunTokensInsightWorker,
     RunMyEtherListsWorker,
     RunRecentTokensWorker,
+    RunTwitterWorker,
 } from '../../command'
-import { RetryAxios, TokenNamesGenerator, createLogger } from '../../utils'
+import { RetryAxios, TokenNamesGenerator, createLogger, Environment } from '../../utils'
+
+// Env
+
+export const environment: Environment = 'production' === config.get('environment')
+    ? Environment.PRODUCTION
+    : Environment.DEVELOPMENT
+
 
 // Loggers
 
@@ -142,6 +154,7 @@ const lastTokenTxDateFetcherLogger = createLogger(LastTokenTxDateFetcher.name.to
 const queueLogger = createLogger(QueueWorker.name.toLowerCase())
 const telegramLogger = createLogger(TelegramWorker.name.toLowerCase())
 const mailerLogger = createLogger(MailerWorker.name.toLowerCase())
+const twitterLogger = createLogger(TwitterWorker.name.toLowerCase())
 
 // Repositories
 
@@ -184,12 +197,17 @@ container.register(QueuedTokenAddressRepository, {
 container.register(QueuedWalletAddressRepository, {
     useFactory: instanceCachingFactory(() => getConnection().getCustomRepository(QueuedWalletAddressRepository)),
 })
+
 container.register(NewestCheckedTokenRepository, {
     useFactory: instanceCachingFactory(() => getConnection().getCustomRepository(NewestCheckedTokenRepository)),
 })
 
 container.register(CheckedTokenRepository, {
     useFactory: instanceCachingFactory(() => getConnection().getCustomRepository(CheckedTokenRepository)),
+})
+
+container.register(TwitterAccountRepository, {
+    useFactory: instanceCachingFactory(() => getConnection().getCustomRepository(TwitterAccountRepository)),
 })
 
 // Utils
@@ -388,6 +406,14 @@ container.register(CoinsGodsService, {
 
 container.register(CoinsHunterService, {
     useFactory: instanceCachingFactory(() => new CoinsHunterService()),
+})
+
+container.register(TwitterService, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new TwitterService(
+            dependencyContainer.resolve(TwitterAccountRepository),
+        ),
+    ),
 })
 
 // Workers
@@ -835,6 +861,20 @@ container.register(MailerWorker, {
     ),
 })
 
+container.register(TwitterWorker, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new TwitterWorker(
+            dependencyContainer.resolve(TwitterService),
+            dependencyContainer.resolve(ContactHistoryService),
+            dependencyContainer.resolve(ContactMessageService),
+            dependencyContainer.resolve(ContactQueueService),
+            dependencyContainer.resolve(TokensService),
+            environment,
+            twitterLogger,
+        )
+    ),
+})
+
 // CLI
 
 container.register(CliDependency.COMMAND, {
@@ -1049,6 +1089,15 @@ container.register(CliDependency.COMMAND, {
         new RunMyEtherListsWorker(
             dependencyContainer.resolve(MyEtherListsWorker),
             myEtherListsLogger,
+        )
+    ),
+})
+
+container.register(CliDependency.COMMAND, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new RunTwitterWorker(
+            dependencyContainer.resolve(TwitterWorker),
+            twitterLogger,
         )
     ),
 })

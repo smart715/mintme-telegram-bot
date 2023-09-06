@@ -1,9 +1,9 @@
+import moment from 'moment'
 import { singleton } from 'tsyringe'
 import { ContactHistoryRepository } from '../repository'
 import { ContactHistoryStatusType, ContactMethod } from '../types'
-import { ContactHistory } from '../entity'
+import { ContactHistory, TwitterAccount } from '../entity'
 import { Blockchain } from '../../utils'
-import moment from 'moment'
 
 @singleton()
 export class ContactHistoryService {
@@ -11,7 +11,7 @@ export class ContactHistoryService {
         private readonly contactHistoryRepository: ContactHistoryRepository,
     ) { }
 
-    public async getAmountOfSentMessagesPerAccount(accountId: number): Promise<{ group: number, dm: number }> {
+    public async getAmountOfTelegramSentMessagesPerAccount(accountId: number): Promise<{ group: number, dm: number }> {
         const result = await this.contactHistoryRepository
             .createQueryBuilder()
             .select([ `SUM(CASE WHEN status LIKE 'SENT_GROUP%' THEN 1 ELSE 0 END) AS count_group`, `SUM(CASE WHEN status = 'SENT_DM' THEN 1 ELSE 0 END) AS count_dm` ])
@@ -23,6 +23,14 @@ export class ContactHistoryService {
         return { group: result.count_group || 0, dm: result.count_dm || 0 }
     }
 
+    public async getCountSentTwitterMessagesDaily(twitterAccount: TwitterAccount): Promise<number> {
+        return this.contactHistoryRepository.getCountSentTwitterMessagesDaily(twitterAccount)
+    }
+
+    public async getCountAttemptsTwitterDaily(twitterAccount: TwitterAccount): Promise<number> {
+        return this.contactHistoryRepository.getCountAttemptsTwitterDaily(twitterAccount)
+    }
+
     public async addRecord(
         address: string,
         blockchain: Blockchain,
@@ -32,6 +40,7 @@ export class ContactHistoryService {
         channel: string,
         status: ContactHistoryStatusType,
         tgAccountId?: number,
+        twitterAccountId?: number,
     ): Promise<ContactHistory> {
         const contactHistoryRecord = new ContactHistory(
             address,
@@ -45,6 +54,10 @@ export class ContactHistoryService {
 
         if (tgAccountId) {
             contactHistoryRecord.tgAccountId = tgAccountId
+        }
+
+        if (twitterAccountId) {
+            contactHistoryRecord.twitterAccountId = twitterAccountId
         }
 
         await this.contactHistoryRepository.insert(contactHistoryRecord)
