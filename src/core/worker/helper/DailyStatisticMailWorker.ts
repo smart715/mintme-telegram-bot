@@ -30,24 +30,41 @@ export class DailyStatisticMailWorker {
         const tokensWorkersMsg = await this.buildTokenWorkersMsg(fromDate)
         const contactingWorkersMsg = await this.buildContactingWorkersMsg(fromDate)
 
-        return tokensWorkersMsg
+        return tokensWorkersMsg + contactingWorkersMsg
     }
 
     private async buildContactingWorkersMsg(fromDate: Date): Promise<string> {
         const contacts = await this.contactHistoryService.getTotalCountGroupedByContactMethod(fromDate)
+
         const groupedContactingWorkersInfo = this.groupContactingWorkersInfo(contacts)
 
+        let msg = '<br><br>Daily Statistic (contacting workers): <br>'
 
+        if (0 === Object.keys(groupedContactingWorkersInfo).length) {
+            msg += `No users were contacted today`
+
+            return msg
+        }
+
+        for (const [contactMethod, contactInfo] of Object.entries(groupedContactingWorkersInfo)) {
+            msg += `<strong>${contactMethod}</strong>: ` +
+                `Success - ${contactInfo.success}. ` +
+                `Failed(dm not enabled, account banned etc.) - ${contactInfo.failed}. ` +
+                `Crypto(failures and successes): ETH - ${contactInfo.ETH}, BSC - ${contactInfo.BSC}, CRO - ${contactInfo.CRO}. ` +
+                `<strong>Total</strong> - ${contactInfo.total} contacts<br>`
+        }
+
+        return msg
     }
 
-    private groupContactingWorkersInfo(contacts: GroupedContactsCount[]): Promise<{
+    private groupContactingWorkersInfo(contacts: GroupedContactsCount[]): {
         total: number,
         failed: number,
         success: number,
-        CRO: number,
-        BSC: number,
         ETH: number,
-    }[]> {
+        BSC: number,
+        CRO: number,
+    }[] {
         const grouped = []
 
         for (const contact of contacts) {
@@ -60,12 +77,11 @@ export class DailyStatisticMailWorker {
             grouped[contact.contact_method][contact.blockchain] = parseInt(contact.tokens)
 
             if (contact.is_success) {
-                grouped[contact.contact_method][contact.
+                grouped[contact.contact_method].success += parseInt(contact.tokens)
             } else {
-
+                grouped[contact.contact_method].failed += parseInt(contact.tokens)
             }
 
-            grouped[contact.contact_method][contact.blockchain] = parseInt(contact.tokens)
             grouped[contact.contact_method].total += parseInt(contact.tokens)
         }
 
@@ -76,7 +92,7 @@ export class DailyStatisticMailWorker {
         const tokens = await this.tokenService.getCountGroupedBySourceAndBlockchain(fromDate)
         const groupedWebsiteParserInfo = this.groupWebsiteParsersInfo(tokens)
 
-        let msg = 'Daily Statistic: <br>'
+        let msg = 'Daily Statistic (website parsers): <br>'
 
         if (0 === Object.keys(groupedWebsiteParserInfo).length) {
             msg += `No tokens were added today`
