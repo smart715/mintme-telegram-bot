@@ -1,6 +1,6 @@
 import { Blockchain } from '../utils'
 
-export interface TokensCountGroupedBySource {
+export interface TokensCountGroupedBySourceAndBlockchain {
     tokens: string,
     source: string,
     blockchain: Blockchain
