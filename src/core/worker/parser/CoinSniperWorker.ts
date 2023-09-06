@@ -1,25 +1,27 @@
 import { singleton } from 'tsyringe'
 import { Blockchain, sleep } from '../../../utils'
-import { CoinSniperService, NewestCheckedTokenService, SeleniumService, TokensService } from '../../service'
+import { CheckedTokenService, CoinSniperService, FirewallService, NewestCheckedTokenService, SeleniumService, TokensService } from '../../service'
 import { DOMWindow, JSDOM } from 'jsdom'
 import { Logger } from 'winston'
-import { WebDriver } from 'selenium-webdriver'
+import { By, WebDriver, until } from 'selenium-webdriver'
 import { NewestTokenChecker, StopCheckException } from './NewestTokenChecker'
 
 @singleton()
 export class CoinSniperWorker extends NewestTokenChecker {
     protected readonly workerName = 'CoinSniper'
-    private readonly prefixLog = `[${this.workerName}]`
-    private readonly supportedBlockchains: Blockchain[] = [ Blockchain.ETH, Blockchain.BSC ]
-
     protected override readonly sleepTimeBetweenPages = 2 * 1000
 
+    private readonly prefixLog = `[${this.workerName}]`
+    private readonly supportedBlockchains: Blockchain[] = [ Blockchain.ETH, Blockchain.BSC ]
+    private readonly sleepBetweenTokens = 4 * 1000
     private webDriver: WebDriver
 
     public constructor(
         private readonly coinSniperService: CoinSniperService,
         private readonly tokenService: TokensService,
         protected readonly newestTokenCheckedService: NewestCheckedTokenService,
+        private readonly firewallService: FirewallService,
+        private readonly checkedTokenService: CheckedTokenService,
         protected readonly logger: Logger,
     ) {
         super(
@@ -30,7 +32,11 @@ export class CoinSniperWorker extends NewestTokenChecker {
     }
 
     public async run(): Promise<void> {
-        this.webDriver = await SeleniumService.createDriver('', undefined, this.logger)
+        this.webDriver = await SeleniumService.createCloudFlareByPassedDriver(
+            this.coinSniperService.getNewTokensPageUrl(1),
+            this.firewallService,
+            this.logger,
+        )
 
         for (const blockchain of this.supportedBlockchains) {
             await this.webDriver.get(this.coinSniperService.getBlockchainFilterPageUrl(blockchain))
@@ -71,10 +77,10 @@ export class CoinSniperWorker extends NewestTokenChecker {
     }
 
     protected override async checkPage(page: number, blockchain?: Blockchain): Promise<void> {
-        // todo: fix cloudflare
         await this.webDriver.get(this.coinSniperService.getNewTokensPageUrl(page))
-        const pageDOM = (new JSDOM(await this.webDriver.getPageSource())).window
+        await this.webDriver.wait(until.elementLocated(By.className('home')), 60000)
 
+        const pageDOM = (new JSDOM(await this.webDriver.getPageSource())).window
         const coinsIds = this.getCoinsIds(pageDOM)
 
         if (!coinsIds.length) {
@@ -84,11 +90,19 @@ export class CoinSniperWorker extends NewestTokenChecker {
         for (const coinId of coinsIds) {
             await this.newestCheckedCheck(coinId, blockchain)
 
-            const coinPageSource = await this.coinSniperService.loadToken(coinId)
-            const coinPageDocument = (new JSDOM(coinPageSource)).window.document
+            if (await this.checkedTokenService.isChecked(coinId, this.workerName)) {
+                this.logger.warn(`${this.prefixLog} ${coinId} already checked. Skipping`)
 
-            const tokenAddress = (coinPageDocument.getElementsByClassName('address')[0])
-                ? coinPageDocument.getElementsByClassName('address')[0].innerHTML
+                continue
+            }
+
+            await this.webDriver.get(this.coinSniperService.getTokenPageUrl(coinId))
+            await this.webDriver.wait(until.elementLocated(By.className('home')), 60000)
+
+            const coinPageDocument = (new JSDOM(await this.webDriver.getPageSource())).window.document
+
+            const tokenAddress = (coinPageDocument.getElementsByClassName('contract')[0])
+                ? coinPageDocument.getElementsByClassName('contract')[0].getAttribute('data-copy')
                 : ''
             const tokenName = coinPageDocument.title.split('-')[0].trim()
             let website = ''
@@ -101,7 +115,7 @@ export class CoinSniperWorker extends NewestTokenChecker {
                 return el.href
             })
 
-            if (tokenAddress.startsWith('0x')) {
+            if (tokenAddress && tokenAddress.startsWith('0x')) {
                 await this.tokenService.addIfNotExists(
                     tokenAddress,
                     tokenName,
@@ -120,7 +134,9 @@ export class CoinSniperWorker extends NewestTokenChecker {
                 this.logger.warn(`${this.prefixLog} Unsupported blockchain or wrong data for ${coinId}. Skipping`)
             }
 
-            await sleep(2000)
+            await this.checkedTokenService.saveAsChecked(coinId, this.workerName)
+
+            await sleep(this.sleepBetweenTokens)
         }
     }
 
