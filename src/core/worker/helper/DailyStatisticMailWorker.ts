@@ -5,6 +5,26 @@ import { singleton } from 'tsyringe'
 import { ContactHistoryService, MailerService, TokensService } from '../../service'
 import { GroupedContactsCount, TokensCountGroupedBySourceAndBlockchain } from '../../../types'
 
+interface ContactingWorkersInfo {
+    [key: string]: {
+        total: number,
+        failed: number,
+        success: number,
+        ETH: number,
+        BSC: number,
+        CRO: number,
+    },
+}
+
+interface TokenWorkersInfo {
+    [key: string]: {
+        total: number,
+        CRO: number,
+        BSC: number,
+        ETH: number,
+    },
+}
+
 @singleton()
 export class DailyStatisticMailWorker {
     private readonly prefixLog = '[DailyStatisticWorker]'
@@ -65,15 +85,8 @@ export class DailyStatisticMailWorker {
         return msg
     }
 
-    private groupContactingWorkersInfo(contacts: GroupedContactsCount[]): {
-        total: number,
-        failed: number,
-        success: number,
-        ETH: number,
-        BSC: number,
-        CRO: number,
-    }[] {
-        const grouped = []
+    private groupContactingWorkersInfo(contacts: GroupedContactsCount[]): ContactingWorkersInfo {
+        const grouped: ContactingWorkersInfo = {}
 
         for (const contact of contacts) {
             const currentContactSource = grouped[contact.contact_method]
@@ -96,7 +109,7 @@ export class DailyStatisticMailWorker {
         return grouped
     }
 
-    private async buildTokenWorkersMsg(fromDate): Promise<string> {
+    private async buildTokenWorkersMsg(fromDate: Date): Promise<string> {
         const tokens = await this.tokenService.getCountGroupedBySourceAndBlockchain(fromDate)
         const groupedWebsiteParserInfo = this.groupWebsiteParsersInfo(tokens)
 
@@ -116,13 +129,8 @@ export class DailyStatisticMailWorker {
         return msg
     }
 
-    private groupWebsiteParsersInfo(tokens: TokensCountGroupedBySourceAndBlockchain[]): {
-        total: number,
-        CRO: number,
-        BSC: number,
-        ETH: number,
-    }[] {
-        const grouped = []
+    private groupWebsiteParsersInfo(tokens: TokensCountGroupedBySourceAndBlockchain[]): TokenWorkersInfo {
+        const grouped: TokenWorkersInfo = {}
 
         for (const token of tokens) {
             const currentTokenSource = grouped[token.source]
