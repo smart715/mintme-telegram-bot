@@ -92,6 +92,7 @@ import {
     Coins360Service,
     CoinsGodsService,
     CoinsHunterService,
+    FirewallService,
     TwitterWorker,
     TwitterAccountRepository,
     TwitterService,
@@ -223,6 +224,10 @@ container.register(RetryAxios, {
 })
 
 // Services
+
+container.register(FirewallService, {
+    useFactory: instanceCachingFactory(() => new FirewallService()),
+})
 
 container.register(MintmeService, {
     useFactory: instanceCachingFactory(() => new MintmeService()),
@@ -473,6 +478,7 @@ container.register(BSCScanAddressTokensHoldingsWorker, {
         new BSCScanAddressTokensHoldingsWorker(
             dependencyContainer.resolve(QueuedWalletAddressService),
             dependencyContainer.resolve(ExplorerEnqueuer),
+            dependencyContainer.resolve(FirewallService),
             createLogger(BSCScanAddressTokensHoldingsWorker.name.toLowerCase())
         )
     ),
@@ -483,6 +489,7 @@ container.register(EtherScanAddressTokensHoldingsWorker, {
         new EtherScanAddressTokensHoldingsWorker(
             dependencyContainer.resolve(QueuedWalletAddressService),
             dependencyContainer.resolve(ExplorerEnqueuer),
+            dependencyContainer.resolve(FirewallService),
             createLogger(EtherScanAddressTokensHoldingsWorker.name.toLowerCase())
         )
     ),
@@ -814,6 +821,8 @@ container.register(CoinSniperWorker, {
             dependencyContainer.resolve(CoinSniperService),
             dependencyContainer.resolve(TokensService),
             dependencyContainer.resolve(NewestCheckedTokenService),
+            dependencyContainer.resolve(FirewallService),
+            dependencyContainer.resolve(CheckedTokenService),
             createLogger(CoinSniperWorker.name.toLowerCase()),
         )
     ),

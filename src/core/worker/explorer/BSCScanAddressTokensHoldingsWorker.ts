@@ -1,22 +1,23 @@
 import { AbstractTokenWorker } from '../AbstractTokenWorker'
-import { By, WebDriver } from 'selenium-webdriver'
-import { QueuedWalletAddressService, SeleniumService } from '../../service'
+import { By, WebDriver, until } from 'selenium-webdriver'
+import { FirewallService, QueuedWalletAddressService, SeleniumService } from '../../service'
 import { QueuedWalletAddress } from '../../entity'
 import { sleep, Blockchain, explorerDomains } from '../../../utils'
 import { singleton } from 'tsyringe'
 import { ExplorerEnqueuer } from './ExplorerEnqueuer'
 import { Logger } from 'winston'
 
-//todo solve cloudflare check and test it
 @singleton()
 export class BSCScanAddressTokensHoldingsWorker extends AbstractTokenWorker {
     private readonly workerName = BSCScanAddressTokensHoldingsWorker.name
     private readonly walletsBatchAmount = 1000
     private readonly sleepDuration = 60 * 1000
+    private readonly delayBetweenPages = 5 * 1000
 
     public constructor(
         private readonly queuedWalletAddressService: QueuedWalletAddressService,
         private readonly explorerParser: ExplorerEnqueuer,
+        private readonly firewallService: FirewallService,
         private readonly logger: Logger,
     ) {
         super()
@@ -24,7 +25,7 @@ export class BSCScanAddressTokensHoldingsWorker extends AbstractTokenWorker {
 
     public async run(blockchain: Blockchain.BSC | Blockchain.CRO): Promise<void> {
         const explorerDomain = explorerDomains[blockchain]
-        const webDriver = await SeleniumService.createDriver('', undefined, this.logger)
+        let webDriver
 
         this.logger.info(`[${this.workerName}] started for ${blockchain} blockchain`)
 
@@ -42,8 +43,18 @@ export class BSCScanAddressTokensHoldingsWorker extends AbstractTokenWorker {
             }
 
             for (const wallet of wallets) {
+                if (!webDriver) { // by pass cloudflare of first wallet page, do it only once
+                    webDriver = await SeleniumService.createCloudFlareByPassedDriver(
+                        this.buildExplorerUrl(explorerDomain, wallet.walletAddress),
+                        this.firewallService,
+                        this.logger,
+                    )
+
+                    await sleep(this.delayBetweenPages)
+                }
+
                 await webDriver.get(this.buildExplorerUrl(explorerDomain, wallet.walletAddress))
-                //todo pass cloudflare here
+                await webDriver.wait(until.elementLocated(By.id('assets-wallet')), 60000)
 
                 if (await this.isPageAvailable(webDriver)) {
                     await this.processTokensOnPage(webDriver, blockchain)
@@ -57,6 +68,8 @@ export class BSCScanAddressTokensHoldingsWorker extends AbstractTokenWorker {
                 }
 
                 await this.queuedWalletAddressService.markAsChecked(wallet)
+
+                await sleep(this.delayBetweenPages)
             }
         }
     }

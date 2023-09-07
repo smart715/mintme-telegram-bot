@@ -43,6 +43,8 @@ export default {
 
     'server_ip': '{{ server_ip }}',
 
+    'flaresolverr_server_url': 'http://localhost:8191/v1',
+
     explorerApiKeys: {
         'BSC': 'M7KD3A8FB4137CMQZ7VV3C696V6WYHD6UE',
         'ETH': 'XSYS3JRES31D8P4ZY261FNA5VWTWNZ5XVQ',

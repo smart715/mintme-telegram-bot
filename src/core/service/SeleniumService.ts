@@ -4,15 +4,27 @@ import { Builder, Capabilities, ThenableWebDriver, WebDriver } from 'selenium-we
 import { Options } from 'selenium-webdriver/chrome'
 import { ProxyServer } from '../entity'
 import { Logger } from 'winston'
+import { FirewallService } from './FirewallService'
 
 @singleton()
 export class SeleniumService {
-    public static async createDriver(profile: string = '', proxyServer: ProxyServer|undefined = undefined, logger: Logger): Promise<ThenableWebDriver> {
+    private static defaultUserAgent: string = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36'
+
+    public static async createDriver(
+        profile: string = '',
+        proxyServer: ProxyServer|undefined = undefined,
+        logger: Logger,
+        userAgent: string = SeleniumService.defaultUserAgent,
+        disableSandboxFlag: boolean = false,
+    ): Promise<ThenableWebDriver> {
         const options = new Options()
             .addArguments('--headless=new')
-            .addArguments('--no-sandbox')
             .addArguments('--window-size=1920,1080')
-            .addArguments('user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36')
+            .addArguments(`user-agent=${userAgent}`)
+
+        if (!disableSandboxFlag) { // somehow influence how cloudflare blocks request
+            options.addArguments('--no-sandbox')
+        }
 
         if (profile) {
             options.addArguments(`--user-data-dir=${profile}`)
@@ -61,6 +73,28 @@ export class SeleniumService {
         }
 
         return driver
+    }
+
+    public static async createCloudFlareByPassedDriver(
+        url: string,
+        firewallService: FirewallService,
+        logger: Logger,
+    ): Promise<WebDriver> {
+        const { cookies, userAgent } = await firewallService.getCloudflareCookies(url)
+
+        const webDriver = await SeleniumService.createDriver('', undefined, logger, userAgent, true)
+
+        if (!cookies) {
+            throw new Error('Could not pass cloudflare firewall')
+        }
+
+        await webDriver.get(url)
+
+        for (const cookie of cookies) {
+            await webDriver.manage().addCookie({ name: cookie.name, value: cookie.value })
+        }
+
+        return webDriver
     }
 
     public static async isInternetWorking(driver: WebDriver): Promise<boolean> {
