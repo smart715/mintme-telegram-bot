@@ -36,7 +36,7 @@ export class MailerService {
         return this.sendEmail(
             this.dailyStatisticReceiver,
             'Worker Failed',
-            message + ' ' + JSON.stringify(error, Object.getOwnPropertyNames(error))
+            message + ': ' + JSON.stringify(error, Object.getOwnPropertyNames(error))
         )
     }
 

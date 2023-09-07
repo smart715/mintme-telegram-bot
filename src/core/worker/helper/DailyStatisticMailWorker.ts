@@ -50,7 +50,7 @@ export class DailyStatisticMailWorker {
     private async buildEmailBody(): Promise<string> {
         const now = new Date()
         const fromDate = new Date()
-        fromDate.setHours(now.getHours() - 170)
+        fromDate.setHours(now.getHours() - 24)
 
         this.logger.info(`${this.prefixLog} Building token workers statistic...`)
         const tokensWorkersMsg = await this.buildTokenWorkersMsg(fromDate)
@@ -59,6 +59,27 @@ export class DailyStatisticMailWorker {
         const contactingWorkersMsg = await this.buildContactingWorkersMsg(fromDate)
 
         return tokensWorkersMsg + contactingWorkersMsg
+    }
+
+    private async buildTokenWorkersMsg(fromDate: Date): Promise<string> {
+        const tokens = await this.tokenService.getCountGroupedBySourceAndBlockchain(fromDate)
+
+        const groupedWebsiteParserInfo = this.groupWebsiteParsersInfo(tokens)
+
+        let msg = 'Daily Statistic (website parsers): <br>'
+
+        if (0 === Object.keys(groupedWebsiteParserInfo).length) {
+            msg += `No tokens were added today`
+
+            return msg
+        }
+
+        for (const [ worker, workerInfo ] of Object.entries(groupedWebsiteParserInfo)) {
+            msg += `<strong>${worker}</strong>: ETH - ${workerInfo.ETH}, BSC - ${workerInfo.BSC}, CRO - ${workerInfo.CRO}. ` +
+                `<strong>Total added</strong> - ${workerInfo.total} tokens<br>`
+        }
+
+        return msg
     }
 
     private async buildContactingWorkersMsg(fromDate: Date): Promise<string> {
@@ -85,6 +106,23 @@ export class DailyStatisticMailWorker {
         return msg
     }
 
+    private groupWebsiteParsersInfo(tokens: TokensCountGroupedBySourceAndBlockchain[]): TokenWorkersInfo {
+        const grouped: TokenWorkersInfo = {}
+
+        for (const token of tokens) {
+            const currentTokenSource = grouped[token.source]
+
+            if (!currentTokenSource) {
+                grouped[token.source] = { total: 0, ETH: 0, BSC: 0, CRO: 0 }
+            }
+
+            grouped[token.source][token.blockchain] = parseInt(token.tokens)
+            grouped[token.source].total += parseInt(token.tokens)
+        }
+
+        return grouped
+    }
+
     private groupContactingWorkersInfo(contacts: GroupedContactsCount[]): ContactingWorkersInfo {
         const grouped: ContactingWorkersInfo = {}
 
@@ -104,43 +142,6 @@ export class DailyStatisticMailWorker {
             }
 
             grouped[contact.contact_method].total += parseInt(contact.tokens)
-        }
-
-        return grouped
-    }
-
-    private async buildTokenWorkersMsg(fromDate: Date): Promise<string> {
-        const tokens = await this.tokenService.getCountGroupedBySourceAndBlockchain(fromDate)
-        const groupedWebsiteParserInfo = this.groupWebsiteParsersInfo(tokens)
-
-        let msg = 'Daily Statistic (website parsers): <br>'
-
-        if (0 === Object.keys(groupedWebsiteParserInfo).length) {
-            msg += `No tokens were added today`
-
-            return msg
-        }
-
-        for (const [ worker, workerInfo ] of Object.entries(groupedWebsiteParserInfo)) {
-            msg += `<strong>${worker}</strong>: ETH - ${workerInfo.ETH}, BSC - ${workerInfo.BSC}, CRO - ${workerInfo.CRO}. ` +
-                `<strong>Total added</strong> - ${workerInfo.total} tokens<br>`
-        }
-
-        return msg
-    }
-
-    private groupWebsiteParsersInfo(tokens: TokensCountGroupedBySourceAndBlockchain[]): TokenWorkersInfo {
-        const grouped: TokenWorkersInfo = {}
-
-        for (const token of tokens) {
-            const currentTokenSource = grouped[token.source]
-
-            if (!currentTokenSource) {
-                grouped[token.source] = { total: 0, ETH: 0, BSC: 0, CRO: 0 }
-            }
-
-            grouped[token.source][token.blockchain] = parseInt(token.tokens)
-            grouped[token.source].total += parseInt(token.tokens)
         }
 
         return grouped

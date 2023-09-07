@@ -2,7 +2,7 @@ import { container, singleton } from 'tsyringe'
 import { Logger } from 'winston'
 import { CommandInterface } from './types'
 import { Database, sleep } from '../utils'
-import { TelegramWorker } from '../core'
+import { MailerService, TelegramWorker } from '../core'
 
 @singleton()
 export class RunTelegramWorker implements CommandInterface {
@@ -11,6 +11,7 @@ export class RunTelegramWorker implements CommandInterface {
 
     public constructor(
         private readonly telegramWorker: TelegramWorker,
+        private readonly mailService: MailerService,
         private readonly logger: Logger,
     ) { }
 
@@ -33,6 +34,8 @@ export class RunTelegramWorker implements CommandInterface {
 
                 await this.runTelegramWorker()
             }
+
+            await this.mailService.sendFailedWorkerEmail(`Error while running ${this.constructor.name}`, err)
 
             throw err
         } finally {
