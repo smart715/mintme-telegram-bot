@@ -3,7 +3,7 @@ import { Logger } from 'winston'
 import { CommandInterface, RunAdvnWorkerCmdArgv } from './types'
 import { Arguments, Argv } from 'yargs'
 import { Blockchain, sleep } from '../utils'
-import { AdvnWorker } from '../core'
+import { AdvnWorker, MailerService } from '../core'
 
 @singleton()
 export class RunAdvnWorker implements CommandInterface {
@@ -12,6 +12,7 @@ export class RunAdvnWorker implements CommandInterface {
 
     public constructor(
         private readonly advnWorker: AdvnWorker,
+        private readonly mailService: MailerService,
         private readonly logger: Logger,
     ) { }
 
@@ -27,7 +28,13 @@ export class RunAdvnWorker implements CommandInterface {
     public async handler(argv: Arguments<RunAdvnWorkerCmdArgv>): Promise<void> {
         this.logger.info(`Started command ${this.command}`)
 
-        await this.advnWorker.run(argv.blockchain)
+        try {
+            await this.advnWorker.run(argv.blockchain)
+        } catch (err) {
+            await this.mailService.sendFailedWorkerEmail(`Error while running ${this.constructor.name}`, err)
+
+            throw err
+        }
 
         this.logger.info(`Command ${this.command} finished with success`)
 

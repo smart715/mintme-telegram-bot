@@ -2,7 +2,7 @@ import { singleton } from 'tsyringe'
 import { Arguments, Argv } from 'yargs'
 import { Logger } from 'winston'
 import { CommandInterface, RunCoinCodexWorkerCmdArgv } from './types'
-import { CoinCodexWorker } from '../core'
+import { CoinCodexWorker, MailerService } from '../core'
 import { Blockchain, sleep } from '../utils'
 
 @singleton()
@@ -12,6 +12,7 @@ export class RunCoinCodexWorker implements CommandInterface {
 
     public constructor(
         private readonly coinCodexWorker: CoinCodexWorker,
+        private readonly mailService: MailerService,
         private readonly logger: Logger,
     ) { }
 
@@ -27,7 +28,13 @@ export class RunCoinCodexWorker implements CommandInterface {
     public async handler(argv: Arguments<RunCoinCodexWorkerCmdArgv>): Promise<void> {
         this.logger.info(`Started command ${this.command}`)
 
-        await this.coinCodexWorker.run(argv.blockchain)
+        try {
+            await this.coinCodexWorker.run(argv.blockchain)
+        } catch (err) {
+            await this.mailService.sendFailedWorkerEmail(`Error while running ${this.constructor.name}`, err)
+
+            throw err
+        }
 
         this.logger.info(`Command ${this.command} finished with success`)
 

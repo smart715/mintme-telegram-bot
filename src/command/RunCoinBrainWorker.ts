@@ -3,7 +3,7 @@ import { Logger } from 'winston'
 import { CommandInterface, RunCoinBrainWorkerCmdArgv } from './types'
 import { Arguments, Argv } from 'yargs'
 import { Blockchain, sleep } from '../utils'
-import { CoinBrainWorker } from '../core'
+import { CoinBrainWorker, MailerService } from '../core'
 
 @singleton()
 export class RunCoinBrainWorker implements CommandInterface {
@@ -12,6 +12,7 @@ export class RunCoinBrainWorker implements CommandInterface {
 
     public constructor(
         private readonly coinBrainWorker: CoinBrainWorker,
+        private readonly mailService: MailerService,
         private readonly logger: Logger,
     ) { }
 
@@ -27,7 +28,13 @@ export class RunCoinBrainWorker implements CommandInterface {
     public async handler(argv: Arguments<RunCoinBrainWorkerCmdArgv>): Promise<void> {
         this.logger.info(`Started command ${this.command}`)
 
-        await this.coinBrainWorker.run(argv.blockchain)
+        try {
+            await this.coinBrainWorker.run(argv.blockchain)
+        } catch (err) {
+            await this.mailService.sendFailedWorkerEmail(`Error while running ${this.constructor.name}`, err)
+
+            throw err
+        }
 
         this.logger.info(`Command ${this.command} finished with success`)
 

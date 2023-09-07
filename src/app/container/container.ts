@@ -946,6 +946,7 @@ container.register(CliDependency.COMMAND, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new RunAdvnWorker(
             dependencyContainer.resolve(AdvnWorker),
+            dependencyContainer.resolve(MailerService),
             advnLogger,
         )
     ),
@@ -955,6 +956,7 @@ container.register(CliDependency.COMMAND, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new RunCoinDiscoveryWorker(
             dependencyContainer.resolve(CoinDiscoveryWorker),
+            dependencyContainer.resolve(MailerService),
             coinDiscoveryLogger,
         )
     ),
@@ -964,6 +966,7 @@ container.register(CliDependency.COMMAND, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new RunCoinBrainWorker(
             dependencyContainer.resolve(CoinBrainWorker),
+            dependencyContainer.resolve(MailerService),
             coinBrainLogger,
         )
     ),
@@ -973,6 +976,7 @@ container.register(CliDependency.COMMAND, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new RunCoinBuddyWorker(
             dependencyContainer.resolve(CoinBuddyWorker),
+            dependencyContainer.resolve(MailerService),
             coinBuddyLogger,
         )
     ),
@@ -982,6 +986,7 @@ container.register(CliDependency.COMMAND, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new RunCoinCapWorker(
             dependencyContainer.resolve(CoinCapWorker),
+            dependencyContainer.resolve(MailerService),
             coinCapLogger,
         )
     ),
@@ -991,6 +996,7 @@ container.register(CliDependency.COMMAND, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new RunCoinCatapultWorker(
             dependencyContainer.resolve(CoinCatapultWorker),
+            dependencyContainer.resolve(MailerService),
             coinCatapultLogger,
         ),
     ),
@@ -1018,6 +1024,7 @@ container.register(CliDependency.COMMAND, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new RunCoinCodexWorker(
             dependencyContainer.resolve(CoinCodexWorker),
+            dependencyContainer.resolve(MailerService),
             coinCodexLogger,
         )
     ),
@@ -1027,6 +1034,7 @@ container.register(CliDependency.COMMAND, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new RunBitQueryWorker(
             dependencyContainer.resolve(BitQueryWorker),
+            dependencyContainer.resolve(MailerService),
             bitQueryLogger
         )
     ),

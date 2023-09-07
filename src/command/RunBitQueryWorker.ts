@@ -3,7 +3,7 @@ import { Logger } from 'winston'
 import { Arguments, Argv } from 'yargs'
 import { CommandInterface, RunBitQueryWorkerCmdArgv } from './types'
 import { Blockchain, sleep } from '../utils'
-import { BitQueryWorker } from '../core'
+import { BitQueryWorker, MailerService } from '../core'
 
 @singleton()
 export class RunBitQueryWorker implements CommandInterface {
@@ -12,6 +12,7 @@ export class RunBitQueryWorker implements CommandInterface {
 
     public constructor(
         private readonly bitQueryWorker: BitQueryWorker,
+        private readonly mailService: MailerService,
         private readonly logger: Logger,
     ) { }
 
@@ -27,7 +28,13 @@ export class RunBitQueryWorker implements CommandInterface {
     public async handler(argv: Arguments<RunBitQueryWorkerCmdArgv>): Promise<void> {
         this.logger.info(`Started command ${this.command}`)
 
-        await this.bitQueryWorker.run(argv.blockchain)
+        try {
+            await this.bitQueryWorker.run(argv.blockchain)
+        } catch (err) {
+            await this.mailService.sendFailedWorkerEmail(`Error while running ${this.constructor.name}`, err)
+
+            throw err
+        }
 
         this.logger.info(`Command ${this.command} finished with success`)
 
