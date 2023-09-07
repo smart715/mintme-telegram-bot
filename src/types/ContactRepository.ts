@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/naming-convention */
 import { Blockchain } from '../utils'
 import { ContactMethod } from '../core'
 

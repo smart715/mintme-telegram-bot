@@ -1,15 +1,16 @@
-// @ts-nocheck
+/* eslint-disable @typescript-eslint/naming-convention */
 import config from 'config'
 import { Logger } from 'winston'
 import { singleton } from 'tsyringe'
 import { ContactHistoryService, MailerService, TokensService } from '../../service'
-import {GroupedContactsCount, TokensCountGroupedBySourceAndBlockchain} from '../../../types'
+import { GroupedContactsCount, TokensCountGroupedBySourceAndBlockchain } from '../../../types'
 
 @singleton()
 export class DailyStatisticMailWorker {
+    private readonly prefixLog = '[DailyStatisticWorker]'
     private readonly email: string = config.get('email_daily_statistic')
 
-    constructor(
+    public constructor(
         private readonly tokenService: TokensService,
         private readonly mailerService: MailerService,
         private readonly contactHistoryService: ContactHistoryService,
@@ -19,7 +20,11 @@ export class DailyStatisticMailWorker {
     public async run(): Promise<void> {
         const emailBody = await this.buildEmailBody()
 
+        this.logger.info(`${this.prefixLog} Sending workers statistic mail...`)
+
         await this.mailerService.sendEmail(this.email, 'Daily Statistic', emailBody)
+
+        this.logger.info(`${this.prefixLog} Finished`)
     }
 
     private async buildEmailBody(): Promise<string> {
@@ -27,7 +32,10 @@ export class DailyStatisticMailWorker {
         const fromDate = new Date()
         fromDate.setHours(now.getHours() - 170)
 
+        this.logger.info(`${this.prefixLog} Building token workers statistic...`)
         const tokensWorkersMsg = await this.buildTokenWorkersMsg(fromDate)
+
+        this.logger.info(`${this.prefixLog} Building contacting workers statistic...`)
         const contactingWorkersMsg = await this.buildContactingWorkersMsg(fromDate)
 
         return tokensWorkersMsg + contactingWorkersMsg
@@ -38,7 +46,7 @@ export class DailyStatisticMailWorker {
 
         const groupedContactingWorkersInfo = this.groupContactingWorkersInfo(contacts)
 
-        let msg = '<br><br>Daily Statistic (contacting workers): <br>'
+        let msg = '<br>Daily Statistic (contacting workers): <br>'
 
         if (0 === Object.keys(groupedContactingWorkersInfo).length) {
             msg += `No users were contacted today`
@@ -46,11 +54,11 @@ export class DailyStatisticMailWorker {
             return msg
         }
 
-        for (const [contactMethod, contactInfo] of Object.entries(groupedContactingWorkersInfo)) {
+        for (const [ contactMethod, contactInfo ] of Object.entries(groupedContactingWorkersInfo)) {
             msg += `<strong>${contactMethod}</strong>: ` +
                 `Success - ${contactInfo.success}. ` +
-                `Failed(dm not enabled, account banned etc.) - ${contactInfo.failed}. ` +
-                `Crypto(failures and successes): ETH - ${contactInfo.ETH}, BSC - ${contactInfo.BSC}, CRO - ${contactInfo.CRO}. ` +
+                `Failed (dm not enabled, account banned etc.) - ${contactInfo.failed}. ` +
+                `Crypto (failures and successes): ETH - ${contactInfo.ETH}, BSC - ${contactInfo.BSC}, CRO - ${contactInfo.CRO}. ` +
                 `<strong>Total</strong> - ${contactInfo.total} contacts<br>`
         }
 
@@ -100,7 +108,7 @@ export class DailyStatisticMailWorker {
             return msg
         }
 
-        for (const [worker, workerInfo] of Object.entries(groupedWebsiteParserInfo)) {
+        for (const [ worker, workerInfo ] of Object.entries(groupedWebsiteParserInfo)) {
             msg += `<strong>${worker}</strong>: ETH - ${workerInfo.ETH}, BSC - ${workerInfo.BSC}, CRO - ${workerInfo.CRO}. ` +
                 `<strong>Total added</strong> - ${workerInfo.total} tokens<br>`
         }
