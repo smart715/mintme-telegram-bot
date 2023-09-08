@@ -32,11 +32,15 @@ export class MailerService {
         return this.isResponseOk(response, receiverEmail)
     }
 
-    public async sendFailedWorkerEmail(message: string, error: any): Promise<boolean> {
+    public async sendFailedWorkerEmail(message: string, error: any = null): Promise<boolean> {
+        const body = error
+            ? message + ': ' + JSON.stringify(error, Object.getOwnPropertyNames(error))
+            : message
+
         return this.sendEmail(
             this.dailyStatisticReceiver,
             'Worker Failed',
-            message + ': ' + JSON.stringify(error, Object.getOwnPropertyNames(error))
+            body
         )
     }
 

@@ -4,7 +4,7 @@ import { Logger } from 'winston'
 import {
     ContactHistoryService,
     ContactMessageService,
-    ContactQueueService,
+    ContactQueueService, MailerService,
     TokensService,
     TwitterService,
 } from '../../../service'
@@ -27,6 +27,7 @@ export class TwitterWorker {
         private readonly contactQueueService: ContactQueueService,
         private readonly tokenService: TokensService,
         private readonly environment: Environment,
+        private readonly mailerService: MailerService,
         private readonly logger: Logger,
     ) {
     }
@@ -39,7 +40,10 @@ export class TwitterWorker {
             const allAccounts = await this.twitterService.getAllAccounts()
 
             if (0 === allAccounts.length) {
-                this.logger.error(`${this.prefixLog} DB doesn't have twitter accounts. Aborting.`)
+                await this.mailerService
+                    .sendFailedWorkerEmail(`${this.prefixLog} DB doesn't have available twitter accounts.`)
+
+                this.logger.error(`${this.prefixLog} DB doesn't have available twitter accounts. Aborting.`)
 
                 return
             }
