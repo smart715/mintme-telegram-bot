@@ -41,16 +41,6 @@ export class TwitterClient {
 
     public async init(): Promise<boolean> {
         await this.initMessage()
-
-        if (!this.message) {
-            this.logger.warn(
-                `[TwitterWorker ID: ${this.twitterAccount.id}] ` +
-                `No messages stock available, Account not able to start messaging. Skipping...`
-            )
-
-            return false
-        }
-
         await this.updateSentMessagesAndTotalAttempt()
 
         if (!this.isAllowedToSentMessages()) {
@@ -289,7 +279,7 @@ export class TwitterClient {
         const contentMessage = await this.contactMessageService.getOneContactMessage()
 
         if (!contentMessage) {
-            return
+            throw new Error(`No messages stock available`)
         }
 
         this.message = contentMessage

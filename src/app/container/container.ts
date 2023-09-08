@@ -561,6 +561,7 @@ container.register(TelegramWorker, {
             dependencyContainer.resolve(ContactQueueService),
             dependencyContainer.resolve(TokensService),
             dependencyContainer.resolve(ProxyService),
+            dependencyContainer.resolve(MailerService),
             telegramLogger,
         )
     ),
@@ -873,6 +874,7 @@ container.register(TwitterWorker, {
             dependencyContainer.resolve(ContactQueueService),
             dependencyContainer.resolve(TokensService),
             environment,
+            dependencyContainer.resolve(MailerService),
             twitterLogger,
         )
     ),

@@ -4,7 +4,8 @@ import { Logger } from 'winston'
 import {
     ContactHistoryService,
     ContactMessageService,
-    ContactQueueService, MailerService,
+    ContactQueueService,
+    MailerService,
     TokensService,
     TwitterService,
 } from '../../../service'
@@ -44,6 +45,16 @@ export class TwitterWorker {
                     .sendFailedWorkerEmail(`${this.prefixLog} DB doesn't have available twitter accounts.`)
 
                 this.logger.error(`${this.prefixLog} DB doesn't have available twitter accounts. Aborting.`)
+
+                return
+            }
+
+            if (!(await this.contactMessageService.getOneContactMessage())) {
+                const noMessagesMsg = `${this.prefixLog} No messages stock available,` +
+                    ` worker not able to start messaging. Aborting`
+
+                this.logger.error(noMessagesMsg)
+                await this.mailerService.sendFailedWorkerEmail(noMessagesMsg)
 
                 return
             }

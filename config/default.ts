@@ -7,8 +7,9 @@ export default {
     'db_password': 'root',
     'db_name': 'tokens_fetcher',
 
-    // Email to send daily statistic
-    'email_daily_statistic': 'exmaple@mail.com',
+    // Email to send daily statistic.
+    // This email receives notifications about broken workers or not available messages/accounts
+    'email_daily_statistic': 'example@mail.com',
 
     // Coinmarketcap worker settings
     cmcWorker: {

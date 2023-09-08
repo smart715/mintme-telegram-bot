@@ -9,7 +9,8 @@ import {
     TelegramService,
     ContactMessageService,
     ContactQueueService,
-    ProxyService, MailerService,
+    ProxyService,
+    MailerService,
 } from '../../../service'
 import { sleep } from '../../../../utils'
 
@@ -40,6 +41,7 @@ export class TelegramWorker {
             this.telegramService,
             this.proxyService,
             tgAccount,
+            this.mailerService,
             this.logger
         )
 
@@ -101,7 +103,7 @@ export class TelegramWorker {
         }
     }
 
-    private startContactingAllManagers(clients: TelegramClient[]): Promise<void[]> {
+    private async startContactingAllManagers(clients: TelegramClient[]): Promise<void[]> {
         const contactingPromises: Promise<void>[] = []
 
         for (const client of clients) {
@@ -115,10 +117,11 @@ export class TelegramWorker {
             }
 
             if (!client.accountMessages?.length) {
-                this.logger.warn(
-                    `[Telegram Worker ID: ${client.telegramAccount.id}] ` +
+                const msg = `[Telegram Worker ID: ${client.telegramAccount.id}] ` +
                     `No messages stock available, Account not able to start messaging.`
-                )
+
+                this.logger.warn(msg)
+                await this.mailerService.sendFailedWorkerEmail(msg)
 
                 continue
             }
