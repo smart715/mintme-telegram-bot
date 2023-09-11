@@ -105,7 +105,6 @@ import {
     RunQueueWorker,
     RunExplorerWorker,
     RunCoinGeckoWorker,
-    RunAdvnWorker,
     RunCoinDiscoveryWorker,
     RunCoinBrainWorker,
     RunCoinBuddyWorker,
@@ -930,15 +929,6 @@ container.register(CliDependency.COMMAND, {
 
 container.register(CliDependency.COMMAND, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
-        new RunAdvnWorker(
-            dependencyContainer.resolve(AdvnWorker),
-            advnLogger,
-        )
-    ),
-})
-
-container.register(CliDependency.COMMAND, {
-    useFactory: instanceCachingFactory((dependencyContainer) =>
         new RunCoinDiscoveryWorker(
             dependencyContainer.resolve(CoinDiscoveryWorker),
             coinDiscoveryLogger,
@@ -1062,6 +1052,20 @@ container.register(CliDependency.COMMAND, {
             dependencyContainer.resolve(CMCWorker),
             dependencyContainer.resolve(CoinLoreWorker),
             dependencyContainer.resolve(CoinScopeWorker),
+            dependencyContainer.resolve(AdvnWorker),
+            dependencyContainer.resolve(BitQueryWorker),
+            dependencyContainer.resolve(CoinBrainWorker),
+            dependencyContainer.resolve(CoinBuddyWorker),
+            dependencyContainer.resolve(CoinCapWorker),
+            dependencyContainer.resolve(CoinCatapultWorker),
+            dependencyContainer.resolve(CoinCodexWorker),
+            dependencyContainer.resolve(CoinDiscoveryWorker),
+            dependencyContainer.resolve(CoinGeckoWorker),
+            dependencyContainer.resolve(MyEtherListsWorker),
+            dependencyContainer.resolve(RecentTokensWorker),
+            dependencyContainer.resolve(RugFreeCoinsWorker),
+            dependencyContainer.resolve(TokensInsightWorker),
+            dependencyContainer.resolve(Top100TokensWorker),
         )
     ),
 })

@@ -26,7 +26,8 @@ import {
     MyEtherListsWorker,
     RecentTokensWorker,
     RugFreeCoinsWorker,
-    TokensInsightWorker, Top100TokensWorker,
+    TokensInsightWorker,
+    Top100TokensWorker,
 } from '../core'
 import { Arguments, Argv } from 'yargs'
 import { createLogger, sleep } from '../utils'
