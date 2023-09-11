@@ -1,7 +1,7 @@
 import { singleton } from 'tsyringe'
 import { Logger } from 'winston'
 import { AbstractTokenWorker } from '../AbstractTokenWorker'
-import { QueuedTokenAddressService, BitQueryService } from '../../service'
+import { BitQueryService, QueuedTokenAddressService } from '../../service'
 import { AddressResponse, BitQueryTransfersResponse } from '../../../types'
 import { Blockchain, findContractAddress } from '../../../utils'
 
@@ -9,6 +9,7 @@ import { Blockchain, findContractAddress } from '../../../utils'
 export class BitQueryWorker extends AbstractTokenWorker {
     private readonly workerName = 'BitQuery'
     private readonly prefixLog = `[${this.workerName}]`
+    private readonly supportedBlockchains: Blockchain[] = [ Blockchain.ETH, Blockchain.BSC, Blockchain.CRO ]
 
     public constructor(
         private readonly bitQueryService: BitQueryService,
@@ -18,7 +19,15 @@ export class BitQueryWorker extends AbstractTokenWorker {
         super()
     }
 
-    public async run(currentBlockchain: Blockchain): Promise<void> {
+    public async run(): Promise<void> {
+        for (const blockchain of this.supportedBlockchains) {
+            await this.runByBlockchain(blockchain)
+        }
+    }
+
+    public async runByBlockchain(currentBlockchain: Blockchain): Promise<void> {
+        this.logger.info(`${this.prefixLog} Checking ${currentBlockchain} blockchain`)
+
         const limit = 25000
         let offset = 0
         let fetchNext = true

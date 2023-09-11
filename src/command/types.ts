@@ -63,10 +63,6 @@ export interface RunCoinCodexWorkerCmdArgv {
     blockchain: Blockchain,
 }
 
-export interface RunBitQueryWorkerCmdArgv {
-    blockchain: Blockchain,
-}
-
 export interface RunCasualTokenWorkerCmdArgv {
     name: CasualTokenWorkerNames,
 }

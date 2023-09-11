@@ -111,7 +111,6 @@ import {
     RunCoinCapWorker,
     RunCoinCatapultWorker,
     RunCoinCodexWorker,
-    RunBitQueryWorker,
     RunTelegramWorker,
     RunLastTokenTxDateFetcher,
     RunFetchTokenWorker,
@@ -995,15 +994,6 @@ container.register(CliDependency.COMMAND, {
         new RunCoinCodexWorker(
             dependencyContainer.resolve(CoinCodexWorker),
             coinCodexLogger,
-        )
-    ),
-})
-
-container.register(CliDependency.COMMAND, {
-    useFactory: instanceCachingFactory((dependencyContainer) =>
-        new RunBitQueryWorker(
-            dependencyContainer.resolve(BitQueryWorker),
-            bitQueryLogger
         )
     ),
 })
