@@ -90,6 +90,20 @@ export enum CasualTokenWorkerNames {
     COINMARKETCAP = 'coinmarketcap',
     COIN_LORE = 'coin-lore',
     COIN_SCOPE = 'coin-scope',
+    ADVN = 'advn',
+    BIT_QUERY = 'bit-query',
+    COIN_BRAIN = 'coin-brain',
+    COIN_BUDDY = 'coin-buddy',
+    COIN_CAP = 'coin-cap',
+    COIN_CATAPULT = 'coin-catapult',
+    COIN_CODEX = 'coin-codex',
+    COIN_DISCOVERY = 'coin-discovery',
+    COIN_GECKO = 'coin-gecko',
+    MY_ETHER_LISTS = 'my-ether-lists',
+    RECENT_TOKENS = 'recent-tokens',
+    RUG_FREE_COINS = 'rug-free-coins',
+    TOKENS_INSIGHT = 'tokens-insight',
+    TOP_100 = 'top-100',
 }
 
 export interface RunRugFreeCoinsWorkerCmdArgv {
