@@ -112,7 +112,7 @@ export class RunFetchTokenWorker implements CommandInterface {
             [CasualTokenWorkerNames.RECENT_TOKENS]: this.recentTokensWorker,
             [CasualTokenWorkerNames.RUG_FREE_COINS]: this.rugFreeCoinsWorker,
             [CasualTokenWorkerNames.TOKENS_INSIGHT]: this.tokensInsightWorker,
-            [CasualTokenWorkerNames.TOP_100]: this.top100TokensWorker,
+            [CasualTokenWorkerNames.TOP_100_TOKENS]: this.top100TokensWorker,
         }
 
         const worker = workers[workerName]

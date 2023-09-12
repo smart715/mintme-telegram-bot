@@ -108,8 +108,6 @@ import {
     RunLastTokenTxDateFetcher,
     RunFetchTokenWorker,
     RunMailerWorker,
-    RunTop100TokensWorker,
-    RunTokensInsightWorker,
     RunTwitterWorker,
 } from '../../command'
 import { RetryAxios, TokenNamesGenerator, createLogger, Environment } from '../../utils'
@@ -909,15 +907,6 @@ container.register(CliDependency.COMMAND, {
 
 container.register(CliDependency.COMMAND, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
-        new RunTop100TokensWorker(
-            dependencyContainer.resolve(Top100TokensWorker),
-            top100TokensLogger,
-        ),
-    ),
-})
-
-container.register(CliDependency.COMMAND, {
-    useFactory: instanceCachingFactory((dependencyContainer) =>
         new RunMailerWorker(
             dependencyContainer.resolve(MailerWorker),
             mailerLogger,
@@ -974,15 +963,6 @@ container.register(CliDependency.COMMAND, {
         new RunTelegramWorker(
             dependencyContainer.resolve(TelegramWorker),
             telegramLogger,
-        )
-    ),
-})
-
-container.register(CliDependency.COMMAND, {
-    useFactory: instanceCachingFactory((dependencyContainer) =>
-        new RunTokensInsightWorker(
-            dependencyContainer.resolve(TokensInsightWorker),
-            tokensInsightLogger,
         )
     ),
 })

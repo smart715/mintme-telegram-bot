@@ -67,13 +67,5 @@ export enum CasualTokenWorkerNames {
     RECENT_TOKENS = 'recent-tokens',
     RUG_FREE_COINS = 'rug-free-coins',
     TOKENS_INSIGHT = 'tokens-insight',
-    TOP_100 = 'top-100',
-}
-
-export interface RunTop100TokensWorkerCmdArgv {
-    blockchain: Blockchain,
-}
-
-export interface RunTokensInsightWorkerCmdArgv {
-    blockchain: Blockchain,
+    TOP_100_TOKENS = 'top-100-tokens',
 }
