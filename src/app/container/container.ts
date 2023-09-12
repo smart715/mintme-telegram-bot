@@ -104,7 +104,6 @@ import {
     RunEnqueueTokenWorker,
     RunQueueWorker,
     RunExplorerWorker,
-    RunCoinGeckoWorker,
     RunTelegramWorker,
     RunLastTokenTxDateFetcher,
     RunFetchTokenWorker,
@@ -112,7 +111,6 @@ import {
     RunRugFreeCoinsWorker,
     RunTop100TokensWorker,
     RunTokensInsightWorker,
-    RunMyEtherListsWorker,
     RunRecentTokensWorker,
     RunTwitterWorker,
 } from '../../command'
@@ -913,15 +911,6 @@ container.register(CliDependency.COMMAND, {
 
 container.register(CliDependency.COMMAND, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
-        new RunCoinGeckoWorker(
-            dependencyContainer.resolve(CoinGeckoWorker),
-            coinGeckoLogger,
-        )
-    ),
-})
-
-container.register(CliDependency.COMMAND, {
-    useFactory: instanceCachingFactory((dependencyContainer) =>
         new RunRugFreeCoinsWorker(
             dependencyContainer.resolve(RugFreeCoinsWorker),
             rugFreeCoinsLogger,
@@ -1014,15 +1003,6 @@ container.register(CliDependency.COMMAND, {
         new RunTokensInsightWorker(
             dependencyContainer.resolve(TokensInsightWorker),
             tokensInsightLogger,
-        )
-    ),
-})
-
-container.register(CliDependency.COMMAND, {
-    useFactory: instanceCachingFactory((dependencyContainer) =>
-        new RunMyEtherListsWorker(
-            dependencyContainer.resolve(MyEtherListsWorker),
-            myEtherListsLogger,
         )
     ),
 })

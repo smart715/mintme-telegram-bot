@@ -35,10 +35,6 @@ export enum ExplorerWorkerNames {
     EXPLORER_SEARCH = 'explorer-search-api-worker',
 }
 
-export interface RunCoinGeckoWorkerCmdArgv {
-    blockchain: Blockchain,
-}
-
 export interface RunCasualTokenWorkerCmdArgv {
     name: CasualTokenWorkerNames,
 }
@@ -83,10 +79,6 @@ export interface RunTop100TokensWorkerCmdArgv {
 }
 
 export interface RunTokensInsightWorkerCmdArgv {
-    blockchain: Blockchain,
-}
-
-export interface RunMyEtherListsWorkerCmdArgv {
     blockchain: Blockchain,
 }
 

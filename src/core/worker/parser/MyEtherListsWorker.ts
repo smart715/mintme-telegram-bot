@@ -9,7 +9,7 @@ import { GitHubFile, GitHubRawTokenSocial } from '../../../types'
 export class MyEtherListsWorker extends AbstractTokenWorker {
     private readonly workerName = 'MyEtherLists'
     private readonly prefixLog = `[${this.workerName}]`
-    private readonly unsupportedBlockchains: Blockchain[] = [ Blockchain.CRO ]
+    private readonly supportedBlockchains: Blockchain[] = [ Blockchain.ETH, Blockchain.BSC ]
 
     public constructor(
         private readonly myEtherListsService: MyEtherListsService,
@@ -19,14 +19,18 @@ export class MyEtherListsWorker extends AbstractTokenWorker {
         super()
     }
 
-    public async run(currentBlockchain: Blockchain): Promise<void> {
+    public async run(): Promise<void> {
         this.logger.info(`${this.prefixLog} Worker started`)
 
-        if (this.unsupportedBlockchains.includes(currentBlockchain)) {
-            this.logger.error(`${this.prefixLog} Unsupported blockchain ${currentBlockchain}. Aborting`)
-
-            return
+        for (const blockchain of this.supportedBlockchains) {
+            await this.runByBlockchain(blockchain)
         }
+
+        this.logger.info(`${this.prefixLog} Worker finished`)
+    }
+
+    public async runByBlockchain(currentBlockchain: Blockchain): Promise<void> {
+        this.logger.info(`${this.prefixLog} checking ${currentBlockchain} blockchain`)
 
         let files: GitHubFile[]
 
