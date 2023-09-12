@@ -1,7 +1,7 @@
 import { singleton } from 'tsyringe'
 import { Logger } from 'winston'
 import { AbstractTokenWorker } from '../AbstractTokenWorker'
-import { TokensService, CoinDiscoveryService } from '../../service'
+import { CoinDiscoveryService, TokensService } from '../../service'
 import { Blockchain, getHrefValuesFromTagString } from '../../../utils'
 import { CoinDiscoveryGetTokensResponse } from '../../../types'
 
@@ -9,7 +9,6 @@ import { CoinDiscoveryGetTokensResponse } from '../../../types'
 export class CoinDiscoveryWorker extends AbstractTokenWorker {
     private readonly workerName = 'CoinDiscovery'
     private readonly prefixLog = `[${this.workerName}]`
-    private readonly unsupportedBlockchains: Blockchain[] = [ Blockchain.CRO ]
 
     public constructor(
         private readonly coinDiscoveryService: CoinDiscoveryService,
@@ -19,14 +18,8 @@ export class CoinDiscoveryWorker extends AbstractTokenWorker {
         super()
     }
 
-    public async run(currentBlockchain: Blockchain): Promise<void> {
+    public async run(): Promise<void> {
         this.logger.info(`${this.prefixLog} Worker started`)
-
-        if (this.unsupportedBlockchains.includes(currentBlockchain)) {
-            this.logger.error(`${this.prefixLog} Unsupported blockchain ${currentBlockchain}. Aborting`)
-
-            return
-        }
 
         let count: number
         let start: number = 0
@@ -54,9 +47,9 @@ export class CoinDiscoveryWorker extends AbstractTokenWorker {
                 const name = coin.name + '(' + coin.symbol + ')'
                 const nameSlug = coin.name_slug
                 const tokenAddress = coin.contract
-                const blockchain = this.getBlockchain(coin.chain.toString())
+                const currentBlockchain = this.getBlockchain(coin.chain.toString())
 
-                if (null === blockchain) {
+                if (null === currentBlockchain) {
                     continue
                 }
 
@@ -105,12 +98,12 @@ export class CoinDiscoveryWorker extends AbstractTokenWorker {
         this.logger.info(`${this.prefixLog} finished`)
     }
 
-    private getBlockchain(chain: string): string|null {
+    private getBlockchain(chain: string): Blockchain|null {
         switch (chain) {
             case '1':
-                return 'bnbTokens'
+                return Blockchain.BSC
             case '2':
-                return 'etherscanTokens'
+                return Blockchain.ETH
             default:
                 return null
         }

@@ -39,14 +39,6 @@ export interface RunCoinGeckoWorkerCmdArgv {
     blockchain: Blockchain,
 }
 
-export interface RunCoinDiscoveryWorkerCmdArgv {
-    blockchain: Blockchain,
-}
-
-export interface RunCoinCodexWorkerCmdArgv {
-    blockchain: Blockchain,
-}
-
 export interface RunCasualTokenWorkerCmdArgv {
     name: CasualTokenWorkerNames,
 }

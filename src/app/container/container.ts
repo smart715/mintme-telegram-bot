@@ -105,8 +105,6 @@ import {
     RunQueueWorker,
     RunExplorerWorker,
     RunCoinGeckoWorker,
-    RunCoinDiscoveryWorker,
-    RunCoinCodexWorker,
     RunTelegramWorker,
     RunLastTokenTxDateFetcher,
     RunFetchTokenWorker,
@@ -924,15 +922,6 @@ container.register(CliDependency.COMMAND, {
 
 container.register(CliDependency.COMMAND, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
-        new RunCoinDiscoveryWorker(
-            dependencyContainer.resolve(CoinDiscoveryWorker),
-            coinDiscoveryLogger,
-        )
-    ),
-})
-
-container.register(CliDependency.COMMAND, {
-    useFactory: instanceCachingFactory((dependencyContainer) =>
         new RunRugFreeCoinsWorker(
             dependencyContainer.resolve(RugFreeCoinsWorker),
             rugFreeCoinsLogger,
@@ -946,15 +935,6 @@ container.register(CliDependency.COMMAND, {
             dependencyContainer.resolve(Top100TokensWorker),
             top100TokensLogger,
         ),
-    ),
-})
-
-container.register(CliDependency.COMMAND, {
-    useFactory: instanceCachingFactory((dependencyContainer) =>
-        new RunCoinCodexWorker(
-            dependencyContainer.resolve(CoinCodexWorker),
-            coinCodexLogger,
-        )
     ),
 })
 
