@@ -1,5 +1,5 @@
 import { Arguments, BuilderCallback, MiddlewareFunction } from 'yargs'
-import { Blockchain } from '../utils'
+import { Blockchain } from '../../utils'
 
 export interface CommandInterface {
     command: string | ReadonlyArray<string>

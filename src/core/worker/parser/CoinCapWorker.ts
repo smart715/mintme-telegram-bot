@@ -1,12 +1,12 @@
 import { singleton } from 'tsyringe'
 import { Logger } from 'winston'
-import { AbstractTokenWorker } from '../AbstractTokenWorker'
 import { Blockchain, explorerDomains, findContractAddress } from '../../../utils'
 import { CoinCapService, QueuedTokenAddressService } from '../../service'
 import { CoinCapCoinInfoResponse } from '../../../types'
+import { AbstractParserWorker } from './AbstractParserWorker'
 
 @singleton()
-export class CoinCapWorker extends AbstractTokenWorker {
+export class CoinCapWorker extends AbstractParserWorker {
     private readonly workerName = 'CoinCap'
     private readonly prefixLog = `[${this.workerName}]`
 

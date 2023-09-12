@@ -1,6 +1,5 @@
 import { singleton } from 'tsyringe'
 import { Logger } from 'winston'
-import { AbstractTokenWorker } from '../AbstractTokenWorker'
 import { Blockchain, parseBlockchainName, sleep } from '../../../utils'
 import { TokensInsightService, TokensService } from '../../service'
 import {
@@ -8,9 +7,10 @@ import {
     TokensInsightCoinDataResponse,
     TokensInsightPlatform,
 } from '../../../types'
+import { AbstractParserWorker } from './AbstractParserWorker'
 
 @singleton()
-export class TokensInsightWorker extends AbstractTokenWorker {
+export class TokensInsightWorker extends AbstractParserWorker {
     private readonly workerName = 'TokensInsight'
     private readonly prefixLog = `[${this.workerName}]`
     private readonly limit = 1500

@@ -1,8 +1,8 @@
 import { singleton } from 'tsyringe'
 import { CommandInterface, RunQueueWorkerCmdArgv } from './types'
 import { Arguments, Argv } from 'yargs'
-import { Blockchain, sleep } from '../utils'
-import { QueueWorker } from '../core'
+import { Blockchain, sleep } from '../../utils'
+import { QueueWorker } from '../../core'
 import { Logger } from 'winston'
 
 @singleton()

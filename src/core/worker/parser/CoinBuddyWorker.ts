@@ -1,12 +1,12 @@
 import { DOMWindow, JSDOM } from 'jsdom'
 import { singleton } from 'tsyringe'
 import { Logger } from 'winston'
-import { AbstractTokenWorker } from '../AbstractTokenWorker'
 import { Blockchain, findContractAddress } from '../../../utils'
 import { CoinBuddyService, TokensService } from '../../service'
+import { AbstractParserWorker } from './AbstractParserWorker'
 
 @singleton()
-export class CoinBuddyWorker extends AbstractTokenWorker {
+export class CoinBuddyWorker extends AbstractParserWorker {
     private readonly workerName = 'CoinBuddy'
     private readonly prefixLog = `[${this.workerName}]`
     private readonly supportedBlockchains: Blockchain[] = [ Blockchain.ETH, Blockchain.BSC, Blockchain.CRO ]

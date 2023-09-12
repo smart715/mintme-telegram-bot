@@ -1,12 +1,12 @@
 import { singleton } from 'tsyringe'
 import { Logger } from 'winston'
-import { AbstractTokenWorker } from '../AbstractTokenWorker'
 import { CoinGeckoService, TokensService } from '../../service'
 import { Blockchain, sleep } from '../../../utils'
 import { AllCoinsTokenResponse, CoinInfo, LinksCoinInfo } from '../../../types'
+import { AbstractParserWorker } from './AbstractParserWorker'
 
 @singleton()
-export class CoinGeckoWorker extends AbstractTokenWorker {
+export class CoinGeckoWorker extends AbstractParserWorker {
     private readonly workerName = 'CoinGecko'
     private readonly prefixLog = `[${this.workerName}]`
     private readonly sleepDuration = 4 * 1000 // 3 seconds produces 429 http error. So 4-5 is ok

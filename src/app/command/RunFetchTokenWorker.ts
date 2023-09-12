@@ -28,9 +28,9 @@ import {
     RugFreeCoinsWorker,
     TokensInsightWorker,
     Top100TokensWorker,
-} from '../core'
+} from '../../core'
 import { Arguments, Argv } from 'yargs'
-import { createLogger, sleep } from '../utils'
+import { createLogger, sleep } from '../../utils'
 import { singleton } from 'tsyringe'
 
 @singleton()

@@ -1,14 +1,16 @@
 import { Logger } from 'winston'
+import { singleton } from 'tsyringe'
 import { CommandInterface } from './types'
-import { TwitterWorker } from '../core'
-import { sleep } from '../utils'
+import { MailerWorker } from '../../core'
+import { sleep } from '../../utils'
 
-export class RunTwitterWorker implements CommandInterface {
-    public readonly command = 'run-twitter-worker'
-    public readonly description = 'Runs Twitter worker'
+@singleton()
+export class RunMailerWorker implements CommandInterface {
+    public readonly command = 'run-mailer-worker'
+    public readonly description = 'Runs Mailer worker'
 
     public constructor(
-        private readonly twitterWorker: TwitterWorker,
+        private readonly mailerWorker: MailerWorker,
         private readonly logger: Logger,
     ) { }
 
@@ -17,7 +19,7 @@ export class RunTwitterWorker implements CommandInterface {
     public async handler(): Promise<void> {
         this.logger.info(`Started command ${this.command}`)
 
-        await this.twitterWorker.run()
+        await this.mailerWorker.run()
 
         this.logger.info(`Command ${this.command} finished with success`)
 

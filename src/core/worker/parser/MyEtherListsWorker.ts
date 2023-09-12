@@ -1,12 +1,12 @@
 import { singleton } from 'tsyringe'
 import { Logger } from 'winston'
-import { AbstractTokenWorker } from '../AbstractTokenWorker'
 import { Blockchain } from '../../../utils'
 import { MyEtherListsService, TokensService } from '../../service'
 import { GitHubFile, GitHubRawTokenSocial } from '../../../types'
+import { AbstractParserWorker } from './AbstractParserWorker'
 
 @singleton()
-export class MyEtherListsWorker extends AbstractTokenWorker {
+export class MyEtherListsWorker extends AbstractParserWorker {
     private readonly workerName = 'MyEtherLists'
     private readonly prefixLog = `[${this.workerName}]`
     private readonly supportedBlockchains: Blockchain[] = [ Blockchain.ETH, Blockchain.BSC ]

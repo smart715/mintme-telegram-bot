@@ -2,8 +2,8 @@ import { singleton } from 'tsyringe'
 import { Logger } from 'winston'
 import { CommandInterface, RunEnqueueTokenWorkerCmdArgv } from './types'
 import { Arguments, Argv } from 'yargs'
-import { Blockchain, sleep } from '../utils'
-import { EnqueueTokensWorker } from '../core'
+import { Blockchain, sleep } from '../../utils'
+import { EnqueueTokensWorker } from '../../core'
 
 @singleton()
 export class RunEnqueueTokenWorker implements CommandInterface {

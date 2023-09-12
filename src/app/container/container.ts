@@ -109,7 +109,7 @@ import {
     RunFetchTokenWorker,
     RunMailerWorker,
     RunTwitterWorker,
-} from '../../command'
+} from '../command'
 import { RetryAxios, TokenNamesGenerator, createLogger, Environment } from '../../utils'
 
 // Env
