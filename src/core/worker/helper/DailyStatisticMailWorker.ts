@@ -98,8 +98,8 @@ export class DailyStatisticMailWorker {
         for (const [ contactMethod, contactInfo ] of Object.entries(groupedContactingWorkersInfo)) {
             msg += `<strong>${contactMethod}</strong>: ` +
                 `Success - ${contactInfo.success}. ` +
-                `Failed (dm not enabled, account banned etc.) - ${contactInfo.failed}. ` +
-                `Crypto (failures and successes): ETH - ${contactInfo.ETH}, BSC - ${contactInfo.BSC}, CRO - ${contactInfo.CRO}. ` +
+                `Failed - ${contactInfo.failed}. ` +
+                `Crypto: ETH - ${contactInfo.ETH}, BSC - ${contactInfo.BSC}, CRO - ${contactInfo.CRO}. ` +
                 `<strong>Total</strong> - ${contactInfo.total} contacts<br>`
         }
 
