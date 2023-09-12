@@ -9,7 +9,6 @@ import { CoinCapCoinInfoResponse } from '../../../types'
 export class CoinCapWorker extends AbstractTokenWorker {
     private readonly workerName = 'CoinCap'
     private readonly prefixLog = `[${this.workerName}]`
-    private readonly unsupportedBlockchains: Blockchain[] = [ Blockchain.CRO ]
 
     public constructor(
         private readonly coinCapService: CoinCapService,
@@ -19,14 +18,8 @@ export class CoinCapWorker extends AbstractTokenWorker {
         super()
     }
 
-    public async run(currentBlockchain: Blockchain): Promise<void> {
+    public async run(): Promise<void> {
         this.logger.info(`${this.prefixLog} Worker started`)
-
-        if (this.unsupportedBlockchains.includes(currentBlockchain)) {
-            this.logger.error(`${this.prefixLog} Unsupported blockchain ${currentBlockchain}. Aborting`)
-
-            return
-        }
 
         let result: number
         let page = 1
@@ -52,12 +45,16 @@ export class CoinCapWorker extends AbstractTokenWorker {
             result = coins.length
             page += 1
 
-            const targetExplorer = this.getTargetExplorer(currentBlockchain)
-
             for (const coin of coins) {
                 const explorerLink = coin.explorer
 
-                if (null === explorerLink || !explorerLink.includes(targetExplorer)) {
+                if (!explorerLink) {
+                    continue
+                }
+
+                const currentBlockchain = this.getBlockchainByExplorerUrl(explorerLink)
+
+                if (!currentBlockchain) {
                     continue
                 }
 
@@ -79,14 +76,15 @@ export class CoinCapWorker extends AbstractTokenWorker {
         this.logger.info(`${this.prefixLog} finished`)
     }
 
-    private getTargetExplorer(currentBlockchain: Blockchain): string {
-        switch (currentBlockchain) {
-            case Blockchain.BSC:
-                return explorerDomains[Blockchain.BSC]
-            case Blockchain.ETH:
-                return explorerDomains[Blockchain.ETH]
-            default:
-                throw new Error('Wrong blockchain provided. Explorer doesn\'t exists for provided blockchain')
+    private getBlockchainByExplorerUrl(link: string): Blockchain|null {
+        if (link.includes(explorerDomains[Blockchain.BSC])) {
+            return Blockchain.BSC
         }
+
+        if (link.includes(explorerDomains[Blockchain.ETH])) {
+            return Blockchain.ETH
+        }
+
+        return null
     }
 }
