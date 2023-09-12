@@ -13,7 +13,7 @@ import { NewestTokenChecker, StopCheckException } from './NewestTokenChecker'
 export class RecentTokensWorker extends NewestTokenChecker {
     protected readonly workerName = 'RecentTokens'
     private readonly prefixLog = `[${this.workerName}]`
-    private readonly unsupportedBlockchains: Blockchain[] = [ Blockchain.CRO ]
+    private readonly supportedBlockchains: Blockchain[] = [ Blockchain.ETH, Blockchain.BSC ]
     private blockchain: Blockchain|null
 
     public constructor(
@@ -29,16 +29,20 @@ export class RecentTokensWorker extends NewestTokenChecker {
         )
     }
 
-    public async run(currentBlockchain: Blockchain = Blockchain.BSC): Promise<void> {
+    public async run(): Promise<void> {
+        this.logger.info(`${this.prefixLog} Worker started`)
+
+        for (const blockchain of this.supportedBlockchains) {
+            await this.runByBlockchain(blockchain)
+        }
+
+        this.logger.info(`${this.prefixLog} Worker finished`)
+    }
+
+    public async runByBlockchain(currentBlockchain: Blockchain = Blockchain.BSC): Promise<void> {
         this.logger.info(`${this.prefixLog} Started`)
 
         this.blockchain = currentBlockchain
-
-        if (this.unsupportedBlockchains.includes(this.blockchain)) {
-            this.logger.error(`${this.prefixLog} Unsupported blockchain ${currentBlockchain}. Aborting`)
-
-            return
-        }
 
         this.newestChecked = await this.getNewestChecked(this.blockchain)
         this.needToSaveNextNewestChecked = true
