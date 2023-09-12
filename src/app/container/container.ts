@@ -106,8 +106,6 @@ import {
     RunExplorerWorker,
     RunCoinGeckoWorker,
     RunCoinDiscoveryWorker,
-    RunCoinBrainWorker,
-    RunCoinBuddyWorker,
     RunCoinCapWorker,
     RunCoinCatapultWorker,
     RunCoinCodexWorker,
@@ -931,24 +929,6 @@ container.register(CliDependency.COMMAND, {
         new RunCoinDiscoveryWorker(
             dependencyContainer.resolve(CoinDiscoveryWorker),
             coinDiscoveryLogger,
-        )
-    ),
-})
-
-container.register(CliDependency.COMMAND, {
-    useFactory: instanceCachingFactory((dependencyContainer) =>
-        new RunCoinBrainWorker(
-            dependencyContainer.resolve(CoinBrainWorker),
-            coinBrainLogger,
-        )
-    ),
-})
-
-container.register(CliDependency.COMMAND, {
-    useFactory: instanceCachingFactory((dependencyContainer) =>
-        new RunCoinBuddyWorker(
-            dependencyContainer.resolve(CoinBuddyWorker),
-            coinBuddyLogger,
         )
     ),
 })

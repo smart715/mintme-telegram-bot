@@ -43,14 +43,6 @@ export interface RunCoinDiscoveryWorkerCmdArgv {
     blockchain: Blockchain,
 }
 
-export interface RunCoinBrainWorkerCmdArgv {
-    blockchain: Blockchain,
-}
-
-export interface RunCoinBuddyWorkerCmdArgv {
-    blockchain: Blockchain,
-}
-
 export interface RunCoinCapWorkerCmdArgv {
     blockchain: Blockchain,
 }
