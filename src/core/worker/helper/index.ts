@@ -1,0 +1,1 @@
+export { DailyStatisticMailWorker } from './DailyStatisticMailWorker'

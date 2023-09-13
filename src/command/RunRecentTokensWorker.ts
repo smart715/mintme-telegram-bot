@@ -3,7 +3,7 @@ import { Arguments, Argv } from 'yargs'
 import { Logger } from 'winston'
 import { CommandInterface, RunRecentTokensWorkerCmdArgv } from './types'
 import { Blockchain } from '../utils'
-import { RecentTokensWorker } from '../core'
+import { MailerService, RecentTokensWorker } from '../core'
 
 @singleton()
 export class RunRecentTokensWorker implements CommandInterface {
@@ -12,6 +12,7 @@ export class RunRecentTokensWorker implements CommandInterface {
 
     public constructor(
         private readonly recentTokensWorker: RecentTokensWorker,
+        private readonly mailService: MailerService,
         private readonly logger: Logger,
     ) { }
 
@@ -27,7 +28,14 @@ export class RunRecentTokensWorker implements CommandInterface {
     public async handler(argv: Arguments<RunRecentTokensWorkerCmdArgv>): Promise<void> {
         this.logger.info(`Started command ${this.command}`)
 
-        await this.recentTokensWorker.run(argv.blockchain)
+        try {
+            await this.recentTokensWorker.run(argv.blockchain)
+        } catch (err) {
+            await this.mailService.sendFailedWorkerEmail(`Error while running ${this.constructor.name}`, err)
+
+            throw err
+        }
+
 
         this.logger.info(`Command ${this.command} finished with success`)
 

@@ -11,6 +11,7 @@ import {
     CheckTokenBNBWorker,
     EtherScanAddressTokensHoldingsWorker,
     ExplorerSearchAPIWorker,
+    MailerService,
 } from '../core'
 
 @singleton()
@@ -27,6 +28,7 @@ export class RunExplorerWorker implements CommandInterface {
         private readonly bscScanValidatorsFetcher: BSCScanValidatorsFetcher,
         private readonly checkTokenBNBWorker: CheckTokenBNBWorker,
         private readonly explorerSearchAPIWorker: ExplorerSearchAPIWorker,
+        private readonly mailService: MailerService,
     ) { }
 
     public builder(yargs: Argv<RunExplorerWorkerCmdArgv>): void {
@@ -56,10 +58,19 @@ export class RunExplorerWorker implements CommandInterface {
             [ExplorerWorkerNames.EXPLORER_SEARCH]: this.explorerSearchAPIWorker,
         }
 
-        if (ExplorerWorkerNames.HOLDINGS === workerName) {
-            await this.runHoldingWorker(blockchain)
-        } else {
-            await notHoldingWorkers[workerName].run(blockchain)
+        try {
+            if (ExplorerWorkerNames.HOLDINGS === workerName) {
+                await this.runHoldingWorker(blockchain)
+            } else {
+                await notHoldingWorkers[workerName].run(blockchain)
+            }
+        } catch (err) {
+            await this.mailService.sendFailedWorkerEmail(
+                `Error while running ${this.constructor.name}. ${workerName}`,
+                err
+            )
+
+            throw err
         }
 
         await sleep(1000)

@@ -1,6 +1,7 @@
 import { singleton } from 'tsyringe'
 import { Between, EntityRepository, Repository } from 'typeorm'
 import { ContactHistory, TwitterAccount } from '../entity'
+import { GroupedContactsCount } from '../../types'
 
 @singleton()
 @EntityRepository(ContactHistory)
@@ -32,5 +33,21 @@ export class ContactHistoryRepository extends Repository<ContactHistory> {
                     createdAt: Between(oneDayAgo, now),
                 },
             })
+    }
+
+    public async findTotalCountGroupedByContactMethod(fromDate: Date): Promise<GroupedContactsCount[]> {
+        const result = await this.createQueryBuilder()
+            .select([
+                'COUNT(*) as tokens',
+                'blockchain',
+                'contact_method',
+                'is_success',
+            ])
+            .andWhere('created_at > :from', { from: fromDate })
+            .groupBy('contact_method, is_success, blockchain')
+            .orderBy('tokens', 'DESC')
+            .getRawMany()
+
+        return result as GroupedContactsCount[]
     }
 }
