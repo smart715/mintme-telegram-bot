@@ -1,8 +1,8 @@
 import { singleton } from 'tsyringe'
 import { Logger } from 'winston'
 import { CommandInterface } from './types'
-import { sleep } from '../utils'
-import { DailyStatisticMailWorker, MailerService } from '../core'
+import { sleep } from '../../utils'
+import { DailyStatisticMailWorker, MailerService } from '../../core'
 
 @singleton()
 export class RunDailyStatisticMailWorker implements CommandInterface {
