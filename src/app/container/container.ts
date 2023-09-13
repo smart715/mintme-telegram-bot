@@ -96,6 +96,7 @@ import {
     TwitterWorker,
     TwitterAccountRepository,
     TwitterService,
+    DailyStatisticMailWorker,
 } from '../../core'
 import { Application } from '../'
 import { CliDependency } from './types'
@@ -109,6 +110,7 @@ import {
     RunFetchTokenWorker,
     RunMailerWorker,
     RunTwitterWorker,
+    RunDailyStatisticMailWorker,
 } from '../command'
 import { RetryAxios, TokenNamesGenerator, createLogger, Environment } from '../../utils'
 
@@ -141,6 +143,7 @@ const queueLogger = createLogger(QueueWorker.name.toLowerCase())
 const telegramLogger = createLogger(TelegramWorker.name.toLowerCase())
 const mailerLogger = createLogger(MailerWorker.name.toLowerCase())
 const twitterLogger = createLogger(TwitterWorker.name.toLowerCase())
+const dailyStatisticMailLogger = createLogger(DailyStatisticMailWorker.name.toLowerCase())
 
 // Repositories
 
@@ -544,6 +547,7 @@ container.register(TelegramWorker, {
             dependencyContainer.resolve(ContactQueueService),
             dependencyContainer.resolve(TokensService),
             dependencyContainer.resolve(ProxyService),
+            dependencyContainer.resolve(MailerService),
             telegramLogger,
         )
     ),
@@ -856,7 +860,19 @@ container.register(TwitterWorker, {
             dependencyContainer.resolve(ContactQueueService),
             dependencyContainer.resolve(TokensService),
             environment,
+            dependencyContainer.resolve(MailerService),
             twitterLogger,
+        )
+    ),
+})
+
+container.register(DailyStatisticMailWorker, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new DailyStatisticMailWorker(
+            dependencyContainer.resolve(TokensService),
+            dependencyContainer.resolve(MailerService),
+            dependencyContainer.resolve(ContactHistoryService),
+            dailyStatisticMailLogger,
         )
     ),
 })
@@ -865,17 +881,9 @@ container.register(TwitterWorker, {
 
 container.register(CliDependency.COMMAND, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
-        new RunTelegramWorker(
-            dependencyContainer.resolve(TelegramWorker),
-            telegramLogger,
-        )
-    ),
-})
-
-container.register(CliDependency.COMMAND, {
-    useFactory: instanceCachingFactory((dependencyContainer) =>
         new RunEnqueueTokenWorker(
             dependencyContainer.resolve(EnqueueTokensWorker),
+            dependencyContainer.resolve(MailerService),
             enqueueTokenLogger
         ),
     ),
@@ -885,6 +893,7 @@ container.register(CliDependency.COMMAND, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new RunQueueWorker(
             dependencyContainer.resolve(QueueWorker),
+            dependencyContainer.resolve(MailerService),
             queueLogger,
         ),
     ),
@@ -901,6 +910,7 @@ container.register(CliDependency.COMMAND, {
             dependencyContainer.resolve(BSCScanValidatorsFetcher),
             dependencyContainer.resolve(CheckTokenBNBWorker),
             dependencyContainer.resolve(ExplorerSearchAPIWorker),
+            dependencyContainer.resolve(MailerService),
         )
     ),
 })
@@ -909,6 +919,7 @@ container.register(CliDependency.COMMAND, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new RunMailerWorker(
             dependencyContainer.resolve(MailerWorker),
+            dependencyContainer.resolve(MailerService),
             mailerLogger,
         )
     ),
@@ -918,6 +929,7 @@ container.register(CliDependency.COMMAND, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new RunLastTokenTxDateFetcher(
             dependencyContainer.resolve(LastTokenTxDateFetcher),
+            dependencyContainer.resolve(MailerService),
             lastTokenTxDateFetcherLogger,
         )
     ),
@@ -954,6 +966,7 @@ container.register(CliDependency.COMMAND, {
             dependencyContainer.resolve(RugFreeCoinsWorker),
             dependencyContainer.resolve(TokensInsightWorker),
             dependencyContainer.resolve(Top100TokensWorker),
+            dependencyContainer.resolve(MailerService),
         )
     ),
 })
@@ -962,6 +975,7 @@ container.register(CliDependency.COMMAND, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new RunTelegramWorker(
             dependencyContainer.resolve(TelegramWorker),
+            dependencyContainer.resolve(MailerService),
             telegramLogger,
         )
     ),
@@ -971,7 +985,18 @@ container.register(CliDependency.COMMAND, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new RunTwitterWorker(
             dependencyContainer.resolve(TwitterWorker),
+            dependencyContainer.resolve(MailerService),
             twitterLogger,
+        )
+    ),
+})
+
+container.register(CliDependency.COMMAND, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new RunDailyStatisticMailWorker(
+            dependencyContainer.resolve(DailyStatisticMailWorker),
+            dependencyContainer.resolve(MailerService),
+            dailyStatisticMailLogger,
         )
     ),
 })

@@ -1,7 +1,7 @@
 import { Logger } from 'winston'
 import { singleton } from 'tsyringe'
 import { CommandInterface } from './types'
-import { MailerWorker } from '../../core'
+import { MailerService, MailerWorker } from '../../core'
 import { sleep } from '../../utils'
 
 @singleton()
@@ -11,6 +11,7 @@ export class RunMailerWorker implements CommandInterface {
 
     public constructor(
         private readonly mailerWorker: MailerWorker,
+        private readonly mailService: MailerService,
         private readonly logger: Logger,
     ) { }
 
@@ -19,7 +20,13 @@ export class RunMailerWorker implements CommandInterface {
     public async handler(): Promise<void> {
         this.logger.info(`Started command ${this.command}`)
 
-        await this.mailerWorker.run()
+        try {
+            await this.mailerWorker.run()
+        } catch (err) {
+            await this.mailService.sendFailedWorkerEmail(`Error while running ${this.constructor.name}`, err)
+
+            throw err
+        }
 
         this.logger.info(`Command ${this.command} finished with success`)
 

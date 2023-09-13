@@ -7,7 +7,7 @@ import {
     ContactMessageService,
     ContactQueueService,
     TelegramService,
-    ProxyService,
+    ProxyService, MailerService,
 } from '../../../service'
 import { By, Key, WebDriver, WebElement } from 'selenium-webdriver'
 import * as fs from 'fs'
@@ -34,6 +34,7 @@ export class TelegramClient {
         private readonly telegramService: TelegramService,
         private readonly proxyService: ProxyService,
         telegramAccount: TelegramAccount,
+        private readonly mailerService: MailerService,
         private readonly logger: Logger
     ) {
         this.telegramAccount = telegramAccount
@@ -74,7 +75,11 @@ export class TelegramClient {
         if (!this.telegramAccount.proxy || this.telegramAccount.proxy.isDisabled) {
             this.logger.info(`Proxy is invalid or disabled, Getting new one`)
             if (!await this.getNewProxy()) {
+                await this.mailerService.sendFailedWorkerEmail(`[TelegramWorker] Can't create proxy for telegram id:` +
+                    ` ${this.telegramAccount.id}. No proxy stock available.`)
+
                 this.logger.warn(`No proxy stock available`)
+
                 return false
             }
         }

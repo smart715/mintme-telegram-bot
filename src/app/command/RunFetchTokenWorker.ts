@@ -28,6 +28,7 @@ import {
     RugFreeCoinsWorker,
     TokensInsightWorker,
     Top100TokensWorker,
+    MailerService,
 } from '../../core'
 import { Arguments, Argv } from 'yargs'
 import { createLogger, sleep } from '../../utils'
@@ -67,6 +68,7 @@ export class RunFetchTokenWorker implements CommandInterface {
         private readonly rugFreeCoinsWorker: RugFreeCoinsWorker,
         private readonly tokensInsightWorker: TokensInsightWorker,
         private readonly top100TokensWorker: Top100TokensWorker,
+        private readonly mailService: MailerService,
     ) { }
 
     public builder(yargs: Argv<RunCasualTokenWorkerCmdArgv>): void {
@@ -121,7 +123,16 @@ export class RunFetchTokenWorker implements CommandInterface {
 
         logger.info(`Started command ${this.command} --name ${workerName}`)
 
-        await worker.run()
+        try {
+            await worker.run()
+        } catch (err) {
+            await this.mailService.sendFailedWorkerEmail(
+                `Error while running ${this.constructor.name}. ${workerName}`,
+                err
+            )
+
+            throw err
+        }
 
         logger.info(`Command ${this.command} finished with success`)
 

@@ -14,9 +14,11 @@ export class TwitterAccount1692976150721 implements MigrationInterface {
                 PRIMARY KEY (\`id\`)
             ) ENGINE = InnoDB
         `)
+        await queryRunner.query(`ALTER TABLE \`contact_history\` ADD \`twitter_account_id\` int NULL`)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
+        await queryRunner.query(`ALTER TABLE \`contact_history\` DROP COLUMN \`twitter_account_id\``)
         await queryRunner.query(`DROP TABLE \`twitter_account\``)
     }
 }

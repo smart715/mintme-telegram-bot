@@ -2,7 +2,7 @@ import { singleton } from 'tsyringe'
 import { CommandInterface, RunQueueWorkerCmdArgv } from './types'
 import { Arguments, Argv } from 'yargs'
 import { Blockchain, sleep } from '../../utils'
-import { QueueWorker } from '../../core'
+import { MailerService, QueueWorker } from '../../core'
 import { Logger } from 'winston'
 
 @singleton()
@@ -12,6 +12,7 @@ export class RunQueueWorker implements CommandInterface {
 
     public constructor(
         private readonly queueWorker: QueueWorker,
+        private readonly mailService: MailerService,
         private readonly logger: Logger,
     ) { }
 
@@ -34,7 +35,13 @@ export class RunQueueWorker implements CommandInterface {
     public async handler(argv: Arguments<RunQueueWorkerCmdArgv>): Promise<void> {
         this.logger.info(`Started command ${this.command}`)
 
-        await this.queueWorker.run(argv.blockchain, argv.repeat)
+        try {
+            await this.queueWorker.run(argv.blockchain, argv.repeat)
+        } catch (err) {
+            await this.mailService.sendFailedWorkerEmail(`Error while running ${this.constructor.name}`, err)
+
+            throw err
+        }
 
         this.logger.info(`Command ${this.command} finished with success`)
 
