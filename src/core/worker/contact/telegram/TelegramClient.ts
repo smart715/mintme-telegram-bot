@@ -25,6 +25,7 @@ export class TelegramClient {
     public accountMessages: ContactMessage[]
     private messageToSendIndex: number = 0
     public isInitialized: boolean = false
+    private potentialFalsePositiveInRow: number = 0
 
     public constructor(
         private readonly contactHistoryService: ContactHistoryService,
@@ -282,10 +283,44 @@ export class TelegramClient {
         }
     }
 
+    private async getMiddleColumn(): Promise<WebElement|undefined> {
+        const middleColumnSelector = await this.driver.findElements(By.id('MiddleColumn'))
+
+        if (middleColumnSelector.length) {
+            return middleColumnSelector[0]
+        }
+
+        return undefined
+    }
+
+    private async isLoading(middleColumn: WebElement): Promise<boolean> {
+        const loadingSpinner = await middleColumn.findElements(By.className('loading'))
+        return loadingSpinner.length > 0
+    }
+
+    private async isLoaded(): Promise<boolean> {
+        const middleColumn = await this.getMiddleColumn()
+
+        if (!middleColumn) {
+            return false
+        }
+
+        if (await this.isLoading(middleColumn)) {
+            await this.driver.sleep(10000)
+
+            if (await this.isLoading(middleColumn)) {
+                return false
+            }
+        }
+
+        return true
+    }
+
     private async sendGroupMessage(tgLink: string, verified: boolean = false): Promise<ContactHistoryStatusType> {
         if (this.isLimitHit()) {
             return ContactHistoryStatusType.ACCOUNT_LIMIT_HIT
         }
+
         if (!verified) {
             this.log(`Joining ${tgLink}`)
             await this.joinAndVerifyGroup()
@@ -348,6 +383,12 @@ export class TelegramClient {
                 return ContactHistoryStatusType.ACCOUNT_NOT_AUTHORIZED
             }
 
+            const loaded = await this.isLoaded()
+
+            if (!loaded) {
+                return ContactHistoryStatusType.ERROR
+            }
+
             const userStatusSelector = await this.driver.findElements(By.className('user-status'))
 
             if (userStatusSelector.length > 0) {
@@ -366,7 +407,7 @@ export class TelegramClient {
             }
         } catch (e) {
             this.logger.error(e)
-            return ContactHistoryStatusType.UNKNOWN
+            return ContactHistoryStatusType.ERROR
         }
     }
 
@@ -397,7 +438,6 @@ export class TelegramClient {
         }
     }
 
-
     private isSuccessResult(result: ContactHistoryStatusType): boolean {
         const isSuccess = (result === ContactHistoryStatusType.SENT_DM ||
             result === ContactHistoryStatusType.SENT_GROUP ||
@@ -406,6 +446,7 @@ export class TelegramClient {
         if (isSuccess) {
             this.setNextMessageIndex()
         }
+
         return isSuccess
     }
 
@@ -449,7 +490,6 @@ export class TelegramClient {
 
             let result = await this.sendMessage(queuedContact.channel, false)
 
-
             switch (result) {
                 case ContactHistoryStatusType.ACCOUNT_NOT_AUTHORIZED:
                     await this.contactQueueService.setProcessing(queuedContact, false)
@@ -484,9 +524,27 @@ export class TelegramClient {
                     )
                     await this.telegramService.setAccountLimitHitDate(this.telegramAccount, moment().add(5, 'day').toDate())
                     return
+                case ContactHistoryStatusType.ERROR:
+                case ContactHistoryStatusType.ACCOUNT_NOT_EXISTS:
+                    this.potentialFalsePositiveInRow++
+                    if (this.potentialFalsePositiveInRow >= 5) {
+                        return
+                    }
+            }
+
+            if (ContactHistoryStatusType.ERROR == result) {
+                this.log(
+                    `Skipping to send to token ${queuedContact.address} | Result: ${result} | Attempt ${this.potentialFalsePositiveInRow}/5`
+                )
+
+                return this.startContacting()
             }
 
             const isSuccess = this.isSuccessResult(result)
+
+            if (isSuccess) {
+                this.potentialFalsePositiveInRow = 0
+            }
 
             await this.contactQueueService.removeFromQueue(queuedContact.address, queuedContact.blockchain)
 
