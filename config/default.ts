@@ -29,6 +29,7 @@ export default {
     'telegram_messages_delay_in_seconds': 30,
     'telegram_account_max_day_messages': 30,
     'telegram_unique_messages_per_account': 3,
+    'telegram_accounts_per_proxy': 2,
 
     // twitter configs
     'twitter_max_accounts_simultaneous': 1,
