@@ -1,4 +1,4 @@
-import { Entity, Column, PrimaryGeneratedColumn, JoinColumn, OneToOne } from 'typeorm'
+import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, JoinColumn } from 'typeorm'
 import { ProxyServer } from './ProxyServer'
 
 @Entity()
@@ -24,7 +24,7 @@ export class TelegramAccount {
     @Column({ nullable: true })
     public limitHitResetDate!: Date
 
-    @OneToOne(() => ProxyServer)
+    @ManyToOne(() => ProxyServer, (proxy) => proxy.tgAccounts, { eager: true })
     @JoinColumn()
     public proxy: ProxyServer
 }

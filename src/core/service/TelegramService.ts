@@ -44,7 +44,7 @@ export class TelegramService {
     }
 
     public async assignNewProxyForAccount(tgAccount: TelegramAccount): Promise<ProxyServer|undefined> {
-        const proxy = await this.proxyService.getFirstNotUsedProxy()
+        const proxy = await this.proxyService.getFirstAvailableProxy()
 
         if (proxy) {
             tgAccount.proxy = proxy

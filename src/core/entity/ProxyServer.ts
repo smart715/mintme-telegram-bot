@@ -1,4 +1,5 @@
-import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm'
+import { Entity, Column, PrimaryGeneratedColumn, OneToMany } from 'typeorm'
+import { TelegramAccount } from './TelegramAccount'
 
 @Entity()
 export class ProxyServer {
@@ -13,4 +14,7 @@ export class ProxyServer {
 
     @Column()
     public isDisabled!: boolean
+
+    @OneToMany(() => TelegramAccount, (tgAccount) => tgAccount.proxy)
+    public tgAccounts: TelegramAccount[]
 }

@@ -1,9 +1,12 @@
 import { singleton } from 'tsyringe'
 import { ProxyServerRepository } from '../repository'
 import { ProxyServer } from '../entity'
+import config from 'config'
 
 @singleton()
 export class ProxyService {
+    private maxTelegramAccountsPerProxy: number = config.get('telegram_accounts_per_proxy')
+
     public constructor(
         private proxyServerRepository: ProxyServerRepository,
     ) { }
@@ -18,7 +21,7 @@ export class ProxyService {
         await this.proxyServerRepository.save(proxyServer)
     }
 
-    public async getFirstNotUsedProxy(): Promise<ProxyServer|undefined> {
-        return this.proxyServerRepository.getFirstNotAssignedProxy()
+    public async getFirstAvailableProxy(): Promise<ProxyServer|undefined> {
+        return this.proxyServerRepository.getFirstAvailableProxy(this.maxTelegramAccountsPerProxy)
     }
 }
