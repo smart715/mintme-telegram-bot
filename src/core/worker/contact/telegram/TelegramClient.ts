@@ -11,7 +11,7 @@ import {
 } from '../../../service'
 import { By, Key, WebDriver, WebElement } from 'selenium-webdriver'
 import * as fs from 'fs'
-import { getRandomNumber } from '../../../../utils'
+import { Environment, getRandomNumber } from '../../../../utils'
 import { ContactHistoryStatusType, ContactMethod, TokenContactStatusType } from '../../../types'
 import moment from 'moment'
 import { Logger } from 'winston'
@@ -35,6 +35,7 @@ export class TelegramClient {
         private readonly proxyService: ProxyService,
         telegramAccount: TelegramAccount,
         private readonly mailerService: MailerService,
+        private readonly environment: Environment,
         private readonly logger: Logger
     ) {
         this.telegramAccount = telegramAccount
@@ -213,7 +214,13 @@ export class TelegramClient {
             if (messageInput) {
                 await messageInput.sendKeys(this.getMessageTemplate())
                 await this.driver.sleep(5000)
-                await messageInput.sendKeys(Key.RETURN)
+
+                if (this.isProd()) {
+                    this.log('Environment is not production. Skipping sending message')
+                } else {
+                    await messageInput.sendKeys(Key.RETURN)
+                }
+
                 this.sentMessages++
                 return true
             }
@@ -524,5 +531,9 @@ export class TelegramClient {
             `[Telegram Worker ${this.telegramAccount.id}] ` +
             message
         )
+    }
+
+    private isProd(): boolean {
+        return Environment.PRODUCTION === this.environment
     }
 }

@@ -562,6 +562,7 @@ container.register(TelegramWorker, {
             dependencyContainer.resolve(TokensService),
             dependencyContainer.resolve(ProxyService),
             dependencyContainer.resolve(MailerService),
+            environment,
             telegramLogger,
         )
     ),
