@@ -261,7 +261,12 @@ export class TwitterClient {
 
         this.log(`Message input found. Inserting template`)
 
-        await messageInput.sendKeys(message)
+        const splittedMessage = message.split('\n')
+
+        for (const part of splittedMessage) {
+            await messageInput.sendKeys(part)
+            await messageInput.sendKeys(Key.SHIFT, Key.ENTER)
+        }
 
         this.log(`Template added`)
 
@@ -284,7 +289,7 @@ export class TwitterClient {
 
             this.log(`Pressing enter key`)
 
-            await messageInput.sendKeys(Key.RETURN)
+            await messageInput.sendKeys(Key.ENTER)
 
             await this.driver.sleep(5000)
 
