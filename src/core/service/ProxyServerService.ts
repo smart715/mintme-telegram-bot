@@ -11,10 +11,6 @@ export class ProxyService {
         private proxyServerRepository: ProxyServerRepository,
     ) { }
 
-    public async getProxyById(proxyID: number): Promise<ProxyServer|undefined> {
-        return this.proxyServerRepository.findByID(proxyID)
-    }
-
     public async setProxyDisabled(proxyServer: ProxyServer): Promise<void> {
         proxyServer.isDisabled = true
 
