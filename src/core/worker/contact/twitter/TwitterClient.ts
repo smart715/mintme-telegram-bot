@@ -243,10 +243,12 @@ export class TwitterClient {
 
         this.log(`Dm opened for ${link}. Sending message...`)
 
+        const dmInputSelector = 'div[data-testid="dmComposerTextInput"]'
+
         let messageInput: WebElement
 
         try {
-            messageInput = await this.driver.findElement(By.css('div[data-testid="dmComposerTextInput"]'))
+            messageInput = await this.driver.findElement(By.css(dmInputSelector))
         } catch (err) {
             if (err instanceof Error && 'NoSuchElementError' === err.name) {
                 this.log(`Can't find dm input field. Dm not enabled or account doesn't have access to ${link}`)
@@ -266,6 +268,20 @@ export class TwitterClient {
         await this.driver.sleep(5000)
 
         if (this.isProd()) {
+            this.log(`refind dm input selector`)
+
+            try {
+                messageInput = await this.driver.findElement(By.css(dmInputSelector))
+            } catch (err) {
+                if (err instanceof Error && 'NoSuchElementError' === err.name) {
+                    this.log(`Can't find dm input field after insert message. ${link}`)
+
+                    return ContactHistoryStatusType.DM_NOT_ENABLED
+                }
+
+                throw err
+            }
+
             this.log(`Pressing enter key`)
 
             await messageInput.sendKeys(Key.RETURN)
