@@ -1,8 +1,6 @@
 import config from 'config'
 import { Logger } from 'winston'
 import { By, Key, WebDriver, WebElement } from 'selenium-webdriver'
-// eslint-disable-next-line
-import { NoSuchElementError } from 'selenium-webdriver/lib/error'
 import { ContactMessage, Token, TwitterAccount } from '../../../entity'
 import {
     ContactHistoryService,
@@ -205,9 +203,19 @@ export class TwitterClient {
         await this.driver.get(link)
         await this.driver.sleep(20000)
 
-        const mainColumn = await this.driver.findElement(
-            By.css(`div[data-testid="primaryColumn"]`)
-        )
+        let mainColumn: WebElement
+
+        try {
+            mainColumn = await this.driver.findElement(
+                By.css(`div[data-testid="primaryColumn"]`)
+            )
+        } catch (err) {
+            if (err instanceof Error && 'NoSuchElementError' === err.name) {
+                return ContactHistoryStatusType.ACCOUNT_NOT_EXISTS
+            }
+
+            throw err
+        }
 
         const mainText = await mainColumn.getText()
 
@@ -222,7 +230,7 @@ export class TwitterClient {
                 By.css(`div[data-testid="sendDMFromProfile"]`)
             )
         } catch (err) {
-            if (err instanceof NoSuchElementError) {
+            if (err instanceof Error && 'NoSuchElementError' === err.name) {
                 return ContactHistoryStatusType.DM_NOT_ENABLED
             }
 
@@ -240,7 +248,7 @@ export class TwitterClient {
         try {
             messageInput = await this.driver.findElement(By.css('div[data-testid="dmComposerTextInput"]'))
         } catch (err) {
-            if (err instanceof NoSuchElementError) {
+            if (err instanceof Error && 'NoSuchElementError' === err.name) {
                 this.log(`Can't find dm input field. Dm not enabled or account doesn't have access to ${link}`)
 
                 return ContactHistoryStatusType.DM_NOT_ENABLED
