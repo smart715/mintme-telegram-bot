@@ -259,8 +259,6 @@ export class TwitterClient {
             throw err
         }
 
-        this.log(`Message input found. Inserting template`)
-
         const splittedMessage = message.split('\n')
 
         for (const part of splittedMessage) {
@@ -268,13 +266,9 @@ export class TwitterClient {
             await messageInput.sendKeys(Key.SHIFT, Key.ENTER)
         }
 
-        this.log(`Template added`)
-
         await this.driver.sleep(5000)
 
         if (this.isProd()) {
-            this.log(`refind dm input selector`)
-
             try {
                 messageInput = await this.driver.findElement(By.css(dmInputSelector))
             } catch (err) {
@@ -287,17 +281,11 @@ export class TwitterClient {
                 throw err
             }
 
-            this.log(`Pressing enter key`)
-
             await messageInput.sendKeys(Key.ENTER)
 
             await this.driver.sleep(5000)
 
-            this.log(`Getting page source`)
-
             const pageSrc = await this.driver.getPageSource()
-
-            this.log(`Check if failed to send`)
 
             if (pageSrc.includes('failed to send')) {
                 this.log('Failed to send message')
