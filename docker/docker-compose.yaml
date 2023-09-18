@@ -1,8 +1,8 @@
 version: '3.8'
 
 services:
-  markting-bot:
-    container_name: marketing-bot
+  tokens-fetcher:
+    container_name: tokens-fetcher
     build:
       context: ..
       dockerfile: docker/Dockerfile
@@ -20,7 +20,7 @@ services:
       SERVER_HOST: 0.0.0.0
       SERVER_PORT: 4550
       DB_HOST: db
-      DB_NAME: marketing_bot
+      DB_NAME: tokens_fetcher
     networks:
       - default
 
@@ -28,7 +28,7 @@ services:
     image: mariadb:10.9.2
     environment:
       MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: marketing_bot
+      MYSQL_DATABASE: tokens_fetcher
     ports:
       - "3306:3306"
     networks:
