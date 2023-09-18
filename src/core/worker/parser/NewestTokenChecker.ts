@@ -1,8 +1,9 @@
 import { Blockchain, sleep } from '../../../utils'
 import { Logger } from 'winston'
 import { NewestCheckedTokenService } from '../../service'
+import { AbstractParserWorker } from './AbstractParserWorker'
 
-export abstract class NewestTokenChecker {
+export abstract class NewestTokenChecker extends AbstractParserWorker {
     protected readonly allPagesAreChecked = 'All Pages are checked'
     protected readonly caughtNewestCheckedToken = 'Caught newest checked token'
 
@@ -15,7 +16,9 @@ export abstract class NewestTokenChecker {
         protected readonly workerName: string,
         protected readonly newestCheckedTokenService: NewestCheckedTokenService,
         protected readonly logger: Logger
-    ) { }
+    ) {
+        super()
+    }
 
     public async run(): Promise<void> {
         this.logger.info(`[${this.workerName}] Started`)

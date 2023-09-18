@@ -1,8 +1,8 @@
 import { container, singleton } from 'tsyringe'
 import { Logger } from 'winston'
 import { CommandInterface } from './types'
-import { Database, sleep } from '../utils'
-import { MailerService, TelegramWorker } from '../core'
+import { Database, sleep } from '../../utils'
+import { MailerService, TelegramWorker } from '../../core'
 
 @singleton()
 export class RunTelegramWorker implements CommandInterface {

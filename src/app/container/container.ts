@@ -105,27 +105,13 @@ import {
     RunEnqueueTokenWorker,
     RunQueueWorker,
     RunExplorerWorker,
-    RunCoinGeckoWorker,
-    RunAdvnWorker,
-    RunCoinDiscoveryWorker,
-    RunCoinBrainWorker,
-    RunCoinBuddyWorker,
-    RunCoinCapWorker,
-    RunCoinCatapultWorker,
-    RunCoinCodexWorker,
-    RunBitQueryWorker,
     RunTelegramWorker,
     RunLastTokenTxDateFetcher,
     RunFetchTokenWorker,
     RunMailerWorker,
-    RunRugFreeCoinsWorker,
-    RunTop100TokensWorker,
-    RunTokensInsightWorker,
-    RunMyEtherListsWorker,
-    RunRecentTokensWorker,
     RunTwitterWorker,
     RunDailyStatisticMailWorker,
-} from '../../command'
+} from '../command'
 import { RetryAxios, TokenNamesGenerator, createLogger, Environment } from '../../utils'
 
 // Env
@@ -931,130 +917,10 @@ container.register(CliDependency.COMMAND, {
 
 container.register(CliDependency.COMMAND, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
-        new RunCoinGeckoWorker(
-            dependencyContainer.resolve(CoinGeckoWorker),
-            dependencyContainer.resolve(MailerService),
-            coinGeckoLogger,
-        )
-    ),
-})
-
-container.register(CliDependency.COMMAND, {
-    useFactory: instanceCachingFactory((dependencyContainer) =>
-        new RunAdvnWorker(
-            dependencyContainer.resolve(AdvnWorker),
-            dependencyContainer.resolve(MailerService),
-            advnLogger,
-        )
-    ),
-})
-
-container.register(CliDependency.COMMAND, {
-    useFactory: instanceCachingFactory((dependencyContainer) =>
-        new RunCoinDiscoveryWorker(
-            dependencyContainer.resolve(CoinDiscoveryWorker),
-            dependencyContainer.resolve(MailerService),
-            coinDiscoveryLogger,
-        )
-    ),
-})
-
-container.register(CliDependency.COMMAND, {
-    useFactory: instanceCachingFactory((dependencyContainer) =>
-        new RunCoinBrainWorker(
-            dependencyContainer.resolve(CoinBrainWorker),
-            dependencyContainer.resolve(MailerService),
-            coinBrainLogger,
-        )
-    ),
-})
-
-container.register(CliDependency.COMMAND, {
-    useFactory: instanceCachingFactory((dependencyContainer) =>
-        new RunCoinBuddyWorker(
-            dependencyContainer.resolve(CoinBuddyWorker),
-            dependencyContainer.resolve(MailerService),
-            coinBuddyLogger,
-        )
-    ),
-})
-
-container.register(CliDependency.COMMAND, {
-    useFactory: instanceCachingFactory((dependencyContainer) =>
-        new RunCoinCapWorker(
-            dependencyContainer.resolve(CoinCapWorker),
-            dependencyContainer.resolve(MailerService),
-            coinCapLogger,
-        )
-    ),
-})
-
-container.register(CliDependency.COMMAND, {
-    useFactory: instanceCachingFactory((dependencyContainer) =>
-        new RunCoinCatapultWorker(
-            dependencyContainer.resolve(CoinCatapultWorker),
-            dependencyContainer.resolve(MailerService),
-            coinCatapultLogger,
-        ),
-    ),
-})
-
-container.register(CliDependency.COMMAND, {
-    useFactory: instanceCachingFactory((dependencyContainer) =>
-        new RunRugFreeCoinsWorker(
-            dependencyContainer.resolve(RugFreeCoinsWorker),
-            dependencyContainer.resolve(MailerService),
-            rugFreeCoinsLogger,
-        ),
-    ),
-})
-
-container.register(CliDependency.COMMAND, {
-    useFactory: instanceCachingFactory((dependencyContainer) =>
-        new RunTop100TokensWorker(
-            dependencyContainer.resolve(Top100TokensWorker),
-            dependencyContainer.resolve(MailerService),
-            top100TokensLogger,
-        ),
-    ),
-})
-
-container.register(CliDependency.COMMAND, {
-    useFactory: instanceCachingFactory((dependencyContainer) =>
-        new RunCoinCodexWorker(
-            dependencyContainer.resolve(CoinCodexWorker),
-            dependencyContainer.resolve(MailerService),
-            coinCodexLogger,
-        )
-    ),
-})
-
-container.register(CliDependency.COMMAND, {
-    useFactory: instanceCachingFactory((dependencyContainer) =>
-        new RunBitQueryWorker(
-            dependencyContainer.resolve(BitQueryWorker),
-            dependencyContainer.resolve(MailerService),
-            bitQueryLogger
-        )
-    ),
-})
-
-container.register(CliDependency.COMMAND, {
-    useFactory: instanceCachingFactory((dependencyContainer) =>
         new RunMailerWorker(
             dependencyContainer.resolve(MailerWorker),
             dependencyContainer.resolve(MailerService),
             mailerLogger,
-        )
-    ),
-})
-
-container.register(CliDependency.COMMAND, {
-    useFactory: instanceCachingFactory((dependencyContainer) =>
-        new RunRecentTokensWorker(
-            dependencyContainer.resolve(RecentTokensWorker),
-            dependencyContainer.resolve(MailerService),
-            recentTokensLogger,
         )
     ),
 })
@@ -1086,6 +952,20 @@ container.register(CliDependency.COMMAND, {
             dependencyContainer.resolve(CMCWorker),
             dependencyContainer.resolve(CoinLoreWorker),
             dependencyContainer.resolve(CoinScopeWorker),
+            dependencyContainer.resolve(AdvnWorker),
+            dependencyContainer.resolve(BitQueryWorker),
+            dependencyContainer.resolve(CoinBrainWorker),
+            dependencyContainer.resolve(CoinBuddyWorker),
+            dependencyContainer.resolve(CoinCapWorker),
+            dependencyContainer.resolve(CoinCatapultWorker),
+            dependencyContainer.resolve(CoinCodexWorker),
+            dependencyContainer.resolve(CoinDiscoveryWorker),
+            dependencyContainer.resolve(CoinGeckoWorker),
+            dependencyContainer.resolve(MyEtherListsWorker),
+            dependencyContainer.resolve(RecentTokensWorker),
+            dependencyContainer.resolve(RugFreeCoinsWorker),
+            dependencyContainer.resolve(TokensInsightWorker),
+            dependencyContainer.resolve(Top100TokensWorker),
             dependencyContainer.resolve(MailerService),
         )
     ),
@@ -1097,26 +977,6 @@ container.register(CliDependency.COMMAND, {
             dependencyContainer.resolve(TelegramWorker),
             dependencyContainer.resolve(MailerService),
             telegramLogger,
-        )
-    ),
-})
-
-container.register(CliDependency.COMMAND, {
-    useFactory: instanceCachingFactory((dependencyContainer) =>
-        new RunTokensInsightWorker(
-            dependencyContainer.resolve(TokensInsightWorker),
-            dependencyContainer.resolve(MailerService),
-            tokensInsightLogger,
-        )
-    ),
-})
-
-container.register(CliDependency.COMMAND, {
-    useFactory: instanceCachingFactory((dependencyContainer) =>
-        new RunMyEtherListsWorker(
-            dependencyContainer.resolve(MyEtherListsWorker),
-            dependencyContainer.resolve(MailerService),
-            myEtherListsLogger,
         )
     ),
 })

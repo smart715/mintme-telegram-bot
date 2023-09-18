@@ -3,8 +3,7 @@ import dotenv from 'dotenv'
 dotenv.config()
 
 import yargs from 'yargs'
-import { CliDependency, container } from './app'
-import { CommandInterface } from './command'
+import { CliDependency, container, CommandInterface } from './app'
 import { createLogger, Database } from './utils'
 
 (async (): Promise<void> => {

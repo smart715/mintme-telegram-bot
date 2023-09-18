@@ -1,16 +1,15 @@
 import { singleton } from 'tsyringe'
 import { Logger } from 'winston'
-import { AbstractTokenWorker } from '../AbstractTokenWorker'
 import { Blockchain } from '../../../utils'
 import { CoinBrainService, TokensService } from '../../service'
 import { CoinBrainGetTokensGeneralResponse } from '../../../types'
 import { DOMWindow, JSDOM } from 'jsdom'
+import { AbstractParserWorker } from './AbstractParserWorker'
 
 @singleton()
-export class CoinBrainWorker extends AbstractTokenWorker {
+export class CoinBrainWorker extends AbstractParserWorker {
     private readonly workerName = 'CoinBrain'
     private readonly prefixLog = `[${this.workerName}]`
-    private readonly unsupportedBlockchains: Blockchain[] = [ Blockchain.CRO ]
 
     public constructor(
         private readonly coinBrainService: CoinBrainService,
@@ -20,26 +19,8 @@ export class CoinBrainWorker extends AbstractTokenWorker {
         super()
     }
 
-    public async run(currentBlockchain: Blockchain): Promise<void> {
+    public async run(): Promise<void> {
         this.logger.info(`${this.prefixLog} Worker started`)
-
-        if (this.unsupportedBlockchains.includes(currentBlockchain)) {
-            this.logger.error(`${this.prefixLog} Unsupported blockchain ${currentBlockchain}. Aborting`)
-
-            return
-        }
-
-        const currentChainId = this.getCurrentChainId(currentBlockchain)
-
-        if (null === currentChainId) {
-            return
-        }
-
-        const cryptoPagePrefix = this.getCryptoPagePrefix(currentBlockchain)
-
-        if (null === cryptoPagePrefix) {
-            return
-        }
 
         let endCursor = ''
         let hasNextPage = true
@@ -69,7 +50,15 @@ export class CoinBrainWorker extends AbstractTokenWorker {
             for (const coin of coins) {
                 const address = coin.address.toLowerCase()
 
-                if (coin.chainId.toString() !== currentChainId.toString()) {
+                const currentBlockchain = this.getSupportedBlockchainByChainId(Number(coin.chainId))
+
+                if (!currentBlockchain) {
+                    continue
+                }
+
+                const cryptoPagePrefix = this.getCryptoPagePrefix(currentBlockchain)
+
+                if (!cryptoPagePrefix) {
                     continue
                 }
 
@@ -125,50 +114,30 @@ export class CoinBrainWorker extends AbstractTokenWorker {
         } while (hasNextPage)
     }
 
-    private getCurrentChainId(currentBlockchain: Blockchain): null|number {
-        let currentChainId: number|null = null
-
-        switch (currentBlockchain) {
-            case Blockchain.BSC:
-                currentChainId = 56
-
-                break
-            case Blockchain.ETH:
-                currentChainId = 1
-
-                break
+    private getSupportedBlockchainByChainId(chainId: number): Blockchain|null {
+        switch (chainId) {
+            case 56:
+                return Blockchain.BSC
+            case 1:
+                return Blockchain.ETH
+            default:
+                return null
         }
-
-        if (null === currentChainId) {
-            this.logger.error(`${this.prefixLog} current blockchain ${currentBlockchain} doesn't have chainId specified. Pls specify it in code. Aborting.`)
-
-            return null
-        }
-
-        return currentChainId
     }
 
     private getCryptoPagePrefix(currentBlockchain: Blockchain): string|null {
-        let cryptoPagePrefix: string|null = null
-
         switch (currentBlockchain) {
             case Blockchain.BSC:
-                cryptoPagePrefix = 'bnb'
-
-                break
+                return 'bnb'
             case Blockchain.ETH:
-                cryptoPagePrefix = 'eth'
+                return 'eth'
+            default:
+                this.logger.error(
+                    `${this.prefixLog} current blockchain ${currentBlockchain} doesn't have crypto ` +
+                    `prefix specified. Pls specify it in code. Aborting.`)
 
-                break
+                return null
         }
-
-        if (null === cryptoPagePrefix) {
-            this.logger.error(`${this.prefixLog} current blockchain ${currentBlockchain} doesn't have crypto prefix specified. Pls specify it in code. Aborting.`)
-
-            return null
-        }
-
-        return cryptoPagePrefix
     }
 
     private getTokenName(tokenInfoDOM: DOMWindow): string {

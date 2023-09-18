@@ -1,10 +1,10 @@
 import { Logger } from 'winston'
-import { AbstractTokenWorker } from '../AbstractTokenWorker'
-import { Blockchain } from '../../../utils'
+import { Blockchain, parseBlockchainName } from '../../../utils'
 import { TokensService, Top100TokensService } from '../../service'
 import { Top100TokensToken, Top100TokensTopListResponse } from '../../../types'
+import { AbstractParserWorker } from './AbstractParserWorker'
 
-export class Top100TokensWorker extends AbstractTokenWorker {
+export class Top100TokensWorker extends AbstractParserWorker {
     private readonly workerName = 'Top100Tokens'
     private readonly prefixLog = `[${this.workerName}]`
 
@@ -16,11 +16,9 @@ export class Top100TokensWorker extends AbstractTokenWorker {
         super()
     }
 
-    public async run(currentBlockchain: Blockchain): Promise<void> {
+    public async run(): Promise<void> {
         let page = 1
         let resultsCount = 0
-
-        const targetBlockchain = this.getTargetBlockchain(currentBlockchain)
 
         do {
             this.logger.info(`${this.prefixLog} Page: ${page}`)
@@ -48,7 +46,11 @@ export class Top100TokensWorker extends AbstractTokenWorker {
             resultsCount = coins.length
 
             for (const coin of coins) {
-                if (targetBlockchain !== coin.network) {
+                let currentBlockchain: Blockchain
+
+                try {
+                    currentBlockchain = parseBlockchainName(coin.network)
+                } catch (e) {
                     continue
                 }
 
@@ -114,18 +116,5 @@ export class Top100TokensWorker extends AbstractTokenWorker {
             coin.discord,
             coin.telegram,
         ].filter((link) => link) as string[]
-    }
-
-    private getTargetBlockchain(currentBlockchain: Blockchain): string {
-        switch (currentBlockchain) {
-            case Blockchain.ETH:
-                return 'ethereum'
-            case Blockchain.BSC:
-                return 'binance'
-            case Blockchain.CRO:
-                return 'cronos'
-            default:
-                throw new Error('Wrong blockchain provided. Target blockchain doesn\'t exists for provided blockchain')
-        }
     }
 }

@@ -1,11 +1,11 @@
-import { AbstractTokenWorker } from '../AbstractTokenWorker'
 import { Blockchain, sleep, TokenNamesGenerator } from '../../../utils'
 import { LastCheckedTokenNameService, TokensService } from '../../service'
 import axios from 'axios'
 import { EthprolerTokenInfoResponse } from '../../../types'
 import { Logger } from 'winston'
+import { AbstractParserWorker } from './AbstractParserWorker'
 
-export class EthplorerWorker extends AbstractTokenWorker {
+export class EthplorerWorker extends AbstractParserWorker {
     private readonly workerName = EthplorerWorker.name
     private readonly blockchain = Blockchain.ETH
     private readonly saveSeparator = '|'
