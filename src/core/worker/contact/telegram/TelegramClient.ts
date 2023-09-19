@@ -144,7 +144,7 @@ export class TelegramClient {
             })
             await driver.sleep(10000)
             await driver.navigate().refresh()
-            await driver.sleep(30000)
+            await driver.sleep(15000)
             if (await this.isLoggedIn()) {
                 return true
             } else {
@@ -188,7 +188,7 @@ export class TelegramClient {
         }
 
         if (await this.inputAndSendMessage()) {
-            await this.driver.sleep(20000)
+            await this.driver.sleep(10000)
             if (await this.isTempBanned()) {
                 return ContactHistoryStatusType.ACCOUNT_TEMP_BANNED
             }
@@ -244,8 +244,8 @@ export class TelegramClient {
 
             if (await this.getJoinGroupBtn()) {
                 this.log(`Group joining limit hit, Attempt ${retries}/2`)
-                if (retries <= 2) {
-                    await this.driver.sleep(30000)
+                if (retries < 2) {
+                    await this.driver.sleep(5000)
                     const retry = await this.joinAndVerifyGroup(retries + 1)
                     return retry
                 }
@@ -346,7 +346,7 @@ export class TelegramClient {
         }
 
         if (await this.inputAndSendMessage()) {
-            await this.driver.sleep(20000)
+            await this.driver.sleep(10000)
 
             const ownMessages = await this.driver.findElements(By.className('own'))
             if (ownMessages.length > 0) {
@@ -470,7 +470,7 @@ export class TelegramClient {
     }
 
     public async startContacting(): Promise<void> {
-        await this.driver.sleep(getRandomNumber(1, 10)*1000)
+        await this.driver.sleep(getRandomNumber(1, 5)*1000)
 
         const queuedContact = await this.contactQueueService.getFirstFromQueue(ContactMethod.TELEGRAM, this.logger)
 
@@ -500,7 +500,7 @@ export class TelegramClient {
                     await this.contactQueueService.setProcessing(queuedContact, false)
 
                     await this.login()
-                    await this.driver.sleep(60000)
+                    await this.driver.sleep(30000)
                     if (!await this.isLoggedIn()) {
                         result = ContactHistoryStatusType.ACCOUNT_PERM_BANNED
                         this.log(
