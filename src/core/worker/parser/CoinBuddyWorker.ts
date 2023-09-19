@@ -1,15 +1,15 @@
 import { DOMWindow, JSDOM } from 'jsdom'
 import { singleton } from 'tsyringe'
 import { Logger } from 'winston'
-import { AbstractTokenWorker } from '../AbstractTokenWorker'
 import { Blockchain, findContractAddress } from '../../../utils'
 import { CoinBuddyService, TokensService } from '../../service'
+import { AbstractParserWorker } from './AbstractParserWorker'
 
 @singleton()
-export class CoinBuddyWorker extends AbstractTokenWorker {
+export class CoinBuddyWorker extends AbstractParserWorker {
     private readonly workerName = 'CoinBuddy'
     private readonly prefixLog = `[${this.workerName}]`
-    private readonly unsupportedBlockchains: Blockchain[] = [ ]
+    private readonly supportedBlockchains: Blockchain[] = [ Blockchain.ETH, Blockchain.BSC, Blockchain.CRO ]
 
     public constructor(
         private readonly coinBuddyService: CoinBuddyService,
@@ -19,14 +19,18 @@ export class CoinBuddyWorker extends AbstractTokenWorker {
         super()
     }
 
-    public async run(currentBlockchain: Blockchain): Promise<void> {
+    public async run(): Promise<void> {
         this.logger.info(`${this.prefixLog} Worker started`)
 
-        if (this.unsupportedBlockchains.includes(currentBlockchain)) {
-            this.logger.error(`${this.prefixLog} Unsupported blockchain ${currentBlockchain}. Aborting`)
-
-            return
+        for (const blockchain of this.supportedBlockchains) {
+            await this.runByBlockchain(blockchain)
         }
+
+        this.logger.info(`${this.prefixLog} Worker finished`)
+    }
+
+    public async runByBlockchain(currentBlockchain: Blockchain): Promise<void> {
+        this.logger.info(`${this.prefixLog} Checking ${currentBlockchain} blockchain`)
 
         const tag = this.getTagByBlockchain(currentBlockchain)
 
@@ -163,8 +167,6 @@ export class CoinBuddyWorker extends AbstractTokenWorker {
 
             page += 1
         } while (results > 0)
-
-        this.logger.info(`${this.prefixLog} worker finished`)
     }
 
     private getTagByBlockchain(currentBlockchain: Blockchain): string|null {

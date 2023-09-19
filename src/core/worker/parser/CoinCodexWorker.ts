@@ -1,15 +1,15 @@
 import { singleton } from 'tsyringe'
 import { Logger } from 'winston'
-import { AbstractTokenWorker } from '../AbstractTokenWorker'
-import { Blockchain, findContractAddress } from '../../../utils'
+import { Blockchain, findContractAddress, parseBlockchainName } from '../../../utils'
 import { CoinCodexService, TokensService } from '../../service'
 import { CoinCodexCoinResponse, CoinInfoResponse } from '../../../types'
+import { AbstractParserWorker } from './AbstractParserWorker'
 
 @singleton()
-export class CoinCodexWorker extends AbstractTokenWorker {
+export class CoinCodexWorker extends AbstractParserWorker {
     private readonly workerName = 'CoinCodex'
     private readonly prefixLog = `[${this.workerName}]`
-    private readonly unsupportedBlockchains: Blockchain[] = [ Blockchain.CRO ]
+    private readonly supportedBlockchains: Blockchain[] = [ Blockchain.ETH, Blockchain.BSC ]
 
     public constructor(
         private readonly coinCodexService: CoinCodexService,
@@ -19,17 +19,9 @@ export class CoinCodexWorker extends AbstractTokenWorker {
         super()
     }
 
-    public async run(currentBlockchain: Blockchain): Promise<void> {
+    public async run(): Promise<void> {
         this.logger.info(`${this.prefixLog} Worker started`)
 
-        if (this.unsupportedBlockchains.includes(currentBlockchain)) {
-            this.logger.error(`${this.prefixLog} Unsupported blockchain ${currentBlockchain}. Aborting`)
-
-            return
-        }
-
-        const explorerURI = this.getExplorerURI(currentBlockchain)
-        const platformRegExp = this.getPlatformRegEx(currentBlockchain)
         let i = 0
 
         let coins: CoinCodexCoinResponse[]
@@ -61,9 +53,19 @@ export class CoinCodexWorker extends AbstractTokenWorker {
                 continue
             }
 
-            if (!platformRegExp.test(coinInfo.platform.toLowerCase())) {
+            let currentBlockchain: Blockchain
+
+            try {
+                currentBlockchain = parseBlockchainName(coinInfo.platform)
+            } catch (e) {
                 continue
             }
+
+            if (!this.supportedBlockchains.includes(currentBlockchain)) {
+                continue
+            }
+
+            const explorerURI = this.getExplorerURI(currentBlockchain)
 
             this.logger.info(`${this.prefixLog} Checking token ${coinName} (${i}/${coins.length})`)
 
@@ -112,6 +114,8 @@ export class CoinCodexWorker extends AbstractTokenWorker {
                 ]
             )
         }
+
+        this.logger.info(`${this.prefixLog} Worker finished`)
     }
 
     private getExplorerURI(currentBlockchain: Blockchain): string {
@@ -122,17 +126,6 @@ export class CoinCodexWorker extends AbstractTokenWorker {
                 return 'etherscan'
             default:
                 throw new Error('Wrong blockchain provided. Explorer URI doesn\'t exists for provided blockchain')
-        }
-    }
-
-    private getPlatformRegEx(currentBlockchain: Blockchain): RegExp {
-        switch (currentBlockchain) {
-            case Blockchain.BSC:
-                return /binance|bsc|bnb/
-            case Blockchain.ETH:
-                return /eth|ethereum/
-            default:
-                throw new Error('Wrong blockchain provided. Platform regex doesn\'t exists for provided blockchain')
         }
     }
 }

@@ -1,16 +1,16 @@
 import { singleton } from 'tsyringe'
 import { Logger } from 'winston'
-import { AbstractTokenWorker } from '../AbstractTokenWorker'
-import { Blockchain, sleep } from '../../../utils'
+import { Blockchain, parseBlockchainName, sleep } from '../../../utils'
 import { TokensInsightService, TokensService } from '../../service'
 import {
     TokensInsightAllCoinsResponse,
     TokensInsightCoinDataResponse,
     TokensInsightPlatform,
 } from '../../../types'
+import { AbstractParserWorker } from './AbstractParserWorker'
 
 @singleton()
-export class TokensInsightWorker extends AbstractTokenWorker {
+export class TokensInsightWorker extends AbstractParserWorker {
     private readonly workerName = 'TokensInsight'
     private readonly prefixLog = `[${this.workerName}]`
     private readonly limit = 1500
@@ -23,7 +23,7 @@ export class TokensInsightWorker extends AbstractTokenWorker {
         super()
     }
 
-    public async run(currentBlockchain: Blockchain): Promise<void> {
+    public async run(): Promise<void> {
         let offset = 0
         let fetchNext = true
 
@@ -42,7 +42,6 @@ export class TokensInsightWorker extends AbstractTokenWorker {
 
             const coins = allCoinsRes.data.items
             const coinsLength = coins.length
-            const platformRegEx = this.getPlatformRegEx(currentBlockchain)
 
             if (0 === coinsLength) {
                 fetchNext = false
@@ -56,12 +55,6 @@ export class TokensInsightWorker extends AbstractTokenWorker {
 
                 this.logger.info(`${this.prefixLog} Check ${tokenName}. ${i+offset}/${coinsLength+offset}`)
 
-                const tokenInDb = await this.tokensService.findByName(tokenName, currentBlockchain)
-
-                if (tokenInDb) {
-                    continue
-                }
-
                 let coinData: TokensInsightCoinDataResponse
 
                 try {
@@ -74,9 +67,24 @@ export class TokensInsightWorker extends AbstractTokenWorker {
                     continue
                 }
 
+                const currentBlockchain = this.getCurrentBlockchain(coinData)
+
+                if (!currentBlockchain) {
+                    continue
+                }
+
+                const tokenInDb = await this.tokensService.findByName(tokenName, currentBlockchain)
+
+                if (tokenInDb) {
+                    continue
+                }
+
                 await sleep(1000)
 
-                const tokenAddress = this.getTokenAddress(coinData, platformRegEx)
+                const tokenAddress = this.getTokenAddress(
+                    coinData,
+                    this.getPlatformRegEx(currentBlockchain)
+                )
 
                 if (!tokenAddress) {
                     continue
@@ -149,6 +157,17 @@ export class TokensInsightWorker extends AbstractTokenWorker {
             default:
                 throw new Error('Wrong blockchain provided. Platform regex doesn\'t exists for provided blockchain')
         }
+    }
+
+    private getCurrentBlockchain(coinData: TokensInsightCoinDataResponse): Blockchain|null {
+        for (const platform of coinData.data.platforms) {
+            try {
+                return parseBlockchainName(platform.name)
+            // eslint-disable-next-line
+            } catch (e) { }
+        }
+
+        return null
     }
 
     private getTokenAddress(coinData: TokensInsightCoinDataResponse, target: RegExp): string|null {

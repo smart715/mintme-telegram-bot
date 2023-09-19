@@ -1,7 +1,7 @@
 import { singleton } from 'tsyringe'
 import { CommandInterface, ExplorerWorkerNames, RunExplorerWorkerCmdArgv } from './types'
 import { Arguments, Argv } from 'yargs'
-import { Blockchain, sleep } from '../utils'
+import { Blockchain, sleep } from '../../utils'
 import {
     BSCScanAddressTokensHoldingsWorker,
     BSCScanTokensTransactionsFetcher,
@@ -11,7 +11,8 @@ import {
     CheckTokenBNBWorker,
     EtherScanAddressTokensHoldingsWorker,
     ExplorerSearchAPIWorker,
-} from '../core'
+    MailerService,
+} from '../../core'
 
 @singleton()
 export class RunExplorerWorker implements CommandInterface {
@@ -27,6 +28,7 @@ export class RunExplorerWorker implements CommandInterface {
         private readonly bscScanValidatorsFetcher: BSCScanValidatorsFetcher,
         private readonly checkTokenBNBWorker: CheckTokenBNBWorker,
         private readonly explorerSearchAPIWorker: ExplorerSearchAPIWorker,
+        private readonly mailService: MailerService,
     ) { }
 
     public builder(yargs: Argv<RunExplorerWorkerCmdArgv>): void {
@@ -56,10 +58,19 @@ export class RunExplorerWorker implements CommandInterface {
             [ExplorerWorkerNames.EXPLORER_SEARCH]: this.explorerSearchAPIWorker,
         }
 
-        if (ExplorerWorkerNames.HOLDINGS === workerName) {
-            await this.runHoldingWorker(blockchain)
-        } else {
-            await notHoldingWorkers[workerName].run(blockchain)
+        try {
+            if (ExplorerWorkerNames.HOLDINGS === workerName) {
+                await this.runHoldingWorker(blockchain)
+            } else {
+                await notHoldingWorkers[workerName].run(blockchain)
+            }
+        } catch (err) {
+            await this.mailService.sendFailedWorkerEmail(
+                `Error while running ${this.constructor.name}. ${workerName}`,
+                err
+            )
+
+            throw err
         }
 
         await sleep(1000)

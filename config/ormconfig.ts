@@ -1,6 +1,6 @@
 import path from 'path'
 import config from 'config'
-import { ConnectionOptions } from 'typeorm'
+import { ConnectionOptions, FileLogger } from 'typeorm'
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies'
 
 export default {
@@ -18,5 +18,8 @@ export default {
     },
     namingStrategy: new SnakeNamingStrategy(),
     timezone: '0',
+    logger: new FileLogger([ 'error' ], {
+        logPath: './log/db.log',
+    }),
     charset: 'utf8mb4',
 } as ConnectionOptions

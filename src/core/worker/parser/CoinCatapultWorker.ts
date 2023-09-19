@@ -1,15 +1,14 @@
 import { singleton } from 'tsyringe'
 import { Logger } from 'winston'
-import { AbstractTokenWorker } from '../AbstractTokenWorker'
-import { Blockchain, findContractAddress } from '../../../utils'
+import { Blockchain, findContractAddress, parseBlockchainName } from '../../../utils'
 import { CoinCatapultService, TokensService } from '../../service'
 import { CoinCatapultAllCoinsResponse, CoinCatapultTokenInfoGeneralResponse } from '../../../types'
+import { AbstractParserWorker } from './AbstractParserWorker'
 
 @singleton()
-export class CoinCatapultWorker extends AbstractTokenWorker {
+export class CoinCatapultWorker extends AbstractParserWorker {
     private readonly workerName = 'CoinCatapult'
     private readonly prefixLog = `[${this.workerName}]`
-    private readonly unsupportedBlockchains: Blockchain[] = [ Blockchain.CRO ]
 
     public constructor(
         protected readonly coinCatapultService: CoinCatapultService,
@@ -19,16 +18,8 @@ export class CoinCatapultWorker extends AbstractTokenWorker {
         super()
     }
 
-    public async run(currentBlockchain: Blockchain): Promise<void> {
+    public async run(): Promise<void> {
         this.logger.info(`${this.prefixLog} Worker started`)
-
-        if (this.unsupportedBlockchains.includes(currentBlockchain)) {
-            this.logger.error(`${this.prefixLog} Unsupported blockchain ${currentBlockchain}. Aborting`)
-
-            return
-        }
-
-        const targetBlockchain = this.getTargetBlockchain(currentBlockchain)
 
         let allCoinsResponse: CoinCatapultAllCoinsResponse
 
@@ -49,7 +40,15 @@ export class CoinCatapultWorker extends AbstractTokenWorker {
         for (const coin of coins) {
             ++i
 
-            if (!coin.network || targetBlockchain !== coin.network) {
+            if (!coin.network) {
+                continue
+            }
+
+            let currentBlockchain: Blockchain
+
+            try {
+                currentBlockchain = parseBlockchainName(coin.network)
+            } catch (e) {
                 continue
             }
 
@@ -122,18 +121,7 @@ export class CoinCatapultWorker extends AbstractTokenWorker {
                 ]
             )
         }
-    }
 
-    private getTargetBlockchain(currentBlockchain: Blockchain): string {
-        switch (currentBlockchain) {
-            case Blockchain.BSC:
-                return 'bsc'
-            case Blockchain.ETH:
-                return 'eth'
-            default:
-                throw new Error(
-                    'Wrong blockchain provided. Target blockchain name doesn\'t exists for provided blockchain'
-                )
-        }
+        this.logger.info(`${this.prefixLog} Worker finished`)
     }
 }

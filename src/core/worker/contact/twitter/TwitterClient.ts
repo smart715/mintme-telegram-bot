@@ -1,8 +1,6 @@
 import config from 'config'
 import { Logger } from 'winston'
 import { By, Key, WebDriver, WebElement } from 'selenium-webdriver'
-// eslint-disable-next-line
-import { NoSuchElementError } from 'selenium-webdriver/lib/error'
 import { ContactMessage, Token, TwitterAccount } from '../../../entity'
 import {
     ContactHistoryService,
@@ -41,16 +39,6 @@ export class TwitterClient {
 
     public async init(): Promise<boolean> {
         await this.initMessage()
-
-        if (!this.message) {
-            this.logger.warn(
-                `[TwitterWorker ID: ${this.twitterAccount.id}] ` +
-                `No messages stock available, Account not able to start messaging. Skipping...`
-            )
-
-            return false
-        }
-
         await this.updateSentMessagesAndTotalAttempt()
 
         if (!this.isAllowedToSentMessages()) {
@@ -215,9 +203,19 @@ export class TwitterClient {
         await this.driver.get(link)
         await this.driver.sleep(20000)
 
-        const mainColumn = await this.driver.findElement(
-            By.css(`div[data-testid="primaryColumn"]`)
-        )
+        let mainColumn: WebElement
+
+        try {
+            mainColumn = await this.driver.findElement(
+                By.css(`div[data-testid="primaryColumn"]`)
+            )
+        } catch (err) {
+            if (err instanceof Error && 'NoSuchElementError' === err.name) {
+                return ContactHistoryStatusType.ACCOUNT_NOT_EXISTS
+            }
+
+            throw err
+        }
 
         const mainText = await mainColumn.getText()
 
@@ -232,7 +230,7 @@ export class TwitterClient {
                 By.css(`div[data-testid="sendDMFromProfile"]`)
             )
         } catch (err) {
-            if (err instanceof NoSuchElementError) {
+            if (err instanceof Error && 'NoSuchElementError' === err.name) {
                 return ContactHistoryStatusType.DM_NOT_ENABLED
             }
 
@@ -245,12 +243,14 @@ export class TwitterClient {
 
         this.log(`Dm opened for ${link}. Sending message...`)
 
+        const dmInputSelector = 'div[data-testid="dmComposerTextInput"]'
+
         let messageInput: WebElement
 
         try {
-            messageInput = await this.driver.findElement(By.css('div[data-testid="dmComposerTextInput"]'))
+            messageInput = await this.driver.findElement(By.css(dmInputSelector))
         } catch (err) {
-            if (err instanceof NoSuchElementError) {
+            if (err instanceof Error && 'NoSuchElementError' === err.name) {
                 this.log(`Can't find dm input field. Dm not enabled or account doesn't have access to ${link}`)
 
                 return ContactHistoryStatusType.DM_NOT_ENABLED
@@ -259,11 +259,29 @@ export class TwitterClient {
             throw err
         }
 
-        await messageInput.sendKeys(message)
+        const splittedMessage = message.split('\n')
+
+        for (const part of splittedMessage) {
+            await messageInput.sendKeys(part)
+            await messageInput.sendKeys(Key.SHIFT, Key.ENTER)
+        }
+
         await this.driver.sleep(5000)
 
         if (this.isProd()) {
-            await messageInput.sendKeys(Key.RETURN)
+            try {
+                messageInput = await this.driver.findElement(By.css(dmInputSelector))
+            } catch (err) {
+                if (err instanceof Error && 'NoSuchElementError' === err.name) {
+                    this.log(`Can't find dm input field after insert message. ${link}`)
+
+                    return ContactHistoryStatusType.DM_NOT_ENABLED
+                }
+
+                throw err
+            }
+
+            await messageInput.sendKeys(Key.ENTER)
 
             await this.driver.sleep(5000)
 
@@ -289,7 +307,7 @@ export class TwitterClient {
         const contentMessage = await this.contactMessageService.getOneContactMessage()
 
         if (!contentMessage) {
-            return
+            throw new Error(`No messages stock available`)
         }
 
         this.message = contentMessage

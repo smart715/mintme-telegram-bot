@@ -1,8 +1,8 @@
 import { singleton } from 'tsyringe'
 import { Logger } from 'winston'
 import { CommandInterface } from './types'
-import { LastTokenTxDateFetcher } from '../core'
-import { sleep } from '../utils'
+import { LastTokenTxDateFetcher, MailerService } from '../../core'
+import { sleep } from '../../utils'
 
 @singleton()
 export class RunLastTokenTxDateFetcher implements CommandInterface {
@@ -11,6 +11,7 @@ export class RunLastTokenTxDateFetcher implements CommandInterface {
 
     public constructor(
         private readonly lastTokenTxDateFetcher: LastTokenTxDateFetcher,
+        private readonly mailService: MailerService,
         private readonly logger: Logger,
     ) { }
 
@@ -19,7 +20,13 @@ export class RunLastTokenTxDateFetcher implements CommandInterface {
     public async handler(): Promise<void> {
         this.logger.info(`Started command ${this.command}`)
 
-        await this.lastTokenTxDateFetcher.run()
+        try {
+            await this.lastTokenTxDateFetcher.run()
+        } catch (err) {
+            await this.mailService.sendFailedWorkerEmail(`Error while running ${this.constructor.name}`, err)
+
+            throw err
+        }
 
         this.logger.info(`Command ${this.command} finished with success`)
 

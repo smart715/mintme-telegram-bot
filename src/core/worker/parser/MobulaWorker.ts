@@ -1,12 +1,12 @@
-import { AbstractTokenWorker } from '../AbstractTokenWorker'
 import { singleton } from 'tsyringe'
 import { RetryAxios, Blockchain, parseBlockchainName } from '../../../utils'
 import { TokensService } from '../../service'
 import { MobulaSearchResponse } from '../../../types'
 import { Logger } from 'winston'
+import { AbstractParserWorker } from './AbstractParserWorker'
 
 @singleton()
-export class MobulaWorker extends AbstractTokenWorker {
+export class MobulaWorker extends AbstractParserWorker {
     private readonly workerName = MobulaWorker.name
     private readonly searchUrl = `https://postgrest-external.app-mobula.com/assets?select=name%2Csymbol%2Ccontracts%2Cblockchains%2Cwebsite%2Ctwitter&or=%28name.ilike.%25%2Cname.ilike.%29`
 

@@ -7,6 +7,10 @@ export default {
     'db_password': 'root',
     'db_name': 'tokens_fetcher',
 
+    // Email to send daily statistic.
+    // This email receives notifications about broken workers or not available messages/accounts
+    'email_daily_statistic': 'example@mail.com',
+
     // Coinmarketcap worker settings
     cmcWorker: {
         'apiKey': '0da9b092-fee6-4c91-875a-e93fbb6b78e0',
@@ -25,6 +29,7 @@ export default {
     'telegram_messages_delay_in_seconds': 30,
     'telegram_account_max_day_messages': 30,
     'telegram_unique_messages_per_account': 3,
+    'telegram_accounts_per_proxy': 2,
 
     // twitter configs
     'twitter_max_accounts_simultaneous': 1,

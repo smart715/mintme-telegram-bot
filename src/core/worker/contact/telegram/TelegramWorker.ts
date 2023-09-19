@@ -10,6 +10,7 @@ import {
     ContactMessageService,
     ContactQueueService,
     ProxyService,
+    MailerService,
 } from '../../../service'
 import { sleep } from '../../../../utils'
 
@@ -27,6 +28,7 @@ export class TelegramWorker {
         private readonly contactQueueService: ContactQueueService,
         private readonly tokenService: TokensService,
         private readonly proxyService: ProxyService,
+        private readonly mailerService: MailerService,
         private readonly logger: Logger,
     ) { }
 
@@ -39,6 +41,7 @@ export class TelegramWorker {
             this.telegramService,
             this.proxyService,
             tgAccount,
+            this.mailerService,
             this.logger
         )
 
@@ -49,6 +52,18 @@ export class TelegramWorker {
 
     public async run(): Promise<void> {
         const allAccounts = await this.telegramService.getAllAccounts()
+
+        if (0 === allAccounts.length) {
+            await this.mailerService
+                .sendFailedWorkerEmail(`${this.constructor.name} Doesn't have available accounts to login`)
+
+            this.logger.error(
+                `[Telegram Worker] DB doesn't have available account to login. Aborting.`
+            )
+
+            return
+        }
+
         let currentAccountIndex: number = 0
         while (currentAccountIndex < allAccounts.length) {
             this.telegramClients = []
@@ -88,7 +103,7 @@ export class TelegramWorker {
         }
     }
 
-    private startContactingAllManagers(clients: TelegramClient[]): Promise<void[]> {
+    private async startContactingAllManagers(clients: TelegramClient[]): Promise<void[]> {
         const contactingPromises: Promise<void>[] = []
 
         for (const client of clients) {
@@ -102,10 +117,11 @@ export class TelegramWorker {
             }
 
             if (!client.accountMessages?.length) {
-                this.logger.warn(
-                    `[Telegram Worker ID: ${client.telegramAccount.id}] ` +
+                const msg = `[Telegram Worker ID: ${client.telegramAccount.id}] ` +
                     `No messages stock available, Account not able to start messaging.`
-                )
+
+                this.logger.warn(msg)
+                await this.mailerService.sendFailedWorkerEmail(msg)
 
                 continue
             }

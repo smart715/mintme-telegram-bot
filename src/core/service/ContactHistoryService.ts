@@ -4,6 +4,7 @@ import { ContactHistoryRepository } from '../repository'
 import { ContactHistoryStatusType, ContactMethod } from '../types'
 import { ContactHistory, TwitterAccount } from '../entity'
 import { Blockchain } from '../../utils'
+import { GroupedContactsCount } from '../../types'
 
 @singleton()
 export class ContactHistoryService {
@@ -81,5 +82,9 @@ export class ContactHistoryService {
             .andWhere(`NOT status ='UNKNOWN'`)
             .getCount()
         return contactTimes
+    }
+
+    public async getTotalCountGroupedByContactMethod(fromDate: Date): Promise<GroupedContactsCount[]> {
+        return this.contactHistoryRepository.findTotalCountGroupedByContactMethod(fromDate)
     }
 }

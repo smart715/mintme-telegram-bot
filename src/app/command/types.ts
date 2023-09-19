@@ -1,5 +1,5 @@
 import { Arguments, BuilderCallback, MiddlewareFunction } from 'yargs'
-import { Blockchain } from '../utils'
+import { Blockchain } from '../../utils'
 
 export interface CommandInterface {
     command: string | ReadonlyArray<string>
@@ -35,42 +35,6 @@ export enum ExplorerWorkerNames {
     EXPLORER_SEARCH = 'explorer-search-api-worker',
 }
 
-export interface RunCoinGeckoWorkerCmdArgv {
-    blockchain: Blockchain,
-}
-
-export interface RunAdvnWorkerCmdArgv {
-    blockchain: Blockchain,
-}
-
-export interface RunCoinDiscoveryWorkerCmdArgv {
-    blockchain: Blockchain,
-}
-
-export interface RunCoinBrainWorkerCmdArgv {
-    blockchain: Blockchain,
-}
-
-export interface RunCoinBuddyWorkerCmdArgv {
-    blockchain: Blockchain,
-}
-
-export interface RunCoinCapWorkerCmdArgv {
-    blockchain: Blockchain,
-}
-
-export interface RunCoinCatapultWorkerCmdArgv {
-    blockchain: Blockchain,
-}
-
-export interface RunCoinCodexWorkerCmdArgv {
-    blockchain: Blockchain,
-}
-
-export interface RunBitQueryWorkerCmdArgv {
-    blockchain: Blockchain,
-}
-
 export interface RunCasualTokenWorkerCmdArgv {
     name: CasualTokenWorkerNames,
 }
@@ -90,24 +54,18 @@ export enum CasualTokenWorkerNames {
     COINMARKETCAP = 'coinmarketcap',
     COIN_LORE = 'coin-lore',
     COIN_SCOPE = 'coin-scope',
-}
-
-export interface RunRugFreeCoinsWorkerCmdArgv {
-    blockchain: Blockchain,
-}
-
-export interface RunTop100TokensWorkerCmdArgv {
-    blockchain: Blockchain,
-}
-
-export interface RunTokensInsightWorkerCmdArgv {
-    blockchain: Blockchain,
-}
-
-export interface RunMyEtherListsWorkerCmdArgv {
-    blockchain: Blockchain,
-}
-
-export interface RunRecentTokensWorkerCmdArgv {
-    blockchain: Blockchain,
+    ADVN = 'advn',
+    BIT_QUERY = 'bit-query',
+    COIN_BRAIN = 'coin-brain',
+    COIN_BUDDY = 'coin-buddy',
+    COIN_CAP = 'coin-cap',
+    COIN_CATAPULT = 'coin-catapult',
+    COIN_CODEX = 'coin-codex',
+    COIN_DISCOVERY = 'coin-discovery',
+    COIN_GECKO = 'coin-gecko',
+    MY_ETHER_LISTS = 'my-ether-lists',
+    RECENT_TOKENS = 'recent-tokens',
+    RUG_FREE_COINS = 'rug-free-coins',
+    TOKENS_INSIGHT = 'tokens-insight',
+    TOP_100_TOKENS = 'top-100-tokens',
 }

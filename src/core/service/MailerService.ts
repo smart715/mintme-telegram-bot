@@ -5,6 +5,7 @@ import config from 'config'
 @singleton()
 export class MailerService {
     private readonly sender = `${config.get('mailer.senderName')} <${config.get('mailer.senderEmail')}>`
+    private readonly dailyStatisticReceiver = config.get('email_daily_statistic') as string
     private readonly mailer: nodemailer.Transporter
 
     public constructor() {
@@ -29,6 +30,18 @@ export class MailerService {
         })
 
         return this.isResponseOk(response, receiverEmail)
+    }
+
+    public async sendFailedWorkerEmail(message: string, error: any = null): Promise<boolean> {
+        const body = error
+            ? message + ': ' + JSON.stringify(error, Object.getOwnPropertyNames(error))
+            : message
+
+        return this.sendEmail(
+            this.dailyStatisticReceiver,
+            'Worker Failed',
+            body
+        )
     }
 
     private isResponseOk(response: any, receiverEmail: string): boolean {

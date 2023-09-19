@@ -1,15 +1,14 @@
 import { singleton } from 'tsyringe'
 import { Logger } from 'winston'
-import { AbstractTokenWorker } from '../AbstractTokenWorker'
 import { Blockchain, findContractAddress } from '../../../utils'
 import { RugFreeCoinsService, TokensService } from '../../service'
 import { RugFreeCoinData, RugFreeCoinsAllCoins } from '../../../types'
+import { AbstractParserWorker } from './AbstractParserWorker'
 
 @singleton()
-export class RugFreeCoinsWorker extends AbstractTokenWorker {
+export class RugFreeCoinsWorker extends AbstractParserWorker {
     private readonly workerName = 'RugFreeCoins'
     private readonly prefixLog = `[${this.workerName}]`
-    private readonly unsupportedBlockchains: Blockchain[] = [ Blockchain.CRO ]
 
     public constructor(
         private readonly rugFreeCoinsService: RugFreeCoinsService,
@@ -19,12 +18,8 @@ export class RugFreeCoinsWorker extends AbstractTokenWorker {
         super()
     }
 
-    public async run(currentBlockchain: Blockchain): Promise<void> {
-        if (this.unsupportedBlockchains.includes(currentBlockchain)) {
-            this.logger.error(`${this.prefixLog} Unsupported blockchain: ${currentBlockchain}. Aborting.`)
-
-            return
-        }
+    public async run(): Promise<void> {
+        this.logger.info(`${this.prefixLog} Worker started`)
 
         let page = 1
         let resultsCount = 0
@@ -54,6 +49,12 @@ export class RugFreeCoinsWorker extends AbstractTokenWorker {
             resultsCount = allCoins.length
 
             for (const coin of allCoins) {
+                const currentBlockchain = this.getBlockchain(coin)
+
+                if (!currentBlockchain) {
+                    continue
+                }
+
                 const tokenAddress = this.getTokenAddress(coin, currentBlockchain)
 
                 if (!tokenAddress) {
@@ -69,7 +70,6 @@ export class RugFreeCoinsWorker extends AbstractTokenWorker {
                 const tokenName = `${coin.name}(${coin.symbol})`
                 const website = coin.website
                 const links = this.getLinks(coin)
-
 
                 await this.tokenService.addIfNotExists(
                     tokenAddress,
@@ -97,7 +97,19 @@ export class RugFreeCoinsWorker extends AbstractTokenWorker {
             page += 1
         } while (resultsCount > 0)
 
-        this.logger.info(`${this.prefixLog} Finished`)
+        this.logger.info(`${this.prefixLog} finished`)
+    }
+
+    private getBlockchain(coin: RugFreeCoinData): Blockchain|null {
+        if (coin.ethereum_contract_address) {
+            return Blockchain.ETH
+        }
+
+        if (coin.bsc_contract_address) {
+            return Blockchain.BSC
+        }
+
+        return null
     }
 
     private getLinks(coin: RugFreeCoinData): string[] {
