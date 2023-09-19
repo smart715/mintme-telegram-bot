@@ -189,8 +189,13 @@ export class TelegramClient {
 
         if (await this.inputAndSendMessage()) {
             await this.driver.sleep(20000)
+            const middleColumn = await this.getMiddleColumn()
 
-            if (await this.isTempBanned()) {
+            if (!middleColumn) {
+                return ContactHistoryStatusType.ACCOUNT_NOT_EXISTS
+            }
+
+            if (await this.isTempBanned([ middleColumn ])) {
                 return ContactHistoryStatusType.ACCOUNT_TEMP_BANNED
             }
 
@@ -352,7 +357,7 @@ export class TelegramClient {
 
             const ownMessages = await this.driver.findElements(By.className('own'))
             if (ownMessages.length > 0) {
-                if (await this.isTempBanned()) {
+                if (await this.isTempBanned(ownMessages)) {
                     return ContactHistoryStatusType.ACCOUNT_TEMP_BANNED
                 }
 
@@ -424,10 +429,13 @@ export class TelegramClient {
         await this.telegramService.setAccountAsDisabled(this.telegramAccount)
     }
 
-    private async isTempBanned(): Promise<boolean> {
-        const failedMessages = await this.driver.findElements(By.className('icon-message-failed'))
-        if (failedMessages.length > 0) {
-            return true
+    private async isTempBanned(ownMessages: WebElement[]): Promise<boolean> {
+        for (const message of ownMessages) {
+            const failedMessages = await message.findElements(By.className('icon-message-failed'))
+
+            if (failedMessages.length > 0) {
+                return true
+            }
         }
         return false
     }
