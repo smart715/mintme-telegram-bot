@@ -188,10 +188,12 @@ export class TelegramClient {
         }
 
         if (await this.inputAndSendMessage()) {
-            await this.driver.sleep(10000)
+            await this.driver.sleep(20000)
+
             if (await this.isTempBanned()) {
                 return ContactHistoryStatusType.ACCOUNT_TEMP_BANNED
             }
+
             return ContactHistoryStatusType.SENT_DM
         } else {
             return ContactHistoryStatusType.ACCOUNT_NOT_EXISTS
@@ -213,7 +215,7 @@ export class TelegramClient {
 
             if (messageInput) {
                 await messageInput.sendKeys(this.getMessageTemplate())
-                await this.driver.sleep(5000)
+                await this.driver.sleep(20000)
                 await messageInput.sendKeys(Key.RETURN)
                 this.sentMessages++
                 return true
@@ -346,13 +348,14 @@ export class TelegramClient {
         }
 
         if (await this.inputAndSendMessage()) {
-            await this.driver.sleep(10000)
+            await this.driver.sleep(20000)
 
             const ownMessages = await this.driver.findElements(By.className('own'))
             if (ownMessages.length > 0) {
                 if (await this.isTempBanned()) {
                     return ContactHistoryStatusType.ACCOUNT_TEMP_BANNED
                 }
+
                 return ContactHistoryStatusType.SENT_GROUP
             } else {
                 return ContactHistoryStatusType.SENT_GROUP_BUT_DELETED
