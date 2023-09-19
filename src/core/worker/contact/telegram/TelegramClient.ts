@@ -538,6 +538,9 @@ export class TelegramClient {
             }
 
             if (ContactHistoryStatusType.ERROR == result) {
+                await this.driver.get('https://web.telegram.org/a/')
+                await this.driver.sleep(10000)
+
                 this.log(
                     `Skipping to send to token ${queuedContact.address} | Result: ${result} | Attempt ${this.potentialFalsePositiveInRow}/5`
                 )
