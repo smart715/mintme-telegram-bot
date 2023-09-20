@@ -45,7 +45,7 @@ export class MailerService {
     }
 
     private isResponseOk(response: any, receiverEmail: string): boolean {
-        return response.response.includes('250 Accepted')
+        return response.response.includes('250')
             && response.accepted.includes(receiverEmail)
             && 0 === response.rejected.length
     }
