@@ -112,8 +112,8 @@ export class CMCWorker extends AbstractParserWorker {
     private getUsefulLinks(linksObj: {[type: string] : string[]}): string[] {
         const links: string[] = []
 
-        Object.values(linksObj).forEach((links: string[]) => {
-            links.push(...links)
+        Object.values(linksObj).forEach((linksArray: string[]) => {
+            links.push(...linksArray)
         })
 
         return links
