@@ -26,7 +26,6 @@ export class MailerService {
             to: receiverEmail,
             subject: header,
             text: body,
-            html: body,
         })
 
         return this.isResponseOk(response, receiverEmail)
