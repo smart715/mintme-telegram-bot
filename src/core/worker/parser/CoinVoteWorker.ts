@@ -11,7 +11,7 @@ export class CoinVoteWorker extends AbstractParserWorker {
     private readonly prefixLog = `[${this.workerName}]`
     private readonly supportedBlockchains: Blockchain[] = [ Blockchain.ETH, Blockchain.BSC ]
 
-    private readonly maxItemsOnPage = 26
+    private readonly maxItemsOnPage = 20
 
     public constructor(
         private readonly coinVoteService: CoinVoteService,
