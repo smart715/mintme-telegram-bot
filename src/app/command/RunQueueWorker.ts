@@ -1,35 +1,42 @@
 import { singleton } from 'tsyringe'
+import { CommandInterface, RunQueueWorkerCmdArgv } from './types'
 import { Arguments, Argv } from 'yargs'
+import { Blockchain, sleep } from '../../utils'
+import { MailerService, QueueWorker } from '../../core'
 import { Logger } from 'winston'
-import { CommandInterface, RunCoinCodexWorkerCmdArgv } from './types'
-import { CoinCodexWorker, MailerService } from '../core'
-import { Blockchain, sleep } from '../utils'
 
 @singleton()
-export class RunCoinCodexWorker implements CommandInterface {
-    public readonly command = 'run-coin-codex-worker'
-    public readonly description = 'This command runs Coin Codex worker from cli'
+export class RunQueueWorker implements CommandInterface {
+    public readonly command = 'run-queue-worker'
+    public readonly description = 'Runs queue worker'
 
     public constructor(
-        private readonly coinCodexWorker: CoinCodexWorker,
+        private readonly queueWorker: QueueWorker,
         private readonly mailService: MailerService,
         private readonly logger: Logger,
     ) { }
 
-    public builder(yargs: Argv<RunCoinCodexWorkerCmdArgv>): void {
+    public builder(yargs: Argv<RunQueueWorkerCmdArgv>): void {
         yargs.option('blockchain', {
             type: 'string',
             describe: 'Blockchain to check',
             default: () => Blockchain.BSC,
             demandOption: false,
         })
+
+        yargs.option('repeat', {
+            type: 'number',
+            describe: 'Repeat run in N seconds',
+            default: () => 0,
+            demandOption: false,
+        })
     }
 
-    public async handler(argv: Arguments<RunCoinCodexWorkerCmdArgv>): Promise<void> {
+    public async handler(argv: Arguments<RunQueueWorkerCmdArgv>): Promise<void> {
         this.logger.info(`Started command ${this.command}`)
 
         try {
-            await this.coinCodexWorker.run(argv.blockchain)
+            await this.queueWorker.run(argv.blockchain, argv.repeat)
         } catch (err) {
             await this.mailService.sendFailedWorkerEmail(`Error while running ${this.constructor.name}`, err)
 

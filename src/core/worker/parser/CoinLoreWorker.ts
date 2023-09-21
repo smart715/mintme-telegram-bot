@@ -1,13 +1,13 @@
 import { singleton } from 'tsyringe'
-import { AbstractTokenWorker } from '../AbstractTokenWorker'
 import { CoinLoreService, CheckedTokenService, TokensService } from '../../service'
 import { Blockchain } from '../../../utils'
 import config from 'config'
 import { DOMWindow, JSDOM } from 'jsdom'
 import { Logger } from 'winston'
+import { AbstractParserWorker } from './AbstractParserWorker'
 
 @singleton()
-export class CoinLoreWorker extends AbstractTokenWorker {
+export class CoinLoreWorker extends AbstractParserWorker {
     private readonly workerName = 'coinlore'
     private readonly prefixLog = `[${this.workerName}]`
     private readonly batchSize: number = config.get('coinlore_request_batch_size')

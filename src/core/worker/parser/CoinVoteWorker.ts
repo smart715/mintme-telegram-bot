@@ -1,17 +1,17 @@
 import { singleton } from 'tsyringe'
-import { AbstractTokenWorker } from '../AbstractTokenWorker'
 import { Blockchain, findContractAddress, getHrefFromTagString, getHrefValuesFromTagString, sleep } from '../../../utils'
 import { CoinVoteService, CheckedTokenService, TokensService } from '../../service'
 import { DOMWindow, JSDOM } from 'jsdom'
 import { Logger } from 'winston'
+import { AbstractParserWorker } from './AbstractParserWorker'
 
 @singleton()
-export class CoinVoteWorker extends AbstractTokenWorker {
+export class CoinVoteWorker extends AbstractParserWorker {
     private readonly workerName = 'CoinVote'
     private readonly prefixLog = `[${this.workerName}]`
     private readonly supportedBlockchains: Blockchain[] = [ Blockchain.ETH, Blockchain.BSC ]
 
-    private readonly maxItemsOnPage = 26
+    private readonly maxItemsOnPage = 20
 
     public constructor(
         private readonly coinVoteService: CoinVoteService,

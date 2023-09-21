@@ -14,10 +14,24 @@ import {
     MemeCoinsWorker,
     MobulaWorker,
     MyCoinVoteWorker,
+    AdvnWorker,
+    BitQueryWorker,
+    CoinBrainWorker,
+    CoinBuddyWorker,
+    CoinCapWorker,
+    CoinCatapultWorker,
+    CoinCodexWorker,
+    CoinDiscoveryWorker,
+    CoinGeckoWorker,
+    MyEtherListsWorker,
+    RecentTokensWorker,
+    RugFreeCoinsWorker,
+    TokensInsightWorker,
+    Top100TokensWorker,
     MailerService,
-} from '../core'
+} from '../../core'
 import { Arguments, Argv } from 'yargs'
-import { createLogger, sleep } from '../utils'
+import { createLogger, sleep } from '../../utils'
 import { singleton } from 'tsyringe'
 
 @singleton()
@@ -40,6 +54,20 @@ export class RunFetchTokenWorker implements CommandInterface {
         private readonly cmcWorker: CMCWorker,
         private readonly coinLoreWorker: CoinLoreWorker,
         private readonly coinScopeWorker: CoinScopeWorker,
+        private readonly advnWorker: AdvnWorker,
+        private readonly bitQueryWorker: BitQueryWorker,
+        private readonly coinBrainWorker: CoinBrainWorker,
+        private readonly coinBuddyWorker: CoinBuddyWorker,
+        private readonly coinCapWorker: CoinCapWorker,
+        private readonly coinCatapultWorker: CoinCatapultWorker,
+        private readonly coinCodexWorker: CoinCodexWorker,
+        private readonly coinDiscoveryWorker: CoinDiscoveryWorker,
+        private readonly coinGeckoWorker: CoinGeckoWorker,
+        private readonly myEtherListsWorker: MyEtherListsWorker,
+        private readonly recentTokensWorker: RecentTokensWorker,
+        private readonly rugFreeCoinsWorker: RugFreeCoinsWorker,
+        private readonly tokensInsightWorker: TokensInsightWorker,
+        private readonly top100TokensWorker: Top100TokensWorker,
         private readonly mailService: MailerService,
     ) { }
 
@@ -73,6 +101,20 @@ export class RunFetchTokenWorker implements CommandInterface {
             [CasualTokenWorkerNames.COINMARKETCAP]: this.cmcWorker,
             [CasualTokenWorkerNames.COIN_LORE]: this.coinLoreWorker,
             [CasualTokenWorkerNames.COIN_SCOPE]: this.coinScopeWorker,
+            [CasualTokenWorkerNames.ADVN]: this.advnWorker,
+            [CasualTokenWorkerNames.BIT_QUERY]: this.bitQueryWorker,
+            [CasualTokenWorkerNames.COIN_BRAIN]: this.coinBrainWorker,
+            [CasualTokenWorkerNames.COIN_BUDDY]: this.coinBuddyWorker,
+            [CasualTokenWorkerNames.COIN_CAP]: this.coinCapWorker,
+            [CasualTokenWorkerNames.COIN_CATAPULT]: this.coinCatapultWorker,
+            [CasualTokenWorkerNames.COIN_CODEX]: this.coinCodexWorker,
+            [CasualTokenWorkerNames.COIN_DISCOVERY]: this.coinDiscoveryWorker,
+            [CasualTokenWorkerNames.COIN_GECKO]: this.coinGeckoWorker,
+            [CasualTokenWorkerNames.MY_ETHER_LISTS]: this.myEtherListsWorker,
+            [CasualTokenWorkerNames.RECENT_TOKENS]: this.recentTokensWorker,
+            [CasualTokenWorkerNames.RUG_FREE_COINS]: this.rugFreeCoinsWorker,
+            [CasualTokenWorkerNames.TOKENS_INSIGHT]: this.tokensInsightWorker,
+            [CasualTokenWorkerNames.TOP_100_TOKENS]: this.top100TokensWorker,
         }
 
         const worker = workers[workerName]

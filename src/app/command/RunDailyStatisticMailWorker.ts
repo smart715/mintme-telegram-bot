@@ -1,14 +1,16 @@
+import { singleton } from 'tsyringe'
 import { Logger } from 'winston'
 import { CommandInterface } from './types'
-import { MailerService, TwitterWorker } from '../core'
-import { sleep } from '../utils'
+import { sleep } from '../../utils'
+import { DailyStatisticMailWorker, MailerService } from '../../core'
 
-export class RunTwitterWorker implements CommandInterface {
-    public readonly command = 'run-twitter-worker'
-    public readonly description = 'Runs Twitter worker'
+@singleton()
+export class RunDailyStatisticMailWorker implements CommandInterface {
+    public readonly command = 'run-daily-statistic-worker'
+    public readonly description = 'This command runs Dail Statistic Mail worker from cli'
 
     public constructor(
-        private readonly twitterWorker: TwitterWorker,
+        private readonly dailyStatisticMailWorker: DailyStatisticMailWorker,
         private readonly mailService: MailerService,
         private readonly logger: Logger,
     ) { }
@@ -19,7 +21,7 @@ export class RunTwitterWorker implements CommandInterface {
         this.logger.info(`Started command ${this.command}`)
 
         try {
-            await this.twitterWorker.run()
+            await this.dailyStatisticMailWorker.run()
         } catch (err) {
             await this.mailService.sendFailedWorkerEmail(`Error while running ${this.constructor.name}`, err)
 

@@ -1,15 +1,16 @@
 import { singleton } from 'tsyringe'
 import { Logger } from 'winston'
-import { AbstractTokenWorker } from '../AbstractTokenWorker'
 import { CoinGeckoService, TokensService } from '../../service'
 import { Blockchain, sleep } from '../../../utils'
 import { AllCoinsTokenResponse, CoinInfo, LinksCoinInfo } from '../../../types'
+import { AbstractParserWorker } from './AbstractParserWorker'
 
 @singleton()
-export class CoinGeckoWorker extends AbstractTokenWorker {
+export class CoinGeckoWorker extends AbstractParserWorker {
     private readonly workerName = 'CoinGecko'
     private readonly prefixLog = `[${this.workerName}]`
     private readonly sleepDuration = 4 * 1000 // 3 seconds produces 429 http error. So 4-5 is ok
+    private readonly supportedBlockchains: Blockchain[] = [ Blockchain.ETH, Blockchain.BSC, Blockchain.CRO ]
 
     public constructor(
         private readonly tokenService: TokensService,
@@ -19,9 +20,18 @@ export class CoinGeckoWorker extends AbstractTokenWorker {
         super()
     }
 
-    public async run(currentBlockchain: Blockchain): Promise<void> {
-        this.logger.info(`${CoinGeckoWorker.name} started`)
+    public async run(): Promise<void> {
+        this.logger.info(`${this.prefixLog} Worker started`)
 
+        for (const blockchain of this.supportedBlockchains) {
+            await this.runByBlockchain(blockchain)
+        }
+
+        this.logger.info(`${this.prefixLog} Worker finished`)
+    }
+
+    public async runByBlockchain(currentBlockchain: Blockchain): Promise<void> {
+        this.logger.info(`${this.prefixLog} checking ${currentBlockchain} blockchain`)
 
         const link = this.getAllCoinsLink(currentBlockchain)
 
@@ -109,8 +119,6 @@ export class CoinGeckoWorker extends AbstractTokenWorker {
                 ]
             )
         }
-
-        this.logger.info(`${CoinGeckoWorker.name} finished`)
     }
 
     private getAllCoinsLink(currentBlockchain: Blockchain): string {
@@ -122,7 +130,10 @@ export class CoinGeckoWorker extends AbstractTokenWorker {
             case Blockchain.CRO:
                 return 'https://tokens.coingecko.com/cronos/all.json'
             default:
-                throw new Error('Wrong blockchain provided. All coins link doesn\'t exists for provided blockchain')
+                throw new Error(
+                    `Wrong blockchain provided. ` +
+                    `All coins link doesn't exists for provided blockchain ${currentBlockchain}`
+                )
         }
     }
 

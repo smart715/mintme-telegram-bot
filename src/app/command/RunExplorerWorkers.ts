@@ -1,7 +1,7 @@
 import { singleton } from 'tsyringe'
 import { CommandInterface, ExplorerWorkerNames, RunExplorerWorkerCmdArgv } from './types'
 import { Arguments, Argv } from 'yargs'
-import { Blockchain, sleep } from '../utils'
+import { Blockchain, sleep } from '../../utils'
 import {
     BSCScanAddressTokensHoldingsWorker,
     BSCScanTokensTransactionsFetcher,
@@ -12,7 +12,7 @@ import {
     EtherScanAddressTokensHoldingsWorker,
     ExplorerSearchAPIWorker,
     MailerService,
-} from '../core'
+} from '../../core'
 
 @singleton()
 export class RunExplorerWorker implements CommandInterface {

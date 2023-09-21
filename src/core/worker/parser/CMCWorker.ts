@@ -1,14 +1,14 @@
 import { singleton } from 'tsyringe'
 import { CMCService, CheckedTokenService, TokensService } from '../../service'
-import { AbstractTokenWorker } from '../AbstractTokenWorker'
 import { Blockchain, parseBlockchainName, sleep } from '../../../utils'
 import config from 'config'
 import { CMCCryptocurrency } from '../../../types'
 import { CMCWorkerConfig } from '../../types'
 import { Logger } from 'winston'
+import { AbstractParserWorker } from './AbstractParserWorker'
 
 @singleton()
-export class CMCWorker extends AbstractTokenWorker {
+export class CMCWorker extends AbstractParserWorker {
     private readonly workerName = 'CMC'
     private readonly prefixLog = `[${this.workerName}]`
     private readonly supportedBlockchains = Object.values(Blockchain)
@@ -112,8 +112,8 @@ export class CMCWorker extends AbstractTokenWorker {
     private getUsefulLinks(linksObj: {[type: string] : string[]}): string[] {
         const links: string[] = []
 
-        Object.values(linksObj).forEach((links: string[]) => {
-            links.push(...links)
+        Object.values(linksObj).forEach((linksArray: string[]) => {
+            links.push(...linksArray)
         })
 
         return links

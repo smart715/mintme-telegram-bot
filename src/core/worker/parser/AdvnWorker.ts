@@ -1,15 +1,20 @@
 import { singleton } from 'tsyringe'
 import { Logger } from 'winston'
-import { AbstractTokenWorker } from '../AbstractTokenWorker'
-import { Blockchain, findContractAddress, getHrefFromTagString, getHrefValuesFromTagString } from '../../../utils'
+import {
+    Blockchain,
+    findContractAddress,
+    getHrefFromTagString,
+    getHrefValuesFromTagString,
+    parseBlockchainName,
+} from '../../../utils'
 import { TokensService, AdvnService } from '../../service'
 import { AdvnGeneralResponse } from '../../../types'
+import { AbstractParserWorker } from './AbstractParserWorker'
 
 @singleton()
-export class AdvnWorker extends AbstractTokenWorker {
+export class AdvnWorker extends AbstractParserWorker {
     private readonly workerName = 'ADVN'
     private readonly prefixLog = `[${this.workerName}]`
-    private readonly unsupportedBlockchains: Blockchain[] = [ Blockchain.CRO ]
 
     public constructor(
         private readonly advnService: AdvnService,
@@ -19,16 +24,8 @@ export class AdvnWorker extends AbstractTokenWorker {
         super()
     }
 
-    public async run(currentBlockchain: Blockchain): Promise<void> {
+    public async run(): Promise<void> {
         this.logger.info(`${this.prefixLog} started`)
-
-        if (this.unsupportedBlockchains.includes(currentBlockchain)) {
-            this.logger.error(`${this.prefixLog} Unsupported blockchain: ${currentBlockchain}. Aborting.`)
-
-            return
-        }
-
-        const target: string = this.getTarget(currentBlockchain)
 
         let count: number = 0
         let start: number = 0
@@ -49,7 +46,15 @@ export class AdvnWorker extends AbstractTokenWorker {
             }
 
             for (const advnToken of tokens.data) {
-                if (!advnToken.platform?.toString().includes(target)) {
+                if (!advnToken.platform) {
+                    continue
+                }
+
+                let blockchain: Blockchain
+
+                try {
+                    blockchain = parseBlockchainName(advnToken.platform.toString())
+                } catch (e) {
                     continue
                 }
 
@@ -81,7 +86,7 @@ export class AdvnWorker extends AbstractTokenWorker {
                 const website = this.getWebsite(tokenInfo)
                 const links = this.getLinks(tokenInfo)
 
-                const tokenInDb = await this.tokenService.findByAddress(tokenAddress, currentBlockchain)
+                const tokenInDb = await this.tokenService.findByAddress(tokenAddress, blockchain)
 
                 if (tokenInDb) {
                     continue
@@ -94,7 +99,7 @@ export class AdvnWorker extends AbstractTokenWorker {
                     [ '' ],
                     links,
                     this.workerName,
-                    currentBlockchain,
+                    blockchain,
                 )
 
                 this.logger.info(
@@ -105,7 +110,7 @@ export class AdvnWorker extends AbstractTokenWorker {
                         website,
                         links,
                         this.workerName,
-                        currentBlockchain,
+                        blockchain,
                     ]
                 )
             }
@@ -115,17 +120,6 @@ export class AdvnWorker extends AbstractTokenWorker {
         } while (count > 0)
 
         this.logger.info(`${this.prefixLog} Finished`)
-    }
-
-    private getTarget(blockchain: Blockchain): string {
-        switch (blockchain) {
-            case Blockchain.BSC:
-                return 'Binance'
-            case Blockchain.ETH:
-                return 'Ethereum'
-            default:
-                throw new Error('Wrong blockchain provided. Target doesn\'t exists for provided blockchain')
-        }
     }
 
     private getWebsite(tokenInfo: string): string {

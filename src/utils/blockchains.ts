@@ -10,6 +10,7 @@ export function parseBlockchainName(name: string): Blockchain {
     const bscNames = [
         'bnb',
         'binance smart chain',
+        'binance chain',
         'bnb smart chain (bep20)',
         'bsc',
         'binance',
