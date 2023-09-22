@@ -88,6 +88,7 @@ import {
     CMCService,
     CoinScopeService,
     CoinSniperService,
+    BSCScanService,
     CoinVoteService,
     Coins360Service,
     CoinsGodsService,
@@ -381,6 +382,10 @@ container.register(CoinSniperService, {
     useFactory: instanceCachingFactory(() => new CoinSniperService()),
 })
 
+container.register(BSCScanService, {
+    useFactory: instanceCachingFactory(() => new BSCScanService()),
+})
+
 container.register(CoinVoteService, {
     useFactory: instanceCachingFactory(() => new CoinVoteService()),
 })
@@ -493,6 +498,8 @@ container.register(BSCScanTokensTransactionsFetcher, {
 container.register(BSCScanTopAccountsFetcher, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new BSCScanTopAccountsFetcher(
+            dependencyContainer.resolve(BSCScanService),
+            dependencyContainer.resolve(FirewallService),
             dependencyContainer.resolve(ExplorerEnqueuer),
             createLogger(BSCScanTopAccountsFetcher.name.toLowerCase())
         )
