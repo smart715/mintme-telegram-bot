@@ -509,6 +509,8 @@ container.register(BSCScanTopAccountsFetcher, {
 container.register(BSCScanTopTokensFetcher, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new BSCScanTopTokensFetcher(
+            dependencyContainer.resolve(BSCScanService),
+            dependencyContainer.resolve(FirewallService),
             dependencyContainer.resolve(ExplorerEnqueuer),
             createLogger(BSCScanTopTokensFetcher.name.toLowerCase())
         )
