@@ -14,6 +14,7 @@ export class BSCScanTopTokensFetcher extends AbstractTokenWorker {
         [Blockchain.ETH]: 12,
         [Blockchain.CRO]: 1,
     }
+
     private webDriver: WebDriver
 
     public constructor(
