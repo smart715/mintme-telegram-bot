@@ -10,4 +10,8 @@ export class BSCScanService extends AbstractTokenFetcherService {
     public getTokensPageUrl(explorerDomain: string, page: number): string {
         return `https://${explorerDomain}/tokens?ps=100&p=${page}`
     }
+
+    public getTokenTxnsPageUrl(explorerDomain: string, page: number): string {
+        return `https://${explorerDomain}/tokentxns?ps=100&p=${page}`
+    }
 }

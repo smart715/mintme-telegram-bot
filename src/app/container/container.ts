@@ -489,6 +489,8 @@ container.register(EtherScanAddressTokensHoldingsWorker, {
 container.register(BSCScanTokensTransactionsFetcher, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new BSCScanTokensTransactionsFetcher(
+            dependencyContainer.resolve(BSCScanService),
+            dependencyContainer.resolve(FirewallService),
             dependencyContainer.resolve(ExplorerEnqueuer),
             createLogger(BSCScanTokensTransactionsFetcher.name.toLowerCase())
         )
