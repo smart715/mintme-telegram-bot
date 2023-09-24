@@ -25,6 +25,7 @@ export class TelegramClient {
     public accountMessages: ContactMessage[]
     private messageToSendIndex: number = 0
     public isInitialized: boolean = false
+    private potentialFalsePositiveInRow: number = 0
 
     public constructor(
         private readonly contactHistoryService: ContactHistoryService,
@@ -144,7 +145,7 @@ export class TelegramClient {
             })
             await driver.sleep(10000)
             await driver.navigate().refresh()
-            await driver.sleep(30000)
+            await driver.sleep(15000)
             if (await this.isLoggedIn()) {
                 return true
             } else {
@@ -189,9 +190,16 @@ export class TelegramClient {
 
         if (await this.inputAndSendMessage()) {
             await this.driver.sleep(20000)
-            if (await this.isTempBanned()) {
+            const middleColumn = await this.getMiddleColumn()
+
+            if (!middleColumn) {
+                return ContactHistoryStatusType.ACCOUNT_NOT_EXISTS
+            }
+
+            if (await this.isTempBanned([ middleColumn ])) {
                 return ContactHistoryStatusType.ACCOUNT_TEMP_BANNED
             }
+
             return ContactHistoryStatusType.SENT_DM
         } else {
             return ContactHistoryStatusType.ACCOUNT_NOT_EXISTS
@@ -213,7 +221,7 @@ export class TelegramClient {
 
             if (messageInput) {
                 await messageInput.sendKeys(this.getMessageTemplate())
-                await this.driver.sleep(5000)
+                await this.driver.sleep(20000)
 
                 if (this.isProd()) {
                     this.log('Environment is not production. Skipping sending message')
@@ -250,8 +258,8 @@ export class TelegramClient {
 
             if (await this.getJoinGroupBtn()) {
                 this.log(`Group joining limit hit, Attempt ${retries}/2`)
-                if (retries <= 2) {
-                    await this.driver.sleep(30000)
+                if (retries < 2) {
+                    await this.driver.sleep(5000)
                     const retry = await this.joinAndVerifyGroup(retries + 1)
                     return retry
                 }
@@ -294,10 +302,44 @@ export class TelegramClient {
         }
     }
 
+    private async getMiddleColumn(): Promise<WebElement|undefined> {
+        const middleColumnSelector = await this.driver.findElements(By.id('MiddleColumn'))
+
+        if (middleColumnSelector.length) {
+            return middleColumnSelector[0]
+        }
+
+        return undefined
+    }
+
+    private async isLoading(middleColumn: WebElement): Promise<boolean> {
+        const loadingSpinner = await middleColumn.findElements(By.className('loading'))
+        return loadingSpinner.length > 0
+    }
+
+    private async isLoaded(): Promise<boolean> {
+        const middleColumn = await this.getMiddleColumn()
+
+        if (!middleColumn) {
+            return false
+        }
+
+        if (await this.isLoading(middleColumn)) {
+            await this.driver.sleep(10000)
+
+            if (await this.isLoading(middleColumn)) {
+                return false
+            }
+        }
+
+        return true
+    }
+
     private async sendGroupMessage(tgLink: string, verified: boolean = false): Promise<ContactHistoryStatusType> {
         if (this.isLimitHit()) {
             return ContactHistoryStatusType.ACCOUNT_LIMIT_HIT
         }
+
         if (!verified) {
             this.log(`Joining ${tgLink}`)
             await this.joinAndVerifyGroup()
@@ -322,9 +364,10 @@ export class TelegramClient {
 
             const ownMessages = await this.driver.findElements(By.className('own'))
             if (ownMessages.length > 0) {
-                if (await this.isTempBanned()) {
+                if (await this.isTempBanned(ownMessages)) {
                     return ContactHistoryStatusType.ACCOUNT_TEMP_BANNED
                 }
+
                 return ContactHistoryStatusType.SENT_GROUP
             } else {
                 return ContactHistoryStatusType.SENT_GROUP_BUT_DELETED
@@ -360,6 +403,12 @@ export class TelegramClient {
                 return ContactHistoryStatusType.ACCOUNT_NOT_AUTHORIZED
             }
 
+            const loaded = await this.isLoaded()
+
+            if (!loaded) {
+                return ContactHistoryStatusType.ERROR
+            }
+
             const userStatusSelector = await this.driver.findElements(By.className('user-status'))
 
             if (userStatusSelector.length > 0) {
@@ -378,7 +427,7 @@ export class TelegramClient {
             }
         } catch (e) {
             this.logger.error(e)
-            return ContactHistoryStatusType.UNKNOWN
+            return ContactHistoryStatusType.ERROR
         }
     }
 
@@ -387,10 +436,13 @@ export class TelegramClient {
         await this.telegramService.setAccountAsDisabled(this.telegramAccount)
     }
 
-    private async isTempBanned(): Promise<boolean> {
-        const failedMessages = await this.driver.findElements(By.className('icon-message-failed'))
-        if (failedMessages.length > 0) {
-            return true
+    private async isTempBanned(ownMessages: WebElement[]): Promise<boolean> {
+        for (const message of ownMessages) {
+            const failedMessages = await message.findElements(By.className('icon-message-failed'))
+
+            if (failedMessages.length > 0) {
+                return true
+            }
         }
         return false
     }
@@ -409,7 +461,6 @@ export class TelegramClient {
         }
     }
 
-
     private isSuccessResult(result: ContactHistoryStatusType): boolean {
         const isSuccess = (result === ContactHistoryStatusType.SENT_DM ||
             result === ContactHistoryStatusType.SENT_GROUP ||
@@ -418,6 +469,7 @@ export class TelegramClient {
         if (isSuccess) {
             this.setNextMessageIndex()
         }
+
         return isSuccess
     }
 
@@ -436,7 +488,7 @@ export class TelegramClient {
     }
 
     public async startContacting(): Promise<void> {
-        await this.driver.sleep(getRandomNumber(1, 10)*1000)
+        await this.driver.sleep(getRandomNumber(1, 5)*1000)
 
         const queuedContact = await this.contactQueueService.getFirstFromQueue(ContactMethod.TELEGRAM, this.logger)
 
@@ -461,13 +513,12 @@ export class TelegramClient {
 
             let result = await this.sendMessage(queuedContact.channel, false)
 
-
             switch (result) {
                 case ContactHistoryStatusType.ACCOUNT_NOT_AUTHORIZED:
                     await this.contactQueueService.setProcessing(queuedContact, false)
 
                     await this.login()
-                    await this.driver.sleep(60000)
+                    await this.driver.sleep(30000)
                     if (!await this.isLoggedIn()) {
                         result = ContactHistoryStatusType.ACCOUNT_PERM_BANNED
                         this.log(
@@ -496,9 +547,30 @@ export class TelegramClient {
                     )
                     await this.telegramService.setAccountLimitHitDate(this.telegramAccount, moment().add(5, 'day').toDate())
                     return
+                case ContactHistoryStatusType.ERROR:
+                case ContactHistoryStatusType.ACCOUNT_NOT_EXISTS:
+                    this.potentialFalsePositiveInRow++
+                    if (this.potentialFalsePositiveInRow >= 5) {
+                        return
+                    }
+            }
+
+            if (ContactHistoryStatusType.ERROR == result) {
+                await this.driver.get('https://web.telegram.org/a/')
+                await this.driver.sleep(10000)
+
+                this.log(
+                    `Skipping to send to token ${queuedContact.address} | Result: ${result} | Attempt ${this.potentialFalsePositiveInRow}/5`
+                )
+
+                return this.startContacting()
             }
 
             const isSuccess = this.isSuccessResult(result)
+
+            if (isSuccess) {
+                this.potentialFalsePositiveInRow = 0
+            }
 
             await this.contactQueueService.removeFromQueue(queuedContact.address, queuedContact.blockchain)
 
