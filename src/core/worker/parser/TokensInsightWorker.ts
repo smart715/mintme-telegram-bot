@@ -79,7 +79,7 @@ export class TokensInsightWorker extends AbstractParserWorker {
                     continue
                 }
 
-                await sleep(1000)
+                await sleep(3000)
 
                 const tokenAddress = this.getTokenAddress(
                     coinData,

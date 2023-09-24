@@ -1,37 +1,44 @@
 import { singleton } from 'tsyringe'
 import { Logger } from 'winston'
 import { RetryAxios, Blockchain, tokenAddressRegexp } from '../../../utils'
-import { NewestCheckedTokenService, TokensService } from '../../service'
-import { NewestTokenChecker, StopCheckException } from './NewestTokenChecker'
+import { CheckedTokenService, TokensService } from '../../service'
+import { AbstractParserWorker } from './AbstractParserWorker'
 
 @singleton()
-export class GemFinderWorker extends NewestTokenChecker {
+export class GemFinderWorker extends AbstractParserWorker {
+    private readonly workerName = 'GemFinder'
+    private readonly prefixLog = `[${this.workerName}]`
     private readonly tokenIdRegexp = new RegExp('gem/[0-9]{1,8}', 'gs')
     private readonly tokenIdPrefix = 'gem/'
 
     public constructor(
-        protected readonly newestCheckedTokenService: NewestCheckedTokenService,
         private readonly tokensService: TokensService,
         private readonly retryAxios: RetryAxios,
+        private readonly checkedTokenService: CheckedTokenService,
         protected readonly logger: Logger,
     ) {
-        super(
-            GemFinderWorker.name,
-            newestCheckedTokenService,
-            logger,
-        )
+        super()
     }
 
-    protected override async checkPage(page: number): Promise<void> {
-        const tokenIds = await this.fetchTokenIds(page)
+    public async run(): Promise<void> {
+        this.logger.info(`${this.prefixLog} Worker started`)
 
-        if (!tokenIds.length) {
-            throw new StopCheckException(this.allPagesAreChecked)
+        let page = 1
+        while (true) { // eslint-disable-line
+            const tokenIds = await this.fetchTokenIds(page)
+
+            if (!tokenIds.length) {
+                break
+            }
+
+            for (const tokenId of tokenIds) {
+                await this.processToken(tokenId.replace(this.tokenIdPrefix, ''))
+            }
+
+            page++
         }
 
-        for (const tokenId of tokenIds) {
-            await this.processToken(tokenId.replace(this.tokenIdPrefix, ''))
-        }
+        this.logger.info(`${this.prefixLog} Worker finished`)
     }
 
     private async fetchTokenIds(page: number): Promise<string[]> {
@@ -45,7 +52,11 @@ export class GemFinderWorker extends NewestTokenChecker {
     }
 
     private async processToken(tokenId: string): Promise<void> {
-        await this.newestCheckedCheck(tokenId)
+        if (await this.checkedTokenService.isChecked(tokenId, this.workerName)) {
+            this.logger.warn(`${this.prefixLog} ${tokenId} already checked. Skipping`)
+
+            return
+        }
 
         const tokenInfo = await this.fetchTokenInfo(tokenId)
         const tokenAddress = this.getTokenAddress(tokenInfo)
@@ -54,7 +65,11 @@ export class GemFinderWorker extends NewestTokenChecker {
         const links = this.getLinks(tokenInfo)
         const websites = this.getWebsites(tokenInfo)
 
+        await this.checkedTokenService.saveAsChecked(tokenId, this.workerName)
+
         if (!tokenAddress || !blockchain) {
+            this.logger.warn(`${this.prefixLog} No address/blockchain found for ${tokenId}. Skipping`)
+
             return
         }
 
@@ -66,6 +81,11 @@ export class GemFinderWorker extends NewestTokenChecker {
             links,
             this.workerName,
             blockchain,
+        )
+
+        this.logger.info(
+            `${this.prefixLog} Token saved to database:`,
+            [ tokenAddress, tokenName, blockchain ],
         )
     }
 
