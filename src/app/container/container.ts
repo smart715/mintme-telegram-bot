@@ -637,9 +637,9 @@ container.register(EthplorerWorker, {
 container.register(GemFinderWorker, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new GemFinderWorker(
-            dependencyContainer.resolve(NewestCheckedTokenService),
             dependencyContainer.resolve(TokensService),
             dependencyContainer.resolve(RetryAxios),
+            dependencyContainer.resolve(CheckedTokenService),
             createLogger(GemFinderWorker.name.toLowerCase())
         )
     ),
