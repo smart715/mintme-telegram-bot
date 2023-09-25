@@ -44,9 +44,60 @@ make run
 ```
 It will create a node server using docker compose with hot-reloading.
 
-### [Cli commands](#cli-commands)
+## Usage
 
-### Conduct of Developers / Documentation
+Example cli command:
+```bash
+npm run cli -- run-fetch-token-worker --name=coin-gecko
+```
+
+
+## Cli commands
+### Parse
+#### `run-fetch-token-worker`
+
+| Parameter | Notes                                                                                                                      |
+|-----------|----------------------------------------------------------------------------------------------------------------------------|
+| name      | Parser worker name from [CasualTokenWorkerNames](src/app/command/types.ts). Eg: `coin-cap`, `coin-gecko`, `top-100-tokens` |
+
+#### `run-explorer-worker`
+
+| Parameter  | Notes                                                                                                                                |
+|------------|--------------------------------------------------------------------------------------------------------------------------------------|
+| name       | Explorer worker name from [ExplorerWorkerNames](src/app/command/types.ts). Eg: `token-holdings-worker`, `token-transactions-fetcher` |
+| blockchain | Blockchain symbol from [Blockchain](src/utils/blockchains.ts). `ETH`, `CRO`, `BSC`                                                   |
+
+**Explorers description:**
+
+| Explorer name                                  | Description                                                                                                                                                                                         |
+|------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `token-transactions-fetcher`                   | Accepts all blockchains.<br/> Fetches token transactions page from Explorers. <br/> Parses token addresses and wallet pages and add it to queuedWalletAddressService and queuedTokenAddressService. |
+| `top-accounts-fetcher`                         | Accepts all blockchains. Fetches Top Accounts by crypto balance and saves wallet addresses.                                                                                                         |
+| `top-tokens-fetcher`                           | Accepts all blockchains. Fetches top tokens and saves token addresses.                                                                                                                              |
+| `validators-fetcher`                           | Works only for BSC. Fetches Validators Top Leaderboard (Blocks Validated) page and saves all wallet addresses.                                                                                      |
+| `check-token-worker`                           |                                                                                                                                                                                                     |
+| `explorer-search-api-worker`                   |                                                                                                                                                                                                     |
+| `token-holdings-worker`                        |                                                                                                                                                                                                     |
+
+#### `run-last-token-tx-date-fetcher`
+
+### Contact
+
+#### `run-enqueue-tokens-worker`
+
+#### `run-queue-worker`
+
+#### `run-mailer-worker`
+
+#### `run-telegram-worker`
+
+#### `run-twitter-worker`
+
+### Helper
+
+#### `run-daily-statistic-worker`
+
+## Conduct of Developers / Documentation
 
 Developers should follow the [layering systen](https://cs.uwaterloo.ca/~m2nagapp/courses/CS446/1195/Arch_Design_Activity/Layered.pdf).
 
