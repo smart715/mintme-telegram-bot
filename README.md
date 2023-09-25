@@ -1,7 +1,12 @@
 # Marketing Bot
 
-Project responsible for parsing crypto websites, parsing blockchain explorers, validate info and send marketing messages using twitter, email and telegram.
+The project is responsible for parsing crypto websites, parsing blockchain explorers, validate info and send marketing messages using twitter, email and telegram.
 The project works with ETH, BNB and CRO cryptos.
+
+## How it works
+Node js server accepts cli commands that parse info from crypto websites and explorers and saves contact info and information about tokens.   
+After that **Email**, **Telegram** and **Twitter** workers contacts with token's owners/support using token's info that was parsed.  
+Detailed description about cli worker commands, see [cli commands](#cli-commands) section
 
 ## Production
 
@@ -38,6 +43,8 @@ To start developing you will probably need just
 make run
 ```
 It will create a node server using docker compose with hot-reloading.
+
+### [Cli commands](#cli-commands)
 
 ### Conduct of Developers / Documentation
 
