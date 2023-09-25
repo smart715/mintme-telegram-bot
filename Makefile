@@ -1,4 +1,3 @@
-DOCKER_PROJECT_NAME?=tokens_fetcher
 COMPOSE_FILE?=docker/docker-compose.yaml
 
 ##@ Help

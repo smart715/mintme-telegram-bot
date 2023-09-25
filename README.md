@@ -1,19 +1,22 @@
 # Marketing Bot
-Project responsible for parsing crypto websites, validate info and send marketing messages using twitter, email and telegram.
+
+Project responsible for parsing crypto websites, parsing blockchain explorers, validate info and send marketing messages using twitter, email and telegram.
+The project works with ETH, BNB and CRO cryptos.
 
 ## Production
 
 ### Requirements
 
-* NodeJs >= 16
-* MariaDB >= 10.9
-* FlareSolverr
-* selenium-chrome
-* selenium-hub
+* **NodeJs** >= 16
+* **MariaDB** >= 10.9
+* [**FlareSolverr**](https://github.com/FlareSolverr/FlareSolverr)
+* **selenium-chrome**
+* **selenium-hub**
 
 ### Installation
-
-Make sure to configure all environment variables (you can find example in `.env` file). Additional settings
+Install FlareSolverr, selenium-chrom, selenium-hub.  
+Make sure to configure all environment variables (you can find example in `.env` file).  
+Additional settings
 can be found in `config/*` files.
 
 ```shell
@@ -34,7 +37,7 @@ To start developing you will probably need just
 ```shell
 make run
 ```
-and that's all. It will create a node server with hot-reloading.
+It will create a node server using docker compose with hot-reloading.
 
 ### Conduct of Developers / Documentation
 
