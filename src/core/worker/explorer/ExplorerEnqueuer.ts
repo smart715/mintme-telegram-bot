@@ -5,7 +5,7 @@ import { singleton } from 'tsyringe'
 @singleton()
 export class ExplorerEnqueuer {
     private readonly tokenAddressPrefix = 'token/'
-    private readonly walletAddressPrefix = 'token/'
+    private readonly walletAddressPrefix = 'address/'
     private readonly tokenAddressRegexp = this.tokenAddressPrefix + tokenAddressRegexp
     private readonly walletAddressRegexp = this.walletAddressPrefix + walletAddressRegexp
 
