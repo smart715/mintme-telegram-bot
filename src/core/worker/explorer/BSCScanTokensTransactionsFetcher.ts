@@ -30,7 +30,7 @@ export class BSCScanTokensTransactionsFetcher extends AbstractTokenWorker {
 
         this.logger.info(`[${this.workerName}] started for ${blockchain} blockchain`)
 
-        for (let page = 100; page >= 97; page--) {
+        for (let page = 100; page >= 1; page--) {
             await this.webDriver.get(this.bscscanService.getTokenTxnsPageUrl(explorerDomain, page))
             const pageSource = await this.webDriver.getPageSource()
 
