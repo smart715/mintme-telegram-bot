@@ -1,4 +1,4 @@
-import { Blockchain } from '../utils'
+import { Blockchain } from '../../utils'
 
 export interface TokensCountGroupedBySourceAndBlockchain {
     tokens: string,

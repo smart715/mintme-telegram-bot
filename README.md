@@ -55,12 +55,14 @@ npm run cli -- run-fetch-token-worker --name=coin-gecko
 ## Cli commands
 ### Parse
 #### `run-fetch-token-worker`
+This cli commands parses info about tokens from different websites using api or selenium.
 
 | Parameter | Notes                                                                                                                      |
 |-----------|----------------------------------------------------------------------------------------------------------------------------|
 | name      | Parser worker name from [CasualTokenWorkerNames](src/app/command/types.ts). Eg: `coin-cap`, `coin-gecko`, `top-100-tokens` |
 
 #### `run-explorer-worker`
+Parses token addresses and wallet addresses from explorers.
 
 | Parameter  | Notes                                                                                                                                |
 |------------|--------------------------------------------------------------------------------------------------------------------------------------|
@@ -69,33 +71,49 @@ npm run cli -- run-fetch-token-worker --name=coin-gecko
 
 **Explorers description:**
 
-| Explorer name                                  | Description                                                                                                                                                                                         |
-|------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `token-transactions-fetcher`                   | Accepts all blockchains.<br/> Fetches token transactions page from Explorers. <br/> Parses token addresses and wallet pages and add it to queuedWalletAddressService and queuedTokenAddressService. |
-| `top-accounts-fetcher`                         | Accepts all blockchains. Fetches Top Accounts by crypto balance and saves wallet addresses.                                                                                                         |
-| `top-tokens-fetcher`                           | Accepts all blockchains. Fetches top tokens and saves token addresses.                                                                                                                              |
-| `validators-fetcher`                           | Works only for BSC. Fetches Validators Top Leaderboard (Blocks Validated) page and saves all wallet addresses.                                                                                      |
-| `check-token-worker`                           |                                                                                                                                                                                                     |
-| `explorer-search-api-worker`                   |                                                                                                                                                                                                     |
-| `token-holdings-worker`                        |                                                                                                                                                                                                     |
+| Explorer name                 | Description                                                                                                                                                                                                                                                            |
+|-------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `token-transactions-fetcher`  | Accepts all blockchains.<br/> Fetches token transactions page from Explorers. <br/> Parses token addresses and wallet pages and add it to queuedWalletAddressService and queuedTokenAddressService.                                                                    |
+| `top-accounts-fetcher`        | Accepts all blockchains. Fetches Top Accounts by crypto balance and saves wallet addresses.                                                                                                                                                                            |
+| `top-tokens-fetcher`          | Accepts all blockchains. Fetches top tokens and saves token addresses.                                                                                                                                                                                                 |
+| `validators-fetcher`          | Works only for BSC. Fetches Validators Top Leaderboard (Blocks Validated) page and saves all wallet addresses.                                                                                                                                                         |
+| `check-token-worker`          | Accepts all blockchains. Fetches queued token addresses. Check for liquidity provider in page and if exists, parse info and adds or updates new token to the token table                                                                                               |
+| `explorer-search-api-worker`  | Accepts all blockchains. Adds token addresses from API explorer to the queued token address.                                                                                                                                                                           |
+| `token-holdings-worker`       | Accepts all blockchains. Runs ether or bsc ScanAddressTokensHoldingsWorker depends on the blockchain param (BSC and CRO runs the same worker)<br/> Checks tokens that have wallet from queued_wallet_address table. Parse it and adds it to queued_token_address table |
 
 #### `run-last-token-tx-date-fetcher`
+Fetches tokens without last transaction date. And update last transaction date in a loop using explorer api
 
 ### Contact
 
 #### `run-enqueue-tokens-worker`
+Fetches tokens from `token` table and tries to add it to queued_contact to contact it via email/twitter/telegram in future
+
+| Parameter  | Notes                                                                              |
+|------------|------------------------------------------------------------------------------------|
+| blockchain | Blockchain symbol from [Blockchain](src/utils/blockchains.ts). `ETH`, `CRO`, `BSC` |
 
 #### `run-queue-worker`
+Uses queued_contact table. Fetches row, check if token exists, remove it from queue if doesn't exist or contacts the token via email/twitter
+
+| Parameter  | Notes                                                                              |
+|------------|------------------------------------------------------------------------------------|
+| blockchain | Blockchain symbol from [Blockchain](src/utils/blockchains.ts). `ETH`, `CRO`, `BSC` |
+| repeat     | Repeat run in `argument` seconds. Default value is `0`                             |
 
 #### `run-mailer-worker`
+Contacts with tokens using mailer. Runs in a loop with 5 mins sleep time if there is no tokens to contact
 
 #### `run-telegram-worker`
+Contacts with tokens using telegram and selenium. Uses proxy. Supports multi accounts. Accounts should be added to the `telegram_account` table
 
 #### `run-twitter-worker`
+Contacts with tokens using twitter account and selenium. Supports multi accounts. Accounts should be added to the `twitter_account` table
 
 ### Helper
 
 #### `run-daily-statistic-worker`
+This command counts daily statistic and sends it using mailer to the provided email (`email_daily_statistic` parameter)
 
 ## Conduct of Developers / Documentation
 
