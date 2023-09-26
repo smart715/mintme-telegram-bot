@@ -1,9 +1,10 @@
 import { AbstractTokenWorker } from '../AbstractTokenWorker'
 import { explorerDomains, Blockchain } from '../../../utils'
-import { SeleniumService } from '../../service'
+import { SeleniumService, BSCScanService, FirewallService } from '../../service'
 import { singleton } from 'tsyringe'
 import { ExplorerEnqueuer } from './ExplorerEnqueuer'
 import { Logger } from 'winston'
+import { WebDriver } from 'selenium-webdriver'
 
 @singleton()
 export class BSCScanTopTokensFetcher extends AbstractTokenWorker {
@@ -14,7 +15,11 @@ export class BSCScanTopTokensFetcher extends AbstractTokenWorker {
         [Blockchain.CRO]: 1,
     }
 
+    private webDriver: WebDriver
+
     public constructor(
+        private readonly bscscanService: BSCScanService,
+        private readonly firewallService: FirewallService,
         private readonly explorerParser: ExplorerEnqueuer,
         private readonly logger: Logger,
     ) {
@@ -24,13 +29,17 @@ export class BSCScanTopTokensFetcher extends AbstractTokenWorker {
     public async run(blockchain: Blockchain): Promise<void> {
         const pagesCount = this.pagesCounts[blockchain]
         const explorerDomain = explorerDomains[blockchain]
-        const webDriver = await SeleniumService.createDriver('', undefined, this.logger)
+        this.webDriver = await SeleniumService.createCloudFlareByPassedDriver(
+            this.bscscanService.getTokensPageUrl(explorerDomain, pagesCount),
+            this.firewallService,
+            this.logger,
+        )
 
         this.logger.info(`[${this.workerName}] started for ${blockchain} blockchain`)
 
         for (let page = pagesCount; page >= 1; page--) {
-            await webDriver.get('https://' + explorerDomain + '/tokens?ps=100&p=' + page)
-            const pageSource = await webDriver.getPageSource()
+            await this.webDriver.get(this.bscscanService.getTokensPageUrl(explorerDomain, page))
+            const pageSource = await this.webDriver.getPageSource()
 
             await this.explorerParser.enqueueTokenAddresses(pageSource, blockchain)
         }
