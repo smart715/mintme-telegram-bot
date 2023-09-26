@@ -2,7 +2,7 @@ import { singleton } from 'tsyringe'
 import { Logger } from 'winston'
 import { Blockchain } from '../../../utils'
 import { CoinBrainService, TokensService } from '../../service'
-import { CoinBrainGetTokensGeneralResponse } from '../../../types'
+import { CoinBrainGetTokensGeneralResponse } from '../../types'
 import { DOMWindow, JSDOM } from 'jsdom'
 import { AbstractParserWorker } from './AbstractParserWorker'
 

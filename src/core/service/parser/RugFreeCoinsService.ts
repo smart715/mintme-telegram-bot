@@ -1,6 +1,6 @@
 import axios from 'axios'
 import { singleton } from 'tsyringe'
-import { RugFreeCoinsAllCoins } from '../../../types'
+import { RugFreeCoinsAllCoins } from '../../types'
 
 @singleton()
 export class RugFreeCoinsService {

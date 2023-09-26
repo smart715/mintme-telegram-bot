@@ -2,7 +2,7 @@ import { singleton } from 'tsyringe'
 import { Logger } from 'winston'
 import { Blockchain } from '../../../utils'
 import { MyEtherListsService, TokensService } from '../../service'
-import { GitHubFile, GitHubRawTokenSocial } from '../../../types'
+import { GitHubFile, GitHubRawTokenSocial } from '../../types'
 import { AbstractParserWorker } from './AbstractParserWorker'
 
 @singleton()

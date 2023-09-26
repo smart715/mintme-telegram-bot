@@ -1,6 +1,6 @@
 import axios from 'axios'
 import { singleton } from 'tsyringe'
-import { CoinDiscoveryGetTokensResponse } from '../../../types'
+import { CoinDiscoveryGetTokensResponse } from '../../types'
 import { AbstractTokenFetcherService } from './AbstractTokenFetcherService'
 
 @singleton()

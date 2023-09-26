@@ -2,7 +2,7 @@
 import axios from 'axios'
 import config from 'config'
 import { singleton } from 'tsyringe'
-import { BitQueryTransfersResponse } from '../../../types'
+import { BitQueryTransfersResponse } from '../../types'
 
 @singleton()
 export class BitQueryService {

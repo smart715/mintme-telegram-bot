@@ -1,6 +1,6 @@
 import axios from 'axios'
 import { singleton } from 'tsyringe'
-import { CoinCapCoinInfoResponse } from '../../../types'
+import { CoinCapCoinInfoResponse } from '../../types'
 
 @singleton()
 export class CoinCapService {

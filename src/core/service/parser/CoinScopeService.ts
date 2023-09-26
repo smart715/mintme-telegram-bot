@@ -1,7 +1,7 @@
 import axios from 'axios'
 import { singleton } from 'tsyringe'
 import { Blockchain } from '../../../utils'
-import { CoinScopeApiResponse } from '../../../types'
+import { CoinScopeApiResponse } from '../../types'
 import { AbstractTokenFetcherService } from './AbstractTokenFetcherService'
 
 @singleton()

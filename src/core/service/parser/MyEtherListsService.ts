@@ -1,6 +1,6 @@
 import axios from 'axios'
 import { singleton } from 'tsyringe'
-import { GitHubFile, GitHubRawTokenFile } from '../../../types'
+import { GitHubFile, GitHubRawTokenFile } from '../../types'
 
 @singleton()
 export class MyEtherListsService {

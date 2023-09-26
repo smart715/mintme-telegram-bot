@@ -1,25 +1,25 @@
 # Marketing Bot
 
 The project is responsible for parsing crypto websites, parsing blockchain explorers, validate info and send marketing messages using twitter, email and telegram.
-The project works with ETH, BNB and CRO cryptos.
+The project works with ETH, BNB and CRO cryptos and uses [console commands](#cli-commands) as endpoints.
 
 ## How it works
 Node js server accepts cli commands that parse info from crypto websites and explorers and saves contact info and information about tokens.   
-After that **Email**, **Telegram** and **Twitter** workers contacts with token's owners/support using token's info that was parsed.  
+After that Email, Telegram and Twitter workers contacts with token's owners/support using token's info that was parsed.  
 Detailed description about cli worker commands, see [cli commands](#cli-commands) section
 
 ## Production
 
 ### Requirements
 
-* **NodeJs** >= 16
-* **MariaDB** >= 10.9
-* [**FlareSolverr**](https://github.com/FlareSolverr/FlareSolverr)
-* **selenium-chrome**
-* **selenium-hub**
+* NodeJs >= 16
+* MariaDB >= 10.9
+* [FlareSolverr](https://github.com/FlareSolverr/FlareSolverr)
+* selenium-chrome
+* selenium-hub
 
 ### Installation
-Install FlareSolverr, selenium-chrom, selenium-hub.  
+Install FlareSolverr, selenium-chrome, selenium-hub.  
 Make sure to configure all environment variables (you can find example in `.env` file).  
 Additional settings
 can be found in `config/*` files.
@@ -31,18 +31,18 @@ npm run start
 ```
 
 ## Development
-
+Development requires Docker on your local machine  
 Run Makefile to see all suitable actions
 
 ```shell
 make
 ```
 
-To start developing you will probably need just
+To start developing you will probably just need
 ```shell
 make run
 ```
-It will create a node server using docker compose with hot-reloading.
+It will create a node server using docker compose with hot-reloading and deploy all necessary services from docker compose file
 
 ## Usage
 

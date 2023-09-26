@@ -3,7 +3,7 @@ import config from 'config'
 import { Logger } from 'winston'
 import { singleton } from 'tsyringe'
 import { ContactHistoryService, MailerService, TokensService } from '../../service'
-import { GroupedContactsCount, TokensCountGroupedBySourceAndBlockchain } from '../../../types'
+import { GroupedContactsCount, TokensCountGroupedBySourceAndBlockchain } from '../../types'
 
 interface ContactingWorkersInfo {
     [key: string]: {

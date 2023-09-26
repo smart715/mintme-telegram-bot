@@ -2,8 +2,7 @@ import { singleton } from 'tsyringe'
 import { TokenRepository } from '../repository'
 import { Token } from '../entity'
 import { Blockchain, getValidLinks, isValidEmail } from '../../utils'
-import { ContactMethod } from '../types'
-import { TokensCountGroupedBySourceAndBlockchain } from '../../types'
+import { ContactMethod, TokensCountGroupedBySourceAndBlockchain } from '../types'
 
 @singleton()
 export class TokensService {

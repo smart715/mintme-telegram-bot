@@ -1,8 +1,7 @@
 import axios from 'axios'
 import { singleton } from 'tsyringe'
 import config from 'config'
-import { CMCWorkerConfig } from '../../types'
-import { CMCApiGeneralResponse, CMCCryptocurrency, CMCTokenInfoResponse } from '../../../types'
+import { CMCApiGeneralResponse, CMCCryptocurrency, CMCTokenInfoResponse, CMCWorkerConfig } from '../../types'
 
 @singleton()
 export class CMCService {

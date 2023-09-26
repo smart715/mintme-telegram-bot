@@ -8,7 +8,7 @@ import {
     parseBlockchainName,
 } from '../../../utils'
 import { TokensService, AdvnService } from '../../service'
-import { AdvnGeneralResponse } from '../../../types'
+import { AdvnGeneralResponse } from '../../types'
 import { AbstractParserWorker } from './AbstractParserWorker'
 
 @singleton()
