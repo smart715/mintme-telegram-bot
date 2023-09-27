@@ -1,6 +1,6 @@
 import axios from 'axios'
 import { singleton } from 'tsyringe'
-import { Coin360Token } from '../../../types'
+import { Coin360Token } from '../../types'
 import { AbstractTokenFetcherService } from './AbstractTokenFetcherService'
 
 @singleton()

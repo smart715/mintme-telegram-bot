@@ -1,7 +1,7 @@
 import axios from 'axios'
 import { singleton } from 'tsyringe'
 import { Blockchain } from '../../../utils'
-import { CoinsHunterToken } from '../../../types'
+import { CoinsHunterToken } from '../../types'
 
 @singleton()
 export class CoinsHunterService {

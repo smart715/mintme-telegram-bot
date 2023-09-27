@@ -6,7 +6,7 @@ import {
     TokensInsightAllCoinsResponse,
     TokensInsightCoinDataResponse,
     TokensInsightPlatform,
-} from '../../../types'
+} from '../../types'
 import { AbstractParserWorker } from './AbstractParserWorker'
 
 @singleton()

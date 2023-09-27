@@ -1,6 +1,6 @@
 import { singleton } from 'tsyringe'
 import axios from 'axios'
-import { AdvnGeneralResponse } from '../../../types'
+import { AdvnGeneralResponse } from '../../types'
 import { AbstractTokenFetcherService } from './AbstractTokenFetcherService'
 
 @singleton()

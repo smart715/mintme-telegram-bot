@@ -2,7 +2,7 @@ import { singleton } from 'tsyringe'
 import { Logger } from 'winston'
 import { Blockchain, findContractAddress } from '../../../utils'
 import { RugFreeCoinsService, TokensService } from '../../service'
-import { RugFreeCoinData, RugFreeCoinsAllCoins } from '../../../types'
+import { RugFreeCoinData, RugFreeCoinsAllCoins } from '../../types'
 import { AbstractParserWorker } from './AbstractParserWorker'
 
 @singleton()

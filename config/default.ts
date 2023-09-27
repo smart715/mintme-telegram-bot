@@ -5,7 +5,7 @@ export default {
     'db_host': 'db',
     'db_user': 'root',
     'db_password': 'root',
-    'db_name': 'tokens_fetcher',
+    'db_name': 'marketing_bot',
 
     // Email to send daily statistic.
     // This email receives notifications about broken workers or not available messages/accounts

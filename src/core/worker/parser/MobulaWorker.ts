@@ -1,7 +1,7 @@
 import { singleton } from 'tsyringe'
 import { RetryAxios, Blockchain, parseBlockchainName } from '../../../utils'
 import { TokensService } from '../../service'
-import { MobulaSearchResponse } from '../../../types'
+import { MobulaSearchResponse } from '../../types'
 import { Logger } from 'winston'
 import { AbstractParserWorker } from './AbstractParserWorker'
 

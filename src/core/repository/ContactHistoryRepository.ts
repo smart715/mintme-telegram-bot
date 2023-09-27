@@ -1,7 +1,7 @@
 import { singleton } from 'tsyringe'
 import { Between, EntityRepository, Repository } from 'typeorm'
 import { ContactHistory, TwitterAccount } from '../entity'
-import { GroupedContactsCount } from '../../types'
+import { GroupedContactsCount } from '../types'
 
 @singleton()
 @EntityRepository(ContactHistory)

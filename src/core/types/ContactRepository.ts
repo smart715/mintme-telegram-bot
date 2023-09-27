@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/naming-convention */
-import { Blockchain } from '../utils'
-import { ContactMethod } from '../core'
+import { Blockchain } from '../../utils'
+import { ContactMethod } from '../index'
 
 export interface GroupedContactsCount {
     tokens: string,

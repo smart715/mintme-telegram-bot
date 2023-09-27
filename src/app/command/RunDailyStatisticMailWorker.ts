@@ -7,7 +7,7 @@ import { DailyStatisticMailWorker, MailerService } from '../../core'
 @singleton()
 export class RunDailyStatisticMailWorker implements CommandInterface {
     public readonly command = 'run-daily-statistic-worker'
-    public readonly description = 'This command runs Dail Statistic Mail worker from cli'
+    public readonly description = 'This command runs Daily Statistic Mail worker from cli'
 
     public constructor(
         private readonly dailyStatisticMailWorker: DailyStatisticMailWorker,

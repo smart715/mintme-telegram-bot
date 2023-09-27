@@ -12,7 +12,7 @@ import {
     ProxyService,
     MailerService,
 } from '../../../service'
-import { sleep } from '../../../../utils'
+import { Environment, sleep } from '../../../../utils'
 
 @singleton()
 export class TelegramWorker {
@@ -29,6 +29,7 @@ export class TelegramWorker {
         private readonly tokenService: TokensService,
         private readonly proxyService: ProxyService,
         private readonly mailerService: MailerService,
+        private readonly environment: Environment,
         private readonly logger: Logger,
     ) { }
 
@@ -42,6 +43,7 @@ export class TelegramWorker {
             this.proxyService,
             tgAccount,
             this.mailerService,
+            this.environment,
             this.logger
         )
 

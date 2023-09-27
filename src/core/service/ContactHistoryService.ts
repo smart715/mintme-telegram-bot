@@ -1,10 +1,9 @@
 import moment from 'moment'
 import { singleton } from 'tsyringe'
 import { ContactHistoryRepository } from '../repository'
-import { ContactHistoryStatusType, ContactMethod } from '../types'
+import { ContactHistoryStatusType, ContactMethod, GroupedContactsCount } from '../types'
 import { ContactHistory, TwitterAccount } from '../entity'
 import { Blockchain } from '../../utils'
-import { GroupedContactsCount } from '../../types'
 
 @singleton()
 export class ContactHistoryService {

@@ -4,8 +4,7 @@ import { singleton } from 'tsyringe'
 import { Brackets, EntityRepository, Repository } from 'typeorm'
 import { Token } from '../entity'
 import { Blockchain } from '../../utils'
-import { TokenContactStatusType } from '../types'
-import { TokensCountGroupedBySourceAndBlockchain } from '../../types'
+import { TokenContactStatusType, TokensCountGroupedBySourceAndBlockchain } from '../types'
 
 @singleton()
 @EntityRepository(Token)

@@ -1,7 +1,7 @@
 import { Blockchain, sleep, TokenNamesGenerator } from '../../../utils'
 import { LastCheckedTokenNameService, TokensService } from '../../service'
 import axios from 'axios'
-import { EthprolerTokenInfoResponse } from '../../../types'
+import { EthprolerTokenInfoResponse } from '../../types'
 import { Logger } from 'winston'
 import { AbstractParserWorker } from './AbstractParserWorker'
 

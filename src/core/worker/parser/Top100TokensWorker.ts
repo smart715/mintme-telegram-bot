@@ -1,7 +1,7 @@
 import { Logger } from 'winston'
 import { Blockchain, parseBlockchainName } from '../../../utils'
 import { TokensService, Top100TokensService } from '../../service'
-import { Top100TokensToken, Top100TokensTopListResponse } from '../../../types'
+import { Top100TokensToken, Top100TokensTopListResponse } from '../../types'
 import { AbstractParserWorker } from './AbstractParserWorker'
 
 export class Top100TokensWorker extends AbstractParserWorker {

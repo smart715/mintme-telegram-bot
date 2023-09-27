@@ -2,7 +2,7 @@ import { singleton } from 'tsyringe'
 import { Logger } from 'winston'
 import { Blockchain, findContractAddress, parseBlockchainName } from '../../../utils'
 import { CoinCatapultService, TokensService } from '../../service'
-import { CoinCatapultAllCoinsResponse, CoinCatapultTokenInfoGeneralResponse } from '../../../types'
+import { CoinCatapultAllCoinsResponse, CoinCatapultTokenInfoGeneralResponse } from '../../types'
 import { AbstractParserWorker } from './AbstractParserWorker'
 
 @singleton()

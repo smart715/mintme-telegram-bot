@@ -1,6 +1,6 @@
 import axios from 'axios'
 import { singleton } from 'tsyringe'
-import { Top100TokensTopListResponse } from '../../../types'
+import { Top100TokensTopListResponse } from '../../types'
 
 @singleton()
 export class Top100TokensService {

@@ -1,7 +1,7 @@
 import { singleton } from 'tsyringe'
 import { Logger } from 'winston'
 import { BitQueryService, QueuedTokenAddressService } from '../../service'
-import { AddressResponse, BitQueryTransfersResponse } from '../../../types'
+import { AddressResponse, BitQueryTransfersResponse } from '../../types'
 import { Blockchain, findContractAddress } from '../../../utils'
 import { AbstractParserWorker } from './AbstractParserWorker'
 
