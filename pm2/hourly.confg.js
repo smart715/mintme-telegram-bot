@@ -2,10 +2,10 @@
 module.exports = {
     apps: [
         {
-            name: 'daily-apps',
-            script: './pm2/script/daily_script.sh',
+            name: 'hourly-apps',
+            script: './pm2/script/hourly_script.sh',
             autorestart: false, // Prevent automatic restart,
-            cron_restart: '0 0 * * *',
+            cron_restart: '0 * * * *',
         },
     ],
 }

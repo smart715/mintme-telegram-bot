@@ -2,10 +2,10 @@
 module.exports = {
     apps: [
         {
-            name: 'daily-apps',
-            script: './pm2/script/daily_script.sh',
+            name: 'every-three-days-apps',
+            script: './pm2/script/every_three_days_script.sh',
             autorestart: false, // Prevent automatic restart,
-            cron_restart: '0 0 * * *',
+            cron_restart: '0 0 */3 * *',
         },
     ],
 }
