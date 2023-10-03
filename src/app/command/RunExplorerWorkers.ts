@@ -40,8 +40,9 @@ export class RunExplorerWorker implements CommandInterface {
 
         yargs.option('blockchain', {
             type: 'string',
-            describe: `Blockchain to check, has to be one of these ${Object.values(Blockchain).join(', ')}`,
-            demandOption: true,
+            describe: `Optional. Blockchain to check. If specified, has to be one of these ${Object.values(Blockchain).join(', ')}`,
+            default: () => null,
+            demandOption: false,
         })
     }
 
@@ -62,7 +63,11 @@ export class RunExplorerWorker implements CommandInterface {
             if (ExplorerWorkerNames.HOLDINGS === workerName) {
                 await this.runHoldingWorker(blockchain)
             } else {
-                await notHoldingWorkers[workerName].run(blockchain)
+                if (blockchain) {
+                    await notHoldingWorkers[workerName].run(blockchain)
+                } else {
+                    await notHoldingWorkers[workerName].run()
+                }
             }
         } catch (err) {
             await this.mailService.sendFailedWorkerEmail(
@@ -78,7 +83,17 @@ export class RunExplorerWorker implements CommandInterface {
         process.exit()
     }
 
-    private async runHoldingWorker(blockchain: Blockchain): Promise<void> {
+    private async runHoldingWorker(blockchain: Blockchain|null): Promise<void> {
+        if (!blockchain) {
+            const ethWorker = this.etherScanAddressTokensHoldingsWorker.run()
+            const bscWorker = this.bscScanAddressTokensHoldingsWorker.run(Blockchain.BSC)
+            const croWorker = this.bscScanAddressTokensHoldingsWorker.run(Blockchain.CRO)
+
+            await Promise.all([ ethWorker, bscWorker, croWorker ])
+
+            return
+        }
+
         if (Blockchain.ETH === blockchain) {
             await this.etherScanAddressTokensHoldingsWorker.run()
         } else {

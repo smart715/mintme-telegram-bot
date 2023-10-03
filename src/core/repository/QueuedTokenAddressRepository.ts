@@ -7,15 +7,15 @@ import { Blockchain } from '../../utils'
 @EntityRepository(QueuedTokenAddress)
 export class QueuedTokenAddressRepository extends Repository<QueuedTokenAddress> {
     public async getUnchecked(blockchain: Blockchain|null, limit: number): Promise<QueuedTokenAddress[]> {
-        const queryBuilder = this.createQueryBuilder('tokenQueue')
-            .where('tokenQueue.isChecked = false')
+        const queryBuilder = this.createQueryBuilder('queuedTokenAddress')
+            .where('queuedTokenAddress.isChecked = false')
 
         if (blockchain) {
-            queryBuilder.andWhere('tokenQueue.blockchain = :blockchain', { blockchain: blockchain })
+            queryBuilder.andWhere('queuedTokenAddress.blockchain = :blockchain', { blockchain: blockchain })
         }
 
         return queryBuilder
-            .orderBy('tokenQueue.id', 'ASC')
+            .orderBy('queuedTokenAddress.id', 'ASC')
             .limit(limit)
             .getMany()
     }
