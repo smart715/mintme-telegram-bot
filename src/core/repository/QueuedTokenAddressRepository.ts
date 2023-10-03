@@ -6,10 +6,15 @@ import { Blockchain } from '../../utils'
 @singleton()
 @EntityRepository(QueuedTokenAddress)
 export class QueuedTokenAddressRepository extends Repository<QueuedTokenAddress> {
-    public async getUnchecked(blockchain: Blockchain, limit: number): Promise<QueuedTokenAddress[]> {
-        return this.createQueryBuilder('tokenQueue')
-            .where('tokenQueue.blockchain = :blockchain', { blockchain: blockchain })
-            .andWhere('tokenQueue.isChecked = false')
+    public async getUnchecked(blockchain: Blockchain|null, limit: number): Promise<QueuedTokenAddress[]> {
+        const queryBuilder = this.createQueryBuilder('tokenQueue')
+            .where('tokenQueue.isChecked = false')
+
+        if (blockchain) {
+            queryBuilder.andWhere('tokenQueue.blockchain = :blockchain', { blockchain: blockchain })
+        }
+
+        return queryBuilder
             .orderBy('tokenQueue.id', 'ASC')
             .limit(limit)
             .getMany()

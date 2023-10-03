@@ -10,11 +10,7 @@ import { WebDriver } from 'selenium-webdriver'
 export class BSCScanTokensTransactionsFetcher extends AbstractTokenWorker {
     private readonly workerName = BSCScanTokensTransactionsFetcher.name
     private webDriver: WebDriver
-    private readonly supportedBlockchains = [
-        Blockchain.ETH,
-        Blockchain.BSC,
-        Blockchain.CRO,
-    ]
+    private readonly supportedBlockchains = [ Blockchain.ETH, Blockchain.BSC, Blockchain.CRO ]
 
     public constructor(
         private readonly bscscanService: BSCScanService,
@@ -30,19 +26,16 @@ export class BSCScanTokensTransactionsFetcher extends AbstractTokenWorker {
 
         if (blockchain) {
             await this.runByBlockchain(blockchain)
-
-            return
-        }
-
-        for (const blockchain of this.supportedBlockchains) {
-            await this.runByBlockchain(blockchain)
+        } else {
+            for (const blockchain of this.supportedBlockchains) {
+                await this.runByBlockchain(blockchain)
+            }
         }
 
         this.logger.info(`[${this.workerName}] finished`)
     }
 
-    private async runByBlockchain(blockchain: Blockchain): Promise<void>
-    {
+    private async runByBlockchain(blockchain: Blockchain): Promise<void> {
         const explorerDomain = explorerDomains[blockchain]
         this.webDriver = await SeleniumService.createCloudFlareByPassedDriver(
             this.bscscanService.getTokenTxsPageUrl(explorerDomain, 100),
