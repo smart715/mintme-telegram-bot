@@ -63,7 +63,6 @@ export class InitialState1689246380860 implements MigrationInterface {
                 \`id\` int NOT NULL AUTO_INCREMENT,
                 \`title\` varchar(512) NOT NULL,
                 \`content\` text NOT NULL,
-                \`allowed_blockchains\` varchar(255) NULL,
                 \`is_tg_only\` tinyint NOT NULL DEFAULT 0,
                 PRIMARY KEY (\`id\`)
             ) ENGINE = InnoDB

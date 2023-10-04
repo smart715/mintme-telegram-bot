@@ -12,17 +12,22 @@ import {
 } from '../../../service'
 import { Environment, getRandomNumber } from '../../../../utils'
 import { ContactHistoryStatusType, ContactMethod, TokenContactStatusType } from '../../../types'
+import moment from 'moment'
 
 export class TwitterClient {
     private readonly maxMessagesDaily: number = config.get('twitter_dm_limit_daily')
     private readonly maxAttemptsDaily: number = config.get('twitter_total_attempts_daily')
     private readonly messageDelaySec: number = config.get('twitter_messages_delay_in_seconds')
+    private readonly unreadDotCss: string = config.get('twitter_css_unread_dot')
+    private readonly responsesCheckerFrequenc:number = config.get('twitter_responses_checker_frequency_hours')
 
     private readonly twitterAccount: TwitterAccount
     private message: ContactMessage
     private driver: WebDriver
     private sentMessages: number
     private attempts: number
+
+    private runResponseWorker: boolean = false
 
     public constructor(
         twitterAccount: TwitterAccount,
@@ -41,13 +46,22 @@ export class TwitterClient {
         await this.initMessage()
         await this.updateSentMessagesAndTotalAttempt()
 
-        if (!this.isAllowedToSentMessages()) {
+        const thresholdDate = moment().subtract(this.responsesCheckerFrequenc, 'hours')
+        const lastResponsesFetchDate = moment(this.twitterAccount.lastResponsesFetchDate)
+
+        if (!lastResponsesFetchDate.isValid() || lastResponsesFetchDate.isBefore(thresholdDate)) {
+            this.runResponseWorker = true
+        }
+
+        if (!this.isAllowedToSendMessages()) {
             this.logger.warn(
                 `[TwitterWorker ID: ${this.twitterAccount.id}] ` +
                 `Client is not allowed to sent messages. Max daily attempts or daily messages reached. Skipping...`
             )
 
-            return false
+            if (!this.runResponseWorker) {
+                return false
+            }
         }
 
         this.log(`Creating driver instance`)
@@ -66,7 +80,7 @@ export class TwitterClient {
         return true
     }
 
-    private isAllowedToSentMessages(): boolean {
+    private isAllowedToSendMessages(): boolean {
         return !(this.attempts >= this.maxAttemptsDaily || this.sentMessages >= this.maxMessagesDaily)
     }
 
@@ -111,9 +125,110 @@ export class TwitterClient {
         }
     }
 
-    public async startContacting(): Promise<void> {
+    private async startResponsesFetcher(): Promise<boolean> {
+        this.log(`Started getting responses`)
+        await this.driver.get(`https://twitter.com/messages`)
+        await this.driver.sleep(10000)
+
+        const chatListSeelctor = await this.driver.findElements(By.css('[data-viewportview="true"]'))
+        if (!chatListSeelctor.length) {
+            this.log(`Couldn't find chat list div`)
+            return false
+        }
+
+        const chatList = chatListSeelctor[0]
+
+        const dateCheckUntil = moment().utc().subtract(3, 'days').format('MMM D')
+
+        let lastScrollHeight = 0
+        let keepChecking = true
+        let curentRetries = 0
+        let isStartOfChat = true
+        while (keepChecking) {
+            lastScrollHeight = +(await chatList.getAttribute('scrollHeight'))
+
+            if (!isStartOfChat) {
+                this.log(`Scrolling`)
+
+                await this.driver.executeScript(`arguments[0].scrollTo(0, arguments[0].scrollHeight)`, chatList)
+                await this.driver.sleep(5000)
+            }
+
+            isStartOfChat = false
+
+            const chats = await this.driver.findElements(By.css('[data-testid="conversation"]'))
+
+            for (const chat of chats) {
+                const dateSelector = await chat.findElements(By.css('time'))
+
+                if (dateSelector.length) {
+                    const dateStr = await dateSelector[0].getText()
+
+                    if (dateCheckUntil.toLocaleLowerCase() === dateStr.toLocaleLowerCase()) {
+                        this.log(`Checked chats until ${dateCheckUntil}`)
+                        keepChecking = false
+                        return true
+                    }
+                }
+
+                const unreadDotSelector = await chat.findElements(By.className(this.unreadDotCss))
+
+                if (!unreadDotSelector.length) {
+                    continue
+                }
+
+                const userNameSelector = await chat.findElements(By.css('a'))
+                const messageTitleSelector = await chat.findElements(By.css('span'))
+
+                if (userNameSelector.length && messageTitleSelector.length) {
+                    const userLink = await userNameSelector[0].getAttribute('href')
+                    const message = await messageTitleSelector.pop()?.getText()
+
+                    if (!message || !message.length || !userLink) {
+                        continue
+                    }
+
+                    await this.twitterService.addNewResponse(message, userLink, this.twitterAccount)
+                }
+            }
+
+            const currentScrollHeight = +(await chatList.getAttribute('scrollHeight'))
+
+            if (currentScrollHeight === lastScrollHeight) {
+                if (curentRetries >= 3) {
+                    return true
+                } else {
+                    curentRetries++
+                    continue
+                }
+            }
+
+            curentRetries = 0
+            await this.driver.sleep(1000)
+        }
+
+        this.log(`Finished getting responses`)
+        return true
+    }
+
+    public async startWorker(): Promise<void> {
         while (true) {  // eslint-disable-line
             await this.driver.sleep(getRandomNumber(1, 10) * 1000)
+
+            if (this.runResponseWorker) {
+                const responseWorkerResult = await this.startResponsesFetcher()
+
+                if (responseWorkerResult) {
+                    await this.twitterService.updateResponsesLastChecked(this.twitterAccount)
+                }
+
+                this.runResponseWorker = false
+            }
+
+            if (!this.isAllowedToSendMessages()) {
+                this.log(`Account Limit hit`)
+                continue
+            }
 
             const queuedContact = await this.contactQueueService.getFirstFromQueue(ContactMethod.TWITTER, this.logger)
 
@@ -194,10 +309,6 @@ export class TwitterClient {
     }
 
     private async contactWithToken(link: string, message: string): Promise<ContactHistoryStatusType> {
-        if (!this.isAllowedToSentMessages()) {
-            return ContactHistoryStatusType.ACCOUNT_LIMIT_HIT
-        }
-
         this.log(`Trying to contact with ${link}`)
 
         await this.driver.get(link)
@@ -311,8 +422,6 @@ export class TwitterClient {
         }
 
         this.message = contentMessage
-
-        this.log(`Message content to send: ${this.message.content}`)
     }
 
     private async updateSentMessagesAndTotalAttempt(): Promise<void> {

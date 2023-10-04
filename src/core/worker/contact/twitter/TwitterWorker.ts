@@ -73,7 +73,7 @@ export class TwitterWorker {
                 currentAccountIndex++
             }
 
-            await this.startContactingAllManagers()
+            await this.startAllClients()
 
             for (const client of this.twitterClients) {
                 await client.destroyDriver()
@@ -106,11 +106,11 @@ export class TwitterWorker {
         return twitterClient
     }
 
-    private startContactingAllManagers(): Promise<void[]> {
+    private startAllClients(): Promise<void[]> {
         const contactingPromises: Promise<void>[] = []
 
         for (const client of this.twitterClients) {
-            contactingPromises.push(client.startContacting())
+            contactingPromises.push(client.startWorker())
         }
 
         return Promise.all(contactingPromises)

@@ -36,6 +36,8 @@ export default {
     'twitter_dm_limit_daily': 300,
     'twitter_total_attempts_daily': 1000,
     'twitter_messages_delay_in_seconds': 40,
+    'twitter_responses_checker_frequency_hours': 12,
+    'twitter_css_unread_dot': 'r-l5o3uw',
 
     // enqueue tokens worker
     'contact_email_max_attempts': 4,
