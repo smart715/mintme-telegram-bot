@@ -13,4 +13,7 @@ export class TwitterAccount {
 
     @Column()
     public isDisabled!: boolean
+
+    @Column({ nullable: true })
+    public lastResponsesFetchDate!: Date
 }

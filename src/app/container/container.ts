@@ -98,6 +98,7 @@ import {
     TwitterAccountRepository,
     TwitterService,
     DailyStatisticMailWorker,
+    TwitterResponseRepository,
 } from '../../core'
 import { Application } from '../'
 import { CliDependency } from './types'
@@ -198,6 +199,10 @@ container.register(CheckedTokenRepository, {
 
 container.register(TwitterAccountRepository, {
     useFactory: instanceCachingFactory(() => getConnection().getCustomRepository(TwitterAccountRepository)),
+})
+
+container.register(TwitterResponseRepository, {
+    useFactory: instanceCachingFactory(() => getConnection().getCustomRepository(TwitterResponseRepository)),
 })
 
 // Utils
@@ -406,6 +411,7 @@ container.register(TwitterService, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new TwitterService(
             dependencyContainer.resolve(TwitterAccountRepository),
+            dependencyContainer.resolve(TwitterResponseRepository),
         ),
     ),
 })
