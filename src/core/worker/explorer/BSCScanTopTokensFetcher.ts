@@ -15,6 +15,7 @@ export class BSCScanTopTokensFetcher extends AbstractTokenWorker {
         [Blockchain.CRO]: 1,
     }
 
+    private readonly supportedBlockchains = [ Blockchain.ETH, Blockchain.BSC, Blockchain.CRO ]
     private webDriver: WebDriver
 
     public constructor(
@@ -26,7 +27,21 @@ export class BSCScanTopTokensFetcher extends AbstractTokenWorker {
         super()
     }
 
-    public async run(blockchain: Blockchain): Promise<void> {
+    public async run(blockchain: Blockchain|null = null): Promise<void> {
+        this.logger.info(`[${this.workerName}] started`)
+
+        if (blockchain) {
+            await this.runByBlockchain(blockchain)
+        } else {
+            for (const blockchain of this.supportedBlockchains) {
+                await this.runByBlockchain(blockchain)
+            }
+        }
+
+        this.logger.info(`[${this.workerName}] finished`)
+    }
+
+    private async runByBlockchain(blockchain: Blockchain): Promise<void> {
         const pagesCount = this.pagesCounts[blockchain]
         const explorerDomain = explorerDomains[blockchain]
         this.webDriver = await SeleniumService.createCloudFlareByPassedDriver(

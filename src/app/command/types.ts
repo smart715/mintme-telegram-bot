@@ -22,7 +22,7 @@ export interface RunQueueWorkerCmdArgv {
 
 export interface RunExplorerWorkerCmdArgv {
     name: ExplorerWorkerNames,
-    blockchain: Blockchain,
+    blockchain: Blockchain | null,
 }
 
 export enum ExplorerWorkerNames {

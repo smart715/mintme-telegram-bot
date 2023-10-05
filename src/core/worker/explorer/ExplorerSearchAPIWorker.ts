@@ -9,6 +9,7 @@ import { Logger } from 'winston'
 @singleton()
 export class ExplorerSearchAPIWorker extends AbstractTokenWorker {
     private readonly workerName = ExplorerSearchAPIWorker.name
+    private readonly supportedBlockchains = [ Blockchain.ETH, Blockchain.BSC, Blockchain.CRO ]
 
     public constructor(
         private readonly tokenNamesGenerator: TokenNamesGenerator,
@@ -19,7 +20,21 @@ export class ExplorerSearchAPIWorker extends AbstractTokenWorker {
         super()
     }
 
-    public async run(blockchain: Blockchain): Promise<void> {
+    public async run(blockchain: Blockchain|null = null): Promise<void> {
+        this.logger.info(`[${this.workerName}] started`)
+
+        if (blockchain) {
+            await this.runByBlockchain(blockchain)
+        } else {
+            for (const blockchain of this.supportedBlockchains) {
+                await this.runByBlockchain(blockchain)
+            }
+        }
+
+        this.logger.info(`[${this.workerName}] finished`)
+    }
+
+    private async runByBlockchain(blockchain: Blockchain): Promise<void> {
         const explorerDomain = explorerDomains[blockchain]
         const webDriver = await SeleniumService.createDriver('', undefined, this.logger)
 

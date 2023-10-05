@@ -64,12 +64,12 @@ This cli commands parses info about tokens from different websites using api or 
 #### `run-explorer-worker`
 Parses token addresses and wallet addresses from explorers.
 
-| Parameter  | Notes                                                                                                                                |
-|------------|--------------------------------------------------------------------------------------------------------------------------------------|
-| name       | Explorer worker name from [ExplorerWorkerNames](src/app/command/types.ts). Eg: `token-holdings-worker`, `token-transactions-fetcher` |
-| blockchain | Blockchain symbol from [Blockchain](src/utils/blockchains.ts). `ETH`, `CRO`, `BSC`                                                   |
+| Parameter  | Notes                                                                                                                                                                                                                                                               |
+|------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| name       | Explorer worker name from [ExplorerWorkerNames](src/app/command/types.ts). Eg: `token-holdings-worker`, `token-transactions-fetcher`                                                                                                                                |
+| blockchain | Optional. If not specified, check all blockchains. Specified Blockchain symbol should be from [Blockchain](src/utils/blockchains.ts). `ETH`, `CRO`, `BSC` or NULL for some workers to check all blockchains. Check [Explorers descriptions](#explorers-description) |
 
-**Explorers description:**
+#### **Explorers description**
 
 | Explorer name                 | Description                                                                                                                                                                                                                                                            |
 |-------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

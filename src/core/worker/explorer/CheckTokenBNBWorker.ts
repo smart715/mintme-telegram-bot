@@ -21,9 +21,9 @@ export class CheckTokenBNBWorker extends AbstractTokenWorker {
         super()
     }
 
-    public async run(blockchain: Blockchain): Promise<void> {
+    public async run(blockchain: Blockchain|null = null): Promise<void> {
         const webDriver = await SeleniumService.createDriver('', undefined, this.logger)
-        this.logger.info(`[${this.workerName}] started for ${blockchain} blockchain`)
+        this.logger.info(`[${this.workerName}] started for ${blockchain ?? 'all'} blockchain`)
 
         // eslint-disable-next-line
         while (true) {
