@@ -42,8 +42,8 @@ export default {
     // enqueue tokens worker
     'contact_email_max_attempts': 4,
     'contact_twitter_max_attempts': 2,
-    'contact_telegram_max_attempts': 1,
-    'contact_frequency_in_seconds': 60 * 60 * 24 * 7, // 7 days
+    'contact_telegram_max_attempts': 2,
+    'contact_frequency_in_seconds': 60 * 60 * 24 * 14, // 14 days
 
     'server_ip': '{{ server_ip }}',
 
