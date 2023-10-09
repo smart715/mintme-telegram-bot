@@ -1,35 +1,23 @@
 import { singleton } from 'tsyringe'
-import { TelegramAccountsRepository } from '../repository'
-import { ProxyServer, TelegramAccount } from '../entity'
+import { TelegramAccountsRepository, TelegramResponseRepository } from '../repository'
+import { TelegramAccount, ProxyServer } from '../entity'
 import { ProxyService } from './ProxyServerService'
+import { TelegramWorkerMode } from '../../utils'
+import moment from 'moment'
 
 @singleton()
 export class TelegramService {
     public constructor(
         private telegramAccountRepository: TelegramAccountsRepository,
+        private telegramResponseRepository: TelegramResponseRepository,
         private proxyService: ProxyService,
     ) { }
 
-    public async assignNewAccountToServer(ip: string): Promise<TelegramAccount|undefined> {
-        const account = await this.telegramAccountRepository.findOne({ where: {
-            assignedServerIP: null,
-            isDisabled: 0,
-        } })
-
-        if (account) {
-            account.assignedServerIP = ip
-            await this.telegramAccountRepository.save(account)
-            return account
+    public async getAllAccounts(mode: TelegramWorkerMode|undefined = undefined): Promise<TelegramAccount[]> {
+        if (TelegramWorkerMode.RESPONSES === mode) {
+            return this.telegramAccountRepository.getAllAccountsForResponseWorker()
         }
 
-        return undefined
-    }
-
-    public async getServerAccounts(ip: string): Promise<TelegramAccount[]> {
-        return this.telegramAccountRepository.getServerAccounts(ip)
-    }
-
-    public async getAllAccounts(): Promise<TelegramAccount[]> {
         return this.telegramAccountRepository.getAllAccounts()
     }
 
@@ -38,9 +26,37 @@ export class TelegramService {
         await this.telegramAccountRepository.save(tgAccount)
     }
 
+    public async updateLastResponsesFetchDate(tgAccount: TelegramAccount): Promise<void> {
+        tgAccount.lastResponsesFetchDate = moment().utc().toDate()
+        await this.telegramAccountRepository.save(tgAccount)
+    }
+
     public async setAccountLimitHitDate(tgAccount: TelegramAccount, date: Date): Promise<void> {
         tgAccount.limitHitResetDate = date
         await this.telegramAccountRepository.save(tgAccount)
+    }
+
+    public async addNewResponse(
+        chatLink: string,
+        chatMessages: string,
+        tgAccount: TelegramAccount,
+        type: string
+    ): Promise<void> {
+        const isExistingResponse = await this.telegramResponseRepository.isExistingReponse(chatLink, chatMessages)
+
+        if (isExistingResponse) {
+            return
+        }
+
+        const telegramResponse = this.telegramResponseRepository.create({
+            chatLink: chatLink,
+            chatMessages: chatMessages,
+            isChecked: false,
+            telegamAccount: tgAccount,
+            type: type,
+        })
+
+        await this.telegramResponseRepository.insert(telegramResponse)
     }
 
     public async assignNewProxyForAccount(tgAccount: TelegramAccount): Promise<ProxyServer|undefined> {

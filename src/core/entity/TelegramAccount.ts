@@ -12,9 +12,6 @@ export class TelegramAccount {
     @Column()
     public userName!: string
 
-    @Column({ nullable: true })
-    public assignedServerIP!: string
-
     @Column('text')
     public localStorageJson!: string
 
@@ -27,4 +24,7 @@ export class TelegramAccount {
     @ManyToOne(() => ProxyServer, (proxy) => proxy.tgAccounts, { eager: true })
     @JoinColumn()
     public proxy: ProxyServer
+
+    @Column({ nullable: true })
+    public lastResponsesFetchDate!: Date
 }

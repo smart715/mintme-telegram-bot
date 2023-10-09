@@ -7,6 +7,7 @@ export * from './blockchains'
 export * from './constants'
 export { TokenNamesGenerator } from './TokenNamesGenerator'
 export { RetryAxios } from './RetryAxios'
+export { TelegramWorkerMode } from './telegram'
 
 export {
     getHrefFromTagString,

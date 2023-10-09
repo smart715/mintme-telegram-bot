@@ -12,7 +12,7 @@ import {
 import { By, Key, WebDriver, WebElement } from 'selenium-webdriver'
 import * as fs from 'fs'
 import { Environment, getRandomNumber } from '../../../../utils'
-import { ContactHistoryStatusType, ContactMethod, TokenContactStatusType } from '../../../types'
+import { ChatType, ContactHistoryStatusType, ContactMethod, TokenContactStatusType } from '../../../types'
 import moment from 'moment'
 import { Logger } from 'winston'
 
@@ -25,6 +25,8 @@ export class TelegramClient {
     public accountMessages: ContactMessage[]
     private messageToSendIndex: number = 0
     public isInitialized: boolean = false
+    private runResponeseWorker: boolean = false
+    private runContactingWorker: boolean = false
     private potentialFalsePositiveInRow: number = 0
 
     public constructor(
@@ -43,15 +45,28 @@ export class TelegramClient {
     }
 
     public async initialize(): Promise<void> {
-        const currentDate = moment()
+        const dateTwoDaysAgo = moment().utc().subtract(2, 'days')
+        const lastResponsesFetchDate = moment(this.telegramAccount.lastResponsesFetchDate)
+
+        if (!lastResponsesFetchDate.isValid() || lastResponsesFetchDate.isBefore(dateTwoDaysAgo)) {
+            this.runResponeseWorker = true
+        }
+
         const limitHitDate = moment(this.telegramAccount.limitHitResetDate)
+        const currentDate = moment().utc()
 
         if (limitHitDate.isAfter(currentDate)) {
             const diffMs = limitHitDate.diff(currentDate, 'milliseconds')
             const msInDay = 86400000
             this.log(
-                `${diffMs / msInDay} days to use this account again, Last limit hit: ${limitHitDate.format()}`
+                `${diffMs / msInDay} days to contact from this account again, Limit hit reset: ${limitHitDate.format()}`
             )
+        } else {
+            this.runContactingWorker = true
+        }
+
+        if (!this.runContactingWorker && !this.runResponeseWorker) {
+            this.log(`Skipping account, Contacting and Responses workers `)
             return
         }
 
@@ -456,7 +471,7 @@ export class TelegramClient {
                     `token ${queuedContact.address} :: ${queuedContact.blockchain} was marked as responded . Skipping`
                 )
 
-                return this.startContacting()
+                return this.startWorker()
             }
         }
     }
@@ -476,7 +491,7 @@ export class TelegramClient {
     private async postSendingCheck(): Promise<void> {
         if (!this.telegramAccount.isDisabled) {
             await this.driver.sleep(this.messagesDelay * 1000)
-            const contactMethod = await this.startContacting()
+            const contactMethod = await this.startWorker()
             return contactMethod
         }
     }
@@ -487,8 +502,27 @@ export class TelegramClient {
         }
     }
 
-    public async startContacting(): Promise<void> {
-        await this.driver.sleep(getRandomNumber(1, 5)*1000)
+    public async startResponsesWorker(): Promise<void> {
+        this.log(`Started getting responses`)
+        await this.getResponses()
+        await this.telegramService.updateLastResponsesFetchDate(this.telegramAccount)
+        this.runResponeseWorker = false
+        this.log(`Finished getting responses`)
+    }
+
+    public async startWorker(): Promise<void> {
+        await this.driver.sleep(getRandomNumber(1, 10) * 1000)
+
+        if (this.runResponeseWorker) {
+            await this.startResponsesWorker()
+
+            await this.driver.get('https://web.telegram.org/a/')
+            await this.driver.sleep(20000)
+        }
+
+        if (!this.runContactingWorker) {
+            return
+        }
 
         const queuedContact = await this.contactQueueService.getFirstFromQueue(ContactMethod.TELEGRAM, this.logger)
 
@@ -502,7 +536,7 @@ export class TelegramClient {
                     `No token for ${queuedContact.address} :: ${queuedContact.blockchain} . Skipping`
                 )
 
-                return this.startContacting()
+                return this.startWorker()
             }
 
             await this.checkQueuedContact(queuedContact, token)
@@ -526,7 +560,7 @@ export class TelegramClient {
                         )
                         return
                     } else {
-                        return this.startContacting()
+                        return this.startWorker()
                     }
                 case ContactHistoryStatusType.ACCOUNT_GROUP_JOIN_LIMIT_HIT:
                     await this.contactQueueService.setProcessing(queuedContact, false)
@@ -537,7 +571,7 @@ export class TelegramClient {
                     this.log(
                         `Account hit limit`
                     )
-                    await this.telegramService.setAccountLimitHitDate(this.telegramAccount, moment().add(2, 'day').toDate())
+                    await this.telegramService.setAccountLimitHitDate(this.telegramAccount, moment().utc().add(2, 'day').toDate())
                     return
                 case ContactHistoryStatusType.ACCOUNT_TEMP_BANNED:
                     await this.contactQueueService.setProcessing(queuedContact, false)
@@ -545,12 +579,12 @@ export class TelegramClient {
                     this.log(
                         `Account temporarily banned`
                     )
-                    await this.telegramService.setAccountLimitHitDate(this.telegramAccount, moment().add(5, 'day').toDate())
+                    await this.telegramService.setAccountLimitHitDate(this.telegramAccount, moment().utc().add(5, 'day').toDate())
                     return
                 case ContactHistoryStatusType.ERROR:
                 case ContactHistoryStatusType.ACCOUNT_NOT_EXISTS:
                     this.potentialFalsePositiveInRow++
-                    if (this.potentialFalsePositiveInRow >= 5) {
+                    if (this.potentialFalsePositiveInRow >= 2) {
                         return
                     }
             }
@@ -563,7 +597,7 @@ export class TelegramClient {
                     `Skipping to send to token ${queuedContact.address} | Result: ${result} | Attempt ${this.potentialFalsePositiveInRow}/5`
                 )
 
-                return this.startContacting()
+                return this.startWorker()
             }
 
             const isSuccess = this.isSuccessResult(result)
@@ -603,6 +637,238 @@ export class TelegramClient {
             `[Telegram Worker ${this.telegramAccount.id}] ` +
             message
         )
+    }
+
+    private async getExtraChatInfo(middleColumn: WebElement, infoStr: string): Promise<string> {
+        try {
+            const rightColumn = await this.driver.findElement(By.id('RightColumn'))
+            let profileDivs = await rightColumn.findElements(By.className('profile-info'))
+            if (!profileDivs.length) {
+                const chatTitle = await middleColumn.findElements(By.className('info'))
+                if (chatTitle.length) {
+                    await this.driver.actions().click(chatTitle[0]).perform()
+                    await this.driver.sleep(3000)
+                    profileDivs = await rightColumn.findElements(By.className('profile-info'))
+                }
+            }
+
+            const chatLinksDivs = await profileDivs[0].findElements(By.className('ListItem-button'))
+
+
+            for (const info of chatLinksDivs) {
+                const innerText = await info.getText()
+
+                if (innerText.includes(infoStr)) {
+                    return innerText.replace(infoStr, '')
+                }
+            }
+
+            return ''
+        } catch (e) {
+            this.log(`Error while getting extra cha info \n${(e as Error).message}`)
+            return ''
+        }
+    }
+
+    private async getChatMessages(middleColumn: WebElement, chatType: ChatType): Promise<{
+        sender: string;
+        message: string;
+    }[]> {
+        const chatMessagesObj: {
+            sender: string;
+            message: string;
+        }[] = []
+
+        if (middleColumn) {
+            if (ChatType.DM === chatType) {
+                const chatMessages = await middleColumn.findElements(By.className('message-list-item '))
+
+                for (const message of chatMessages) {
+                    const messageClass = await message.getAttribute('class')
+
+                    if (messageClass.includes('ActionMessage')) {
+                        continue
+                    }
+
+                    const messageContentTxt = await message.getText()
+
+                    const messageObj = {
+                        'sender': messageClass.includes(' own') ? 'Me' : 'Other party',
+                        'message': messageContentTxt,
+                    }
+                    chatMessagesObj.push(messageObj)
+                }
+            } else {
+                let hasMoreMentions = true
+
+                while (hasMoreMentions) {
+                    const mentionBtns = await middleColumn.findElements(By.className('icon-mention'))
+                    if (mentionBtns.length) {
+                        const mentionCount: string = await this.driver.executeScript('return arguments[0].parentElement.parentElement.innerText.trim()', mentionBtns[0])
+                        if (mentionCount.length) {
+                            await this.driver.actions().click(mentionBtns[0]).perform()
+                            await this.driver.sleep(10000)
+                        } else {
+                            this.log(`No more mentions`)
+                            hasMoreMentions = false
+                        }
+                    } else {
+                        this.log(`Chat didn't load.`)
+                        break
+                    }
+
+                    const chatMessages = await middleColumn.findElements(By.className('message-list-item'))
+                    for (const message of chatMessages) {
+                        const messageClass = await message.getAttribute('class')
+
+                        if (messageClass.includes('ActionMessage')) {
+                            continue
+                        }
+
+
+                        const sender = await message.findElements(By.className('message-title'))
+
+                        const messageContent = await message.findElements(By.className('text-content'))
+
+                        if (sender.length && messageContent.length) {
+                            const senderTxt = await sender[0].getText()
+                            const messageContentTxt = await messageContent[0].getText()
+                            const messageObj = {
+                                'sender': senderTxt,
+                                'message': messageContentTxt,
+                            }
+                            chatMessagesObj.push(messageObj)
+                        }
+                    }
+                }
+            }
+        }
+        return chatMessagesObj
+    }
+
+    private async processChatResponses(chatElement: WebElement, chatType: ChatType): Promise<void> {
+        try {
+            if (chatElement) {
+                await this.driver.actions().click(chatElement).perform()
+
+                await this.driver.sleep(5000)
+
+                const middleColumn = await this.driver.findElement(By.id('MiddleColumn'))
+
+                const chatMessagesObj = await this.getChatMessages(middleColumn, chatType)
+
+                await this.driver.sleep(1000)
+
+                const chatInfo = (ChatType.DM === chatType) ? '\nUsername' : '\nLink'
+
+                const chatLink = await this.getExtraChatInfo(middleColumn, chatInfo)
+
+                if (chatMessagesObj.length) {
+                    await this.telegramService.addNewResponse(
+                        chatLink,
+                        JSON.stringify(chatMessagesObj),
+                        this.telegramAccount,
+                        chatType)
+                }
+            }
+        } catch (e) {
+            this.log(`Error while processing chat ${e}`)
+        }
+    }
+
+    private async findNotCheckedGroups(chatList: WebElement): Promise<void> {
+        try {
+            const mentionGroups = await chatList.findElements(By.className('group'))
+
+            for (const groupChat of mentionGroups) {
+                const isGroupBtnVisible = await groupChat.isDisplayed()
+                if (!isGroupBtnVisible) {
+                    return this.findNotCheckedGroups(chatList)
+                }
+
+                const hasUnreadMentions = (await (groupChat.findElements(By.className('icon-mention')))).length > 0
+
+                if (hasUnreadMentions) {
+                    this.log(`Found a group with mention`)
+                    await this.processChatResponses(groupChat, ChatType.GROUP)
+                }
+            }
+        } catch (ex) {
+            this.logger.error(ex)
+            return this.findNotCheckedGroups(chatList)
+        }
+    }
+
+    private async findNotCheckedDms(chatList: WebElement): Promise<void> {
+        try {
+            const dmChats = await chatList.findElements(By.className('private'))
+
+            for (const dm of dmChats) {
+                const isDmBtnVisible = await dm.isDisplayed()
+
+                if (!isDmBtnVisible) {
+                    return this.findNotCheckedDms(chatList)
+                }
+
+                const hasUnreadMessages = (await (dm.findElements(By.className('ChatBadge-transition')))).length > 0
+
+                if (hasUnreadMessages) {
+                    this.log(`Found a DM with unread messages`)
+                    await this.processChatResponses(dm, ChatType.DM)
+                }
+            }
+        } catch (error) {
+            this.logger.error(error)
+            return this.findNotCheckedDms(chatList)
+        }
+    }
+
+    private async getResponses(): Promise<void> {
+        const chatListSelector = await this.driver.findElements(By.className('chat-list'))
+
+        if (!chatListSelector.length) {
+            this.log(`Chat list not found`)
+            return
+        }
+
+        const chatList = chatListSelector[0]
+
+        let lastScrollHeight = 0
+        const keepScrolling = true
+        let curentRetries = 0
+        let isStartOfChat = true
+        while (keepScrolling) {
+            lastScrollHeight = +(await chatList.getAttribute('scrollHeight'))
+
+            if (!isStartOfChat) {
+                this.log(`Scrolling`)
+
+                await this.driver.executeScript(`arguments[0].scrollTo(0, arguments[0].scrollHeight)`, chatList)
+                await this.driver.sleep(5000)
+            }
+
+            isStartOfChat = false
+
+            await this.findNotCheckedGroups(chatList)
+
+            await this.driver.sleep(2000)
+
+            await this.findNotCheckedDms(chatList)
+
+            const currentScrollHeight = +(await chatList.getAttribute('scrollHeight'))
+
+            if (currentScrollHeight === lastScrollHeight) {
+                if (curentRetries >= 3) {
+                    return
+                } else {
+                    curentRetries++
+                    continue
+                }
+            }
+
+            curentRetries = 0
+            await this.driver.sleep(1000)
+        }
     }
 
     private isProd(): boolean {

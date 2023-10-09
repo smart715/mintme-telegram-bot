@@ -33,6 +33,7 @@ import {
     TelegramAccountsRepository,
     TelegramWorker,
     TelegramService,
+    TelegramResponseRepository,
     ContactMessageService,
     LastTokenTxDateFetcher,
     ProxyServerRepository,
@@ -187,6 +188,10 @@ container.register(QueuedTokenAddressRepository, {
 
 container.register(QueuedWalletAddressRepository, {
     useFactory: instanceCachingFactory(() => getConnection().getCustomRepository(QueuedWalletAddressRepository)),
+})
+
+container.register(TelegramResponseRepository, {
+    useFactory: instanceCachingFactory(() => getConnection().getCustomRepository(TelegramResponseRepository)),
 })
 
 container.register(NewestCheckedTokenRepository, {

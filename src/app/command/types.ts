@@ -1,5 +1,5 @@
 import { Arguments, BuilderCallback, MiddlewareFunction } from 'yargs'
-import { Blockchain } from '../../utils'
+import { Blockchain, TelegramWorkerMode } from '../../utils'
 
 export interface CommandInterface {
     command: string | ReadonlyArray<string>
@@ -23,6 +23,10 @@ export interface RunQueueWorkerCmdArgv {
 export interface RunExplorerWorkerCmdArgv {
     name: ExplorerWorkerNames,
     blockchain: Blockchain | null,
+}
+
+export interface RunTelegramWorkerCmdArgv {
+    mode: TelegramWorkerMode,
 }
 
 export enum ExplorerWorkerNames {
