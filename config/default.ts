@@ -30,6 +30,7 @@ export default {
     'telegram_account_max_day_messages': 40,
     'telegram_unique_messages_per_account': 3,
     'telegram_accounts_per_proxy': 2,
+    'telegram_max_sent_messages_per_cycle': 5,
 
     // twitter configs
     'twitter_max_accounts_simultaneous': 1,

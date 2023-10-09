@@ -19,6 +19,7 @@ import { Logger } from 'winston'
 export class TelegramClient {
     private readonly maxMessagesPerDay: number = config.get('telegram_account_max_day_messages')
     private readonly messagesDelay: number = config.get('telegram_messages_delay_in_seconds')
+    private readonly maxMessagesPerCycle: number = config.get('telegram_max_sent_messages_per_cycle')
     private sentMessages: number
     public telegramAccount: TelegramAccount
     private driver: WebDriver
@@ -28,6 +29,7 @@ export class TelegramClient {
     private runResponeseWorker: boolean = false
     private runContactingWorker: boolean = false
     private potentialFalsePositiveInRow: number = 0
+    private successMessages: number = 0
 
     public constructor(
         private readonly contactHistoryService: ContactHistoryService,
@@ -482,6 +484,8 @@ export class TelegramClient {
             result === ContactHistoryStatusType.SENT_GROUP_BUT_DELETED)
 
         if (isSuccess) {
+            this.successMessages++
+            this.potentialFalsePositiveInRow = 0
             this.setNextMessageIndex()
         }
 
@@ -602,8 +606,14 @@ export class TelegramClient {
 
             const isSuccess = this.isSuccessResult(result)
 
-            if (isSuccess) {
-                this.potentialFalsePositiveInRow = 0
+            if (this.maxMessagesPerCycle <= this.successMessages) {
+                this.log(`Reached cycle limit hit, Skipping`)
+
+                this.telegramService.setAccountLimitHitDate(
+                    this.telegramAccount,
+                    moment().utc().add(5, 'minutes').toDate())
+
+                return
             }
 
             await this.contactQueueService.removeFromQueue(queuedContact.address, queuedContact.blockchain)
