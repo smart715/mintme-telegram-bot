@@ -107,6 +107,10 @@ Contacts with tokens using mailer. Runs in a loop with 5 mins sleep time if ther
 #### `run-telegram-worker`
 Contacts with tokens using telegram and selenium. Uses proxy. Supports multi accounts. Accounts should be added to the `telegram_account` table
 
+| Parameter  | Notes                                                                              |
+|------------|------------------------------------------------------------------------------------|
+| mode | Worker mode [TelegramWorkerMode](src/utils/telegram.ts)/ `all`, `responses`| 
+
 #### `run-twitter-worker`
 Contacts with tokens using twitter account and selenium. Supports multi accounts. Accounts should be added to the `twitter_account` table
 

@@ -1,8 +1,9 @@
 import { container, singleton } from 'tsyringe'
+import { CommandInterface, RunTelegramWorkerCmdArgv } from './types'
 import { Logger } from 'winston'
-import { CommandInterface } from './types'
-import { Database, sleep } from '../../utils'
+import { Database, sleep, TelegramWorkerMode } from '../../utils'
 import { MailerService, TelegramWorker } from '../../core'
+import { Arguments, Argv } from 'yargs'
 
 @singleton()
 export class RunTelegramWorker implements CommandInterface {
@@ -15,24 +16,31 @@ export class RunTelegramWorker implements CommandInterface {
         private readonly logger: Logger,
     ) { }
 
-    public builder(): void {}
+    public builder(yargs: Argv<RunTelegramWorkerCmdArgv>): void {
+        yargs.option('mode', {
+            type: 'string',
+            describe: 'Default telegram worker type',
+            default: () => TelegramWorkerMode.ALL,
+            demandOption: false,
+        })
+    }
 
-    public async handler(): Promise<void> {
+    public async handler(argv: Arguments<RunTelegramWorkerCmdArgv>): Promise<void> {
         this.logger.info(`Started command ${this.command}`)
 
-        await this.runTelegramWorker()
+        await this.runTelegramWorker(argv.mode)
 
         this.logger.info(`Command ${this.command} finished with success`)
     }
 
-    private async runTelegramWorker(): Promise<void> {
+    private async runTelegramWorker(workerType: TelegramWorkerMode): Promise<void> {
         try {
-            await this.telegramWorker.run()
+            await this.telegramWorker.run(workerType)
         } catch (err: any) {
             if (container.resolve(Database).isFailedConnectionError(err)) {
                 await container.resolve(Database).retryConnection()
 
-                await this.runTelegramWorker()
+                await this.runTelegramWorker(workerType)
             }
 
             await this.mailService.sendFailedWorkerEmail(`Error while running ${this.constructor.name}`, err)

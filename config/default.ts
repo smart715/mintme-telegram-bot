@@ -2,7 +2,7 @@ export default {
     'environment': process.env.NODE_ENV,
 
     //Database config
-    'db_host': 'db',
+    'db_host': 'localhost',
     'db_user': 'root',
     'db_password': 'root',
     'db_name': 'marketing_bot',
@@ -44,8 +44,6 @@ export default {
     'contact_twitter_max_attempts': 2,
     'contact_telegram_max_attempts': 2,
     'contact_frequency_in_seconds': 60 * 60 * 24 * 14, // 14 days
-
-    'server_ip': '{{ server_ip }}',
 
     'flaresolverr_server_url': 'http://localhost:8191/v1',
 

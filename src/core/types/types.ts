@@ -32,6 +32,11 @@ export enum ContactHistoryStatusType {
     ACCOUNT_GROUP_JOIN_LIMIT_HIT = 'ACCOUNT_GROUP_JOIN_LIMIT_HIT',
 }
 
+export enum ChatType {
+    DM = 'DM',
+    GROUP = 'GROUP',
+}
+
 export interface CMCWorkerConfig {
     apiKey: string,
     requestOffset: number,

@@ -12,14 +12,14 @@ import {
     ProxyService,
     MailerService,
 } from '../../../service'
-import { Environment, sleep } from '../../../../utils'
+import { Environment, sleep, TelegramWorkerMode } from '../../../../utils'
 
 @singleton()
 export class TelegramWorker {
     private readonly maxTelegramAccounts: number = config.get('telegram_max_accounts_simultaneous')
-    private readonly serverIP: string = config.get('server_ip')
 
     private telegramClients: TelegramClient[] = []
+    private mode: TelegramWorkerMode
 
     public constructor(
         private readonly telegramService: TelegramService,
@@ -52,8 +52,12 @@ export class TelegramWorker {
         return tgAccountManager
     }
 
-    public async run(): Promise<void> {
-        const allAccounts = await this.telegramService.getAllAccounts()
+    public async run(mode: TelegramWorkerMode): Promise<void> {
+        this.logger.info(`Running Telegram worker | Mode: ${mode}`)
+        this.mode = mode
+        this.telegramClients = []
+
+        const allAccounts = await this.telegramService.getAllAccounts(mode)
 
         if (0 === allAccounts.length) {
             await this.mailerService
@@ -77,60 +81,55 @@ export class TelegramWorker {
                 currentAccountIndex++
             }
 
-            await this.startContactingAllManagers(this.telegramClients)
+            await this.startAllClients(this.telegramClients)
 
             for (const client of this.telegramClients) {
                 await client.destroyDriver()
             }
         }
+
+        await this.startAllClients(this.telegramClients)
+
+        this.logger.info('Initialized Telegram clients: ', this.telegramClients.length)
         await sleep(60000)
-        const restart = await this.run()
+        const restart = await this.run(mode)
         return restart
     }
 
-    public async disableAccount(telegramAccount: TelegramAccount): Promise<void> {
-        await this.telegramService.setAccountAsDisabled(telegramAccount)
-        delete this.telegramClients[this.telegramClients.findIndex(
-            mgr => mgr.telegramAccount.id === telegramAccount.id)]
-        await this.requestNewAccount()
-    }
+    private async startAllClients(clients: TelegramClient[]): Promise<void[]> {
+        const workerPromises: Promise<void>[] = []
 
-    public async requestNewAccount(): Promise<void> {
-        const newAccount = await this.telegramService.assignNewAccountToServer(this.serverIP)
-
-        if (newAccount) {
-            this.telegramClients.push(await this.initializeNewAccountManager(newAccount))
-        } else {
-            this.logger.warn('No accounts stock available')
-        }
-    }
-
-    private async startContactingAllManagers(clients: TelegramClient[]): Promise<void[]> {
-        const contactingPromises: Promise<void>[] = []
-
-        for (const client of clients) {
+        clients.forEach(async (client) => {
             if (!client.isInitialized) {
                 this.logger.warn(
                     `[Telegram Worker ID: ${client.telegramAccount.id}] ` +
                     `Not initialized.`
                 )
 
-                continue
+                return
             }
 
-            if (!client.accountMessages?.length) {
+            if (!client.accountMessages?.length &&
+                TelegramWorkerMode.ALL == this.mode) {
                 const msg = `[Telegram Worker ID: ${client.telegramAccount.id}] ` +
                     `No messages stock available, Account not able to start messaging.`
 
                 this.logger.warn(msg)
                 await this.mailerService.sendFailedWorkerEmail(msg)
 
-                continue
+                return
             }
 
-            contactingPromises.push(client.startContacting())
-        }
+            switch (this.mode) {
+                case TelegramWorkerMode.ALL:
+                    workerPromises.push(client.startWorker())
+                    break
+                case TelegramWorkerMode.RESPONSES:
+                    workerPromises.push(client.startResponsesWorker())
+                    break
+            }
+        })
 
-        return Promise.all(contactingPromises)
+        return Promise.all(workerPromises)
     }
 }
