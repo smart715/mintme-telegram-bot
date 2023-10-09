@@ -67,7 +67,7 @@ export class ContactHistoryService {
 
     public async isFailedChannel(contactChannel: string): Promise<boolean> {
         const failsCount = await this.contactHistoryRepository.createQueryBuilder()
-            .where(`channel = '${contactChannel}'`)
+            .where(`channel LIKE '%${contactChannel}'`)
             .andWhere(`is_success = 0`)
             .andWhere(`NOT status ='UNKNOWN'`)
             .getCount()

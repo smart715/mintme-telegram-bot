@@ -148,7 +148,9 @@ export class EnqueueTokensWorker extends AbstractTokenWorker {
         channels: string[],
         contactMethod: ContactMethod): Promise<string> {
         for (const channel of channels) {
-            if (!await this.contactHistoryService.isFailedChannel(channel)) {
+            const channelWithoutProtocol = channel.replace('https://', '')
+
+            if (!await this.contactHistoryService.isFailedChannel(channelWithoutProtocol)) {
                 if (contactMethod === ContactMethod.TELEGRAM) {
                     const link = await this.checkTelegramLink(channel)
                     if (!link) {
