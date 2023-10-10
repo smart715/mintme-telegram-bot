@@ -11,7 +11,7 @@
     "typeorm": "ts-node ./node_modules/typeorm/cli.js -f ./config/ormconfig.ts",
     "cli": "ts-node src/cli.ts",
     "eslint": "eslint ./ --ext .js,.ts",
-    "eslint:fix": "eslint src --ext .js,.ts --fix"
+    "eslint:fix": "eslint ./ --ext .js,.ts --fix"
   },
   "repository": {
     "type": "git",
