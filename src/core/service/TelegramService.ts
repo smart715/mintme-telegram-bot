@@ -21,6 +21,17 @@ export class TelegramService {
         return this.telegramAccountRepository.getAllAccounts()
     }
 
+    public async assginLoginDateToAccount(accountID: number, time: Date) :Promise<TelegramAccount | undefined> {
+        const account = await this.telegramAccountRepository.findById(accountID)
+
+        if (account) {
+            account.lastLogin = time
+            await this.telegramAccountRepository.save(account)
+        }
+
+        return account
+    }
+
     public async setAccountAsDisabled(tgAccount: TelegramAccount): Promise<void> {
         tgAccount.isDisabled = true
         await this.telegramAccountRepository.save(tgAccount)

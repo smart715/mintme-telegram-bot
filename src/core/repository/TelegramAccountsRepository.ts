@@ -30,4 +30,8 @@ export class TelegramAccountsRepository extends Repository<TelegramAccount> {
             ))
             .getMany()
     }
+
+    public async findById(id: number): Promise<TelegramAccount | undefined> {
+        return this.findOne({ where: { id } })
+    }
 }
