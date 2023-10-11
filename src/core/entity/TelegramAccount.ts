@@ -21,6 +21,9 @@ export class TelegramAccount {
     @Column({ nullable: true })
     public limitHitResetDate!: Date
 
+    @Column({ nullable: true })
+    public lastLogin!: Date
+
     @ManyToOne(() => ProxyServer, (proxy) => proxy.tgAccounts, { eager: true })
     @JoinColumn()
     public proxy: ProxyServer

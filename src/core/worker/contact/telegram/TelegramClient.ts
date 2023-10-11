@@ -19,6 +19,7 @@ import { Logger } from 'winston'
 export class TelegramClient {
     private readonly maxMessagesPerDay: number = config.get('telegram_account_max_day_messages')
     private readonly messagesDelay: number = config.get('telegram_messages_delay_in_seconds')
+    private readonly limitLogginIn: number = config.get('telegram_limit_logging_in_in_mins')
     private readonly maxMessagesPerCycle: number = config.get('telegram_max_sent_messages_per_cycle')
     private sentMessages: number
     public telegramAccount: TelegramAccount
@@ -69,6 +70,11 @@ export class TelegramClient {
 
         if (!this.runContactingWorker && !this.runResponeseWorker) {
             this.log(`Skipping account, Contacting and Responses workers `)
+            return
+        }
+
+        if (!this.isAccountLastLoginBeforeLimit()) {
+            this.logger.warn(`Account can't try to login, last login date: ${this.telegramAccount.lastLogin}`)
             return
         }
 
@@ -164,6 +170,7 @@ export class TelegramClient {
             await driver.navigate().refresh()
             await driver.sleep(15000)
             if (await this.isLoggedIn()) {
+                await this.saveLastLogin()
                 return true
             } else {
                 if (retries < 3) {
@@ -179,6 +186,18 @@ export class TelegramClient {
             this.logger.error(e)
             return false
         }
+    }
+
+    private isAccountLastLoginBeforeLimit(): boolean {
+        const beforeLimitLogginIn = moment().subtract(this.limitLogginIn, 'minutes')
+        return !(
+            moment(this.telegramAccount.lastLogin).isValid() &&
+            moment(this.telegramAccount.lastLogin).isAfter(beforeLimitLogginIn)
+        )
+    }
+
+    private async saveLastLogin(): Promise<TelegramAccount | undefined> {
+        return this.telegramService.assginLoginDateToAccount(this.telegramAccount.id, moment().toDate())
     }
 
     private isLimitHit(): boolean {
