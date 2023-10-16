@@ -227,7 +227,7 @@ export class TwitterClient {
 
             if (!this.isAllowedToSendMessages()) {
                 this.log(`Account Limit hit`)
-                continue
+                return
             }
 
             const queuedContact = await this.contactQueueService.getFirstFromQueue(ContactMethod.TWITTER, this.logger)
