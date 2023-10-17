@@ -393,6 +393,11 @@ export class TelegramClient {
                 const goBackToChannel = await this.sendMessage(tgLink, true)
                 return goBackToChannel
             }
+
+            if (await this.isMessagesRestricted()) {
+                this.log('Messages are restricted by admins')
+                return ContactHistoryStatusType.MESSAGES_RESTRICTED_BY_ADMIN
+            }
         }
 
         if (await this.inputAndSendMessage()) {
@@ -412,6 +417,16 @@ export class TelegramClient {
             await this.driver.executeScript(await this.getScript('LeaveGroup'))
             await this.driver.sleep(10000)
             return ContactHistoryStatusType.MESSAGES_NOT_ALLOWED
+        }
+    }
+
+    private async isMessagesRestricted(): Promise<boolean> {
+        try {
+            const messageText = await this.driver.findElement(By.css('.messaging-disabled-inner span')).getText()
+            return 'the admins of this group have restricted your ability to send messages.' === messageText.toLowerCase()
+        } catch (error) {
+            this.logger.error(error)
+            return false
         }
     }
 
