@@ -42,3 +42,9 @@ export interface CMCWorkerConfig {
     requestOffset: number,
     requestLimit: number,
 }
+
+export enum BlacklistType {
+    CHAT_LINK = 'CHAT_LINK',
+    MESSAGE_CONTENT = 'MESSAGE_CONTENT',
+    USERNAME = 'USERNAME',
+}

@@ -1,5 +1,5 @@
 import { singleton } from 'tsyringe'
-import { TelegramAccountsRepository, TelegramResponseRepository } from '../repository'
+import { TelegramAccountsRepository, TelegramResponseRepository, BlacklistRepository } from '../repository'
 import { TelegramAccount, ProxyServer } from '../entity'
 import { ProxyService } from './ProxyServerService'
 import { TelegramWorkerMode } from '../../utils'
@@ -11,6 +11,7 @@ export class TelegramService {
         private telegramAccountRepository: TelegramAccountsRepository,
         private telegramResponseRepository: TelegramResponseRepository,
         private proxyService: ProxyService,
+        private blacklistRepository: BlacklistRepository
     ) { }
 
     public async getAllAccounts(mode: TelegramWorkerMode|undefined = undefined): Promise<TelegramAccount[]> {
@@ -53,9 +54,14 @@ export class TelegramService {
         tgAccount: TelegramAccount,
         type: string
     ): Promise<void> {
-        const isExistingResponse = await this.telegramResponseRepository.isExistingReponse(chatLink, chatMessages)
+        const conditions = [
+            this.telegramResponseRepository.isExistingReponse(chatLink, chatMessages),
+            this.blacklistRepository.isChatInBlacklist(chatLink),
+            this.blacklistRepository.isMessagesContainsBlacklistWord(chatMessages),
+            this.blacklistRepository.isUsernameInBlacklist(chatLink),
+        ]
 
-        if (isExistingResponse) {
+        if ((await Promise.all(conditions)).some((value) => value)) {
             return
         }
 

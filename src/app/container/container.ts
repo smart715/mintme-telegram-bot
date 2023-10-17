@@ -100,6 +100,7 @@ import {
     TwitterService,
     DailyStatisticMailWorker,
     TwitterResponseRepository,
+    BlacklistRepository,
 } from '../../core'
 import { Application } from '../'
 import { CliDependency } from './types'
@@ -208,6 +209,10 @@ container.register(TwitterAccountRepository, {
 
 container.register(TwitterResponseRepository, {
     useFactory: instanceCachingFactory(() => getConnection().getCustomRepository(TwitterResponseRepository)),
+})
+
+container.register(BlacklistRepository, {
+    useFactory: instanceCachingFactory(() => getConnection().getCustomRepository(BlacklistRepository)),
 })
 
 // Utils
