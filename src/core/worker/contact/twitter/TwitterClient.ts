@@ -299,10 +299,7 @@ export class TwitterClient {
                 this.twitterAccount.id
             )
 
-            token.lastContactMethod = ContactMethod.TWITTER
-            token.lastContactAttempt = new Date()
-
-            await this.tokenService.saveTokenContactInfo(token)
+            await this.tokenService.postContactingActions(token, ContactMethod.TWITTER)
 
             await this.driver.sleep(this.messageDelaySec * 1000)
         }

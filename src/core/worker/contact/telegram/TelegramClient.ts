@@ -667,11 +667,8 @@ export class TelegramClient {
                 this.telegramAccount.id,
             )
 
-            token.lastContactMethod = ContactMethod.TELEGRAM
-            token.telegramAttempts++
-            token.lastContactAttempt = new Date()
 
-            await this.tokenService.saveTokenContactInfo(token)
+            await this.tokenService.postContactingActions(token, ContactMethod.TELEGRAM)
         }
         await this.postSendingCheck()
     }

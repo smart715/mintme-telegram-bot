@@ -872,7 +872,6 @@ container.register(MailerWorker, {
             dependencyContainer.resolve(TokensService),
             dependencyContainer.resolve(ContactMessageService),
             dependencyContainer.resolve(ContactHistoryService),
-            dependencyContainer.resolve(EnqueueTokensWorker),
             dependencyContainer.resolve(MailerService),
             mailerLogger,
         )

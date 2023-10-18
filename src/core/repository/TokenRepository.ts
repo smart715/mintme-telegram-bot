@@ -17,22 +17,30 @@ export class TokenRepository extends Repository<Token> {
         return this.findOne({ where: { name, blockchain } })
     }
 
-    public async getLastNotContactedTokens(blockchain: Blockchain,
+    public async getLastNotContactedTokens(blockchain: Blockchain|undefined,
         maxEmailAttempts: number,
         maxTwitterAttempts: number,
         maxTelegramAttempts: number): Promise<Token[]> {
         const delayInSeconds = parseInt(config.get('contact_frequency_in_seconds'))
 
-        return this.createQueryBuilder()
-            .where('contact_status = :status', { status: TokenContactStatusType.NOT_CONTACTED })
+        const queryBuilder = this.createQueryBuilder()
+            .where(new Brackets(queryBuilder => {
+                queryBuilder
+                    .where('contact_status = :notContactedStatus', { notContactedStatus: TokenContactStatusType.NOT_CONTACTED })
+                    .orWhere('contact_status = :contactedStatus', { contactedStatus: TokenContactStatusType.CONTACTED })
+            }))
             .andWhere('avoid_contacting = 0')
-            .andWhere('blockchain = :blockchain', { blockchain })
             .andWhere(`((email_attempts < ${maxEmailAttempts} AND emails LIKE '%@%') OR (twitter_attempts < ${maxTwitterAttempts} AND links LIKE '%twitter.com%') OR (telegram_attempts < ${maxTelegramAttempts} AND links LIKE '%t.me/%'))`)
             .andWhere(
                 '(last_contact_attempt is null or last_contact_attempt < :dateBefore)',
                 { dateBefore: moment().utc().subtract(delayInSeconds, 'second').format() }
             )
-            .getMany()
+
+        if (blockchain) {
+            queryBuilder.andWhere('blockchain = :blockchain', { blockchain })
+        }
+
+        return queryBuilder.getMany()
     }
 
     public async getNextWithoutTxDate(): Promise<Token | undefined> {

@@ -2,7 +2,7 @@ import { singleton } from 'tsyringe'
 import { Logger } from 'winston'
 import { CommandInterface, RunEnqueueTokenWorkerCmdArgv } from './types'
 import { Arguments, Argv } from 'yargs'
-import { Blockchain, sleep } from '../../utils'
+import { sleep } from '../../utils'
 import { EnqueueTokensWorker, MailerService } from '../../core'
 
 @singleton()
@@ -20,7 +20,7 @@ export class RunEnqueueTokenWorker implements CommandInterface {
         yargs.option('blockchain', {
             type: 'string',
             describe: 'Blockchain to check',
-            default: () => Blockchain.BSC,
+            default: () => undefined,
             demandOption: false,
         })
     }

@@ -2,7 +2,8 @@ import { singleton } from 'tsyringe'
 import { TokenRepository } from '../repository'
 import { Token } from '../entity'
 import { Blockchain, getValidLinks, isValidEmail } from '../../utils'
-import { ContactMethod, TokensCountGroupedBySourceAndBlockchain } from '../types'
+import { ContactMethod, TokenContactStatusType, TokensCountGroupedBySourceAndBlockchain } from '../types'
+import moment from 'moment'
 
 @singleton()
 export class TokensService {
@@ -71,7 +72,7 @@ export class TokensService {
             })
     }
 
-    public async getLastNotContactedTokens(blockchain: Blockchain,
+    public async getLastNotContactedTokens(blockchain: Blockchain|undefined,
         maxEmailAttempts: number,
         maxTwitterAttempts: number,
         maxTelegramAttempts: number): Promise<Token[]> {
@@ -99,5 +100,25 @@ export class TokensService {
 
     public getTelegramAccounts(token: Token): string[] {
         return getValidLinks(token.links, ContactMethod.TELEGRAM)
+    }
+
+    public async postContactingActions(token: Token, contactMethod: ContactMethod): Promise<void> {
+        token.lastContactMethod = contactMethod
+        token.lastContactAttempt = moment().utc().toDate()
+        token.contactStatus = TokenContactStatusType.CONTACTED
+
+        switch (contactMethod) {
+            case ContactMethod.EMAIL:
+                token.emailAttempts++
+                break
+            case ContactMethod.TWITTER:
+                token.twitterAttempts++
+                break
+            case ContactMethod.TELEGRAM:
+                token.telegramAttempts++
+                break
+        }
+
+        return this.update(token)
     }
 }
