@@ -79,7 +79,7 @@ Parses token addresses and wallet addresses from explorers.
 | `validators-fetcher`          | Works only for BSC. Fetches Validators Top Leaderboard (Blocks Validated) page and saves all wallet addresses.                                                                                                                                                         |
 | `check-token-worker`          | Accepts all blockchains. Fetches queued token addresses. Check for liquidity provider in page and if exists, parse info and adds or updates new token to the token table                                                                                               |
 | `explorer-search-api-worker`  | Accepts all blockchains. Adds token addresses from API explorer to the queued token address.                                                                                                                                                                           |
-| `token-holdings-worker`       | Accepts all blockchains. Runs ether or bsc ScanAddressTokensHoldingsWorker depends on the blockchain param (BSC and CRO runs the same worker)<br/> Checks tokens that have wallet from queued_wallet_address table. Parse it and adds it to queued_token_address table |
+| `token-holdings-worker`       | Accepts all blockchains. Runs bscScanAddressTokensHoldingsWorker (BSC, ETH and CRO runs the same worker)<br/> Checks tokens that have wallet from queued_wallet_address table. Parse it and adds it to queued_token_address table |
 
 #### `run-last-token-tx-date-fetcher`
 Fetches tokens without last transaction date. And update last transaction date in a loop using explorer api

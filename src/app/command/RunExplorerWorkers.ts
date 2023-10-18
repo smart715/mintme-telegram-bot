@@ -9,7 +9,6 @@ import {
     BSCScanTopTokensFetcher,
     BSCScanValidatorsFetcher,
     CheckTokenBNBWorker,
-    EtherScanAddressTokensHoldingsWorker,
     ExplorerSearchAPIWorker,
     MailerService,
 } from '../../core'
@@ -21,7 +20,6 @@ export class RunExplorerWorker implements CommandInterface {
 
     public constructor(
         private readonly bscScanAddressTokensHoldingsWorker: BSCScanAddressTokensHoldingsWorker,
-        private readonly etherScanAddressTokensHoldingsWorker: EtherScanAddressTokensHoldingsWorker,
         private readonly bscScanTokensTransactionsFetcher: BSCScanTokensTransactionsFetcher,
         private readonly bscScanTopAccountsFetcher: BSCScanTopAccountsFetcher,
         private readonly bscScanTopTokensFetcher: BSCScanTopTokensFetcher,
@@ -85,7 +83,7 @@ export class RunExplorerWorker implements CommandInterface {
 
     private async runHoldingWorker(blockchain: Blockchain|null): Promise<void> {
         if (!blockchain) {
-            const ethWorker = this.etherScanAddressTokensHoldingsWorker.run()
+            const ethWorker = this.bscScanAddressTokensHoldingsWorker.run(Blockchain.ETH)
             const bscWorker = this.bscScanAddressTokensHoldingsWorker.run(Blockchain.BSC)
             const croWorker = this.bscScanAddressTokensHoldingsWorker.run(Blockchain.CRO)
 
@@ -94,10 +92,6 @@ export class RunExplorerWorker implements CommandInterface {
             return
         }
 
-        if (Blockchain.ETH === blockchain) {
-            await this.etherScanAddressTokensHoldingsWorker.run()
-        } else {
-            await this.bscScanAddressTokensHoldingsWorker.run(blockchain)
-        }
+        await this.bscScanAddressTokensHoldingsWorker.run(blockchain)
     }
 }

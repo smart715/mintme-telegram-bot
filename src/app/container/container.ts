@@ -15,7 +15,6 @@ import {
     QueuedTokenAddressService,
     LastCheckedTokenNameService,
     BSCScanAddressTokensHoldingsWorker,
-    EtherScanAddressTokensHoldingsWorker,
     BSCScanTokensTransactionsFetcher,
     BSCScanTopAccountsFetcher,
     BSCScanTopTokensFetcher,
@@ -491,17 +490,6 @@ container.register(BSCScanAddressTokensHoldingsWorker, {
     ),
 })
 
-container.register(EtherScanAddressTokensHoldingsWorker, {
-    useFactory: instanceCachingFactory((dependencyContainer) =>
-        new EtherScanAddressTokensHoldingsWorker(
-            dependencyContainer.resolve(QueuedWalletAddressService),
-            dependencyContainer.resolve(ExplorerEnqueuer),
-            dependencyContainer.resolve(FirewallService),
-            createLogger(EtherScanAddressTokensHoldingsWorker.name.toLowerCase())
-        )
-    ),
-})
-
 container.register(BSCScanTokensTransactionsFetcher, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new BSCScanTokensTransactionsFetcher(
@@ -930,7 +918,6 @@ container.register(CliDependency.COMMAND, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new RunExplorerWorker(
             dependencyContainer.resolve(BSCScanAddressTokensHoldingsWorker),
-            dependencyContainer.resolve(EtherScanAddressTokensHoldingsWorker),
             dependencyContainer.resolve(BSCScanTokensTransactionsFetcher),
             dependencyContainer.resolve(BSCScanTopAccountsFetcher),
             dependencyContainer.resolve(BSCScanTopTokensFetcher),

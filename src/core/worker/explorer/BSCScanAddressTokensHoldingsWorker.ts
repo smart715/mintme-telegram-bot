@@ -1,5 +1,5 @@
 import { AbstractTokenWorker } from '../AbstractTokenWorker'
-import { By, WebDriver, until } from 'selenium-webdriver'
+import { By, Key, WebDriver, until } from 'selenium-webdriver'
 import { FirewallService, QueuedWalletAddressService, SeleniumService } from '../../service'
 import { QueuedWalletAddress } from '../../entity'
 import { sleep, Blockchain, explorerDomains } from '../../../utils'
@@ -14,6 +14,7 @@ export class BSCScanAddressTokensHoldingsWorker extends AbstractTokenWorker {
     private readonly sleepDuration = 60 * 1000
     private readonly delayBetweenPages = 5 * 1000
 
+    private blockchain: Blockchain
     public constructor(
         private readonly queuedWalletAddressService: QueuedWalletAddressService,
         private readonly explorerParser: ExplorerEnqueuer,
@@ -23,7 +24,9 @@ export class BSCScanAddressTokensHoldingsWorker extends AbstractTokenWorker {
         super()
     }
 
-    public async run(blockchain: Blockchain.BSC | Blockchain.CRO): Promise<void> {
+    public async run(blockchain: Blockchain): Promise<void> {
+        this.blockchain = blockchain
+
         const explorerDomain = explorerDomains[blockchain]
         let webDriver
 
@@ -54,16 +57,31 @@ export class BSCScanAddressTokensHoldingsWorker extends AbstractTokenWorker {
                 }
 
                 await webDriver.get(this.buildExplorerUrl(explorerDomain, wallet.walletAddress))
-                await webDriver.wait(until.elementLocated(By.id('assets-wallet')), 60000)
+                await webDriver.wait(until.elementLocated(By.name('mytable_length')), 60000)
+
+                await webDriver.sleep(this.delayBetweenPages)
 
                 if (await this.isPageAvailable(webDriver)) {
-                    await this.processTokensOnPage(webDriver, blockchain)
+                    const resultsPerPageSelector = await webDriver.findElement(By.name('mytable_length'))
+
+                    for (let i = 0; i < 3; i++) {
+                        await resultsPerPageSelector.sendKeys(Key.ARROW_DOWN)
+                        await webDriver.sleep(300)
+                    }
+
+                    await webDriver.sleep(this.delayBetweenPages)
+
+                    await this.processTokensOnPage(webDriver)
 
                     const pagesAmount = await this.getPagesAmount(webDriver)
 
                     for (let page = 2; page <= pagesAmount; page++) {
-                        await webDriver.get(this.buildExplorerUrl(explorerDomain, wallet.walletAddress, page))
-                        await this.processTokensOnPage(webDriver, blockchain)
+                        const nextPage = webDriver.findElement(By.id('mytable_next'))
+                        await webDriver.executeScript(`arguments[0].click()`, nextPage)
+
+                        await webDriver.sleep(this.delayBetweenPages)
+
+                        await this.processTokensOnPage(webDriver)
                     }
                 }
 
@@ -90,9 +108,9 @@ export class BSCScanAddressTokensHoldingsWorker extends AbstractTokenWorker {
         return !pageSource.toLowerCase().includes('token holdings page not available for this address')
     }
 
-    private async processTokensOnPage(webDriver: WebDriver, blockchain: Blockchain): Promise<void> {
+    private async processTokensOnPage(webDriver: WebDriver): Promise<void> {
         const pageSource = await webDriver.getPageSource()
-        await this.explorerParser.enqueueTokenAddresses(pageSource, blockchain)
+        await this.explorerParser.enqueueTokenAddresses(pageSource, this.blockchain)
     }
 
     private async getPagesAmount(webDriver: WebDriver): Promise<number> {
@@ -102,8 +120,9 @@ export class BSCScanAddressTokensHoldingsWorker extends AbstractTokenWorker {
             return 0
         }
 
-        const lastPageElementHref = await pageElements[pageElements.length - 1].getAttribute('href')
-        const pagesAmount = parseInt(lastPageElementHref.split('&p=').slice(-1, 0)[0])
+        const pagesInfoText = await pageElements[2].getText()
+
+        const pagesAmount = parseInt(pagesInfoText.split('of').slice(-1)[0].trim())
 
         return isNaN(pagesAmount)
             ? 0
