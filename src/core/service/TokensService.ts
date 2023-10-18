@@ -90,6 +90,32 @@ export class TokensService {
         return this.tokenRepository.getNextWithoutTxDate()
     }
 
+    public async findIfThereRespondedTokensByQueuedChannel(
+        queuedChannel: string,
+        isEmail: boolean = false
+    ): Promise<boolean> {
+        const tokens = await this.tokenRepository.findTokensByQueuedChannel(queuedChannel, {
+            isEmail,
+            onlyResponded: true,
+        })
+
+        return !!tokens
+    }
+
+    public async findTokensByQueuedChannelAndMarkThemResponded(
+        queuedChannel: string,
+        isEmail: boolean = false
+    ): Promise<void> {
+        const tokens = await this.tokenRepository.findTokensByQueuedChannel(queuedChannel, { isEmail })
+
+        tokens.forEach(async (token) => {
+            await this.tokenRepository.save({
+                id: token.id,
+                contactStatus: TokenContactStatusType.RESPONDED,
+            })
+        })
+    }
+
     public getEmails(token: Token): string[] {
         return token.emails?.filter(email => isValidEmail(email)) ?? []
     }
