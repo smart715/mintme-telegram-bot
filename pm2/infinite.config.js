@@ -25,5 +25,11 @@ module.exports = {
             args: 'run cli -- run-explorer-worker --name=token-transactions-fetcher',
             autorestart: true,
         },
+        {
+            name: 'enqueue-tokens-worker',
+            script: 'npm',
+            args: 'run cli -- run-enqueue-tokens-worker',
+            autorestart: true,
+        },
     ],
 }
