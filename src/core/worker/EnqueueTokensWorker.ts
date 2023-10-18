@@ -18,7 +18,7 @@ export class EnqueueTokensWorker extends AbstractTokenWorker {
         super()
     }
 
-    public async run(blockchain: Blockchain): Promise<any> {
+    public async run(blockchain: Blockchain|undefined): Promise<any> {
         this.logger.info(`[${EnqueueTokensWorker.name}] Started for ${blockchain} blockchain`)
 
         const listedTokensAdresses = await this.mintmeService.getCachedListedTokensAdresses()

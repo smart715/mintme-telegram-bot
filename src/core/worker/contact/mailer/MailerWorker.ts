@@ -5,7 +5,6 @@ import {
     MailerService,
     TokensService,
 } from '../../../service'
-import { EnqueueTokensWorker } from '../../EnqueueTokensWorker'
 import { ContactHistoryStatusType, ContactMethod, TokenContactStatusType } from '../../../types'
 import { sleep } from '../../../../utils'
 import { ContactHistory, ContactMessage, QueuedContact, Token } from '../../../entity'
@@ -23,7 +22,6 @@ export class MailerWorker {
         private readonly tokensService: TokensService,
         private readonly contactMessageService: ContactMessageService,
         private readonly contactHistoryService: ContactHistoryService,
-        private readonly enqueueTokensWorker: EnqueueTokensWorker,
         private readonly mailer: MailerService,
         private readonly logger: Logger,
     ) { }
@@ -72,11 +70,10 @@ export class MailerWorker {
             `[${this.workerName}] Started processing ${queueItem.address} ${queueItem.blockchain} :: ${queueItem.channel}. `
         )
 
-        const contactResult = await this.contact(queueItem.channel, token)
+        await this.contact(queueItem.channel, token)
         await this.contactQueueService.removeFromQueue(queueItem.address, queueItem.blockchain)
-        await this.updateTokenInfo(token)
+        await this.tokensService.postContactingActions(token, ContactMethod.EMAIL)
 
-        await this.tryToEnqueueToken(token, contactResult)
 
         this.logger.info(`[${this.workerName}] ` +
             `Proceeding of ${queueItem.address} :: ${queueItem.blockchain} finished`
@@ -155,34 +152,5 @@ export class MailerWorker {
             email,
             contactResult,
         )
-    }
-
-    private async updateTokenInfo(token: Token): Promise<void> {
-        token.lastContactMethod = ContactMethod.EMAIL
-        token.emailAttempts++
-        token.lastContactAttempt = new Date()
-
-        return this.tokensService.update(token)
-    }
-
-    private async tryToEnqueueToken(token: Token, contactResult: ContactHistoryStatusType): Promise<void> {
-        const isFutureContact = ContactHistoryStatusType.SENT === contactResult
-        const {
-            enqueued,
-            contactChannel,
-            nextContactMethod,
-        } = await this.enqueueTokensWorker.tryToEnqueueToken(token, isFutureContact)
-
-        if (enqueued) {
-            this.logger.info(`[${this.workerName}] ` +
-                `Token ${token.address} was queued for for future contact via ${nextContactMethod} (${contactChannel}). ` +
-                `Saved with status ${token.contactStatus}`
-            )
-        } else {
-            this.logger.warn(`[${this.workerName}] ` +
-                `Token ${token.address} don't have any available contact method. ` +
-                `Saved with status ${token.contactStatus}`
-            )
-        }
     }
 }
