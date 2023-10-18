@@ -577,6 +577,19 @@ export class TelegramClient {
                 return this.startWorker()
             }
 
+            if (await this.tokenService.findIfThereRespondedTokensByQueuedChannel(queuedContact.channel)) {
+                await this.tokenService.findTokensByQueuedChannelAndMarkThemResponded(queuedContact.channel)
+
+                await this.contactQueueService.removeFromQueue(queuedContact.address, queuedContact.blockchain)
+
+                this.logger.info(
+                    `[TelegramWorker ID: ${this.telegramAccount.id}]  ` +
+                    `Token for ${queuedContact.address} :: ${queuedContact.blockchain} owner have another responded token. Removed from queue. Skipping`
+                )
+
+                return this.startWorker()
+            }
+
             await this.checkQueuedContact(queuedContact, token)
 
             this.log(

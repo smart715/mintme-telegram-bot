@@ -66,6 +66,21 @@ export class MailerWorker {
             return
         }
 
+        const isEmail = true
+
+        if (await this.tokensService.findIfThereRespondedTokensByQueuedChannel(queueItem.channel, isEmail)) {
+            await this.tokensService.findTokensByQueuedChannelAndMarkThemResponded(queueItem.channel, isEmail)
+
+            await this.contactQueueService.removeFromQueue(queueItem.address, queueItem.blockchain)
+
+            this.logger.info(
+                `[${this.workerName}] ` +
+                `Token for ${queueItem.address} :: ${queueItem.blockchain} owner have another responded token. Removed from queue. Skipping`
+            )
+
+            return
+        }
+
         this.logger.info(
             `[${this.workerName}] Started processing ${queueItem.address} ${queueItem.blockchain} :: ${queueItem.channel}. `
         )

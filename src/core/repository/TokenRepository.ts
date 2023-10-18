@@ -3,7 +3,7 @@ import config from 'config'
 import { singleton } from 'tsyringe'
 import { Brackets, EntityRepository, Repository } from 'typeorm'
 import { Token } from '../entity'
-import { Blockchain } from '../../utils'
+import { Blockchain, removeHttpsProtocol } from '../../utils'
 import { TokenContactStatusType, TokensCountGroupedBySourceAndBlockchain } from '../types'
 
 @singleton()
@@ -65,5 +65,28 @@ export class TokenRepository extends Repository<Token> {
             .getRawMany()
 
         return result as TokensCountGroupedBySourceAndBlockchain[]
+    }
+
+    public async findTokensByQueuedChannel(
+        queuedChannel: string,
+        options: { onlyResponded?: boolean; isEmail?: boolean } = {}
+    ): Promise<Token[]> {
+        const { onlyResponded = false, isEmail = false } = options
+
+        const query = this.createQueryBuilder()
+
+        if (isEmail) {
+            query.where('INSTR(emails, :queuedChannel) > 0', { queuedChannel })
+        } else {
+            query.where('INSTR(links, :queuedChannel) > 0', { queuedChannel: removeHttpsProtocol(queuedChannel) })
+        }
+
+        if (onlyResponded) {
+            query.andWhere('contact_status = :status', { status: TokenContactStatusType.RESPONDED })
+        }
+
+        const result = await query.getMany()
+
+        return result
     }
 }

@@ -260,6 +260,19 @@ export class TwitterClient {
                 continue
             }
 
+            if (await this.tokenService.findIfThereRespondedTokensByQueuedChannel(queuedContact.channel)) {
+                await this.tokenService.findTokensByQueuedChannelAndMarkThemResponded(queuedContact.channel)
+
+                await this.contactQueueService.removeFromQueue(queuedContact.address, queuedContact.blockchain)
+
+                this.logger.info(
+                    `[TwitterWorker ID: ${this.twitterAccount.id}]  ` +
+                    `Token for ${queuedContact.address} :: ${queuedContact.blockchain} owner have another responded token. Removed from queue. Skipping`
+                )
+
+                continue
+            }
+
             const result = await this.contactWithToken(
                 queuedContact.channel,
                 this.buildMessage(token)

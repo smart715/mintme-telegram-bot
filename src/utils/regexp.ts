@@ -47,3 +47,7 @@ export function getValidLinks(links: string[], method: string): string[] {
 export function removeQueryParams(link: string): string {
     return link.replace(/\?.*$/, '')
 }
+
+export function removeHttpsProtocol(link: string): string {
+    return link.replace('https://', '')
+}
