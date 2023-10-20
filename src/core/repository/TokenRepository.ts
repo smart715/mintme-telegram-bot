@@ -13,6 +13,10 @@ export class TokenRepository extends Repository<Token> {
         return this.findOne({ where: { address, blockchain } })
     }
 
+    public async findByAddress(address: string): Promise<Token | undefined> {
+        return this.findOne({ where: { address } })
+    }
+
     public async findByNameAndBlockchain(name: string, blockchain: Blockchain): Promise<Token | undefined> {
         return this.findOne({ where: { name, blockchain } })
     }

@@ -61,7 +61,7 @@ export class RugFreeCoinsWorker extends AbstractParserWorker {
                     continue
                 }
 
-                const tokenInDb = await this.tokenService.findByAddress(tokenAddress, currentBlockchain)
+                const tokenInDb = await this.tokenService.findByAddress(tokenAddress)
 
                 if (tokenInDb) {
                     continue

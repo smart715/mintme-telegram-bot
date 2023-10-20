@@ -106,11 +106,13 @@ export class CheckTokenBNBWorker extends AbstractTokenWorker {
             return
         }
 
-        const token = await this.tokensService.findByAddress(queuedToken.tokenAddress, queuedToken.blockchain)
+        const token = await this.tokensService.findByAddress(queuedToken.tokenAddress)
 
         if (token) {
+            this.logger.info(`Checking to update ${token.blockchain} token ${token.address} :: ${token.name}`)
             await this.updateToken(token, website, emails, links)
         } else {
+            this.logger.info(`Adding new ${queuedToken.blockchain} token ${queuedToken.tokenAddress} :: ${tokenName}`)
             await this.saveNewToken(queuedToken.blockchain, queuedToken.tokenAddress, tokenName, website, emails, links)
         }
     }
@@ -163,12 +165,21 @@ export class CheckTokenBNBWorker extends AbstractTokenWorker {
         )
     }
 
+    private getBlockchainExplorerTitle(blockchain: Blockchain): string {
+        switch (blockchain) {
+            case Blockchain.BSC:
+                return 'BscScan'
+            case Blockchain.ETH:
+                return 'Etherscan'
+            case Blockchain.CRO:
+                return 'CronoScan'
+        }
+    }
+
     private async getTokenName(webDriver: WebDriver, blockchain: Blockchain): Promise<string> {
         const title = await webDriver.getTitle()
-        const blockchainWord = blockchain === Blockchain.ETH
-            ? 'Etherscan'
-            : 'BscScan'
-
+        const blockchainWord = this.getBlockchainExplorerTitle(blockchain)
+            
         return title.startsWith('$')
             ? title
                 .split('|')[1]
@@ -184,7 +195,7 @@ export class CheckTokenBNBWorker extends AbstractTokenWorker {
     }
 
     private async getWebSite(webDriver: WebDriver, blockchain: Blockchain): Promise<string> {
-        if (Blockchain.ETH === blockchain) {
+        if (Blockchain.ETH === blockchain || Blockchain.BSC === blockchain) {
             const linkDropdown = (await webDriver.findElements({ id: 'ContentPlaceHolder1_divLinks' }))[0]
 
             if (linkDropdown) {
@@ -235,7 +246,7 @@ export class CheckTokenBNBWorker extends AbstractTokenWorker {
     private async getRawLinks(webDriver: WebDriver, blockchain: Blockchain): Promise<string[]> {
         let linkElements: WebElement[]
 
-        if (Blockchain.ETH === blockchain) {
+        if (Blockchain.ETH === blockchain || Blockchain.BSC === blockchain) {
             const placeholder = (await webDriver.findElements(By.id('ContentPlaceHolder1_divLinks')))[0]
             linkElements = await placeholder?.findElements(By.css('a')) ?? []
         } else {

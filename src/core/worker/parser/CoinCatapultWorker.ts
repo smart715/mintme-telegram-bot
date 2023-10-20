@@ -93,7 +93,7 @@ export class CoinCatapultWorker extends AbstractParserWorker {
                 links.push(social.telegram)
             }
 
-            const tokenInDb = await this.tokenService.findByAddress(address, currentBlockchain)
+            const tokenInDb = await this.tokenService.findByAddress(address)
 
             if (tokenInDb) {
                 continue

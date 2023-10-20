@@ -565,7 +565,7 @@ export class TelegramClient {
         const queuedContact = await this.contactQueueService.getFirstFromQueue(ContactMethod.TELEGRAM, this.logger)
 
         if (queuedContact) {
-            const token = await this.tokenService.findByAddress(queuedContact.address, queuedContact.blockchain)
+            const token = await this.tokenService.findByAddress(queuedContact.address)
 
             if (!token) {
                 await this.contactQueueService.removeFromQueue(queuedContact.address, queuedContact.blockchain)
