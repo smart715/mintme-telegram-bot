@@ -1,13 +1,14 @@
 import { singleton } from 'tsyringe'
 import { QueuedContactRepository } from '../repository'
-import { QueuedContact } from '../entity'
+import { QueuedContact, Token } from '../entity'
 import { Brackets } from 'typeorm'
 import config from 'config'
 import moment from 'moment'
 import { Blockchain } from '../../utils'
-import { ContactMethod } from '../types'
+import { ContactMethod, TokenContactStatusType } from '../types'
 import axios from 'axios'
 import { Logger } from 'winston'
+import { TokensService } from './TokensService'
 
 @singleton()
 export class ContactQueueService {
@@ -15,6 +16,7 @@ export class ContactQueueService {
 
     public constructor(
         private readonly queuedContactRepository: QueuedContactRepository,
+        private readonly tokenService: TokensService,
     ) { }
 
     public async addToQueue(
@@ -108,5 +110,38 @@ export class ContactQueueService {
             logger.error(e)
             return false
         }
+    }
+
+    public async preContactCheckAndCorrect(
+        queuedContact: QueuedContact,
+        token: Token,
+        logger: Logger
+    ): Promise<boolean> {
+        if (TokenContactStatusType.RESPONDED === token.contactStatus) {
+            await this.removeFromQueue(queuedContact.address, queuedContact.blockchain)
+
+            logger.info(
+                `token ${queuedContact.address} :: ${queuedContact.blockchain} was marked as responded . Skipping`
+            )
+
+            return false
+        }
+
+        const isChannelOfRespondedToken = await this.tokenService.isChannelOfRespondedToken(queuedContact)
+
+        if (isChannelOfRespondedToken) {
+            token.contactStatus = TokenContactStatusType.RESPONDED
+            this.tokenService.update(token)
+
+            await this.removeFromQueue(queuedContact.address, queuedContact.blockchain)
+
+            logger.info(
+                `Token for ${queuedContact.address} :: ${queuedContact.blockchain} (${queuedContact.channel}) owner have another responded token. Removed from queue. Skipping`
+            )
+
+            return false
+        }
+
+        return true
     }
 }
