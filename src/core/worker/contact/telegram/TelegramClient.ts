@@ -1,5 +1,5 @@
 import config from 'config'
-import { ContactMessage, QueuedContact, TelegramAccount, Token } from '../../../entity'
+import { ContactMessage, TelegramAccount } from '../../../entity'
 import {
     ContactHistoryService,
     SeleniumService,
@@ -12,7 +12,7 @@ import {
 import { By, Key, WebDriver, WebElement } from 'selenium-webdriver'
 import * as fs from 'fs'
 import { Environment, getRandomNumber } from '../../../../utils'
-import { ChatType, ContactHistoryStatusType, ContactMethod, TokenContactStatusType } from '../../../types'
+import { ChatType, ContactHistoryStatusType, ContactMethod } from '../../../types'
 import moment from 'moment'
 import { Logger } from 'winston'
 
@@ -498,20 +498,6 @@ export class TelegramClient {
         return false
     }
 
-    private async checkQueuedContact(queuedContact: QueuedContact, token: Token): Promise<void> {
-        if (queuedContact) {
-            if (token.contactStatus === TokenContactStatusType.RESPONDED) {
-                await this.contactQueueService.removeFromQueue(queuedContact.address, queuedContact.blockchain)
-
-                this.log(
-                    `token ${queuedContact.address} :: ${queuedContact.blockchain} was marked as responded . Skipping`
-                )
-
-                return this.startWorker()
-            }
-        }
-    }
-
     private isSuccessResult(result: ContactHistoryStatusType): boolean {
         const isSuccess = (result === ContactHistoryStatusType.SENT_DM ||
             result === ContactHistoryStatusType.SENT_GROUP ||
@@ -577,20 +563,14 @@ export class TelegramClient {
                 return this.startWorker()
             }
 
-            if (await this.tokenService.findIfThereRespondedTokensByQueuedChannel(queuedContact.channel)) {
-                await this.tokenService.findTokensByQueuedChannelAndMarkThemResponded(queuedContact.channel)
+            const isValidQueuedContact = await this.contactQueueService.preContactCheckAndCorrect(
+                queuedContact,
+                token,
+                this.logger)
 
-                await this.contactQueueService.removeFromQueue(queuedContact.address, queuedContact.blockchain)
-
-                this.logger.info(
-                    `[TelegramWorker ID: ${this.telegramAccount.id}]  ` +
-                    `Token for ${queuedContact.address} :: ${queuedContact.blockchain} owner have another responded token. Removed from queue. Skipping`
-                )
-
+            if (!isValidQueuedContact) {
                 return this.startWorker()
             }
-
-            await this.checkQueuedContact(queuedContact, token)
 
             this.log(
                 `Contacting token ${queuedContact.address} :: ${queuedContact.blockchain}`
@@ -681,7 +661,7 @@ export class TelegramClient {
             )
 
 
-            await this.tokenService.postContactingActions(token, ContactMethod.TELEGRAM)
+            await this.tokenService.postContactingActions(token, ContactMethod.TELEGRAM, isSuccess)
         }
         await this.postSendingCheck()
     }

@@ -5,7 +5,7 @@ import {
     MailerService,
     TokensService,
 } from '../../../service'
-import { ContactHistoryStatusType, ContactMethod, TokenContactStatusType } from '../../../types'
+import { ContactHistoryStatusType, ContactMethod } from '../../../types'
 import { sleep } from '../../../../utils'
 import { ContactHistory, ContactMessage, QueuedContact, Token } from '../../../entity'
 import { singleton } from 'tsyringe'
@@ -55,31 +55,15 @@ export class MailerWorker {
             return
         }
 
-        if (TokenContactStatusType.RESPONDED === token.contactStatus) {
-            await this.contactQueueService.removeFromQueue(queueItem.address, queueItem.blockchain)
+        const isValidQueuedContact = await this.contactQueueService.preContactCheckAndCorrect(
+            queueItem,
+            token,
+            this.logger)
 
-            this.logger.info(
-                `[${this.workerName}] ` +
-                `Token for ${queueItem.address} :: ${queueItem.blockchain} is marked as responded. Removed from queue. Skipping`
-            )
-
+        if (!isValidQueuedContact) {
             return
         }
 
-        const isEmail = true
-
-        if (await this.tokensService.findIfThereRespondedTokensByQueuedChannel(queueItem.channel, isEmail)) {
-            await this.tokensService.findTokensByQueuedChannelAndMarkThemResponded(queueItem.channel, isEmail)
-
-            await this.contactQueueService.removeFromQueue(queueItem.address, queueItem.blockchain)
-
-            this.logger.info(
-                `[${this.workerName}] ` +
-                `Token for ${queueItem.address} :: ${queueItem.blockchain} owner have another responded token. Removed from queue. Skipping`
-            )
-
-            return
-        }
 
         this.logger.info(
             `[${this.workerName}] Started processing ${queueItem.address} ${queueItem.blockchain} :: ${queueItem.channel}. `
@@ -87,7 +71,7 @@ export class MailerWorker {
 
         await this.contact(queueItem.channel, token)
         await this.contactQueueService.removeFromQueue(queueItem.address, queueItem.blockchain)
-        await this.tokensService.postContactingActions(token, ContactMethod.EMAIL)
+        await this.tokensService.postContactingActions(token, ContactMethod.EMAIL, true)
 
 
         this.logger.info(`[${this.workerName}] ` +
