@@ -179,7 +179,7 @@ export class CheckTokenBNBWorker extends AbstractTokenWorker {
     private async getTokenName(webDriver: WebDriver, blockchain: Blockchain): Promise<string> {
         const title = await webDriver.getTitle()
         const blockchainWord = this.getBlockchainExplorerTitle(blockchain)
-            
+
         return title.startsWith('$')
             ? title
                 .split('|')[1]
