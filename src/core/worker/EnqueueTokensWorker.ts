@@ -41,6 +41,9 @@ export class EnqueueTokensWorker extends AbstractTokenWorker {
                 this.logger.warn(`[${EnqueueTokensWorker.name}] Address ${token.address} already listed`)
                 skippedTokensCount++
 
+                token.contactStatus = TokenContactStatusType.LISTED
+                await this.tokensService.saveTokenContactInfo(token)
+
                 continue
             }
 

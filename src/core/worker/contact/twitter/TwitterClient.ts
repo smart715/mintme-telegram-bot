@@ -11,7 +11,7 @@ import {
     TwitterService,
 } from '../../../service'
 import { Environment, getRandomNumber } from '../../../../utils'
-import { ContactHistoryStatusType, ContactMethod, TokenContactStatusType } from '../../../types'
+import { ContactHistoryStatusType, ContactMethod } from '../../../types'
 import moment from 'moment'
 
 export class TwitterClient {
@@ -250,28 +250,15 @@ export class TwitterClient {
                 continue
             }
 
-            if (TokenContactStatusType.RESPONDED === token.contactStatus) {
-                await this.contactQueueService.removeFromQueue(queuedContact.address, queuedContact.blockchain)
+            const isValidQueuedContact = await this.contactQueueService.preContactCheckAndCorrect(
+                queuedContact,
+                token,
+                this.logger)
 
-                this.log(
-                    `token ${queuedContact.address} :: ${queuedContact.blockchain} was marked as responded . Skipping and removed from queue`
-                )
-
+            if (!isValidQueuedContact) {
                 continue
             }
 
-            if (await this.tokenService.findIfThereRespondedTokensByQueuedChannel(queuedContact.channel)) {
-                await this.tokenService.findTokensByQueuedChannelAndMarkThemResponded(queuedContact.channel)
-
-                await this.contactQueueService.removeFromQueue(queuedContact.address, queuedContact.blockchain)
-
-                this.logger.info(
-                    `[TwitterWorker ID: ${this.twitterAccount.id}]  ` +
-                    `Token for ${queuedContact.address} :: ${queuedContact.blockchain} owner have another responded token. Removed from queue. Skipping`
-                )
-
-                continue
-            }
 
             const result = await this.contactWithToken(
                 queuedContact.channel,
@@ -312,7 +299,7 @@ export class TwitterClient {
                 this.twitterAccount.id
             )
 
-            await this.tokenService.postContactingActions(token, ContactMethod.TWITTER)
+            await this.tokenService.postContactingActions(token, ContactMethod.TWITTER, isSuccess)
 
             await this.driver.sleep(this.messageDelaySec * 1000)
         }

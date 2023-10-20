@@ -12,6 +12,7 @@ export enum TokenContactStatusType {
     LIMIT_REACHED = 'LIMIT_REACHED',
     NO_CONTACTS = 'NO_CONTACTS',
     CONTACTED = 'CONTACTED',
+    LISTED = 'LISTED',
 }
 
 export enum ContactHistoryStatusType {

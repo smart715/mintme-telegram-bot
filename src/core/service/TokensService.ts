@@ -1,6 +1,6 @@
 import { singleton } from 'tsyringe'
 import { TokenRepository } from '../repository'
-import { Token } from '../entity'
+import { QueuedContact, Token } from '../entity'
 import { Blockchain, getValidLinks, isValidEmail } from '../../utils'
 import { ContactMethod, TokenContactStatusType, TokensCountGroupedBySourceAndBlockchain } from '../types'
 import moment from 'moment'
@@ -90,30 +90,16 @@ export class TokensService {
         return this.tokenRepository.getNextWithoutTxDate()
     }
 
-    public async findIfThereRespondedTokensByQueuedChannel(
-        queuedChannel: string,
-        isEmail: boolean = false
+    public async isChannelOfRespondedToken(
+        queuedContact: QueuedContact,
     ): Promise<boolean> {
-        const tokens = await this.tokenRepository.findTokensByQueuedChannel(queuedChannel, {
+        const isEmail = ContactMethod.EMAIL === queuedContact.contactMethod
+
+        const isChannelOfRespondedToken = await this.tokenRepository.isChannelOfRespondedToken(queuedContact.channel,
             isEmail,
-            onlyResponded: true,
-        })
+        )
 
-        return !!tokens
-    }
-
-    public async findTokensByQueuedChannelAndMarkThemResponded(
-        queuedChannel: string,
-        isEmail: boolean = false
-    ): Promise<void> {
-        const tokens = await this.tokenRepository.findTokensByQueuedChannel(queuedChannel, { isEmail })
-
-        tokens.forEach(async (token) => {
-            await this.tokenRepository.save({
-                id: token.id,
-                contactStatus: TokenContactStatusType.RESPONDED,
-            })
-        })
+        return isChannelOfRespondedToken
     }
 
     public getEmails(token: Token): string[] {
@@ -128,10 +114,8 @@ export class TokensService {
         return getValidLinks(token.links, ContactMethod.TELEGRAM)
     }
 
-    public async postContactingActions(token: Token, contactMethod: ContactMethod): Promise<void> {
+    public async postContactingActions(token: Token, contactMethod: ContactMethod, isSuccess: boolean): Promise<void> {
         token.lastContactMethod = contactMethod
-        token.lastContactAttempt = moment().utc().toDate()
-        token.contactStatus = TokenContactStatusType.CONTACTED
 
         switch (contactMethod) {
             case ContactMethod.EMAIL:
@@ -143,6 +127,13 @@ export class TokensService {
             case ContactMethod.TELEGRAM:
                 token.telegramAttempts++
                 break
+        }
+
+        if (isSuccess) {
+            token.lastContactAttempt = moment().utc().toDate()
+            token.contactStatus = TokenContactStatusType.CONTACTED
+        } else {
+            token.contactStatus = TokenContactStatusType.NOT_CONTACTED
         }
 
         return this.update(token)

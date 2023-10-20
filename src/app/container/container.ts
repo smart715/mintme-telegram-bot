@@ -300,6 +300,7 @@ container.register(ContactQueueService, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new ContactQueueService(
             dependencyContainer.resolve(QueuedContactRepository),
+            dependencyContainer.resolve(TokensService),
         ),
     ),
 })

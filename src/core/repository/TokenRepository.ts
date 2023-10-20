@@ -67,12 +67,10 @@ export class TokenRepository extends Repository<Token> {
         return result as TokensCountGroupedBySourceAndBlockchain[]
     }
 
-    public async findTokensByQueuedChannel(
+    public async isChannelOfRespondedToken(
         queuedChannel: string,
-        options: { onlyResponded?: boolean; isEmail?: boolean } = {}
-    ): Promise<Token[]> {
-        const { onlyResponded = false, isEmail = false } = options
-
+        isEmail: boolean
+    ): Promise<boolean> {
         const query = this.createQueryBuilder()
 
         if (isEmail) {
@@ -81,12 +79,10 @@ export class TokenRepository extends Repository<Token> {
             query.where('INSTR(links, :queuedChannel) > 0', { queuedChannel: removeHttpsProtocol(queuedChannel) })
         }
 
-        if (onlyResponded) {
-            query.andWhere('contact_status = :status', { status: TokenContactStatusType.RESPONDED })
-        }
+        query.andWhere('contact_status = :status', { status: TokenContactStatusType.RESPONDED })
 
-        const result = await query.getMany()
+        const tokensCount = await query.getCount()
 
-        return result
+        return tokensCount > 0
     }
 }
