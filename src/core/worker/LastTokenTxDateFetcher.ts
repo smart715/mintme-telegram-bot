@@ -58,7 +58,7 @@ export class LastTokenTxDateFetcher {
     private async fetchLastTxTimestamp(tokenAddress: string, blockchain: Blockchain): Promise<number | null> {
         const response = await axios.get(this.buildLastTxUrl(tokenAddress, blockchain))
 
-        return response.data.result[0].timeStamp
+        return response.data.result[0] && response.data.result[0].timeStamp
             ? parseInt(response.data.result[0].timeStamp) * 1000
             : null
     }
