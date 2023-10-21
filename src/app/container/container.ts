@@ -463,6 +463,7 @@ container.register(CoinGeckoWorker, {
         new CoinGeckoWorker(
             dependencyContainer.resolve(TokensService),
             dependencyContainer.resolve(CoinGeckoService),
+            dependencyContainer.resolve(CheckedTokenService),
             coinGeckoLogger
         ),
     ),

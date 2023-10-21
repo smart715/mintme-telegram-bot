@@ -1,6 +1,6 @@
 import { singleton } from 'tsyringe'
 import { Logger } from 'winston'
-import { CoinGeckoService, TokensService } from '../../service'
+import { CheckedTokenService, CoinGeckoService, TokensService } from '../../service'
 import { Blockchain, sleep } from '../../../utils'
 import { AllCoinsTokenResponse, CoinInfo, LinksCoinInfo } from '../../types'
 import { AbstractParserWorker } from './AbstractParserWorker'
@@ -15,6 +15,7 @@ export class CoinGeckoWorker extends AbstractParserWorker {
     public constructor(
         private readonly tokenService: TokensService,
         private readonly coinGeckoService: CoinGeckoService,
+        private readonly checkedTokenService: CheckedTokenService,
         private readonly logger: Logger,
     ) {
         super()
@@ -55,6 +56,12 @@ export class CoinGeckoWorker extends AbstractParserWorker {
                 continue
             }
 
+            if (await this.checkedTokenService.isChecked(tokenId, this.workerName)) {
+                this.logger.warn(`${this.prefixLog} ${tokenId} already checked. Skipping`)
+
+                return
+            }
+
             const address: string = token.address
 
             if (address.length <= 0) {
@@ -65,9 +72,16 @@ export class CoinGeckoWorker extends AbstractParserWorker {
 
             await sleep(this.sleepDuration)
 
+            this.logger.info(`Checking token ${token.name}`)
+
             try {
                 coinInfo = await this.coinGeckoService.getCoinInfo(tokenId)
+                await this.checkedTokenService.saveAsChecked(tokenId, this.workerName)
             } catch (ex: any) {
+                if (ex.message.includes('code 404')) {
+                    await this.checkedTokenService.saveAsChecked(tokenId, this.workerName)
+                }
+
                 this.logger.warn(
                     `Failed to fetch coin info for ${tokenId} tokenId. Reason ${ex.message}. Skipping...`
                 )
