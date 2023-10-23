@@ -86,7 +86,7 @@ export class CoinCodexWorker extends AbstractParserWorker {
                 continue
             }
 
-            const tokenInDb = await this.tokenService.findByAddress(contractAddress, currentBlockchain)
+            const tokenInDb = await this.tokenService.findByAddress(contractAddress)
 
             if (tokenInDb) {
                 continue

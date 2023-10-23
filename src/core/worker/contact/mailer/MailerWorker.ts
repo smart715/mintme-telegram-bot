@@ -46,7 +46,7 @@ export class MailerWorker {
     }
 
     private async processQueueItem(queueItem: QueuedContact): Promise<void> {
-        const token = await this.tokensService.findByAddress(queueItem.address, queueItem.blockchain)
+        const token = await this.tokensService.findByAddress(queueItem.address)
 
         if (!token) {
             await this.contactQueueService.removeFromQueue(queueItem.address, queueItem.blockchain)

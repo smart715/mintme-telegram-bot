@@ -36,7 +36,7 @@ export class QueueWorker {
             return
         }
 
-        const token = await this.tokensService.findByAddress(queueItem.address, queueItem.blockchain)
+        const token = await this.tokensService.findByAddress(queueItem.address)
 
         if (!token) {
             await this.contactQueueService.removeFromQueue(queueItem.address, queueItem.blockchain)

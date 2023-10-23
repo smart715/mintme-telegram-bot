@@ -68,7 +68,7 @@ export class EthplorerWorker extends AbstractParserWorker {
             for (const token of tokens) {
                 const tokenAddress = token[this.tokAddressIndex]
 
-                if (await this.tokensService.findByAddress(tokenAddress, this.blockchain)) {
+                if (await this.tokensService.findByAddress(tokenAddress)) {
                     continue
                 }
 

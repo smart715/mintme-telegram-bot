@@ -90,7 +90,7 @@ export class TokensInsightWorker extends AbstractParserWorker {
                     continue
                 }
 
-                const tokenInDbWithSameAddr = await this.tokensService.findByAddress(tokenAddress, currentBlockchain)
+                const tokenInDbWithSameAddr = await this.tokensService.findByAddress(tokenAddress)
 
                 if (tokenInDbWithSameAddr) {
                     continue

@@ -113,7 +113,7 @@ export class RecentTokensWorker extends NewestTokenChecker {
             return
         }
 
-        const tokenInDb = await this.tokenService.findByAddress(tokenAddress, this.blockchain)
+        const tokenInDb = await this.tokenService.findByAddress(tokenAddress)
 
         if (tokenInDb) {
             return
