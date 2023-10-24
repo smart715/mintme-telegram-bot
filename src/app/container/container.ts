@@ -278,6 +278,7 @@ container.register(QueuedTokenAddressService, {
     useFactory: instanceCachingFactory((dependencyContainer) => new QueuedTokenAddressService(
         dependencyContainer.resolve(QueuedTokenAddressRepository),
         dependencyContainer.resolve(DuplicatesFoundService),
+        dependencyContainer.resolve(TokensService),
     )),
 })
 

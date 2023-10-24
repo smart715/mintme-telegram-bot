@@ -31,5 +31,11 @@ module.exports = {
             args: 'run cli -- run-enqueue-tokens-worker',
             autorestart: true,
         },
+        {
+            name: 'run-last-token-tx-date-fetcher',
+            script: 'npm',
+            args: 'run cli -- run-last-token-tx-date-fetcher',
+            autorestart: true,
+        },
     ],
 }

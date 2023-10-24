@@ -62,7 +62,7 @@ export class CoinBrainWorker extends AbstractParserWorker {
                     continue
                 }
 
-                const coinInDb = await this.tokenService.findByAddress(address, currentBlockchain)
+                const coinInDb = await this.tokenService.findByAddress(address)
 
                 if (coinInDb) {
                     continue

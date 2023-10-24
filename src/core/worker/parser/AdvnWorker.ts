@@ -86,7 +86,7 @@ export class AdvnWorker extends AbstractParserWorker {
                 const website = this.getWebsite(tokenInfo)
                 const links = this.getLinks(tokenInfo)
 
-                const tokenInDb = await this.tokenService.findByAddress(tokenAddress, blockchain)
+                const tokenInDb = await this.tokenService.findByAddress(tokenAddress)
 
                 if (tokenInDb) {
                     continue
