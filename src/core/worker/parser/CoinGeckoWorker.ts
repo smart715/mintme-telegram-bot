@@ -59,7 +59,7 @@ export class CoinGeckoWorker extends AbstractParserWorker {
             if (await this.checkedTokenService.isChecked(tokenId, this.workerName)) {
                 this.logger.warn(`${this.prefixLog} ${tokenId} already checked. Skipping`)
 
-                return
+                continue
             }
 
             const address: string = token.address
