@@ -133,4 +133,13 @@ export class ContactQueueService {
 
         return true
     }
+
+    public async resetProcessingStat(contactMethod: ContactMethod): Promise<void> {
+        await this.queuedContactRepository.createQueryBuilder()
+            .update(QueuedContact)
+            .set({ isProcessing: false })
+            .where('contact_method = :contactMethod', { contactMethod })
+            .andWhere('is_processing = 1')
+            .execute()
+    }
 }

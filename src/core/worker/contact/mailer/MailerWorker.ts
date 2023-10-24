@@ -29,6 +29,8 @@ export class MailerWorker {
     public async run(): Promise<void> {
         this.logger.info(`[${this.workerName}] Started`)
 
+        await this.contactQueueService.resetProcessingStat(ContactMethod.EMAIL)
+
         // eslint-disable-next-line
         while (true) {
             const queueItem = await this.contactQueueService.getFirstFromQueue(ContactMethod.EMAIL, this.logger)
