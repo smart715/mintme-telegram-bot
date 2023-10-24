@@ -51,6 +51,10 @@ export class ExplorerSearchAPIWorker extends AbstractTokenWorker {
 
         await this.saveLastCheckedCombination(blockchain, currentCombination)
 
+        if (webDriver) {
+            await webDriver.quit()
+        }
+
         this.logger.info(`[${this.workerName}] all token name configurations for ${blockchain} blockchain are checked`)
     }
 

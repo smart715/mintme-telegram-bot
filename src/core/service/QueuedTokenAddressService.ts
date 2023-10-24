@@ -3,29 +3,32 @@ import { singleton } from 'tsyringe'
 import { QueuedTokenAddressRepository } from '../repository'
 import { Blockchain } from '../../utils'
 import { DuplicatesFoundService } from './DuplicatesFoundService'
+import { TokensService } from '../service'
 
 @singleton()
 export class QueuedTokenAddressService {
     public constructor(
         private readonly repository: QueuedTokenAddressRepository,
         private readonly duplicatesFoundService: DuplicatesFoundService,
+        private readonly tokensService: TokensService,
     ) {}
 
     public async push(tokenAddress: string, blockchain: Blockchain): Promise<void> {
-        const queueToken = await this.getToken(tokenAddress, blockchain)
+        const queueToken = await this.getToken(tokenAddress)
+        const token = await this.tokensService.findByAddress(tokenAddress)
 
-        if (queueToken) {
+        if (queueToken || token) {
             await this.duplicatesFoundService.increment(QueuedTokenAddressService.name)
 
             return
         }
 
-        const token = new QueuedTokenAddress()
-        token.tokenAddress = tokenAddress.toLowerCase()
-        token.blockchain = blockchain
-        token.isChecked = false
+        const queuedToken = new QueuedTokenAddress()
+        queuedToken.tokenAddress = tokenAddress.toLowerCase()
+        queuedToken.blockchain = blockchain
+        queuedToken.isChecked = false
 
-        await this.repository.insert(token)
+        await this.repository.insert(queuedToken)
     }
 
     public async getTokensToCheck(blockchain: Blockchain|null, amount: number): Promise<QueuedTokenAddress[]> {
@@ -37,7 +40,7 @@ export class QueuedTokenAddressService {
         await this.repository.save(token)
     }
 
-    public async getToken(tokenAddress: string, blockchain: Blockchain): Promise<QueuedTokenAddress | undefined> {
-        return this.repository.findOne({ tokenAddress: tokenAddress, blockchain: blockchain })
+    public async getToken(tokenAddress: string): Promise<QueuedTokenAddress | undefined> {
+        return this.repository.findOne({ tokenAddress: tokenAddress })
     }
 }
