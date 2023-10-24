@@ -2,7 +2,7 @@ import { singleton } from 'tsyringe'
 import { Logger } from 'winston'
 import { AbstractTokenWorker } from './AbstractTokenWorker'
 import { ContactQueueService, MintmeService, TokensService, ContactHistoryService } from '../service'
-import { Blockchain, getMaxAttemptsPerMethod } from '../../utils'
+import { Blockchain, getMaxAttemptsPerMethod, sleep } from '../../utils'
 import { ContactHistoryStatusType, ContactMethod, TokenContactStatusType } from '../types'
 import { Token } from '../entity'
 
@@ -162,21 +162,25 @@ export class EnqueueTokensWorker extends AbstractTokenWorker {
 
                     this.logger.info(`Checking if telegram channel ${link} available`)
 
-                    await new Promise(f => setTimeout(f, 1000))
-
-                    if (await this.contactQueueService.isExistingTg(link, this.logger)) {
-                        this.logger.info(`Telegram channel ${link} is active`)
+                    await sleep(3000)
+                    try {
+                        if (await this.contactQueueService.isExistingTg(link, this.logger)) {
+                            this.logger.info(`Telegram channel ${link} is active`)
+                            return link
+                        } else {
+                            this.logger.warn(`Telegram channel ${link} not active`)
+                            await this.contactHistoryService.addRecord(token.address,
+                                token.blockchain,
+                                ContactMethod.TELEGRAM,
+                                false,
+                                0,
+                                link,
+                                ContactHistoryStatusType.ACCOUNT_NOT_EXISTS)
+                            continue
+                        }
+                    } catch (ex: any) {
+                        this.logger.error(`Couldn't fetch status of channel ${link}, Err: ${ex.message}, Queued to check through proxy and account`)
                         return link
-                    } else {
-                        this.logger.warn(`Telegram channel ${link} not active`)
-                        await this.contactHistoryService.addRecord(token.address,
-                            token.blockchain,
-                            ContactMethod.TELEGRAM,
-                            false,
-                            0,
-                            link,
-                            ContactHistoryStatusType.ACCOUNT_NOT_EXISTS)
-                        continue
                     }
                 }
 
