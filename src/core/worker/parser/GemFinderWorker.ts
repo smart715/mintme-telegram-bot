@@ -3,6 +3,7 @@ import { Logger } from 'winston'
 import { RetryAxios, Blockchain, tokenAddressRegexp } from '../../../utils'
 import { CheckedTokenService, TokensService } from '../../service'
 import { AbstractParserWorker } from './AbstractParserWorker'
+import { JSDOM } from 'jsdom'
 
 @singleton()
 export class GemFinderWorker extends AbstractParserWorker {
@@ -68,7 +69,7 @@ export class GemFinderWorker extends AbstractParserWorker {
         await this.checkedTokenService.saveAsChecked(tokenId, this.workerName)
 
         if (!tokenAddress || !blockchain) {
-            this.logger.warn(`${this.prefixLog} No address/blockchain found for ${tokenId}. Skipping`)
+            this.logger.warn(`${this.prefixLog} No address/Supported blockchain found for ${tokenId}. Skipping`)
 
             return
         }
@@ -100,10 +101,26 @@ export class GemFinderWorker extends AbstractParserWorker {
     }
 
 
-    private getBlockchain(tokenInfo: string): Blockchain {
-        return tokenInfo.includes('binance_address')
-            ? Blockchain.BSC
-            : Blockchain.ETH
+    private getBlockchain(tokenInfo: string): Blockchain|undefined {
+        const pageDOM = (new JSDOM(tokenInfo)).window.document
+        const contractSectionSelector = pageDOM.getElementsByClassName('coin_contract')
+
+        if (!contractSectionSelector.length) {
+            return undefined
+        }
+
+        const contractSectionSrc = contractSectionSelector[0].innerHTML
+
+        if (contractSectionSrc.includes('binance smart chain')) {
+            return Blockchain.BSC
+        } else if (contractSectionSrc.includes('ethereum')) {
+            return Blockchain.ETH
+        } else if (contractSectionSrc.includes('cronos')) {
+            return Blockchain.CRO
+        }
+
+
+        return undefined
     }
 
     private getTokenAddress(tokenInfo: string): string {
