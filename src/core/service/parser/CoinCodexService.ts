@@ -22,7 +22,7 @@ export class CoinCodexService {
                 throw error
             }
 
-            return this.getAllCoins(retries++)
+            return this.getAllCoins(++retries)
         }
     }
 
