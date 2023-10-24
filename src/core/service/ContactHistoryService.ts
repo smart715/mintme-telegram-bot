@@ -4,6 +4,7 @@ import { ContactHistoryRepository } from '../repository'
 import { ContactHistoryStatusType, ContactMethod, GroupedContactsCount } from '../types'
 import { ContactHistory, TwitterAccount } from '../entity'
 import { Blockchain } from '../../utils'
+import config from 'config'
 
 @singleton()
 export class ContactHistoryService {
@@ -73,6 +74,20 @@ export class ContactHistoryService {
             .getCount()
 
         return failsCount > 0
+    }
+
+    public async isChannelCanBeContacted(contactChannel: string): Promise<boolean> {
+        const delaySameChannelInSeconds = parseInt(config.get('contact_frequency_same_channel_in_seconds'))
+
+        const contactingCount = await this.contactHistoryRepository.createQueryBuilder()
+            .where(`channel LIKE '%${contactChannel.replace('https://', '')}'`)
+            .andWhere(
+                '(created_at > :thresholdDate)',
+                { thresholdDate: moment().utc().subtract(delaySameChannelInSeconds, 'second').format() }
+            )
+            .getCount()
+
+        return 0 === contactingCount
     }
 
     public async getChannelContactTimes(contactChannel: string): Promise<number> {
