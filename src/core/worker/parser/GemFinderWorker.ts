@@ -105,17 +105,20 @@ export class GemFinderWorker extends AbstractParserWorker {
         const pageDOM = (new JSDOM(tokenInfo)).window.document
         const contractSectionSelector = pageDOM.getElementsByClassName('coin_contract')
 
-        if (contractSectionSelector.length) {
-            const contractSectionSrc = contractSectionSelector[0].innerHTML
-
-            if (contractSectionSrc.includes('binance smart chain')) {
-                return Blockchain.BSC
-            } else if (contractSectionSrc.includes('ethereum')) {
-                return Blockchain.ETH
-            } else if (contractSectionSrc.includes('cronos')) {
-                return Blockchain.CRO
-            }
+        if (!contractSectionSelector.length) {
+            return undefined
         }
+
+        const contractSectionSrc = contractSectionSelector[0].innerHTML
+
+        if (contractSectionSrc.includes('binance smart chain')) {
+            return Blockchain.BSC
+        } else if (contractSectionSrc.includes('ethereum')) {
+            return Blockchain.ETH
+        } else if (contractSectionSrc.includes('cronos')) {
+            return Blockchain.CRO
+        }
+
 
         return undefined
     }
