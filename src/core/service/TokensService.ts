@@ -11,11 +11,17 @@ export class TokensService {
         private tokenRepository: TokenRepository,
     ) {}
 
-    public async findByAddress(
+    public async findByAddressAndBlockchain(
         address: string,
         blockchain: Blockchain,
     ): Promise<Token | undefined> {
         return this.tokenRepository.findByAddressAndBlockchain(address, blockchain)
+    }
+
+    public async findByAddress(
+        address: string,
+    ): Promise<Token | undefined> {
+        return this.tokenRepository.findByAddress(address)
     }
 
     public async findByName(
@@ -34,7 +40,7 @@ export class TokensService {
         workerSource: string,
         blockchain: Blockchain
     ): Promise<Token> {
-        let token = await this.findByAddress(tokenAddress, blockchain)
+        let token = await this.findByAddress(tokenAddress)
 
         if (token) {
             return token

@@ -54,7 +54,7 @@ export class MyEtherListsWorker extends AbstractParserWorker {
 
             this.logger.info(`${this.prefixLog} Check ${tokenName} ${i}/${files.length}`)
 
-            const tokenInDb = await this.tokensService.findByAddress(rawToken.address, currentBlockchain)
+            const tokenInDb = await this.tokensService.findByAddress(rawToken.address)
 
             if (tokenInDb) {
                 continue

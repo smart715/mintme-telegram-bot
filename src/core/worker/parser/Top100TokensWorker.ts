@@ -60,7 +60,7 @@ export class Top100TokensWorker extends AbstractParserWorker {
                     continue
                 }
 
-                const tokenInDb = await this.tokenService.findByAddress(tokenAddress, currentBlockchain)
+                const tokenInDb = await this.tokenService.findByAddress(tokenAddress)
 
                 if (tokenInDb) {
                     continue
