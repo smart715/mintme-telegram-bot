@@ -53,7 +53,7 @@ export class CoinDiscoveryWorker extends AbstractParserWorker {
                     continue
                 }
 
-                const tokenInDb = await this.tokenService.findByAddress(tokenAddress, currentBlockchain)
+                const tokenInDb = await this.tokenService.findByAddress(tokenAddress)
 
                 if (!tokenAddress.startsWith('0x') || tokenInDb) {
                     continue
