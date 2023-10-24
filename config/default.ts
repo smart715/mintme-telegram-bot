@@ -45,7 +45,8 @@ export default {
     'contact_email_max_attempts': 4,
     'contact_twitter_max_attempts': 2,
     'contact_telegram_max_attempts': 2,
-    'contact_frequency_in_seconds': 60 * 60 * 24 * 14, // 14 days
+    'contact_frequency_different_channel_in_seconds': 60 * 60 * 24 * 7, // 7 days
+    'contact_frequency_same_channel_in_seconds': 60 * 60 * 24 * 21, // 21 days
 
     'flaresolverr_server_url': 'http://localhost:8191/v1',
 
