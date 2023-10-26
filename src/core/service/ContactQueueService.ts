@@ -1,7 +1,7 @@
 import { singleton } from 'tsyringe'
 import { QueuedContactRepository } from '../repository'
 import { QueuedContact, Token } from '../entity'
-import { Blockchain } from '../../utils'
+import { Blockchain, sleep } from '../../utils'
 import { ContactMethod, TokenContactStatusType } from '../types'
 import axios from 'axios'
 import { Logger } from 'winston'
@@ -91,10 +91,20 @@ export class ContactQueueService {
         return (find > 0)
     }
 
-    public async isExistingTg(link: string, logger: Logger): Promise<boolean> {
+    public async isExistingTg(link: string, logger: Logger, retries: number = 0): Promise<boolean> {
         try {
             const request = await axios.get(link)
-            return (request.data.includes('tgme_page_title') && !request.data.includes(' subscribers'))
+
+            if (200 === request.status && request.data.includes('<title>Telegram: Contact')) {
+                return request.data.includes('tgme_page_title') && !request.data.includes(' subscribers')
+            }
+
+            if (retries >= 5) {
+                throw new Error(`Telegram request returned status ${request.status}`)
+            }
+
+            await sleep(5000)
+            return this.isExistingTg(link, logger, ++retries)
         } catch (e) {
             logger.error(e)
             return false
