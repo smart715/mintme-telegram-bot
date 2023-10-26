@@ -15,7 +15,7 @@ export class TokenRepository extends Repository<Token> {
 
     public async findByAddress(address: string): Promise<Token | undefined> {
         return this.createQueryBuilder()
-            .where('LOWER(address) LIKE %:address%', { address: address.trim().toLowerCase() })
+            .where('LOWER(address) LIKE :address', { address: `%${address.trim().toLowerCase()}%` })
             .getOne()
     }
 
