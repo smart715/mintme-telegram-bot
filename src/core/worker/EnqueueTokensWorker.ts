@@ -186,7 +186,8 @@ export class EnqueueTokensWorker extends AbstractTokenWorker {
                                 false,
                                 0,
                                 link,
-                                ContactHistoryStatusType.ACCOUNT_NOT_EXISTS)
+                                ContactHistoryStatusType.ACCOUNT_NOT_EXISTS
+                            )
 
                             continue
                         }
