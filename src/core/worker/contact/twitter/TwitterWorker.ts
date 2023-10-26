@@ -12,6 +12,7 @@ import {
 import { TwitterAccount } from '../../../entity'
 import { TwitterClient } from './TwitterClient'
 import { Environment, sleep } from '../../../../utils'
+import { ContactMethod } from '../../../types'
 
 @singleton()
 export class TwitterWorker {
@@ -34,6 +35,8 @@ export class TwitterWorker {
     }
 
     public async run(): Promise<void> {
+        await this.contactQueueService.resetProcessingStat(ContactMethod.TWITTER)
+
         // eslint-disable-next-line
         while (true) {
             this.twitterClients = []

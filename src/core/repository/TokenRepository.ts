@@ -25,7 +25,7 @@ export class TokenRepository extends Repository<Token> {
         maxEmailAttempts: number,
         maxTwitterAttempts: number,
         maxTelegramAttempts: number): Promise<Token[]> {
-        const delayInSeconds = parseInt(config.get('contact_frequency_in_seconds'))
+        const delayInSeconds = parseInt(config.get('contact_frequency_different_channel_in_seconds'))
 
         const queryBuilder = this.createQueryBuilder()
             .where(new Brackets(queryBuilder => {

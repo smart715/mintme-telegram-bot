@@ -102,18 +102,28 @@ export class EnqueueTokensWorker extends AbstractTokenWorker {
             }
 
             return { enqueued: false, nextContactMethod: null, contactChannel: '' }
-        } else {
-            token.contactStatus = TokenContactStatusType.QUEUED
+        }
 
-            await this.contactQueueService.addToQueue(token.address,
-                token.blockchain,
-                contactChannel,
-                isFutureContact,
-                nextContactMethod
+        const isChannelCanBeContacted = await this.contactHistoryService.isChannelCanBeContacted(contactChannel)
+
+        if (!isChannelCanBeContacted) {
+            this.logger.info(
+                `[${EnqueueTokensWorker.name}] Skipped ${contactChannel} for being contacted within same channel frequency`
             )
 
-            return { enqueued: true, nextContactMethod, contactChannel }
+            return { enqueued: false, nextContactMethod: null, contactChannel: '' }
         }
+
+        token.contactStatus = TokenContactStatusType.QUEUED
+
+        await this.contactQueueService.addToQueue(token.address,
+            token.blockchain,
+            contactChannel,
+            isFutureContact,
+            nextContactMethod
+        )
+
+        return { enqueued: true, nextContactMethod, contactChannel }
     }
 
     private async checkTelegramLink(channel: string): Promise<string|undefined> {

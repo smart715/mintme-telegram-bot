@@ -13,6 +13,7 @@ import {
     MailerService,
 } from '../../../service'
 import { Environment, sleep, TelegramWorkerMode } from '../../../../utils'
+import { ContactMethod } from '../../../types'
 
 @singleton()
 export class TelegramWorker {
@@ -54,6 +55,9 @@ export class TelegramWorker {
 
     public async run(mode: TelegramWorkerMode): Promise<void> {
         this.logger.info(`Running Telegram worker | Mode: ${mode}`)
+
+        await this.contactQueueService.resetProcessingStat(ContactMethod.TELEGRAM)
+
         this.mode = mode
         this.telegramClients = []
 
