@@ -110,7 +110,7 @@ export class EthplorerWorker extends AbstractParserWorker {
         const links = this.getLinks(tokenInfo)
 
         if (links.length) {
-            await this.tokensService.addIfNotExists(
+            await this.tokensService.addOrUpdateToken(
                 tokenAddress,
                 tokenName,
                 [ tokenInfo.token.website ],

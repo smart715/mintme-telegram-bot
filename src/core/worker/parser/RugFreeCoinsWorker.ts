@@ -1,7 +1,7 @@
 import { singleton } from 'tsyringe'
 import { Logger } from 'winston'
 import { Blockchain, findContractAddress } from '../../../utils'
-import { RugFreeCoinsService, TokensService } from '../../service'
+import { CheckedTokenService, RugFreeCoinsService, TokensService } from '../../service'
 import { RugFreeCoinData, RugFreeCoinsAllCoins } from '../../types'
 import { AbstractParserWorker } from './AbstractParserWorker'
 
@@ -13,6 +13,7 @@ export class RugFreeCoinsWorker extends AbstractParserWorker {
     public constructor(
         private readonly rugFreeCoinsService: RugFreeCoinsService,
         private readonly tokenService: TokensService,
+        private readonly checkedTokenService: CheckedTokenService,
         private readonly logger: Logger,
     ) {
         super()
@@ -61,17 +62,20 @@ export class RugFreeCoinsWorker extends AbstractParserWorker {
                     continue
                 }
 
-                const tokenInDb = await this.tokenService.findByAddress(tokenAddress)
+                if (await this.checkedTokenService.isChecked(tokenAddress, this.workerName)) {
+                    this.logger.warn(`${this.prefixLog} ${tokenAddress} already checked. Skipping`)
 
-                if (tokenInDb) {
                     continue
                 }
+
+
+                await this.checkedTokenService.saveAsChecked(tokenAddress, this.workerName)
 
                 const tokenName = `${coin.name}(${coin.symbol})`
                 const website = coin.website
                 const links = this.getLinks(coin)
 
-                await this.tokenService.addIfNotExists(
+                await this.tokenService.addOrUpdateToken(
                     tokenAddress,
                     tokenName,
                     [ website ],

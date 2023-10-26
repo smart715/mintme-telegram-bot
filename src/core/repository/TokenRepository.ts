@@ -14,7 +14,9 @@ export class TokenRepository extends Repository<Token> {
     }
 
     public async findByAddress(address: string): Promise<Token | undefined> {
-        return this.findOne({ where: { address } })
+        return this.createQueryBuilder()
+            .where('LOWER(address) LIKE %:address%', { address: address.trim().toLowerCase() })
+            .getOne()
     }
 
     public async findByNameAndBlockchain(name: string, blockchain: Blockchain): Promise<Token | undefined> {

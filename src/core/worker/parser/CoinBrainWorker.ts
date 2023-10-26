@@ -1,7 +1,7 @@
 import { singleton } from 'tsyringe'
 import { Logger } from 'winston'
 import { Blockchain } from '../../../utils'
-import { CoinBrainService, TokensService } from '../../service'
+import { CheckedTokenService, CoinBrainService, TokensService } from '../../service'
 import { CoinBrainGetTokensGeneralResponse } from '../../types'
 import { DOMWindow, JSDOM } from 'jsdom'
 import { AbstractParserWorker } from './AbstractParserWorker'
@@ -14,6 +14,7 @@ export class CoinBrainWorker extends AbstractParserWorker {
     public constructor(
         private readonly coinBrainService: CoinBrainService,
         private readonly tokenService: TokensService,
+        private readonly checkedTokenService: CheckedTokenService,
         private readonly logger: Logger,
     ) {
         super()
@@ -62,9 +63,9 @@ export class CoinBrainWorker extends AbstractParserWorker {
                     continue
                 }
 
-                const coinInDb = await this.tokenService.findByAddress(address)
+                if (await this.checkedTokenService.isChecked(address, this.workerName)) {
+                    this.logger.warn(`${this.prefixLog} ${address} already checked. Skipping`)
 
-                if (coinInDb) {
                     continue
                 }
 
@@ -89,7 +90,7 @@ export class CoinBrainWorker extends AbstractParserWorker {
                     continue
                 }
 
-                await this.tokenService.addIfNotExists(
+                await this.tokenService.addOrUpdateToken(
                     address,
                     tokenName,
                     [ website ],
@@ -98,6 +99,9 @@ export class CoinBrainWorker extends AbstractParserWorker {
                     this.workerName,
                     currentBlockchain
                 )
+
+
+                await this.checkedTokenService.saveAsChecked(address, this.workerName)
 
                 this.logger.info(
                     `${this.prefixLog} Added to DB:`,

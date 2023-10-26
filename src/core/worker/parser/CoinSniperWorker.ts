@@ -116,7 +116,7 @@ export class CoinSniperWorker extends NewestTokenChecker {
             })
 
             if (tokenAddress && tokenAddress.startsWith('0x')) {
-                await this.tokenService.addIfNotExists(
+                await this.tokenService.addOrUpdateToken(
                     tokenAddress,
                     tokenName,
                     [ website ],

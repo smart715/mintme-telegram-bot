@@ -1,7 +1,7 @@
 import { singleton } from 'tsyringe'
 import { Logger } from 'winston'
 import { Blockchain, findContractAddress, parseBlockchainName } from '../../../utils'
-import { CoinCatapultService, TokensService } from '../../service'
+import { CheckedTokenService, CoinCatapultService, TokensService } from '../../service'
 import { CoinCatapultAllCoinsResponse, CoinCatapultTokenInfoGeneralResponse } from '../../types'
 import { AbstractParserWorker } from './AbstractParserWorker'
 
@@ -13,6 +13,7 @@ export class CoinCatapultWorker extends AbstractParserWorker {
     public constructor(
         protected readonly coinCatapultService: CoinCatapultService,
         protected readonly tokenService: TokensService,
+        private readonly checkedTokenService: CheckedTokenService,
         private readonly logger: Logger,
     ) {
         super()
@@ -49,6 +50,12 @@ export class CoinCatapultWorker extends AbstractParserWorker {
             try {
                 currentBlockchain = parseBlockchainName(coin.network)
             } catch (e) {
+                continue
+            }
+
+            if (await this.checkedTokenService.isChecked(coin.slug, this.workerName)) {
+                this.logger.warn(`${this.prefixLog} ${coin.slug} already checked. Skipping`)
+
                 continue
             }
 
@@ -99,7 +106,7 @@ export class CoinCatapultWorker extends AbstractParserWorker {
                 continue
             }
 
-            await this.tokenService.addIfNotExists(
+            await this.tokenService.addOrUpdateToken(
                 address,
                 tokenName,
                 [ website ],
@@ -108,6 +115,8 @@ export class CoinCatapultWorker extends AbstractParserWorker {
                 this.workerName,
                 currentBlockchain
             )
+
+            await this.checkedTokenService.saveAsChecked(coin.slug, this.workerName)
 
             this.logger.info(
                 `${this.prefixLog} Added to DB:`,

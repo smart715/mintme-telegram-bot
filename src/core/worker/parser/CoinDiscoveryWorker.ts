@@ -1,6 +1,6 @@
 import { singleton } from 'tsyringe'
 import { Logger } from 'winston'
-import { CoinDiscoveryService, TokensService } from '../../service'
+import { CheckedTokenService, CoinDiscoveryService, TokensService } from '../../service'
 import { Blockchain, getHrefValuesFromTagString } from '../../../utils'
 import { CoinDiscoveryGetTokensResponse } from '../../types'
 import { AbstractParserWorker } from './AbstractParserWorker'
@@ -13,6 +13,7 @@ export class CoinDiscoveryWorker extends AbstractParserWorker {
     public constructor(
         private readonly coinDiscoveryService: CoinDiscoveryService,
         private readonly tokenService: TokensService,
+        private readonly checkedTokenService: CheckedTokenService,
         private readonly logger: Logger,
     ) {
         super()
@@ -53,9 +54,13 @@ export class CoinDiscoveryWorker extends AbstractParserWorker {
                     continue
                 }
 
-                const tokenInDb = await this.tokenService.findByAddress(tokenAddress)
+                if (!tokenAddress.startsWith('0x')) {
+                    continue
+                }
 
-                if (!tokenAddress.startsWith('0x') || tokenInDb) {
+                if (await this.checkedTokenService.isChecked(nameSlug, this.workerName)) {
+                    this.logger.warn(`${this.prefixLog} ${nameSlug} already checked. Skipping`)
+
                     continue
                 }
 
@@ -69,7 +74,7 @@ export class CoinDiscoveryWorker extends AbstractParserWorker {
                     website = links[0]
                 }
 
-                await this.tokenService.addIfNotExists(
+                await this.tokenService.addOrUpdateToken(
                     tokenAddress,
                     name,
                     [ website ],
@@ -78,6 +83,8 @@ export class CoinDiscoveryWorker extends AbstractParserWorker {
                     this.workerName,
                     currentBlockchain
                 )
+
+                await this.checkedTokenService.saveAsChecked(nameSlug, this.workerName)
 
                 this.logger.info(
                     `${this.prefixLog} Added to DB:`,

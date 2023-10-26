@@ -31,7 +31,7 @@ export class TokensService {
         return this.tokenRepository.findByNameAndBlockchain(name, blockchain)
     }
 
-    public async addIfNotExists(
+    public async addOrUpdateToken(
         tokenAddress: string,
         tokenName: string,
         websites: string[],
@@ -43,7 +43,7 @@ export class TokensService {
         let token = await this.findByAddress(tokenAddress)
 
         if (token) {
-            return token
+            return this.updateTokenLinks(token, websites, emails, links)
         }
 
         token = new Token()
@@ -57,6 +57,40 @@ export class TokensService {
         token.source = workerSource
 
         await this.tokenRepository.insert(token)
+
+        return token
+    }
+
+    private async updateTokenLinks(
+        token: Token,
+        newWebsites: string[],
+        newEmails: string[],
+        newLinks: string[],
+    ): Promise<Token> {
+        newWebsites.forEach(newWebsite => {
+            if (!token.websites.includes(newWebsite)) {
+                token.websites.push(newWebsite)
+            }
+        })
+
+        newEmails.forEach(newEmail => {
+            if (!token.emails.includes(newEmail)) {
+                token.emails.push(newEmail)
+            }
+        })
+
+        newLinks.forEach(newLink => {
+            if (!token.links.includes(newLink)) {
+                token.links.push(newLink)
+            }
+        })
+
+        if (TokenContactStatusType.NO_CONTACTS === token.contactStatus ||
+            TokenContactStatusType.LIMIT_REACHED === token.contactStatus) {
+            token.contactStatus = TokenContactStatusType.NOT_CONTACTED
+        }
+
+        await this.update(token)
 
         return token
     }
