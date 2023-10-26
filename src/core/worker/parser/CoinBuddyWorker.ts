@@ -112,10 +112,10 @@ export class CoinBuddyWorker extends AbstractParserWorker {
 
                 if (await this.checkedTokenService.isChecked(coinId, this.workerName)) {
                     this.logger.warn(`${this.prefixLog} ${coinId} already checked. Skipping`)
-    
+
                     continue
                 }
-    
+
                 let website: string = ''
                 const otherLinks: string[] = []
 
