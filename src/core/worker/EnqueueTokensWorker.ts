@@ -179,6 +179,7 @@ export class EnqueueTokensWorker extends AbstractTokenWorker {
                             return link
                         } else {
                             this.logger.warn(`Telegram channel ${link} not active`)
+
                             await this.contactHistoryService.addRecord(token.address,
                                 token.blockchain,
                                 ContactMethod.TELEGRAM,
@@ -186,6 +187,7 @@ export class EnqueueTokensWorker extends AbstractTokenWorker {
                                 0,
                                 link,
                                 ContactHistoryStatusType.ACCOUNT_NOT_EXISTS)
+
                             continue
                         }
                     } catch (ex: any) {

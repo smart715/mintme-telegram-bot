@@ -96,15 +96,15 @@ export class ContactQueueService {
             const request = await axios.get(link)
 
             if (200 === request.status && request.data.includes('<title>Telegram: Contact')) {
-                return (request.data.includes('tgme_page_title') && !request.data.includes(' subscribers'))
+                return request.data.includes('tgme_page_title') && !request.data.includes(' subscribers')
             }
 
             if (retries >= 5) {
                 throw new Error(`Telegram request returned status ${request.status}`)
-            } else {
-                await sleep(5000)
-                return this.isExistingTg(link, logger, ++retries)
             }
+
+            await sleep(5000)
+            return this.isExistingTg(link, logger, ++retries)
         } catch (e) {
             logger.error(e)
             return false
