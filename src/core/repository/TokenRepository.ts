@@ -41,6 +41,7 @@ export class TokenRepository extends Repository<Token> {
                 '(last_contact_attempt is null or last_contact_attempt < :dateBefore)',
                 { dateBefore: moment().utc().subtract(delayInSeconds, 'second').format() }
             )
+            .orderBy(`created_at`, 'DESC')
 
         if (blockchain) {
             queryBuilder.andWhere('blockchain = :blockchain', { blockchain })
