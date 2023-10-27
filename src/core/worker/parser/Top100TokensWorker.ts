@@ -74,7 +74,7 @@ export class Top100TokensWorker extends AbstractParserWorker {
                     continue
                 }
 
-                await this.tokenService.addIfNotExists(
+                await this.tokenService.addOrUpdateToken(
                     tokenAddress,
                     tokenName,
                     [ website ],

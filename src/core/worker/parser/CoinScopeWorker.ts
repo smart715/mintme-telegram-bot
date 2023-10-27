@@ -84,7 +84,7 @@ export class CoinScopeWorker extends AbstractParserWorker {
             return
         }
 
-        await this.tokensService.addIfNotExists(
+        await this.tokensService.addOrUpdateToken(
             tokenData.tokenAddress,
             `${tokenData.tokenName} (${tokenId.toUpperCase()})`,
             [ tokenData.website ],

@@ -81,7 +81,7 @@ export class CoinsHunterWorker extends NewestTokenChecker {
             const website = token.social_info.website
             const links = [ ...Object.values(token.social_info), ...Object.values(token.contact_info) ]
 
-            await this.tokenService.addIfNotExists(
+            await this.tokenService.addOrUpdateToken(
                 tokenAddress,
                 tokenName,
                 [ website ],

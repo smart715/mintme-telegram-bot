@@ -63,7 +63,7 @@ export class CoinLoreWorker extends AbstractParserWorker {
                 continue
             }
 
-            await this.tokensService.addIfNotExists(
+            await this.tokensService.addOrUpdateToken(
                 tokenAddress,
                 `${coin.name} (${coin.symbol})`,
                 [ links.shift() || '' ],

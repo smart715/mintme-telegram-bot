@@ -74,7 +74,7 @@ export class GemFinderWorker extends AbstractParserWorker {
             return
         }
 
-        await this.tokensService.addIfNotExists(
+        await this.tokensService.addOrUpdateToken(
             tokenAddress,
             tokenName,
             websites,

@@ -7,7 +7,7 @@ import {
     getHrefValuesFromTagString,
     parseBlockchainName,
 } from '../../../utils'
-import { TokensService, AdvnService } from '../../service'
+import { TokensService, AdvnService, CheckedTokenService } from '../../service'
 import { AdvnGeneralResponse } from '../../types'
 import { AbstractParserWorker } from './AbstractParserWorker'
 
@@ -19,6 +19,7 @@ export class AdvnWorker extends AbstractParserWorker {
     public constructor(
         private readonly advnService: AdvnService,
         private readonly tokenService: TokensService,
+        private readonly checkedTokenService: CheckedTokenService,
         private readonly logger: Logger,
     ) {
         super()
@@ -67,6 +68,12 @@ export class AdvnWorker extends AbstractParserWorker {
 
                 let tokenInfo: string
 
+                if (await this.checkedTokenService.isChecked(name, this.workerName)) {
+                    this.logger.warn(`${this.prefixLog} ${name} already checked. Skipping`)
+
+                    continue
+                }
+
                 try {
                     tokenInfo = await this.advnService.getTokenInfo(id)
                 } catch (ex: any) {
@@ -86,13 +93,7 @@ export class AdvnWorker extends AbstractParserWorker {
                 const website = this.getWebsite(tokenInfo)
                 const links = this.getLinks(tokenInfo)
 
-                const tokenInDb = await this.tokenService.findByAddress(tokenAddress)
-
-                if (tokenInDb) {
-                    continue
-                }
-
-                await this.tokenService.addIfNotExists(
+                await this.tokenService.addOrUpdateToken(
                     tokenAddress,
                     name,
                     [ website ],
@@ -101,6 +102,8 @@ export class AdvnWorker extends AbstractParserWorker {
                     this.workerName,
                     blockchain,
                 )
+
+                await this.checkedTokenService.saveAsChecked(name, this.workerName)
 
                 this.logger.info(
                     `${this.prefixLog} Added to DB:`,

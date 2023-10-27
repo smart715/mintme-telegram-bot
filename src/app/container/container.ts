@@ -586,6 +586,7 @@ container.register(AdvnWorker, {
         new AdvnWorker(
             dependencyContainer.resolve(AdvnService),
             dependencyContainer.resolve(TokensService),
+            dependencyContainer.resolve(CheckedTokenService),
             advnLogger,
         )
     ),
@@ -596,6 +597,7 @@ container.register(CoinDiscoveryWorker, {
         new CoinDiscoveryWorker(
             dependencyContainer.resolve(CoinDiscoveryService),
             dependencyContainer.resolve(TokensService),
+            dependencyContainer.resolve(CheckedTokenService),
             coinDiscoveryLogger,
         )
     ),
@@ -606,6 +608,7 @@ container.register(CoinBrainWorker, {
         new CoinBrainWorker(
             dependencyContainer.resolve(CoinBrainService),
             dependencyContainer.resolve(TokensService),
+            dependencyContainer.resolve(CheckedTokenService),
             coinBrainLogger,
         )
     ),
@@ -616,6 +619,7 @@ container.register(CoinBuddyWorker, {
         new CoinBuddyWorker(
             dependencyContainer.resolve(CoinBuddyService),
             dependencyContainer.resolve(TokensService),
+            dependencyContainer.resolve(CheckedTokenService),
             coinBuddyLogger,
         )
     ),
@@ -680,6 +684,7 @@ container.register(MobulaWorker, {
         new MobulaWorker(
             dependencyContainer.resolve(TokensService),
             dependencyContainer.resolve(RetryAxios),
+            dependencyContainer.resolve(CheckedTokenService),
             createLogger(MobulaWorker.name.toLowerCase())
         )
     ),
@@ -701,6 +706,7 @@ container.register(RugFreeCoinsWorker, {
         new RugFreeCoinsWorker(
             dependencyContainer.resolve(RugFreeCoinsService),
             dependencyContainer.resolve(TokensService),
+            dependencyContainer.resolve(CheckedTokenService),
             rugFreeCoinsLogger,
         )
     ),
@@ -721,6 +727,7 @@ container.register(CoinCatapultWorker, {
         new CoinCatapultWorker(
             dependencyContainer.resolve(CoinCatapultService),
             dependencyContainer.resolve(TokensService),
+            dependencyContainer.resolve(CheckedTokenService),
             coinCatapultLogger,
         )
     ),
@@ -731,6 +738,7 @@ container.register(CoinCodexWorker, {
         new CoinCodexWorker(
             dependencyContainer.resolve(CoinCodexService),
             dependencyContainer.resolve(TokensService),
+            dependencyContainer.resolve(CheckedTokenService),
             coinCodexLogger,
         )
     ),
@@ -751,6 +759,7 @@ container.register(TokensInsightWorker, {
         new TokensInsightWorker(
             dependencyContainer.resolve(TokensInsightService),
             dependencyContainer.resolve(TokensService),
+            dependencyContainer.resolve(CheckedTokenService),
             tokensInsightLogger,
         )
     ),

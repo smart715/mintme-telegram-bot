@@ -69,7 +69,7 @@ export class MyEtherListsWorker extends AbstractParserWorker {
                 continue
             }
 
-            await this.tokensService.addIfNotExists(
+            await this.tokensService.addOrUpdateToken(
                 tokenAddress,
                 tokenName,
                 [ website ],

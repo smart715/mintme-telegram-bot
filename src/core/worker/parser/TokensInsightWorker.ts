@@ -1,7 +1,7 @@
 import { singleton } from 'tsyringe'
 import { Logger } from 'winston'
 import { Blockchain, parseBlockchainName, sleep } from '../../../utils'
-import { TokensInsightService, TokensService } from '../../service'
+import { CheckedTokenService, TokensInsightService, TokensService } from '../../service'
 import {
     TokensInsightAllCoinsResponse,
     TokensInsightCoinDataResponse,
@@ -18,6 +18,7 @@ export class TokensInsightWorker extends AbstractParserWorker {
     public constructor(
         private readonly tokensInsightService: TokensInsightService,
         private readonly tokensService: TokensService,
+        private readonly checkedTokenService: CheckedTokenService,
         private readonly logger: Logger,
     ) {
         super()
@@ -90,11 +91,14 @@ export class TokensInsightWorker extends AbstractParserWorker {
                     continue
                 }
 
-                const tokenInDbWithSameAddr = await this.tokensService.findByAddress(tokenAddress)
+                if (await this.checkedTokenService.isChecked(tokenAddress, this.workerName)) {
+                    this.logger.warn(`${this.prefixLog} ${tokenAddress} already checked. Skipping`)
 
-                if (tokenInDbWithSameAddr) {
                     continue
                 }
+
+
+                await this.checkedTokenService.saveAsChecked(tokenAddress, this.workerName)
 
                 const websites = coinData.data.website
 
@@ -104,7 +108,7 @@ export class TokensInsightWorker extends AbstractParserWorker {
                     continue
                 }
 
-                await this.tokensService.addIfNotExists(
+                await this.tokensService.addOrUpdateToken(
                     tokenAddress,
                     tokenName,
                     websites,
