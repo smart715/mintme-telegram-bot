@@ -9,9 +9,9 @@ import { Logger } from 'winston'
 @singleton()
 export class CheckTokenBNBWorker extends AbstractTokenWorker {
     private readonly workerName = CheckTokenBNBWorker.name
-    private readonly tokensBatch = 100
+    private readonly tokensBatch = 50
     private readonly sleepTime = 60 * 1000
-    private readonly tokenForbiddenWordsRegexp = /(pancake|binance-peg|wrapped|-lp|swaap governance|tracker)/i
+    private readonly tokenForbiddenWordsRegexp = /(pancake|binance-peg|wrapped|-lp|swaap governance|tracker|\(\)|Cronos Chain)/i
 
     public constructor(
         private readonly queuedTokenAddressService: QueuedTokenAddressService,
@@ -35,13 +35,17 @@ export class CheckTokenBNBWorker extends AbstractTokenWorker {
                 continue
             }
 
+            this.logger.info(`Found ${tokensToCheck.length} Addresses to check`)
+
             for (const token of tokensToCheck) {
                 await this.checkToken(webDriver, token)
+                await sleep(2000)
             }
         }
     }
 
     private async checkToken(webDriver: WebDriver, token: QueuedTokenAddress): Promise<void> {
+        this.logger.info(`Checking ${token.tokenAddress} :: ${token.blockchain}`)
         await webDriver.get('https://' + explorerDomains[token.blockchain] + '/token/' + token.tokenAddress)
 
         if (await this.checkLiquidityProvider(webDriver)) {
@@ -103,6 +107,7 @@ export class CheckTokenBNBWorker extends AbstractTokenWorker {
         const info = tokenName + website + emails.join('') + links.join('')
 
         if (this.tokenForbiddenWordsRegexp.test(info)) {
+            this.logger.warn(`Ignored token ${tokenName} ${queuedToken.tokenAddress} :: ${queuedToken.blockchain} due to forbidden name.`)
             return
         }
 
@@ -154,12 +159,10 @@ export class CheckTokenBNBWorker extends AbstractTokenWorker {
                 .replace(' (', '(')
                 .replace('Token Tracker', '')
                 .trim()
-                .toLowerCase()
             : title
                 .replace(' (', '(')
                 .replace(`Token Tracker | ${blockchainWord}`, '')
                 .trim()
-                .toLowerCase()
     }
 
     private async getWebSite(webDriver: WebDriver, blockchain: Blockchain): Promise<string> {
@@ -176,10 +179,10 @@ export class CheckTokenBNBWorker extends AbstractTokenWorker {
             return ''
         }
 
-        const placeHolder = await webDriver.findElement(By.id('ContentPlaceHolder1_tr_officialsite_1'))
+        const placeHolderSelector = await webDriver.findElements(By.id('ContentPlaceHolder1_tr_officialsite_1'))
 
-        if (placeHolder) {
-            return (await placeHolder.getText()).replace('Official Site:\n', '').toLowerCase()
+        if (placeHolderSelector.length) {
+            return (await placeHolderSelector[0].getText()).replace('Official Site:\n', '').toLowerCase()
         }
 
         return ''
