@@ -25,10 +25,6 @@ export class EnqueueTokensWorker extends AbstractTokenWorker {
         const listedTokensAdresses = await this.mintmeService.getCachedListedTokensAdresses()
         this.logger.info(`[${EnqueueTokensWorker.name}] Fetched listed addresses, amount: ${listedTokensAdresses.length}`)
 
-        console.log(await this.contactQueueService.isExistingTg('https://t.me/shibamax/', this.logger))
-        console.log(await this.contactQueueService.isExistingTg('https://t.me/jhghjtyutyuty', this.logger))
-        console.log(await this.contactQueueService.isExistingTg('https://t.me/madoo00', this.logger))
-
         const tokensToContact = await this.tokensService.getLastNotContactedTokens(blockchain,
             getMaxAttemptsPerMethod(ContactMethod.EMAIL),
             getMaxAttemptsPerMethod(ContactMethod.TWITTER),
