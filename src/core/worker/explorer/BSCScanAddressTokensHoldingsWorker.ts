@@ -89,11 +89,10 @@ export class BSCScanAddressTokensHoldingsWorker extends AbstractTokenWorker {
                     await this.queuedWalletAddressService.markAsChecked(wallet)
 
                     await sleep(this.delayBetweenPages)
-
                 } catch (error) {
                     await destroyDriver(webDriver)
                     throw error
-                }                
+                }
             }
         }
     }

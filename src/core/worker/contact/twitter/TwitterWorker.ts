@@ -81,10 +81,10 @@ export class TwitterWorker {
             } catch (error) {
                 await this.destroyDrivers()
                 throw error
-            } 
+            }
 
             await this.destroyDrivers()
-            
+
             await sleep(60 * 1000)
         }
     }

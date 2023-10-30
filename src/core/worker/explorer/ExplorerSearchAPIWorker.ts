@@ -52,7 +52,6 @@ export class ExplorerSearchAPIWorker extends AbstractTokenWorker {
                 await destroyDriver(webDriver)
                 throw error
             }
-
         }
 
         await this.saveLastCheckedCombination(blockchain, currentCombination)

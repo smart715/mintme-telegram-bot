@@ -43,7 +43,6 @@ export class CheckTokenBNBWorker extends AbstractTokenWorker {
                 await destroyDriver(webDriver)
                 throw error
             }
-
         }
     }
 
