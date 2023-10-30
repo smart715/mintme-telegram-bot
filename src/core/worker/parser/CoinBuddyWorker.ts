@@ -2,7 +2,7 @@ import { DOMWindow, JSDOM } from 'jsdom'
 import { singleton } from 'tsyringe'
 import { Logger } from 'winston'
 import { Blockchain, findContractAddress } from '../../../utils'
-import { CoinBuddyService, TokensService } from '../../service'
+import { CheckedTokenService, CoinBuddyService, TokensService } from '../../service'
 import { AbstractParserWorker } from './AbstractParserWorker'
 
 @singleton()
@@ -14,6 +14,7 @@ export class CoinBuddyWorker extends AbstractParserWorker {
     public constructor(
         private readonly coinBuddyService: CoinBuddyService,
         private readonly tokenService: TokensService,
+        private readonly checkedTokenService: CheckedTokenService,
         private readonly logger: Logger,
     ) {
         super()
@@ -109,9 +110,9 @@ export class CoinBuddyWorker extends AbstractParserWorker {
                     continue
                 }
 
-                const tokenInDb = await this.tokenService.findByAddress(tokenAddress)
+                if (await this.checkedTokenService.isChecked(coinId, this.workerName)) {
+                    this.logger.warn(`${this.prefixLog} ${coinId} already checked. Skipping`)
 
-                if (tokenInDb) {
                     continue
                 }
 
@@ -142,7 +143,7 @@ export class CoinBuddyWorker extends AbstractParserWorker {
                     continue
                 }
 
-                await this.tokenService.addIfNotExists(
+                await this.tokenService.addOrUpdateToken(
                     tokenAddress,
                     tokenName,
                     [ website ],
@@ -151,6 +152,8 @@ export class CoinBuddyWorker extends AbstractParserWorker {
                     this.workerName,
                     currentBlockchain
                 )
+
+                await this.checkedTokenService.saveAsChecked(coinId, this.workerName)
 
                 this.logger.info(
                     `${this.prefixLog} Added to DB:`,

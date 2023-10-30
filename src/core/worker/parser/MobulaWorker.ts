@@ -1,6 +1,6 @@
 import { singleton } from 'tsyringe'
 import { RetryAxios, Blockchain, parseBlockchainName } from '../../../utils'
-import { TokensService } from '../../service'
+import { CheckedTokenService, TokensService } from '../../service'
 import { MobulaSearchResponse } from '../../types'
 import { Logger } from 'winston'
 import { AbstractParserWorker } from './AbstractParserWorker'
@@ -13,6 +13,7 @@ export class MobulaWorker extends AbstractParserWorker {
     public constructor(
         private readonly tokensService: TokensService,
         private readonly retryAxios: RetryAxios,
+        private readonly checkedTokenService: CheckedTokenService,
         private readonly logger: Logger,
     ) {
         super()
@@ -48,7 +49,15 @@ export class MobulaWorker extends AbstractParserWorker {
                 continue
             }
 
-            await this.tokensService.addIfNotExists(
+            if (await this.checkedTokenService.isChecked(contractAddress, this.workerName)) {
+                this.logger.warn(`${this.workerName} ${contractAddress} already checked. Skipping`)
+
+                continue
+            }
+
+            await this.checkedTokenService.saveAsChecked(contractAddress, this.workerName)
+
+            await this.tokensService.addOrUpdateToken(
                 contractAddress,
                 this.getTokenName(tokenInfo),
                 [ tokenInfo.website ],

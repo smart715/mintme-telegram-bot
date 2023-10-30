@@ -53,7 +53,7 @@ export class MemeCoinsWorker extends NewestTokenChecker {
             return
         }
 
-        await this.tokensService.addIfNotExists(
+        await this.tokensService.addOrUpdateToken(
             tokenAddress,
             tokenName,
             webSites,

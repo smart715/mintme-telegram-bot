@@ -76,7 +76,7 @@ export class Coin360Worker extends AbstractParserWorker {
             })
 
             if (blockchain && this.supportedBlockchains.includes(blockchain) && tokenAddress?.startsWith('0x')) {
-                await this.tokenService.addIfNotExists(
+                await this.tokenService.addOrUpdateToken(
                     tokenAddress,
                     tokenName,
                     [ website ],

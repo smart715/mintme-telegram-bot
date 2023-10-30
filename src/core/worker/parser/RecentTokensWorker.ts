@@ -135,7 +135,7 @@ export class RecentTokensWorker extends NewestTokenChecker {
             return
         }
 
-        await this.tokenService.addIfNotExists(
+        await this.tokenService.addOrUpdateToken(
             tokenAddress,
             tokenName,
             [ website ],

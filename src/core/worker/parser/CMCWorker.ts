@@ -89,7 +89,7 @@ export class CMCWorker extends AbstractParserWorker {
             const email = ''
             const links = this.getUsefulLinks(tokenInfo.urls)
 
-            await this.tokensService.addIfNotExists(
+            await this.tokensService.addOrUpdateToken(
                 tokenAddress,
                 tokenName,
                 [ website ],

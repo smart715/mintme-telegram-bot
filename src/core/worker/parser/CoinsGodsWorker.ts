@@ -63,7 +63,7 @@ export class CoinsGodsWorker extends AbstractParserWorker {
             }
 
             if (this.supportedBlockchains.includes(blockchain) && tokenAddress?.startsWith('0x')) {
-                await this.tokenService.addIfNotExists(
+                await this.tokenService.addOrUpdateToken(
                     tokenAddress,
                     tokenName,
                     [ website ],

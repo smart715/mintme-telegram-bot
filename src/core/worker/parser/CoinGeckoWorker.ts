@@ -105,13 +105,7 @@ export class CoinGeckoWorker extends AbstractParserWorker {
 
             const allLinks = this.getLinks(links)
 
-            const tokenInDb = await this.tokenService.findByAddress(address)
-
-            if (tokenInDb) {
-                continue
-            }
-
-            await this.tokenService.addIfNotExists(
+            await this.tokenService.addOrUpdateToken(
                 address,
                 coinName,
                 websites,

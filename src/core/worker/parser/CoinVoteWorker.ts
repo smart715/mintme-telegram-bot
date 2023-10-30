@@ -65,7 +65,7 @@ export class CoinVoteWorker extends AbstractParserWorker {
                     const website = linksEl ? this.getWebsite(linksEl.innerHTML) : ''
                     const links = linksEl ? this.getLinks(linksEl?.innerHTML) : [ ]
 
-                    await this.tokenService.addIfNotExists(
+                    await this.tokenService.addOrUpdateToken(
                         tokenAddress,
                         tokenName,
                         [ website ],

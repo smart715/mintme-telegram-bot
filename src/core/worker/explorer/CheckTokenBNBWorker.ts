@@ -2,7 +2,7 @@ import { AbstractTokenWorker } from '../AbstractTokenWorker'
 import { By, WebDriver, WebElement } from 'selenium-webdriver'
 import { QueuedTokenAddressService, SeleniumService, TokensService } from '../../service'
 import { Blockchain, destroyDriver, explorerDomains, sleep } from '../../../utils'
-import { QueuedTokenAddress, Token } from '../../entity'
+import { QueuedTokenAddress } from '../../entity'
 import { singleton } from 'tsyringe'
 import { Logger } from 'winston'
 
@@ -111,40 +111,8 @@ export class CheckTokenBNBWorker extends AbstractTokenWorker {
             return
         }
 
-        const token = await this.tokensService.findByAddress(queuedToken.tokenAddress)
-
-        if (token) {
-            this.logger.info(`Checking to update ${token.blockchain} token ${token.address} :: ${token.name}`)
-            await this.updateToken(token, website, emails, links)
-        } else {
-            this.logger.info(`Adding new ${queuedToken.blockchain} token ${queuedToken.tokenAddress} :: ${tokenName}`)
-            await this.saveNewToken(queuedToken.blockchain, queuedToken.tokenAddress, tokenName, website, emails, links)
-        }
-    }
-
-    private async updateToken(
-        token: Token,
-        newWebsite: string,
-        newEmails: string[],
-        newLinks: string[],
-    ): Promise<void> {
-        if (newWebsite.trim() && !token.websites.includes(newWebsite)) {
-            token.websites.push(newWebsite)
-        }
-
-        newEmails.forEach(newEmail => {
-            if (!token.emails.includes(newEmail)) {
-                token.emails.push(newEmail)
-            }
-        })
-
-        newLinks.forEach(newLink => {
-            if (!token.links.includes(newLink)) {
-                token.links.push(newLink)
-            }
-        })
-
-        await this.tokensService.update(token)
+        this.logger.info(`Adding or Updating ${queuedToken.blockchain} token ${queuedToken.tokenAddress} :: ${tokenName}`)
+        await this.saveNewToken(queuedToken.blockchain, queuedToken.tokenAddress, tokenName, website, emails, links)
     }
 
     private async saveNewToken(
@@ -159,7 +127,7 @@ export class CheckTokenBNBWorker extends AbstractTokenWorker {
             return
         }
 
-        await this.tokensService.addIfNotExists(
+        await this.tokensService.addOrUpdateToken(
             tokenAddress.toLowerCase(),
             tokenName,
             [ website ],
