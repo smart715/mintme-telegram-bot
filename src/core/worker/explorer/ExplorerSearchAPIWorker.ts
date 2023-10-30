@@ -1,5 +1,5 @@
 import { AbstractTokenWorker } from '../AbstractTokenWorker'
-import { explorerDomains, TokenNamesGenerator, Blockchain } from '../../../utils'
+import { explorerDomains, TokenNamesGenerator, Blockchain, destroyDriver } from '../../../utils'
 import { LastCheckedTokenNameService, SeleniumService } from '../../service'
 import { WebDriver } from 'selenium-webdriver'
 import { singleton } from 'tsyringe'
@@ -45,8 +45,14 @@ export class ExplorerSearchAPIWorker extends AbstractTokenWorker {
         while (this.tokenNamesGenerator.noFurtherCombinations !== currentCombination) {
             currentCombination = this.tokenNamesGenerator.getNextCombination(currentCombination)
 
-            await this.checkConfiguration(webDriver, explorerDomain, blockchain, currentCombination)
-            await this.saveLastCheckedCombination(blockchain, currentCombination)
+            try {
+                await this.checkConfiguration(webDriver, explorerDomain, blockchain, currentCombination)
+                await this.saveLastCheckedCombination(blockchain, currentCombination)
+            } catch (error) {
+                await destroyDriver(webDriver)
+                throw error
+            }
+
         }
 
         await this.saveLastCheckedCombination(blockchain, currentCombination)

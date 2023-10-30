@@ -1,7 +1,7 @@
 import { AbstractTokenWorker } from '../AbstractTokenWorker'
 import { By, WebDriver, WebElement } from 'selenium-webdriver'
 import { QueuedTokenAddressService, SeleniumService, TokensService } from '../../service'
-import { Blockchain, explorerDomains, sleep } from '../../../utils'
+import { Blockchain, destroyDriver, explorerDomains, sleep } from '../../../utils'
 import { QueuedTokenAddress, Token } from '../../entity'
 import { singleton } from 'tsyringe'
 import { Logger } from 'winston'
@@ -35,9 +35,15 @@ export class CheckTokenBNBWorker extends AbstractTokenWorker {
                 continue
             }
 
-            for (const token of tokensToCheck) {
-                await this.checkToken(webDriver, token)
+            try {
+                for (const token of tokensToCheck) {
+                    await this.checkToken(webDriver, token)
+                }
+            } catch (error) {
+                await destroyDriver(webDriver)
+                throw error
             }
+
         }
     }
 

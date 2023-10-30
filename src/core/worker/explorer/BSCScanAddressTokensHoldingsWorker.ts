@@ -2,7 +2,7 @@ import { AbstractTokenWorker } from '../AbstractTokenWorker'
 import { By, Key, WebDriver, until } from 'selenium-webdriver'
 import { FirewallService, QueuedWalletAddressService, SeleniumService } from '../../service'
 import { QueuedWalletAddress } from '../../entity'
-import { sleep, Blockchain, explorerDomains } from '../../../utils'
+import { sleep, Blockchain, explorerDomains, destroyDriver } from '../../../utils'
 import { singleton } from 'tsyringe'
 import { ExplorerEnqueuer } from './ExplorerEnqueuer'
 import { Logger } from 'winston'
@@ -56,38 +56,44 @@ export class BSCScanAddressTokensHoldingsWorker extends AbstractTokenWorker {
                     await sleep(this.delayBetweenPages)
                 }
 
-                await webDriver.get(this.buildExplorerUrl(explorerDomain, wallet.walletAddress))
-                await webDriver.wait(until.elementLocated(By.name('mytable_length')), 60000)
-
-                await webDriver.sleep(this.delayBetweenPages)
-
-                if (await this.isPageAvailable(webDriver)) {
-                    const resultsPerPageSelector = await webDriver.findElement(By.name('mytable_length'))
-
-                    for (let i = 0; i < 3; i++) {
-                        await resultsPerPageSelector.sendKeys(Key.ARROW_DOWN)
-                        await webDriver.sleep(300)
-                    }
+                try {
+                    await webDriver.get(this.buildExplorerUrl(explorerDomain, wallet.walletAddress))
+                    await webDriver.wait(until.elementLocated(By.name('mytable_length')), 60000)
 
                     await webDriver.sleep(this.delayBetweenPages)
 
-                    await this.processTokensOnPage(webDriver)
+                    if (await this.isPageAvailable(webDriver)) {
+                        const resultsPerPageSelector = await webDriver.findElement(By.name('mytable_length'))
 
-                    const pagesAmount = await this.getPagesAmount(webDriver)
-
-                    for (let page = 2; page <= pagesAmount; page++) {
-                        const nextPage = webDriver.findElement(By.id('mytable_next'))
-                        await webDriver.executeScript(`arguments[0].click()`, nextPage)
+                        for (let i = 0; i < 3; i++) {
+                            await resultsPerPageSelector.sendKeys(Key.ARROW_DOWN)
+                            await webDriver.sleep(300)
+                        }
 
                         await webDriver.sleep(this.delayBetweenPages)
 
                         await this.processTokensOnPage(webDriver)
+
+                        const pagesAmount = await this.getPagesAmount(webDriver)
+
+                        for (let page = 2; page <= pagesAmount; page++) {
+                            const nextPage = webDriver.findElement(By.id('mytable_next'))
+                            await webDriver.executeScript(`arguments[0].click()`, nextPage)
+
+                            await webDriver.sleep(this.delayBetweenPages)
+
+                            await this.processTokensOnPage(webDriver)
+                        }
                     }
-                }
 
-                await this.queuedWalletAddressService.markAsChecked(wallet)
+                    await this.queuedWalletAddressService.markAsChecked(wallet)
 
-                await sleep(this.delayBetweenPages)
+                    await sleep(this.delayBetweenPages)
+
+                } catch (error) {
+                    await destroyDriver(webDriver)
+                    throw error
+                }                
             }
         }
     }

@@ -76,12 +76,15 @@ export class TwitterWorker {
                 currentAccountIndex++
             }
 
-            await this.startAllClients()
+            try {
+                await this.startAllClients()
+            } catch (error) {
+                await this.destroyDrivers()
+                throw error
+            } 
 
-            for (const client of this.twitterClients) {
-                await client.destroyDriver()
-            }
-
+            await this.destroyDrivers()
+            
             await sleep(60 * 1000)
         }
     }
@@ -117,5 +120,11 @@ export class TwitterWorker {
         }
 
         return Promise.all(contactingPromises)
+    }
+
+    private async destroyDrivers(): Promise<void> {
+        for (const client of this.twitterClients) {
+            await client.destroyDriver()
+        }
     }
 }
