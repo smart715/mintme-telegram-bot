@@ -3,9 +3,11 @@ import { QueuedContactRepository } from '../repository'
 import { QueuedContact, Token } from '../entity'
 import { Blockchain, sleep } from '../../utils'
 import { ContactMethod, TokenContactStatusType } from '../types'
-import axios from 'axios'
+import axios, { AxiosRequestConfig } from 'axios'
 import { Logger } from 'winston'
 import { TokensService } from './TokensService'
+import { ProxyService } from './ProxyServerService'
+import { HttpsProxyAgent } from 'https-proxy-agent'
 
 @singleton()
 export class ContactQueueService {
@@ -14,6 +16,7 @@ export class ContactQueueService {
     public constructor(
         private readonly queuedContactRepository: QueuedContactRepository,
         private readonly tokenService: TokensService,
+        private readonly proxyService: ProxyService,
     ) { }
 
     public async addToQueue(
@@ -93,17 +96,35 @@ export class ContactQueueService {
 
     public async isExistingTg(link: string, logger: Logger, retries: number = 0): Promise<boolean> {
         try {
-            const request = await axios.get(link)
+            const proxy = await this.proxyService.getRandomProxy()
+            let axiosConfig: AxiosRequestConfig<any> | undefined
+
+            if (proxy) {
+                const proxyInfo = proxy.proxy.replace('http://', '')
+                const httpsAgent = new HttpsProxyAgent(`http://${proxy.authInfo}@${proxyInfo}`)
+                axiosConfig = {
+                    httpAgent: httpsAgent,
+                }
+            }
+
+
+            const request = await axios.get(link, axiosConfig)
 
             if (200 === request.status && request.data.includes('<title>Telegram: Contact')) {
-                return request.data.includes('tgme_page_title') && !request.data.includes(' subscribers')
+                if (request.data.includes(' subscribers')) {
+                    return false
+                }
+
+                if (request.data.includes('tgme_page_title')) {
+                    return true
+                }
             }
 
             if (retries >= 5) {
                 throw new Error(`Telegram request returned status ${request.status}`)
             }
 
-            await sleep(5000)
+            await sleep(3000)
             return this.isExistingTg(link, logger, ++retries)
         } catch (e) {
             logger.error(e)

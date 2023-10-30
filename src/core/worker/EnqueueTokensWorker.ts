@@ -5,6 +5,7 @@ import { ContactQueueService, MintmeService, TokensService, ContactHistoryServic
 import { Blockchain, getMaxAttemptsPerMethod, sleep } from '../../utils'
 import { ContactHistoryStatusType, ContactMethod, TokenContactStatusType } from '../types'
 import { Token } from '../entity'
+import moment from 'moment'
 
 @singleton()
 export class EnqueueTokensWorker extends AbstractTokenWorker {
@@ -23,6 +24,10 @@ export class EnqueueTokensWorker extends AbstractTokenWorker {
 
         const listedTokensAdresses = await this.mintmeService.getCachedListedTokensAdresses()
         this.logger.info(`[${EnqueueTokensWorker.name}] Fetched listed addresses, amount: ${listedTokensAdresses.length}`)
+
+        console.log(await this.contactQueueService.isExistingTg('https://t.me/shibamax/', this.logger))
+        console.log(await this.contactQueueService.isExistingTg('https://t.me/jhghjtyutyuty', this.logger))
+        console.log(await this.contactQueueService.isExistingTg('https://t.me/madoo00', this.logger))
 
         const tokensToContact = await this.tokensService.getLastNotContactedTokens(blockchain,
             getMaxAttemptsPerMethod(ContactMethod.EMAIL),
@@ -107,6 +112,8 @@ export class EnqueueTokensWorker extends AbstractTokenWorker {
         const isChannelCanBeContacted = await this.contactHistoryService.isChannelCanBeContacted(contactChannel)
 
         if (!isChannelCanBeContacted) {
+            token.lastContactAttempt = moment().utc().toDate()
+
             this.logger.info(
                 `[${EnqueueTokensWorker.name}] Skipped ${contactChannel} for being contacted within same channel frequency`
             )

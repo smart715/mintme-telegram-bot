@@ -302,6 +302,7 @@ container.register(ContactQueueService, {
         new ContactQueueService(
             dependencyContainer.resolve(QueuedContactRepository),
             dependencyContainer.resolve(TokensService),
+            dependencyContainer.resolve(ProxyService),
         ),
     ),
 })

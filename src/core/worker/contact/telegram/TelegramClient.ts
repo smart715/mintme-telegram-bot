@@ -615,7 +615,9 @@ export class TelegramClient {
                 case ContactHistoryStatusType.ERROR:
                 case ContactHistoryStatusType.ACCOUNT_NOT_EXISTS:
                     this.potentialFalsePositiveInRow++
-                    if (this.potentialFalsePositiveInRow >= 2) {
+
+                    if (this.potentialFalsePositiveInRow >= 2 ||
+                        await this.contactQueueService.isExistingTg(queuedContact.channel, this.logger)) {
                         return
                     }
             }
