@@ -116,7 +116,7 @@ export class ContactQueueService {
                 const proxyInfo = proxy.proxy.replace('http://', '')
                 const httpsAgent = new HttpsProxyAgent(`http://${proxy.authInfo}@${proxyInfo}`)
                 axiosConfig = {
-                    httpAgent: httpsAgent,
+                    httpsAgent,
                 }
             }
 
