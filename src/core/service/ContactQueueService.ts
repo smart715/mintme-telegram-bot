@@ -137,7 +137,7 @@ export class ContactQueueService {
                 return TelegramChannelCheckResultType.NOT_ACTIVE
             }
 
-            await sleep(5000)
+            await sleep(10000)
             return this.checkTelegramChannel(link, logger, ++retries)
         } catch (e) {
             logger.error(`${e}, Retry #${retries}`)
