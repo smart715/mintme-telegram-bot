@@ -303,6 +303,7 @@ container.register(ContactQueueService, {
             dependencyContainer.resolve(QueuedContactRepository),
             dependencyContainer.resolve(TokensService),
             dependencyContainer.resolve(ProxyService),
+            dependencyContainer.resolve(ContactHistoryService),
         ),
     ),
 })

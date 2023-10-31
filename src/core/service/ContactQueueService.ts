@@ -2,12 +2,13 @@ import { singleton } from 'tsyringe'
 import { QueuedContactRepository } from '../repository'
 import { QueuedContact, Token } from '../entity'
 import { Blockchain, sleep } from '../../utils'
-import { ContactMethod, TokenContactStatusType } from '../types'
+import { ContactMethod, TelegramChannelCheckResultType, TokenContactStatusType } from '../types'
 import axios, { AxiosRequestConfig } from 'axios'
 import { Logger } from 'winston'
 import { TokensService } from './TokensService'
 import { ProxyService } from './ProxyServerService'
 import { HttpsProxyAgent } from 'https-proxy-agent'
+import { ContactHistoryService } from './ContactHistoryService'
 
 @singleton()
 export class ContactQueueService {
@@ -17,6 +18,7 @@ export class ContactQueueService {
         private readonly queuedContactRepository: QueuedContactRepository,
         private readonly tokenService: TokensService,
         private readonly proxyService: ProxyService,
+        private readonly contactHistoryService: ContactHistoryService,
     ) { }
 
     public async addToQueue(
@@ -94,8 +96,19 @@ export class ContactQueueService {
         return (find > 0)
     }
 
-    public async isExistingTg(link: string, logger: Logger, retries: number = 0): Promise<boolean> {
+    public async checkTelegramChannel(
+        link: string,
+        logger: Logger,
+        retries: number = 0): Promise<TelegramChannelCheckResultType> {
         try {
+            if (0 === retries) {
+                const isChannelCanBeContacted = await this.contactHistoryService.isChannelCanBeContacted(link)
+
+                if (!isChannelCanBeContacted) {
+                    return TelegramChannelCheckResultType.FREQUENCY_LIMIT
+                }
+            }
+
             const proxy = await this.proxyService.getRandomProxy()
             let axiosConfig: AxiosRequestConfig<any> | undefined
 
@@ -112,23 +125,28 @@ export class ContactQueueService {
 
             if (200 === request.status && request.data.includes('<title>Telegram: Contact')) {
                 if (request.data.includes(' subscribers')) {
-                    return false
+                    return TelegramChannelCheckResultType.ANNOUNCEMENTS_CHANNEL
                 }
 
                 if (request.data.includes('tgme_page_title')) {
-                    return true
+                    return TelegramChannelCheckResultType.ACTIVE
                 }
             }
 
             if (retries >= 5) {
-                throw new Error(`Telegram request returned status ${request.status}`)
+                return TelegramChannelCheckResultType.NOT_ACTIVE
             }
 
-            await sleep(3000)
-            return this.isExistingTg(link, logger, ++retries)
+            await sleep(5000)
+            return this.checkTelegramChannel(link, logger, ++retries)
         } catch (e) {
-            logger.error(e)
-            return false
+            logger.error(`${e}, Retry #${retries}`)
+
+            if (retries >= 5) {
+                return TelegramChannelCheckResultType.ERROR
+            }
+
+            return this.checkTelegramChannel(link, logger, ++retries)
         }
     }
 

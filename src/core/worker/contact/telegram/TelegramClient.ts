@@ -12,7 +12,7 @@ import {
 import { By, Key, WebDriver, WebElement } from 'selenium-webdriver'
 import * as fs from 'fs'
 import { Environment, getRandomNumber } from '../../../../utils'
-import { ChatType, ContactHistoryStatusType, ContactMethod } from '../../../types'
+import { ChatType, ContactHistoryStatusType, ContactMethod, TelegramChannelCheckResultType } from '../../../types'
 import moment from 'moment'
 import { Logger } from 'winston'
 
@@ -615,9 +615,13 @@ export class TelegramClient {
                 case ContactHistoryStatusType.ERROR:
                 case ContactHistoryStatusType.ACCOUNT_NOT_EXISTS:
                     this.potentialFalsePositiveInRow++
+                    // eslint-disable-next-line no-case-declarations
+                    const checkTelegramChannel = await this.contactQueueService.checkTelegramChannel(
+                        queuedContact.channel,
+                        this.logger)
 
                     if (this.potentialFalsePositiveInRow >= 2 ||
-                        await this.contactQueueService.isExistingTg(queuedContact.channel, this.logger)) {
+                        TelegramChannelCheckResultType.ACTIVE === checkTelegramChannel) {
                         return
                     }
             }

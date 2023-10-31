@@ -3,7 +3,7 @@ import { Logger } from 'winston'
 import { AbstractTokenWorker } from './AbstractTokenWorker'
 import { ContactQueueService, MintmeService, TokensService, ContactHistoryService } from '../service'
 import { Blockchain, getMaxAttemptsPerMethod, sleep } from '../../utils'
-import { ContactHistoryStatusType, ContactMethod, TokenContactStatusType } from '../types'
+import { ContactHistoryStatusType, ContactMethod, TelegramChannelCheckResultType, TokenContactStatusType } from '../types'
 import { Token } from '../entity'
 import moment from 'moment'
 
@@ -110,10 +110,6 @@ export class EnqueueTokensWorker extends AbstractTokenWorker {
         if (!isChannelCanBeContacted) {
             token.lastContactAttempt = moment().utc().toDate()
 
-            this.logger.info(
-                `[${EnqueueTokensWorker.name}] Skipped ${contactChannel} for being contacted within same channel frequency`
-            )
-
             return { enqueued: false, nextContactMethod: null, contactChannel: '' }
         }
 
@@ -175,28 +171,30 @@ export class EnqueueTokensWorker extends AbstractTokenWorker {
 
                     this.logger.info(`Checking if telegram channel ${link} available`)
 
-                    await sleep(3000)
-                    try {
-                        if (await this.contactQueueService.isExistingTg(link, this.logger)) {
-                            this.logger.info(`Telegram channel ${link} is active`)
-                            return link
-                        } else {
-                            this.logger.warn(`Telegram channel ${link} not active`)
+                    await sleep(1000)
 
+                    const tgChannelCheck = await this.contactQueueService.checkTelegramChannel(link, this.logger)
+                    this.logger.info(`Telegram channel check of ${link} returned:  ${tgChannelCheck}`)
+
+                    switch (tgChannelCheck) {
+                        case TelegramChannelCheckResultType.ACTIVE:
+                        case TelegramChannelCheckResultType.ERROR:
+                        case TelegramChannelCheckResultType.FREQUENCY_LIMIT:
+                            return link
+                        case TelegramChannelCheckResultType.ANNOUNCEMENTS_CHANNEL:
+                        case TelegramChannelCheckResultType.NOT_ACTIVE:
                             await this.contactHistoryService.addRecord(token.address,
                                 token.blockchain,
                                 ContactMethod.TELEGRAM,
                                 false,
                                 0,
                                 link,
-                                ContactHistoryStatusType.ACCOUNT_NOT_EXISTS
+                                TelegramChannelCheckResultType.ANNOUNCEMENTS_CHANNEL === tgChannelCheck ?
+                                    ContactHistoryStatusType.ANNOUNCEMENTS_CHANNEL :
+                                    ContactHistoryStatusType.ACCOUNT_NOT_EXISTS
                             )
 
                             continue
-                        }
-                    } catch (ex: any) {
-                        this.logger.error(`Couldn't fetch status of channel ${link}, Err: ${ex.message}, Queued to check through proxy and account`)
-                        return link
                     }
                 }
 

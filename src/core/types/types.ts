@@ -51,3 +51,11 @@ export enum BlacklistType {
     MESSAGE_CONTENT = 'MESSAGE_CONTENT',
     USERNAME = 'USERNAME',
 }
+
+export enum TelegramChannelCheckResultType {
+    ACTIVE = 'ACTIVE',
+    NOT_ACTIVE = 'NOT_ACTIVE',
+    ANNOUNCEMENTS_CHANNEL = 'ANNOUNCEMENTS_CHANNEL',
+    ERROR = 'ERROR',
+    FREQUENCY_LIMIT = 'FREQUENCY_LIMIT',
+}
