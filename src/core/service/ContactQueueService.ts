@@ -120,7 +120,6 @@ export class ContactQueueService {
                 }
             }
 
-
             const request = await axios.get(link, axiosConfig)
 
             if (200 === request.status && request.data.includes('<title>Telegram: Contact')) {
