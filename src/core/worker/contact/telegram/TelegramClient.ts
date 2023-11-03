@@ -639,16 +639,6 @@ export class TelegramClient {
 
             const isSuccess = this.isSuccessResult(result)
 
-            if (this.maxMessagesPerCycle <= this.successMessages) {
-                this.log(`Reached cycle limit hit, Skipping`)
-
-                this.telegramService.setAccountLimitHitDate(
-                    this.telegramAccount,
-                    moment().utc().add(5, 'minutes').toDate())
-
-                return
-            }
-
             await this.contactQueueService.removeFromQueue(queuedContact.address, queuedContact.blockchain)
 
             this.log(
@@ -668,6 +658,17 @@ export class TelegramClient {
 
 
             await this.tokenService.postContactingActions(token, ContactMethod.TELEGRAM, isSuccess)
+
+
+            if (this.maxMessagesPerCycle <= this.successMessages) {
+                this.log(`Reached cycle limit hit, Skipping`)
+
+                this.telegramService.setAccountLimitHitDate(
+                    this.telegramAccount,
+                    moment().utc().add(5, 'minutes').toDate())
+
+                return
+            }
         }
         await this.postSendingCheck()
     }
