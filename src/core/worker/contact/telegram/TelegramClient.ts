@@ -256,18 +256,21 @@ export class TelegramClient {
             const messageInput = await this.driver.findElement(By.id('editable-message-text'))
 
             if (messageInput) {
+                this.log('Found input box, sending message')
+
                 await messageInput.sendKeys(this.getMessageTemplate())
                 await this.driver.sleep(20000)
 
                 if (this.isProd()) {
                     this.log('Environment is not production. Skipping sending message')
-                } else {
-                    await messageInput.sendKeys(Key.RETURN)
                 }
+                await messageInput.sendKeys(Key.RETURN)
+
 
                 this.sentMessages++
                 return true
             }
+
             return false
         } catch (error) {
             return false
@@ -463,6 +466,10 @@ export class TelegramClient {
             const userStatusSelector = await this.driver.findElements(By.className('user-status'))
 
             if (userStatusSelector.length > 0) {
+                if ((await userStatusSelector[0].getText()).includes('bot')) {
+                    return ContactHistoryStatusType.BOT_USER
+                }
+
                 return await this.sendDM()
             } else {
                 const groupStatusSelector = await this.driver.findElements(By.className('group-status'))
@@ -622,6 +629,7 @@ export class TelegramClient {
 
                     if (this.potentialFalsePositiveInRow >= 2 ||
                         TelegramChannelCheckResultType.ACTIVE === checkTelegramChannel) {
+                        this.log(`Account not loading channels properly, Skipping`)
                         return
                     }
             }
