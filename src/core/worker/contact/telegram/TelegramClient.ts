@@ -659,7 +659,6 @@ export class TelegramClient {
 
             await this.tokenService.postContactingActions(token, ContactMethod.TELEGRAM, isSuccess)
 
-
             if (this.maxMessagesPerCycle <= this.successMessages) {
                 this.log(`Reached cycle limit hit, Skipping`)
 
