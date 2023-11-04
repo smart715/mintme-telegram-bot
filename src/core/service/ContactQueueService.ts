@@ -99,7 +99,8 @@ export class ContactQueueService {
     public async checkTelegramChannel(
         link: string,
         logger: Logger,
-        retries: number = 0): Promise<TelegramChannelCheckResultType> {
+        retries: number = 0
+    ): Promise<TelegramChannelCheckResultType> {
         try {
             if (0 === retries) {
                 const isChannelCanBeContacted = await this.contactHistoryService.isChannelCanBeContacted(link)

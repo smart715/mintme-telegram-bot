@@ -625,10 +625,12 @@ export class TelegramClient {
                     // eslint-disable-next-line no-case-declarations
                     const checkTelegramChannel = await this.contactQueueService.checkTelegramChannel(
                         queuedContact.channel,
-                        this.logger)
+                        this.logger
+                    )
 
                     if (this.potentialFalsePositiveInRow >= 2 ||
-                        TelegramChannelCheckResultType.ACTIVE === checkTelegramChannel) {
+                        TelegramChannelCheckResultType.ACTIVE === checkTelegramChannel
+                    ) {
                         this.log(`Account not loading channels properly, Skipping`)
                         return
                     }
