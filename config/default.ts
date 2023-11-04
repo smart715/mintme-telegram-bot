@@ -13,7 +13,7 @@ export default {
 
     // Coinmarketcap worker settings
     cmcWorker: {
-        'apiKey': '0da9b092-fee6-4c91-875a-e93fbb6b78e0',
+        'apiKeys': [ '0da9b092-fee6-4c91-875a-e93fbb6b78e0', 'key2', 'key3' ], // Replace with actual API keys
         'requestOffset': 5000,
         'requestLimit': 5000,
     },
