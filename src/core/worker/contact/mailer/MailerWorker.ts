@@ -10,12 +10,15 @@ import { sleep } from '../../../../utils'
 import { ContactHistory, ContactMessage, QueuedContact, Token } from '../../../entity'
 import { singleton } from 'tsyringe'
 import { Logger } from 'winston'
+import config from 'config'
 
 @singleton()
 export class MailerWorker {
     private readonly workerName = MailerWorker.name
     private readonly queueIsEmptySleepTime = 60 * 1000
     private readonly sleepTimeBetweenItems = 5 * 1000
+    private readonly maxRetries = 5
+    private readonly email: string = config.get('email_daily_statistic')
 
     public constructor(
         private readonly contactQueueService: ContactQueueService,
@@ -47,13 +50,22 @@ export class MailerWorker {
         }
     }
 
-    private async processQueueItem(queueItem: QueuedContact): Promise<void> {
+    private async processQueueItem(queueItem: QueuedContact, retries = 0): Promise<void> {
         const token = await this.tokensService.findByAddress(queueItem.address)
 
         if (!token) {
             await this.contactQueueService.removeFromQueue(queueItem.address, queueItem.blockchain)
             this.logger.info(`[${this.workerName}] No token for ${queueItem.address} :: ${queueItem.blockchain} . Skipping`)
 
+            return
+        }
+
+        if (!this.isValidEmail(queueItem.channel)) {
+            // Mark the entry as an error and send an error notification
+            this.logger.info(`[${this.workerName}] Invalid email address: ${queueItem.channel}. Marking it as an error.`)
+            await this.contactQueueService.markEntryAsError(queueItem.address, queueItem.blockchain)
+            const errorDetails = `Invalid email address: ${queueItem.channel}`
+            await this.sendErrorNotification('Error during email sending', errorDetails)
             return
         }
 
@@ -66,15 +78,28 @@ export class MailerWorker {
             return
         }
 
-
         this.logger.info(
             `[${this.workerName}] Started processing ${queueItem.address} ${queueItem.blockchain} :: ${queueItem.channel}. `
         )
 
-        await this.contact(queueItem.channel, token)
-        await this.contactQueueService.removeFromQueue(queueItem.address, queueItem.blockchain)
-        await this.tokensService.postContactingActions(token, ContactMethod.EMAIL, true)
-
+        try {
+            await this.contact(queueItem.channel, token)
+            await this.contactQueueService.removeFromQueue(queueItem.address, queueItem.blockchain)
+            await this.tokensService.postContactingActions(token, ContactMethod.EMAIL, true)
+        } catch (error) {
+            const typedError = error as Error
+            this.logger.error(`[${this.workerName}] Error sending email: ${typedError.message}`)
+            if (retries < this.maxRetries) {
+                this.logger.info(`[${this.workerName}] Retrying email sending (Retry ${retries + 1})`)
+                await sleep(this.sleepTimeBetweenItems)
+                return this.processQueueItem(queueItem, retries + 1)
+            } else {
+                this.logger.info(`[${this.workerName}] Max retries reached. Marking the entry as an error.`)
+                await this.contactQueueService.markEntryAsError(queueItem.address, queueItem.blockchain)
+                const errorDetails = `Error for ${queueItem.address} :: ${queueItem.blockchain} (${queueItem.channel})`
+                await this.sendErrorNotification('Error during email sending', errorDetails)
+            }
+        }
 
         this.logger.info(`[${this.workerName}] ` +
             `Proceeding of ${queueItem.address} :: ${queueItem.blockchain} finished`
@@ -98,6 +123,12 @@ export class MailerWorker {
         )
 
         return contactResult
+    }
+
+    private isValidEmail(email: string): boolean {
+        // Regular expression for email address validation
+        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/
+        return emailRegex.test(email)
     }
 
     private async getContactMessage(currentAttempt: number): Promise<ContactMessage> {
@@ -153,5 +184,18 @@ export class MailerWorker {
             email,
             contactResult,
         )
+    }
+
+    private async sendErrorNotification(errorMessage: string, errorDetails: string): Promise<void> {
+        const subject = 'Error Notification'
+        const body = `${errorMessage}\n\nError Details:\n${errorDetails}`
+        const adminEmail = this.email
+        const isSent = await this.mailer.sendEmail(adminEmail, subject, body)
+
+        if (isSent) {
+            this.logger.info(`[${this.workerName}] Error notification sent to ${adminEmail}`)
+        } else {
+            this.logger.error(`[${this.workerName}] Failed to send error notification to ${adminEmail}`)
+        }
     }
 }
