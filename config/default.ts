@@ -21,7 +21,8 @@ export default {
     // coinlore worker settings
     'coinlore_request_batch_size': 100,
 
-    'bitquery_api_key': 'BQYrOBkyfMSCQ6CJChTBQDQbRQhRbXS8',
+    'bitquery_api_keys': [ 'BQYrOBkyfMSCQ6CJChTBQDQbRQhRbXS8', 'key2', 'key3' ], // Replace with actual API keys
+
     'tokensinsight_api_key': '637ad09e1d294dfaa69036b6d4e9c526',
 
     // telegram configs
