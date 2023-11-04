@@ -22,8 +22,7 @@ export default {
     'coinlore_request_batch_size': 100,
 
     'bitquery_api_keys': [ 'BQYrOBkyfMSCQ6CJChTBQDQbRQhRbXS8', 'key2', 'key3' ], // Replace with actual API keys
-
-    'tokensinsight_api_key': '637ad09e1d294dfaa69036b6d4e9c526',
+    'tokensinsight_api_keys': [ '637ad09e1d294dfaa69036b6d4e9c526', 'key2', 'key3' ], // Replace with actual API keys
 
     // telegram configs
     'telegram_max_accounts_simultaneous': 2,
