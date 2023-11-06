@@ -51,9 +51,9 @@ export default {
     'flaresolverr_server_url': 'http://localhost:8191/v1',
 
     explorerApiKeys: {
-        'BSC': [ 'M7KD3A8FB4137CMQZ7VV3C696V6WYHD6UE', 'key2', 'key3' ],
-        'ETH': [ 'XSYS3JRES31D8P4ZY261FNA5VWTWNZ5XVQ', 'key2', 'key3' ],
-        'CRO': [ 'N97BBK59XJ5DK9B8AN87NPEH2DYKBGKHTA', 'key2', 'key3' ],
+        'BSC': [ 'M7KD3A8FB4137CMQZ7VV3C696V6WYHD6UE', 'key2', 'key3' ], // Replace with actual API keys
+        'ETH': [ 'XSYS3JRES31D8P4ZY261FNA5VWTWNZ5XVQ', 'key2', 'key3' ], // Replace with actual API keys
+        'CRO': [ 'N97BBK59XJ5DK9B8AN87NPEH2DYKBGKHTA', 'key2', 'key3' ], // Replace with actual API keys
     },
 
     mailer: {
