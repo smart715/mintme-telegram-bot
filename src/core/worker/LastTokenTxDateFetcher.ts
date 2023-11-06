@@ -6,9 +6,9 @@ import config from 'config'
 import { Logger } from 'winston'
 
 interface ExplorerApiKeysInterface {
-    [Blockchain.BSC]: string,
-    [Blockchain.ETH]: string,
-    [Blockchain.CRO]: string,
+    [Blockchain.BSC]: string[];
+    [Blockchain.ETH]: string[];
+    [Blockchain.CRO]: string[];
 }
 
 export class LastTokenTxDateFetcher {
