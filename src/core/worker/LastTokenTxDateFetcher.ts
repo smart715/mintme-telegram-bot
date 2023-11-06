@@ -27,7 +27,7 @@ export class LastTokenTxDateFetcher {
         this.logger.info(`[${this.workerName}] Started`)
 
         // eslint-disable-next-line
-        while(true) {
+        while (true) {
             const token = await this.tokensService.getNextWithoutTxDate()
 
             if (!token) {
@@ -56,17 +56,27 @@ export class LastTokenTxDateFetcher {
     }
 
     private async fetchLastTxTimestamp(tokenAddress: string, blockchain: Blockchain): Promise<number | null> {
-        const response = await axios.get(this.buildLastTxUrl(tokenAddress, blockchain))
+        const apiKeys = this.explorerApiKeys[blockchain]
 
-        return response.data.result[0] && response.data.result[0].timeStamp
-            ? parseInt(response.data.result[0].timeStamp) * 1000
-            : null
+        for (let apiKeyIndex = 0; apiKeyIndex < apiKeys.length; apiKeyIndex++) {
+            const apiKey = apiKeys[apiKeyIndex]
+
+            try {
+                const response = await axios.get(this.buildLastTxUrl(tokenAddress, blockchain, apiKey))
+                const lastTxTimestamp = response.data.result[0]?.timeStamp
+                if (lastTxTimestamp) {
+                    return parseInt(lastTxTimestamp) * 1000
+                }
+            } catch (error:any) {
+                this.logger.error(`[${this.workerName}] Error with API key ${apiKey}: ${error.message}`)
+            }
+        }
+
+        throw new Error(`[${this.workerName}] All API keys have been exhausted, and the request failed.`)
     }
 
-    private buildLastTxUrl(tokenAddress: string, blockchain: Blockchain): string {
+    private buildLastTxUrl(tokenAddress: string, blockchain: Blockchain, apiKey: string): string {
         const explorerApiUrl = explorerApiUrls[blockchain]
-        const apiKey = this.explorerApiKeys[blockchain]
-
         return `https://${explorerApiUrl}/api?apikey=${apiKey}&module=account&action=txlist&page=1&sort=desc&offset=1&address=${tokenAddress}`
     }
 }
