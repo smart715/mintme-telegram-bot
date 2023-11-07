@@ -12,7 +12,7 @@ import {
 import { By, Key, WebDriver, WebElement } from 'selenium-webdriver'
 import * as fs from 'fs'
 import { Environment, getRandomNumber } from '../../../../utils'
-import { ChatType, ContactHistoryStatusType, ContactMethod } from '../../../types'
+import { ChatType, ContactHistoryStatusType, ContactMethod, TelegramChannelCheckResultType } from '../../../types'
 import moment from 'moment'
 import { Logger } from 'winston'
 
@@ -256,18 +256,21 @@ export class TelegramClient {
             const messageInput = await this.driver.findElement(By.id('editable-message-text'))
 
             if (messageInput) {
+                this.log('Found input box, sending message')
+
                 await messageInput.sendKeys(this.getMessageTemplate())
                 await this.driver.sleep(20000)
 
                 if (this.isProd()) {
                     this.log('Environment is not production. Skipping sending message')
-                } else {
-                    await messageInput.sendKeys(Key.RETURN)
                 }
+                await messageInput.sendKeys(Key.RETURN)
+
 
                 this.sentMessages++
                 return true
             }
+
             return false
         } catch (error) {
             return false
@@ -463,6 +466,10 @@ export class TelegramClient {
             const userStatusSelector = await this.driver.findElements(By.className('user-status'))
 
             if (userStatusSelector.length > 0) {
+                if ((await userStatusSelector[0].getText()).includes('bot')) {
+                    return ContactHistoryStatusType.BOT_USER
+                }
+
                 return await this.sendDM()
             } else {
                 const groupStatusSelector = await this.driver.findElements(By.className('group-status'))
@@ -615,7 +622,16 @@ export class TelegramClient {
                 case ContactHistoryStatusType.ERROR:
                 case ContactHistoryStatusType.ACCOUNT_NOT_EXISTS:
                     this.potentialFalsePositiveInRow++
-                    if (this.potentialFalsePositiveInRow >= 2) {
+                    // eslint-disable-next-line no-case-declarations
+                    const checkTelegramChannel = await this.contactQueueService.checkTelegramChannel(
+                        queuedContact.channel,
+                        this.logger
+                    )
+
+                    if (this.potentialFalsePositiveInRow >= 2 ||
+                        TelegramChannelCheckResultType.ACTIVE === checkTelegramChannel
+                    ) {
+                        this.log(`Account not loading channels properly, Skipping`)
                         return
                     }
             }
@@ -632,16 +648,6 @@ export class TelegramClient {
             }
 
             const isSuccess = this.isSuccessResult(result)
-
-            if (this.maxMessagesPerCycle <= this.successMessages) {
-                this.log(`Reached cycle limit hit, Skipping`)
-
-                this.telegramService.setAccountLimitHitDate(
-                    this.telegramAccount,
-                    moment().utc().add(5, 'minutes').toDate())
-
-                return
-            }
 
             await this.contactQueueService.removeFromQueue(queuedContact.address, queuedContact.blockchain)
 
@@ -662,6 +668,16 @@ export class TelegramClient {
 
 
             await this.tokenService.postContactingActions(token, ContactMethod.TELEGRAM, isSuccess)
+
+            if (this.maxMessagesPerCycle <= this.successMessages) {
+                this.log(`Reached cycle limit hit, Skipping`)
+
+                this.telegramService.setAccountLimitHitDate(
+                    this.telegramAccount,
+                    moment().utc().add(5, 'minutes').toDate())
+
+                return
+            }
         }
         await this.postSendingCheck()
     }
