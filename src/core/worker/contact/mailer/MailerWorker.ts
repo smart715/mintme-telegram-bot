@@ -66,6 +66,7 @@ export class MailerWorker {
             await this.contactQueueService.markEntryAsError(queueItem.address, queueItem.blockchain)
             const errorDetails = `Invalid email address: ${queueItem.channel}`
             await this.sendErrorNotification('Error during email sending', errorDetails)
+
             return
         }
 
