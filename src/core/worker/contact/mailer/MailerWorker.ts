@@ -6,7 +6,7 @@ import {
     TokensService,
 } from '../../../service'
 import { ContactHistoryStatusType, ContactMethod } from '../../../types'
-import { sleep } from '../../../../utils'
+import { sleep, isValidEmail } from '../../../../utils'
 import { ContactHistory, ContactMessage, QueuedContact, Token } from '../../../entity'
 import { singleton } from 'tsyringe'
 import { Logger } from 'winston'
@@ -60,7 +60,7 @@ export class MailerWorker {
             return
         }
 
-        if (!this.isValidEmail(queueItem.channel)) {
+        if (!isValidEmail(queueItem.channel)) {
             // Mark the entry as an error and send an error notification
             this.logger.info(`[${this.workerName}] Invalid email address: ${queueItem.channel}. Marking it as an error.`)
             await this.contactQueueService.markEntryAsError(queueItem.address, queueItem.blockchain)
@@ -123,12 +123,6 @@ export class MailerWorker {
         )
 
         return contactResult
-    }
-
-    private isValidEmail(email: string): boolean {
-        // Regular expression for email address validation
-        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/
-        return emailRegex.test(email)
     }
 
     private async getContactMessage(currentAttempt: number): Promise<ContactMessage> {
