@@ -66,6 +66,7 @@ export class MailerWorker {
             await this.contactQueueService.markEntryAsError(queueItem.address, queueItem.blockchain)
             const errorDetails = `Invalid email address: ${queueItem.channel}`
             await this.sendErrorNotification('Error during email sending', errorDetails)
+
             return
         }
 
@@ -92,6 +93,7 @@ export class MailerWorker {
             if (retries < this.maxRetries) {
                 this.logger.info(`[${this.workerName}] Retrying email sending (Retry ${retries + 1})`)
                 await sleep(this.sleepTimeBetweenItems)
+
                 return this.processQueueItem(queueItem, retries + 1)
             } else {
                 this.logger.info(`[${this.workerName}] Max retries reached. Marking the entry as an error.`)
