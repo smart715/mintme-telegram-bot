@@ -3,7 +3,7 @@ import { Blockchain } from '../../utils'
 import { ContactMethod } from '../types'
 
 @Entity()
-@Index('UQ_ADDRESS_BLOCKCHAIN', ['address', 'blockchain'], { unique: true })
+@Index('UQ_ADDRESS_BLOCKCHAIN', [ 'address', 'blockchain' ], { unique: true })
 export class QueuedContact {
     @PrimaryGeneratedColumn()
     public id: string
