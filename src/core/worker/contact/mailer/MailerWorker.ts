@@ -86,6 +86,7 @@ export class MailerWorker {
         } catch (error) {
             const typedError = error as Error
             this.logger.error(`[${this.workerName}] Error sending email: ${typedError.message}`)
+
             if (retries < this.maxRetries) {
                 this.logger.info(`[${this.workerName}] Retrying email sending (Retry ${retries + 1})`)
                 await sleep(this.sleepTimeBetweenItems)
