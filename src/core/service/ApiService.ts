@@ -8,29 +8,57 @@ export class ApiService {
         this.apiKeys = apiKeys
     }
 
-
-    private async makeRequest(url: string, apiKey: string, config?: AxiosRequestConfig): Promise<any> {
-        const headers = {
-            CONTENT_TYPE: 'application/json',
-            X_API_KEY: apiKey,
-        }
-
+    private async makeRequest(
+        url: string,
+        apiKey: string,
+        config?: AxiosRequestConfig,
+        headers?: Record<string, string>,
+        method: string = 'get'
+    ): Promise<any> {
         try {
-            const response = await axios.post(url, config, { headers })
+            const response = await axios({
+                method: method,
+                url: url,
+                data: 'post' === method ? config?.data : undefined,
+                params: 'get' === method ? config?.params : undefined,
+                headers: headers,
+            } as AxiosRequestConfig)
+
             return response.data
-        } catch (error:any) {
+        } catch (error: any) {
             throw new Error(`Request failed with error: ${error.message}`)
         }
     }
 
-    public async makeRequestWithRetry(url: string, config?: AxiosRequestConfig): Promise<any> {
+    public async makePostRequestWithRetry(
+        url: string,
+        config?: AxiosRequestConfig,
+        headers?: Record<string, string>
+    ): Promise<any> {
+        return this.makeRequestWithRetry(url, 'post', config, headers)
+    }
+
+    public async makeGetRequestWithRetry(
+        url: string,
+        config?: AxiosRequestConfig,
+        headers?: Record<string, string>
+    ): Promise<any> {
+        return this.makeRequestWithRetry(url, 'get', config, headers)
+    }
+
+    private async makeRequestWithRetry(
+        url: string,
+        method: string,
+        config?: AxiosRequestConfig,
+        headers?: Record<string, string>
+    ): Promise<any> {
         let retries = this.apiKeys.length
 
         while (retries > 0) {
             const apiKey = this.apiKeys[this.currentApiKeyIndex]
 
             try {
-                return await this.makeRequest(url, apiKey, config)
+                return await this.makeRequest(url, apiKey, config, headers, method)
             } catch (error) {
                 // If this key fails, move to the next key and retry
                 this.currentApiKeyIndex = (this.currentApiKeyIndex + 1) % this.apiKeys.length
@@ -38,6 +66,7 @@ export class ApiService {
             }
         }
 
+        // Handle the case where all keys are exhausted or other errors occur
         throw new Error('All API keys have been exhausted, and the request failed.')
     }
 }
