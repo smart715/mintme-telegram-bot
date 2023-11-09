@@ -261,9 +261,10 @@ export class TelegramClient {
                 await messageInput.sendKeys(this.getMessageTemplate())
                 await this.driver.sleep(20000)
 
-                if (this.isProd()) {
+                if (!this.isProd()) {
                     this.log('Environment is not production. Skipping sending message')
                 }
+
                 await messageInput.sendKeys(Key.RETURN)
 
 
@@ -291,6 +292,7 @@ export class TelegramClient {
 
     private async joinAndVerifyGroup(retries: number = 1): Promise<void> {
         const joinBtn = await this.getJoinGroupBtn()
+
         if (joinBtn) {
             await this.driver.actions().click(joinBtn).perform()
             await this.driver.sleep(10000)
@@ -425,8 +427,14 @@ export class TelegramClient {
 
     private async isMessagesRestricted(): Promise<boolean> {
         try {
-            const messageText = await this.driver.findElement(By.css('.messaging-disabled-inner span')).getText()
-            return 'the admins of this group have restricted your ability to send messages.' === messageText.toLowerCase()
+            const disabledMessagingSelector = await this.driver.findElements(By.css('.messaging-disabled-inner'))
+
+            if (disabledMessagingSelector.length) {
+                const reasonStr = await disabledMessagingSelector[0].getText()
+                return 'the admins of this group have restricted your ability to send messages.' === reasonStr.toLowerCase()
+            }
+
+            return false
         } catch (error) {
             this.logger.error(error)
             return false
@@ -741,6 +749,10 @@ export class TelegramClient {
                     }
 
                     const messageContentTxt = await message.getText()
+
+                    if (messageContentTxt.toLowerCase().includes('do not give this code to anyone, even if they say they are from telegram')) {
+                        return []
+                    }
 
                     const messageObj = {
                         'sender': messageClass.includes(' own') ? 'Me' : 'Other party',
