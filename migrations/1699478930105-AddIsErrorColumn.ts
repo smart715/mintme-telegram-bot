@@ -1,15 +1,13 @@
-import { MigrationInterface, QueryRunner, TableColumn } from 'typeorm'
+import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class AddIsErrorColumn1699478930105 implements MigrationInterface {
+    public name = 'AddIsErrorColumn1699478930105'
+
     public async up(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.addColumn('queued_contact', new TableColumn({
-            name: 'is_error',
-            type: 'boolean',
-            default: false,
-        }))
+        await queryRunner.query(`ALTER TABLE \`queued_contact\` ADD COLUMN \`is_error\` BOOLEAN DEFAULT FALSE;`)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.dropColumn('queued_contact', 'is_error')
+        await queryRunner.query(` ALTER TABLE \`queued_contact\` DROP COLUMN \`is_error\` ; `)
     }
 }
