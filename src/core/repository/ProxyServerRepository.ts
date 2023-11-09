@@ -13,4 +13,11 @@ export class ProxyServerRepository extends Repository<ProxyServer> {
             GROUP BY proxy_id HAVING COUNT(*) >= :maxAccountsPerProxy)`, { maxAccountsPerProxy: maxTelegramAccountsPerProxy })
             .getOne()
     }
+
+    public async getRandomProxy(): Promise<ProxyServer | undefined> {
+        return this.createQueryBuilder()
+            .where('is_disabled = 0')
+            .orderBy('RAND()')
+            .getOne()
+    }
 }

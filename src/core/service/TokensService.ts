@@ -155,21 +155,21 @@ export class TokensService {
     }
 
     public async postContactingActions(token: Token, contactMethod: ContactMethod, isSuccess: boolean): Promise<void> {
-        token.lastContactMethod = contactMethod
-
-        switch (contactMethod) {
-            case ContactMethod.EMAIL:
-                token.emailAttempts++
-                break
-            case ContactMethod.TWITTER:
-                token.twitterAttempts++
-                break
-            case ContactMethod.TELEGRAM:
-                token.telegramAttempts++
-                break
-        }
-
         if (isSuccess) {
+            token.lastContactMethod = contactMethod
+
+            switch (contactMethod) {
+                case ContactMethod.EMAIL:
+                    token.emailAttempts++
+                    break
+                case ContactMethod.TWITTER:
+                    token.twitterAttempts++
+                    break
+                case ContactMethod.TELEGRAM:
+                    token.telegramAttempts++
+                    break
+            }
+
             token.lastContactAttempt = moment().utc().toDate()
             token.contactStatus = TokenContactStatusType.CONTACTED
         } else {

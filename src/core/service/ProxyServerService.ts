@@ -20,4 +20,8 @@ export class ProxyService {
     public async getFirstAvailableProxy(): Promise<ProxyServer|undefined> {
         return this.proxyServerRepository.getFirstAvailableProxy(this.maxTelegramAccountsPerProxy)
     }
+
+    public async getRandomProxy(): Promise<ProxyServer | undefined> {
+        return this.proxyServerRepository.getRandomProxy()
+    }
 }
