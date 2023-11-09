@@ -153,14 +153,10 @@ export class ContactQueueService {
             .execute()
     }
 
-    public async markEntryAsError(address: string, blockchain: Blockchain): Promise<void> {
-        const queuedContact = await this.queuedContactRepository.findOne({ address, blockchain })
+    public async markEntryAsError(queueItem: QueuedContact): Promise<void> {
+        queueItem.isProcessing = false
+        queueItem.isError = true
 
-        if (queuedContact) {
-            queuedContact.isProcessing = false
-            queuedContact.isError = true
-
-            await this.queuedContactRepository.save(queuedContact)
-        }
+        await this.queuedContactRepository.save(queueItem)
     }
 }

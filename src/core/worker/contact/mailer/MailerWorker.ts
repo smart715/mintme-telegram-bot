@@ -61,7 +61,7 @@ export class MailerWorker {
         if (!isValidEmail(queueItem.channel)) {
             // Mark the entry as an error and send an error notification
             this.logger.info(`[${this.workerName}] Invalid email address: ${queueItem.channel}. Marking it as an error.`)
-            await this.contactQueueService.markEntryAsError(queueItem.address, queueItem.blockchain)
+            await this.contactQueueService.markEntryAsError(queueItem)
 
             return
         }
@@ -94,7 +94,7 @@ export class MailerWorker {
                 return this.processQueueItem(queueItem, retries + 1)
             } else {
                 this.logger.info(`[${this.workerName}] Max retries reached. Marking the entry as an error.`)
-                await this.contactQueueService.markEntryAsError(queueItem.address, queueItem.blockchain)
+                await this.contactQueueService.markEntryAsError(queueItem)
             }
         }
 
