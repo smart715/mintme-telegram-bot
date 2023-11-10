@@ -33,7 +33,7 @@ export class BitQueryService {
                 limit: limit,
                 offset: offset,
                 network: blockchain,
-                dateFormat: '%Y-%m-d',
+                dateFormat: '%Y-%m-%d',
             },
         }
 

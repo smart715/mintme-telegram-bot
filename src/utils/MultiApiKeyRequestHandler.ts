@@ -13,7 +13,7 @@ export class MultiApiKeyRequestHandler {
         url: string,
         config?: AxiosRequestConfig,
         method: string = 'get',
-        headerKey: string = 'X-API-KEY' 
+        headerKey: string = 'X-API-KEY'
 
     ): Promise<any> {
         let retries = this.apiKeys.length
@@ -32,6 +32,7 @@ export class MultiApiKeyRequestHandler {
                     data: 'post' === method ? config?.data : undefined,
                     params: 'get' === method ? config?.params : undefined,
                     headers: headers,
+                    ...config,
                 } as AxiosRequestConfig)
 
                 return response.data
