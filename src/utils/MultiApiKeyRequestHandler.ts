@@ -12,7 +12,9 @@ export class MultiApiKeyRequestHandler {
     public async makeRequest(
         url: string,
         config?: AxiosRequestConfig,
-        method: string = 'get'
+        method: string = 'get',
+        headerKey: string = 'X-API-KEY' 
+
     ): Promise<any> {
         let retries = this.apiKeys.length
 
@@ -20,7 +22,7 @@ export class MultiApiKeyRequestHandler {
             const headers = {
                 // eslint-disable-next-line @typescript-eslint/naming-convention
                 'Content-Type': 'application/json',
-                'TI_API_KEY': this.apiKeys[this.currentApiKeyIndex],
+                [headerKey]: this.apiKeys[this.currentApiKeyIndex],
             }
 
             try {
