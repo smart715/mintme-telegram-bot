@@ -19,15 +19,13 @@ export class TwitterClient {
     private readonly maxAttemptsDaily: number = config.get('twitter_total_attempts_daily')
     private readonly messageDelaySec: number = config.get('twitter_messages_delay_in_seconds')
     private readonly unreadDotCss: string = config.get('twitter_css_unread_dot')
-    private readonly responsesCheckerFrequenc:number = config.get('twitter_responses_checker_frequency_hours')
+    private readonly responsesCheckerFrequency: number = config.get('twitter_responses_checker_frequency_hours')
 
     private readonly twitterAccount: TwitterAccount
     private message: ContactMessage
     private driver: WebDriver
     private sentMessages: number
     private attempts: number
-
-    private runResponseWorker: boolean = false
 
     public constructor(
         twitterAccount: TwitterAccount,
@@ -46,20 +44,13 @@ export class TwitterClient {
         await this.initMessage()
         await this.updateSentMessagesAndTotalAttempt()
 
-        const thresholdDate = moment().subtract(this.responsesCheckerFrequenc, 'hours')
-        const lastResponsesFetchDate = moment(this.twitterAccount.lastResponsesFetchDate)
-
-        if (!lastResponsesFetchDate.isValid() || lastResponsesFetchDate.isBefore(thresholdDate)) {
-            this.runResponseWorker = true
-        }
-
         if (!this.isAllowedToSendMessages()) {
             this.logger.warn(
                 `[TwitterWorker ID: ${this.twitterAccount.id}] ` +
                 `Client is not allowed to sent messages. Max daily attempts or daily messages reached. Skipping...`
             )
 
-            if (!this.runResponseWorker) {
+            if (!this.canRunResponseWorker()) {
                 return false
             }
         }
@@ -211,18 +202,23 @@ export class TwitterClient {
         return true
     }
 
+    private canRunResponseWorker(): boolean {
+        const thresholdDate = moment().subtract(this.responsesCheckerFrequency, 'hours')
+        const lastResponsesFetchDate = moment(this.twitterAccount.lastResponsesFetchDate)
+
+        return !lastResponsesFetchDate.isValid() || lastResponsesFetchDate.isBefore(thresholdDate)
+    }
+
     public async startWorker(): Promise<void> {
         while (true) {  // eslint-disable-line
             await this.driver.sleep(getRandomNumber(1, 10) * 1000)
 
-            if (this.runResponseWorker) {
+            if (this.canRunResponseWorker()) {
                 const responseWorkerResult = await this.startResponsesFetcher()
 
                 if (responseWorkerResult) {
                     await this.twitterService.updateResponsesLastChecked(this.twitterAccount)
                 }
-
-                this.runResponseWorker = false
             }
 
             if (!this.isAllowedToSendMessages()) {
