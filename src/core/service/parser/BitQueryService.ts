@@ -1,45 +1,62 @@
-import { singleton } from 'tsyringe'
+/* eslint-disable @typescript-eslint/naming-convention */
+import axios from 'axios'
 import config from 'config'
-// eslint-disable-next-line import/no-internal-modules
-import { MultiApiKeyRequestHandler } from '../../../utils/MultiApiKeyRequestHandler'
+import { singleton } from 'tsyringe'
 import { BitQueryTransfersResponse } from '../../types'
 
 @singleton()
 export class BitQueryService {
-    private readonly apiKeys: string[]
-    private readonly requestHandler: MultiApiKeyRequestHandler
+  private readonly apiKeys: string[] = config.get('bitquery_api_keys') as string[]
+  private currentApiKeyIndex: number = 0
 
-    public constructor() {
-        this.apiKeys = config.get('bitquery_api_keys') as string[]
-        this.requestHandler = new MultiApiKeyRequestHandler(this.apiKeys)
-    }
+  public async getAddresses(offset: number, limit: number, blockchain: string): Promise<BitQueryTransfersResponse> {
+    let retries = this.apiKeys.length
 
-    public async getAddresses(offset: number, limit: number, blockchain: string): Promise<BitQueryTransfersResponse> {
-        const data = {
-            query: `query ($network: EthereumNetwork!, $limit: Int!, $offset: Int!) {
-                ethereum(network: $network) {
-                  transfers(
-                    options: {desc: "count", limit: $limit, offset: $offset}
-                    amount: {gt: 0}
-                  ) {
-                    currency {
-                      address
+    while (retries > 0) {
+      const apiKey = this.apiKeys[this.currentApiKeyIndex]
+      const data = {
+        query: `query ($network: EthereumNetwork!, $limit: Int!, $offset: Int!) {
+                    ethereum(network: $network) {
+                      transfers(
+                        options: {desc: "count", limit: $limit, offset: $offset}
+                        amount: {gt: 0}
+                      ) {
+                        currency {
+                          address
+                        }
+                        count
+                      }
                     }
-                    count
-                  }
-                }
-              }`,
-            variables: {
-                limit: limit,
-                offset: offset,
-                network: blockchain,
-                dateFormat: '%Y-%m-%d',
-            },
-        }
+                  }`,
+        variables: {
+          limit: limit,
+          offset: offset,
+          network: blockchain,
+          dateFormat: '%Y-%m-d',
+        },
+      }
+      const headers = {
+        'Content-Type': 'application/json',
+        'X-API-KEY': apiKey,
+      }
 
-        const url = 'https://graphql.bitquery.io'
+      try {
+        const response = await axios.post(
+          'https://graphql.bitquery.io',
+          data,
+          { headers }
+        )
 
-        // Use MultiApiKeyRequestHandler to make the request
-        return this.requestHandler.makeRequest(url, { data }, 'post')
+        return response.data
+      } catch (error) {
+        // If this key fails, move to the next key and retry
+        this.currentApiKeyIndex = (this.currentApiKeyIndex + 1) % this.apiKeys.length
+      }
+
+      retries--
     }
+
+    // Handle the case where all keys are exhausted or other errors occur
+    throw new Error('All API keys have been exhausted, and the request failed.')
+  }
 }
