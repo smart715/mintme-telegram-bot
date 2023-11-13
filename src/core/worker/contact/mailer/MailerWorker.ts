@@ -61,7 +61,7 @@ export class MailerWorker {
         if (!isValidEmail(queueItem.channel)) {
             this.logger.info(`[${this.workerName}] Invalid email address: ${queueItem.channel}. Marking it as an error.`)
             await this.contactQueueService.markEntryAsError(queueItem)
-            await this.mailer.sendFailedWorkerEmail(`Invalid email address: ${queueItem.channel}. Marked as an error.`);
+            await this.mailer.sendFailedWorkerEmail(`Invalid email address: ${queueItem.channel}. Marked as an error.`)
 
             return
         }
