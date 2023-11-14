@@ -87,12 +87,9 @@ export class TelegramWorker {
 
             try {
                 await this.startAllClients(this.telegramClients)
-            } catch (error) {
+            } finally {
                 await this.destroyDrivers()
-                throw error
             }
-
-            await this.destroyDrivers()
         }
 
         await this.startAllClients(this.telegramClients)

@@ -32,9 +32,8 @@ export class BSCScanTopAccountsFetcher extends AbstractTokenWorker {
                     await this.runByBlockchain(blockchain)
                 }
             }
-        } catch (error) {
+        } finally {
             await destroyDriver(this.webDriver)
-            throw error
         }
 
         this.logger.info(`[${this.workerName}] finished`)
