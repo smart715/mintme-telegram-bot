@@ -59,9 +59,7 @@ export class MailerWorker {
         }
 
         if (!isValidEmail(queueItem.channel)) {
-            this.logger.info(`[${this.workerName}] Invalid email address: ${queueItem.channel}. Marking it as an error.`)
-            await this.contactQueueService.markEntryAsError(queueItem)
-            await this.mailer.sendFailedWorkerEmail(`Invalid email address: ${queueItem.channel}. Marked as an error.`)
+            await this.handleInvalidEmail(queueItem)
 
             return
         }
@@ -93,15 +91,32 @@ export class MailerWorker {
 
                 return this.processQueueItem(queueItem, retries + 1)
             } else {
-                this.logger.info(`[${this.workerName}] Max retries reached. Marking the entry as an error.`)
-                await this.contactQueueService.markEntryAsError(queueItem)
-                await this.mailer.sendFailedWorkerEmail(`Invalid email address: ${queueItem.channel}. Marked as an error.`)
+                await this.handleMaxRetriesReached(queueItem)
             }
         }
 
         this.logger.info(`[${this.workerName}] ` +
             `Proceeding of ${queueItem.address} :: ${queueItem.blockchain} finished`
         )
+    }
+
+    private async handleInvalidEmail(queueItem: QueuedContact): Promise < void> {
+        this.logger.info(`[${this.workerName}] Invalid email address: ${queueItem.channel}. Marking it as an error.`)
+
+        // Check if there is a link in the email
+        const emailParts = queueItem.channel.split('http')
+
+        if (isValidEmail(emailParts[0])) {
+            await this.contactQueueService.markEntryAsError(queueItem)
+            await this.mailer.sendFailedWorkerEmail(`Invalid email address: ${queueItem.channel}. Marked as an error.`)
+            return
+        }
+    }
+
+    private async handleMaxRetriesReached(queueItem: QueuedContact): Promise<void> {
+        this.logger.info(`[${this.workerName}] Max retries reached. Marking the entry as an error.`)
+        await this.contactQueueService.markEntryAsError(queueItem)
+        await this.mailer.sendFailedWorkerEmail(`Max retries reached. Marking as an error: ${queueItem.channel}.`)
     }
 
     private async contact(email: string, token: Token): Promise<ContactHistoryStatusType> {
