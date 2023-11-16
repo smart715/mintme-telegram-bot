@@ -56,9 +56,7 @@ export class ExplorerSearchAPIWorker extends AbstractTokenWorker {
 
         await this.saveLastCheckedCombination(blockchain, currentCombination)
 
-        if (webDriver) {
-            await webDriver.quit()
-        }
+        await destroyDriver(webDriver)
 
         this.logger.info(`[${this.workerName}] all token name configurations for ${blockchain} blockchain are checked`)
     }
@@ -83,6 +81,8 @@ export class ExplorerSearchAPIWorker extends AbstractTokenWorker {
         combination: string
     ): Promise<void> {
         await webDriver.get('https://' + explorerDomain + '/searchHandler?term=' + combination + '&filterby=2')
+        await webDriver.sleep(2000)
+
         const pageSource = await webDriver.getPageSource()
 
         await this.explorerParser.enqueueTokenAddresses(pageSource, blockchain)
