@@ -11,6 +11,7 @@ export class BSCScanTokensTransactionsFetcher extends AbstractTokenWorker {
     private readonly workerName = BSCScanTokensTransactionsFetcher.name
     private webDriver: WebDriver
     private readonly supportedBlockchains = [ Blockchain.ETH, Blockchain.BSC, Blockchain.CRO ]
+    private readonly delayBetweenPages = 5 * 1000
 
     public constructor(
         private readonly bscscanService: BSCScanService,
@@ -52,11 +53,15 @@ export class BSCScanTokensTransactionsFetcher extends AbstractTokenWorker {
 
         for (let page = 100; page >= 1; page--) {
             await this.webDriver.get(this.bscscanService.getTokenTxsPageUrl(explorerDomain, page))
+            await this.webDriver.sleep(this.delayBetweenPages)
+
             const pageSource = await this.webDriver.getPageSource()
 
             await this.explorerParser.enqueueTokenAddresses(pageSource, blockchain)
             await this.explorerParser.enqueueWalletAddresses(pageSource, blockchain)
         }
+
+        await destroyDriver(this.webDriver)
 
         this.logger.info(`[${this.workerName}] finished for ${blockchain} blockchain`)
     }
