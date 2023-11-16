@@ -51,14 +51,14 @@ export class BSCScanTopAccountsFetcher extends AbstractTokenWorker {
 
         for (let page = 1; page <= 100; page++) {
             await this.webDriver.get(this.bscscanService.getAccountsPageUrl(explorerDomain, page))
+            await this.webDriver.sleep(3000)
+
             const pageSource = await this.webDriver.getPageSource()
 
             await this.explorerParser.enqueueWalletAddresses(pageSource, blockchain)
         }
 
-        if (this.webDriver) {
-            await this.webDriver.quit()
-        }
+        await destroyDriver(this.webDriver)
 
         this.logger.info(`[${this.workerName}] finished for ${blockchain} blockchain`)
     }
