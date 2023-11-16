@@ -59,9 +59,16 @@ export class MailerWorker {
         }
 
         if (!isValidEmail(queueItem.channel)) {
-            await this.handleInvalidEmail(queueItem)
+            this.logger.info(`[${this.workerName}] Invalid email address: ${queueItem.channel}. Marking it as an error.`)
 
-            return
+            // Check if there is a link in the email
+            const emailParts = queueItem.channel.split('http')
+
+            if (!isValidEmail(emailParts[0])) {
+                await this.contactQueueService.markEntryAsError(queueItem)
+                await this.mailer.sendFailedWorkerEmail(`Invalid email address: ${queueItem.channel}. Marked as an error.`)
+                return
+            }
         }
 
         const isValidQueuedContact = await this.contactQueueService.preContactCheckAndCorrect(
@@ -98,19 +105,6 @@ export class MailerWorker {
         this.logger.info(`[${this.workerName}] ` +
             `Proceeding of ${queueItem.address} :: ${queueItem.blockchain} finished`
         )
-    }
-
-    private async handleInvalidEmail(queueItem: QueuedContact): Promise < void> {
-        this.logger.info(`[${this.workerName}] Invalid email address: ${queueItem.channel}. Marking it as an error.`)
-
-        // Check if there is a link in the email
-        const emailParts = queueItem.channel.split('http')
-
-        if (isValidEmail(emailParts[0])) {
-            await this.contactQueueService.markEntryAsError(queueItem)
-            await this.mailer.sendFailedWorkerEmail(`Invalid email address: ${queueItem.channel}. Marked as an error.`)
-            return
-        }
     }
 
     private async handleMaxRetriesReached(queueItem: QueuedContact): Promise<void> {
