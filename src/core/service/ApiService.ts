@@ -3,7 +3,7 @@ import { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios'
 export interface RequestOptions {
     apiKeys?: string[];
     headers?: Record<string, string>;
-    params?: Record<string, string>;
+    params?: Record<string, string | number>;
     method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'OPTIONS' | 'HEAD';
     apiKeyLocation?: 'headers' | 'params';
     apiKeyName?: string;
@@ -46,6 +46,5 @@ export async function makeRequest<T>(
         }
     }
 
-    // If all API keys fail, you can handle the error or throw it
     throw new Error('All API keys have been exhausted, and the request failed.')
 }
