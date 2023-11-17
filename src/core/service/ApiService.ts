@@ -1,6 +1,6 @@
 import { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios'
 
-interface RequestOptions {
+export interface RequestOptions {
     apiKeys?: string[];
     headers?: Record<string, string>;
     params?: Record<string, string>;
