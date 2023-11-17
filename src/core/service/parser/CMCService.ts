@@ -1,5 +1,3 @@
-// CMCService.ts
-
 import { AxiosInstance } from 'axios'
 import { singleton } from 'tsyringe'
 import config from 'config'
@@ -24,8 +22,8 @@ export class CMCService {
                 'Content-Type': 'application/json',
             },
             params: {
-                start: start.toString(),
-                limit: limit.toString(),
+                start: start,
+                limit: limit,
                 sort: 'id',
             },
             apiKeyLocation: 'params',
