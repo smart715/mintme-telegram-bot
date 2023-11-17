@@ -1,67 +1,56 @@
-import axios from 'axios'
+// CMCService.ts
+
+import { AxiosInstance } from 'axios'
 import { singleton } from 'tsyringe'
 import config from 'config'
 import { CMCApiGeneralResponse, CMCCryptocurrency, CMCTokenInfoResponse, CMCWorkerConfig } from '../../types'
+import { makeRequest, RequestOptions } from '../ApiService'
 
 @singleton()
 export class CMCService {
     private readonly apiKeys: string[] = config.get<CMCWorkerConfig>('cmcWorker')['apiKeys']
-    private currentApiKeyIndex: number = 0
+    private readonly axiosInstance: AxiosInstance
+
+    public constructor(axiosInstance: AxiosInstance) {
+        this.axiosInstance = axiosInstance
+    }
 
     public async getLastTokens(start: number, limit: number): Promise<CMCApiGeneralResponse<CMCCryptocurrency[]>> {
-        for (let i = 0; i < this.apiKeys.length; i++) {
-            const apiKey = this.apiKeys[this.currentApiKeyIndex]
-
-            try {
-                const response = await axios.get('https://pro-api.coinmarketcap.com/v1/cryptocurrency/map', {
-                    params: {
-                        CMC_PRO_API_KEY: apiKey,
-                        start,
-                        limit,
-                        sort: 'id',
-                    },
-                })
-
-                return response.data
-            } catch (error) {
-                if (i < this.apiKeys.length - 1) {
-                    // If this key fails, move to the next key and retry
-                    this.currentApiKeyIndex = (this.currentApiKeyIndex + 1) % this.apiKeys.length
-                } else {
-                    throw error
-                }
-            }
+        const requestOptions: RequestOptions = {
+            apiKeys: this.apiKeys,
+            method: 'GET',
+            headers: {
+                // eslint-disable-next-line @typescript-eslint/naming-convention
+                'Content-Type': 'application/json',
+            },
+            params: {
+                start: start.toString(),
+                limit: limit.toString(),
+                sort: 'id',
+            },
+            apiKeyLocation: 'params',
+            apiKeyName: 'CMC_PRO_API_KEY',
         }
 
-        // Handle the case where all keys are exhausted or other errors occur
-        throw new Error('All API keys have been exhausted, and the request failed.')
+        return makeRequest<CMCApiGeneralResponse<CMCCryptocurrency[]>>(this.axiosInstance, 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/map', requestOptions)
     }
 
     public async getTokenInfo(slug: string): Promise<CMCApiGeneralResponse<CMCTokenInfoResponse>> {
-        for (let i = 0; i < this.apiKeys.length; i++) {
-            const apiKey = this.apiKeys[this.currentApiKeyIndex]
-
-            try {
-                const response = await axios.get('https://pro-api.coinmarketcap.com/v1/cryptocurrency/info', {
-                    params: {
-                        CMC_PRO_API_KEY: apiKey,
-                        slug,
-                        aux: 'urls,platform',
-                    },
-                })
-
-                return response.data
-            } catch (error) {
-                if (i < this.apiKeys.length - 1) {
-                    // If this key fails, move to the next key and retry
-                    this.currentApiKeyIndex = (this.currentApiKeyIndex + 1) % this.apiKeys.length
-                } else {
-                    throw error
-                }
-            }
+        const requestOptions: RequestOptions = {
+            apiKeys: this.apiKeys,
+            method: 'GET',
+            headers: {
+                // eslint-disable-next-line @typescript-eslint/naming-convention
+                'Content-Type': 'application/json',
+            },
+            params: {
+                slug,
+                aux: 'urls,platform',
+            },
+            apiKeyLocation: 'params',
+            apiKeyName: 'CMC_PRO_API_KEY',
         }
 
-        // Handle the case where all keys are exhausted or other errors occur
-        throw new Error('All API keys have been exhausted, and the request failed.')
+        return makeRequest<CMCApiGeneralResponse<CMCTokenInfoResponse>>(this.axiosInstance, 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/info', requestOptions)
     }
 }
