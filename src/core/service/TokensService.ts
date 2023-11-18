@@ -39,7 +39,7 @@ export class TokensService {
         links: string[],
         workerSource: string,
         blockchain: Blockchain
-    ): Promise<Token> {
+    ): Promise<Token | undefined> {
         let token = await this.findByAddress(tokenAddress)
 
         if (token) {
@@ -56,7 +56,11 @@ export class TokensService {
         token.links = links
         token.source = workerSource
 
-        await this.tokenRepository.insert(token)
+        try {
+            await this.tokenRepository.insert(token)
+        } catch (error) {
+            return undefined
+        }
 
         return token
     }
