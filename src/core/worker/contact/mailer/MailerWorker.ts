@@ -82,7 +82,7 @@ export class MailerWorker {
     }
 
     private async contact(email: string, token: Token): Promise<ContactHistoryStatusType> {
-        const contactMessage = await this.getContactMessage(token.emailAttempts + 1)
+        const contactMessage = await this.getContactMessage(token.emailAttempts + 1, email)
         const [ title, content ] = await this.buildMessage(contactMessage, token)
         const contactResult = await this.sendEmail(email, title, content)
 
@@ -100,10 +100,11 @@ export class MailerWorker {
         return contactResult
     }
 
-    private async getContactMessage(currentAttempt: number): Promise<ContactMessage> {
+    private async getContactMessage(currentAttempt: number, channel: string): Promise<ContactMessage> {
         const messageTemplate = await this.contactMessageService.getNextContactMessage(
             ContactMethod.EMAIL,
             currentAttempt,
+            channel,
         )
 
         if (!messageTemplate) {
