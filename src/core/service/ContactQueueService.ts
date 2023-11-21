@@ -2,10 +2,13 @@ import { singleton } from 'tsyringe'
 import { QueuedContactRepository } from '../repository'
 import { QueuedContact, Token } from '../entity'
 import { Blockchain, sleep } from '../../utils'
-import { ContactMethod, TokenContactStatusType } from '../types'
-import axios from 'axios'
+import { ContactMethod, TelegramChannelCheckResultType, TokenContactStatusType } from '../types'
+import axios, { AxiosRequestConfig } from 'axios'
 import { Logger } from 'winston'
 import { TokensService } from './TokensService'
+import { ProxyService } from './ProxyServerService'
+import { HttpsProxyAgent } from 'https-proxy-agent'
+import { ContactHistoryService } from './ContactHistoryService'
 
 @singleton()
 export class ContactQueueService {
@@ -14,6 +17,8 @@ export class ContactQueueService {
     public constructor(
         private readonly queuedContactRepository: QueuedContactRepository,
         private readonly tokenService: TokensService,
+        private readonly proxyService: ProxyService,
+        private readonly contactHistoryService: ContactHistoryService,
     ) { }
 
     public async addToQueue(
@@ -92,23 +97,57 @@ export class ContactQueueService {
         return (find > 0)
     }
 
-    public async isExistingTg(link: string, logger: Logger, retries: number = 0): Promise<boolean> {
+    public async checkTelegramChannel(
+        link: string,
+        logger: Logger,
+        retries: number = 0
+    ): Promise<TelegramChannelCheckResultType> {
         try {
-            const request = await axios.get(link)
+            if (0 === retries) {
+                const isChannelCanBeContacted = await this.contactHistoryService.isChannelCanBeContacted(link)
 
-            if (200 === request.status && request.data.includes('<title>Telegram: Contact')) {
-                return request.data.includes('tgme_page_title') && !request.data.includes(' subscribers')
+                if (!isChannelCanBeContacted) {
+                    return TelegramChannelCheckResultType.FREQUENCY_LIMIT
+                }
             }
 
-            if (retries >= 5) {
-                throw new Error(`Telegram request returned status ${request.status}`)
+            const proxy = await this.proxyService.getRandomProxy()
+            let axiosConfig: AxiosRequestConfig<any> | undefined
+
+            if (proxy) {
+                const proxyInfo = proxy.proxy.replace('http://', '')
+                const httpsAgent = new HttpsProxyAgent(`http://${proxy.authInfo}@${proxyInfo}`)
+                axiosConfig = {
+                    httpsAgent,
+                }
+            }
+
+            const request = await axios.get(link, axiosConfig)
+
+            if (200 === request.status && request.data.includes('<title>Telegram: Contact')) {
+                if (request.data.includes(' subscribers')) {
+                    return TelegramChannelCheckResultType.ANNOUNCEMENTS_CHANNEL
+                }
+
+                if (request.data.includes('tgme_page_title')) {
+                    return TelegramChannelCheckResultType.ACTIVE
+                }
+            }
+
+            if (retries >= 2) {
+                return TelegramChannelCheckResultType.NOT_ACTIVE
             }
 
             await sleep(5000)
-            return this.isExistingTg(link, logger, ++retries)
+            return this.checkTelegramChannel(link, logger, ++retries)
         } catch (e) {
-            logger.error(e)
-            return false
+            logger.error(`${e}, Retry #${retries}`)
+
+            if (retries >= 2) {
+                return TelegramChannelCheckResultType.ERROR
+            }
+
+            return this.checkTelegramChannel(link, logger, ++retries)
         }
     }
 
