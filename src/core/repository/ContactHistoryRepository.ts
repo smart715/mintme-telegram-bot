@@ -50,4 +50,15 @@ export class ContactHistoryRepository extends Repository<ContactHistory> {
 
         return result as GroupedContactsCount[]
     }
+
+    public async findLastContactAttempt(channel: string): Promise<ContactHistory | undefined> {
+        return this.findOne({
+            where: {
+                channel,
+            },
+            order: {
+                createdAt: 'DESC',
+            },
+        })
+    }
 }
