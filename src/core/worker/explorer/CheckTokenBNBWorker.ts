@@ -70,7 +70,7 @@ export class CheckTokenBNBWorker extends AbstractTokenWorker {
     }
 
     private async processNewTokens(webDriver: WebDriver, blockchain: Blockchain): Promise<void> {
-        const alert = (await webDriver.findElements(By.css('role="alert"')))[0]
+        const alert = (await webDriver.findElements(By.css('[role="alert"]')))[0]
 
         if (!alert) {
             return
