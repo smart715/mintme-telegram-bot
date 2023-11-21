@@ -26,7 +26,7 @@ export default {
 
     // telegram configs
     'telegram_max_accounts_simultaneous': 2,
-    'telegram_messages_delay_in_seconds': 40,
+    'telegram_messages_delay_in_seconds': 35,
     'telegram_account_max_day_messages': 40,
     'telegram_unique_messages_per_account': 3,
     'telegram_accounts_per_proxy': 2,
@@ -44,9 +44,9 @@ export default {
     // enqueue tokens worker
     'contact_email_max_attempts': 4,
     'contact_twitter_max_attempts': 2,
-    'contact_telegram_max_attempts': 2,
+    'contact_telegram_max_attempts': 3,
     'contact_frequency_different_channel_in_seconds': 60 * 60 * 24 * 7, // 7 days
-    'contact_frequency_same_channel_in_seconds': 60 * 60 * 24 * 21, // 21 days
+    'contact_frequency_same_channel_in_seconds': 60 * 60 * 24 * 28, // 28 days
 
     'flaresolverr_server_url': 'http://localhost:8191/v1',
 
