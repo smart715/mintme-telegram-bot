@@ -7,7 +7,7 @@ export function getContactMethodRegex(method: string): RegExp|undefined {
         case 'TWITTER':
             return /twitter\.com\/[a-zA-Z0-9_]{4,15}/
         case 'TELEGRAM':
-            return /t\.me\/[a-zA-Z0-9]{5,64}/
+            return /t\.me\/[a-zA-Z0-9_]{5,32}/
     }
     return undefined
 }
