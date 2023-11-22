@@ -139,10 +139,15 @@ export class MailerWorker {
     ): Promise<ContactHistoryStatusType.SENT |
     ContactHistoryStatusType.ACCOUNT_NOT_EXISTS |
     ContactHistoryStatusType.NO_MX_RECORD> {
-        const hostName = receiverEmail.split('@')
-        const emailMxRecords = await dns.resolveMx(hostName[1])
+        try {
+            const hostName = receiverEmail.split('@')
+            const emailMxRecords = await dns.resolveMx(hostName[1])
 
-        if (!emailMxRecords.length) {
+            if (!emailMxRecords.length) {
+                return ContactHistoryStatusType.NO_MX_RECORD
+            }
+        } catch (error) {
+            this.logger.error(error)
             return ContactHistoryStatusType.NO_MX_RECORD
         }
 
