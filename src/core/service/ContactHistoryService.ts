@@ -101,4 +101,14 @@ export class ContactHistoryService {
     public async getTotalCountGroupedByContactMethod(fromDate: Date): Promise<GroupedContactsCount[]> {
         return this.contactHistoryRepository.findTotalCountGroupedByContactMethod(fromDate)
     }
+
+    public async getLastSentMessageId(channel: string): Promise<number | undefined> {
+        const lastContactAttempt = await this.contactHistoryRepository.findLastContactAttempt(channel)
+
+        if (!lastContactAttempt) {
+            return undefined
+        }
+
+        return lastContactAttempt.messageId
+    }
 }
