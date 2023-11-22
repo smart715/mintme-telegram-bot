@@ -32,4 +32,12 @@ export class ContactMessageRepository extends Repository<ContactMessage> {
             },
         })
     }
+
+    public async getRandomContactMessage(exculdedId: number|undefined): Promise<ContactMessage | undefined> {
+        return this.createQueryBuilder()
+            .where('is_tg_only = 0')
+            .andWhere('id != :exculdedId', { exculdedId })
+            .orderBy('RAND()')
+            .getOne()
+    }
 }
