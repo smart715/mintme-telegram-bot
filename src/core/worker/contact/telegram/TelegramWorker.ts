@@ -83,7 +83,7 @@ export class TelegramWorker {
             while (this.telegramClients.length < this.maxTelegramAccounts) {
                 const account = allAccounts[currentAccountIndex]
                 const isUsed = usedAccountsIds.includes(account.id)
-                const isLoggedInProxy = this.telegramClients.some(tgClient =>
+                const isLoggedInProxy = account && account.proxy && this.telegramClients.some(tgClient =>
                     tgClient.telegramAccount.proxy.id === account.proxy.id)
 
                 if (account &&
