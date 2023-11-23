@@ -80,17 +80,30 @@ export class TelegramWorker {
         while (usedAccountsIds.length < allAccounts.length) {
             this.telegramClients = []
 
-            for (let i = 0; i < this.maxTelegramAccounts; i++) {
+            while (this.telegramClients.length < this.maxTelegramAccounts) {
                 const account = allAccounts[currentAccountIndex]
+                const isUsed = usedAccountsIds.includes(account.id)
+                const isLoggedInProxy = this.telegramClients.some(tgClient =>
+                    tgClient.telegramAccount.proxy.id === account.proxy.id)
 
                 if (account &&
-                    !usedAccountsIds.includes(account.id) &&
-                    !this.telegramClients.some(tgClient => tgClient.telegramAccount.proxy.id === account.proxy.id)) {
+                    !isUsed &&
+                    !isLoggedInProxy) {
                     this.telegramClients.push(await this.initializeNewAccountManager(account))
                     usedAccountsIds.push(account.id)
+                } else {
+                    this.logger.info(`Skipped Account ${account.id} | Is Used: ${isUsed} | isLoggedInProxy: ${isLoggedInProxy}`)
                 }
 
                 currentAccountIndex++
+
+                if (currentAccountIndex > allAccounts.length -1) {
+                    currentAccountIndex = 0
+                }
+
+                if (usedAccountsIds.length === allAccounts.length) {
+                    break
+                }
             }
 
             await this.startAllClients(this.telegramClients)
