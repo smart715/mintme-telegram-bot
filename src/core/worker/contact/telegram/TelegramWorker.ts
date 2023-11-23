@@ -75,13 +75,21 @@ export class TelegramWorker {
         }
 
         let currentAccountIndex: number = 0
-        while (currentAccountIndex < allAccounts.length) {
+        const usedAccountsIds: number[] = []
+
+        while (usedAccountsIds.length < allAccounts.length) {
             this.telegramClients = []
+
             for (let i = 0; i < this.maxTelegramAccounts; i++) {
                 const account = allAccounts[currentAccountIndex]
-                if (account) {
+
+                if (account &&
+                    !usedAccountsIds.includes(account.id) &&
+                    !this.telegramClients.some(tgClient => tgClient.telegramAccount.proxy.id === account.proxy.id)) {
                     this.telegramClients.push(await this.initializeNewAccountManager(account))
+                    usedAccountsIds.push(account.id)
                 }
+
                 currentAccountIndex++
             }
 
