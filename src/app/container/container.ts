@@ -293,6 +293,7 @@ container.register(ContactMessageService, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new ContactMessageService(
             dependencyContainer.resolve(ContactMessageRepository),
+            dependencyContainer.resolve(ContactHistoryService),
         )
     ),
 })

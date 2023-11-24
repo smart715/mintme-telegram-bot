@@ -3,6 +3,7 @@ import { singleton } from 'tsyringe'
 import { ContactMessageRepository } from '../repository'
 import { ContactMessage } from '../entity'
 import { ContactMethod } from '../types'
+import { ContactHistoryService } from './ContactHistoryService'
 
 @singleton()
 export class ContactMessageService {
@@ -10,6 +11,7 @@ export class ContactMessageService {
 
     public constructor(
         private contactMessageRepository: ContactMessageRepository,
+        private contactHistoryService: ContactHistoryService,
     ) { }
 
     public async getAll(isTg: boolean): Promise<ContactMessage[]> {
@@ -18,11 +20,19 @@ export class ContactMessageService {
 
     public async getNextContactMessage(
         contactMethod: ContactMethod,
-        currentAttempt: number
+        currentAttempt: number,
+        channel: string,
     ): Promise<ContactMessage | undefined> {
         const isTgOnly = ContactMethod.TELEGRAM === contactMethod
 
-        return this.contactMessageRepository.getNextAttemptMessage(isTgOnly, currentAttempt)
+        let contactMessage = await this.contactMessageRepository.getNextAttemptMessage(isTgOnly, currentAttempt)
+
+        if (!contactMessage) {
+            const lastSentMessageId = await this.contactHistoryService.getLastSentMessageId(channel)
+            contactMessage = await this.contactMessageRepository.getRandomContactMessage(lastSentMessageId)
+        }
+
+        return contactMessage
     }
 
     public async getOneContactMessage(): Promise<ContactMessage|undefined> {
