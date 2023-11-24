@@ -9,4 +9,4 @@ src/core/driver/Profile/**
 !src/core/driver/Profile/Default/
 log
 .idea
-.env
+/.env
