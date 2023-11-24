@@ -47,6 +47,7 @@ export default {
     'contact_telegram_max_attempts': 3,
     'contact_frequency_different_channel_in_seconds': 60 * 60 * 24 * 7, // 7 days
     'contact_frequency_same_channel_in_seconds': 60 * 60 * 24 * 28, // 28 days
+    'dm_not_enabled_time_limit_in_days': 30 * 3, // 3 months
 
     'flaresolverr_server_url': 'http://localhost:8191/v1',
 
