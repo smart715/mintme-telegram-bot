@@ -42,7 +42,7 @@ export enum ChatType {
 }
 
 export interface CMCWorkerConfig {
-    apiKey: string,
+    apiKeys: string[],
     requestOffset: number,
     requestLimit: number,
 }

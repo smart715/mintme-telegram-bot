@@ -2,45 +2,37 @@
 import axios from 'axios'
 import config from 'config'
 import { singleton } from 'tsyringe'
+import { makeRequest, RequestOptions } from '../ApiService'
 import { TokensInsightAllCoinsResponse, TokensInsightCoinDataResponse } from '../../types'
 
 @singleton()
 export class TokensInsightService {
-    private readonly apiKey = config.get('tokensinsight_api_key') as string
+    private readonly apiKeys: string[] = config.get('tokensinsight_api_keys') as string[]
+
+    private readonly requestOptions: RequestOptions = {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        apiKeyLocation: 'headers',
+        apiKeyName: 'TI_API_KEY',
+    }
 
     public async getAllCoins(offset: number, limit: number): Promise<TokensInsightAllCoinsResponse> {
-        const headers = {
-            'Content-Type': 'application/json',
-            'TI_API_KEY': this.apiKey,
-        }
+        this.requestOptions.params = { offset, limit }
 
-        const response = await axios.get(
+        return makeRequest<TokensInsightAllCoinsResponse>(
+            axios,
             'https://api.tokeninsight.com/api/v1/coins/list',
-            {
-                headers: headers,
-                params: {
-                    offset,
-                    limit,
-                },
-            },
+            { ...this.requestOptions, apiKeys: this.apiKeys }
         )
-
-        return response.data
     }
 
     public async getCoinData(id: string): Promise<TokensInsightCoinDataResponse> {
-        const headers = {
-            'Content-Type': 'application/json',
-            'TI_API_KEY': this.apiKey,
-        }
-
-        const response = await axios.get(
+        return makeRequest<TokensInsightCoinDataResponse>(
+            axios,
             `https://api.tokeninsight.com/api/v1/coins/${id}`,
-            {
-                headers: headers,
-            },
+            { ...this.requestOptions, apiKeys: this.apiKeys }
         )
-
-        return response.data
     }
 }
