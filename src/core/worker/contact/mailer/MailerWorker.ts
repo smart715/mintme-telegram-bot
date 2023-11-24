@@ -74,9 +74,11 @@ export class MailerWorker {
 
         const contactResult = await this.contact(queueItem.channel, token)
         await this.contactQueueService.removeFromQueue(queueItem.address, queueItem.blockchain)
-        await this.tokensService.postContactingActions(token,
+        await this.tokensService.postContactingActions(
+            token,
             ContactMethod.EMAIL,
-            ContactHistoryStatusType.SENT === contactResult)
+            ContactHistoryStatusType.SENT === contactResult,
+        )
 
 
         this.logger.info(`[${this.workerName}] ` +
