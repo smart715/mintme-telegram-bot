@@ -76,6 +76,19 @@ export class ContactHistoryService {
         return failsCount > 0
     }
 
+    public async isChannelFailedDueToDmNotEnabled(contactChannel: string): Promise<boolean> {
+        const dmNotEnabledLimit = parseInt(config.get('dm_not_enabled_time_limit_in_days'))
+
+        const lastFail = await this.contactHistoryRepository.createQueryBuilder()
+            .where(`channel LIKE '%${contactChannel}'`)
+            .andWhere(`is_success = 0`)
+            .andWhere(`status = :dmNotEnabled`, { dmNotEnabled: ContactHistoryStatusType.DM_NOT_ENABLED })
+            .orderBy('created_at', 'DESC')
+            .getOne()
+
+        return !!lastFail && moment().subtract(dmNotEnabledLimit, 'days').isAfter(moment(lastFail.createdAt))
+    }
+
     public async isChannelCanBeContacted(contactChannel: string): Promise<boolean> {
         const delaySameChannelInSeconds = parseInt(config.get('contact_frequency_same_channel_in_seconds'))
 
