@@ -60,7 +60,7 @@ export class BSCScanAddressTokensHoldingsWorker extends AbstractTokenWorker {
                     this.buildExplorerUrl(explorerDomain, wallet.walletAddress),
                     this.firewallService,
                     this.logger,
-                    )
+                )
 
                 if (isNewDriver) {
                     webDriver = newDriver

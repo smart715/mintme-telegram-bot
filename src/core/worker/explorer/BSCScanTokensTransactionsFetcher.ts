@@ -57,7 +57,7 @@ export class BSCScanTokensTransactionsFetcher extends AbstractTokenWorker {
                 this.bscscanService.getTokenTxsPageUrl(explorerDomain, page),
                 this.firewallService,
                 this.logger
-                )
+            )
 
             if (isNewDriver) {
                 this.webDriver = newDriver

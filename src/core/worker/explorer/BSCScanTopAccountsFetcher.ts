@@ -50,7 +50,7 @@ export class BSCScanTopAccountsFetcher extends AbstractTokenWorker {
                 this.bscscanService.getAccountsPageUrl(explorerDomain, page),
                 this.firewallService,
                 this.logger
-                )
+            )
 
             if (isNewDriver) {
                 this.webDriver = newDriver

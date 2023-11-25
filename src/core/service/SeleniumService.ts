@@ -93,7 +93,7 @@ export class SeleniumService {
             cookies,
             firewallService,
             logger
-            )
+        )
 
         return webDriver
     }
@@ -123,7 +123,7 @@ export class SeleniumService {
                 cookies,
                 firewallService,
                 logger
-                )
+            )
         }
 
         await webDriver.get(url)
@@ -177,7 +177,7 @@ export class SeleniumService {
             undefined,
             firewallService,
             logger
-            )
+        )
 
         return { isNewDriver: true, newDriver: bypassedWebDriver }
     }

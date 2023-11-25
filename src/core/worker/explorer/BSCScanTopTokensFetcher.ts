@@ -57,7 +57,7 @@ export class BSCScanTopTokensFetcher extends AbstractTokenWorker {
                 this.bscscanService.getTokensPageUrl(explorerDomain, page),
                 this.firewallService,
                 this.logger
-                )
+            )
 
             if (isNewDriver) {
                 this.webDriver = newDriver
