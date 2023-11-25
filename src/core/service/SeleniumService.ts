@@ -119,7 +119,7 @@ export class SeleniumService {
 
         await webDriver.get(url)
 
-        const isChallengePage = await this.isCfPage(webDriver)
+        const isChallengePage = await this.isCloudflarePage(webDriver)
 
         if (isChallengePage) {
             if (retries <= 5) {
@@ -137,7 +137,7 @@ export class SeleniumService {
         return webDriver
     }
 
-    public static async isCfPage(webDriver: WebDriver): Promise<boolean> {
+    public static async isCloudflarePage(webDriver: WebDriver): Promise<boolean> {
         const pageSrc = await webDriver.getPageSource()
 
         return pageSrc.toLowerCase().includes('checking if the site connection is secure')
@@ -150,7 +150,7 @@ export class SeleniumService {
         newDriver: WebDriver}> {
         await webDriver.get(url)
 
-        const isCfChallengePage = await this.isCfPage(webDriver)
+        const isCfChallengePage = await this.isCloudflarePage(webDriver)
 
         if (!isCfChallengePage) {
             return { isNewDriver: false, newDriver: webDriver }
