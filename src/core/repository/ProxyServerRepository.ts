@@ -11,6 +11,7 @@ export class ProxyServerRepository extends Repository<ProxyServer> {
             (SELECT proxy_id FROM telegram_account 
             WHERE proxy_id IS NOT NULL 
             GROUP BY proxy_id HAVING COUNT(*) >= :maxAccountsPerProxy)`, { maxAccountsPerProxy: maxTelegramAccountsPerProxy })
+            .orderBy('RAND()')
             .getOne()
     }
 
