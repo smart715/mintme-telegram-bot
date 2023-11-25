@@ -56,11 +56,11 @@ export class BSCScanAddressTokensHoldingsWorker extends AbstractTokenWorker {
                     await sleep(this.delayBetweenPages)
                 }
 
-                const { isNewDriver, newDriver } = await SeleniumService.loadPotentialCfPage(
-                    webDriver,
+                const { isNewDriver, newDriver } = await SeleniumService.loadPotentialCfPage(webDriver,
                     this.buildExplorerUrl(explorerDomain, wallet.walletAddress),
                     this.firewallService,
-                    this.logger)
+                    this.logger,
+                    )
 
                 if (isNewDriver) {
                     webDriver = newDriver

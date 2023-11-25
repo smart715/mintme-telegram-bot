@@ -49,7 +49,8 @@ export class BSCScanTopAccountsFetcher extends AbstractTokenWorker {
             const { isNewDriver, newDriver } = await SeleniumService.loadPotentialCfPage(this.webDriver,
                 this.bscscanService.getAccountsPageUrl(explorerDomain, page),
                 this.firewallService,
-                this.logger)
+                this.logger
+                )
 
             if (isNewDriver) {
                 this.webDriver = newDriver

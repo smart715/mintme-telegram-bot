@@ -88,7 +88,12 @@ export class SeleniumService {
             throw new Error('Could not pass cloudflare firewall')
         }
 
-        await this.bypassCloudflare(webDriver, url, cookies, firewallService, logger)
+        await this.bypassCloudflare(webDriver,
+            url,
+            cookies,
+            firewallService,
+            logger
+            )
 
         return webDriver
     }
@@ -107,12 +112,17 @@ export class SeleniumService {
             const { cookies, userAgent } = await firewallService.getCloudflareCookies(url)
             const currentUserAgent = await webDriver.executeScript('return navigator.userAgent')
 
-            if (currentUserAgent != userAgent) {
+            if (currentUserAgent !== userAgent) {
                 await webDriver.quit()
                 return this.createCloudFlareByPassedDriver(url, firewallService, logger)
             }
 
-            return this.bypassCloudflare(webDriver, url, cookies, firewallService, logger)
+            return this.bypassCloudflare(webDriver,
+                url,
+                cookies,
+                firewallService,
+                logger
+                )
         }
 
         await webDriver.get(url)
@@ -130,7 +140,8 @@ export class SeleniumService {
                     undefined,
                     firewallService,
                     logger,
-                    ++retries)
+                    ++retries
+                    )
             }
 
             throw new Error('Bypassing cloudflare failed for continous 5 retries')
@@ -164,7 +175,8 @@ export class SeleniumService {
             url,
             undefined,
             firewallService,
-            logger)
+            logger
+            )
 
         return { isNewDriver: true, newDriver: bypassedWebDriver }
     }

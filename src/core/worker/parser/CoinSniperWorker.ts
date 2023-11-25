@@ -157,7 +157,8 @@ export class CoinSniperWorker extends NewestTokenChecker {
             this.webDriver,
             url,
             this.firewallService,
-            this.logger)
+            this.logger
+            )
 
         if (isNewDriver) {
             this.webDriver = newDriver
