@@ -93,14 +93,16 @@ export class SeleniumService {
         return webDriver
     }
 
-    private static async bypassCloudflare(webDriver: WebDriver, url: string, solvedCookies: {
-        name: string;
-        value: string;
-    }[] | undefined,
-    firewallService: FirewallService,
-    logger: Logger,
-    retries: number = 0
-    ):Promise<WebDriver> {
+    private static async bypassCloudflare(
+        webDriver: WebDriver,
+        url: string, solvedCookies: {
+            name: string;
+            value: string;
+        }[] | undefined,
+        firewallService: FirewallService,
+        logger: Logger,
+        retries: number = 0
+    ): Promise<WebDriver> {
         if (!solvedCookies) {
             const { cookies, userAgent } = await firewallService.getCloudflareCookies(url)
             const currentUserAgent = await webDriver.executeScript('return navigator.userAgent')

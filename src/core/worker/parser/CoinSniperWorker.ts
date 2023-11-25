@@ -153,7 +153,8 @@ export class CoinSniperWorker extends NewestTokenChecker {
     }
 
     private async loadPage(url: string): Promise<void> {
-        const { isNewDriver, newDriver } = await SeleniumService.loadPotentialCfPage(this.webDriver,
+        const { isNewDriver, newDriver } = await SeleniumService.loadPotentialCfPage(
+            this.webDriver,
             url,
             this.firewallService,
             this.logger)
