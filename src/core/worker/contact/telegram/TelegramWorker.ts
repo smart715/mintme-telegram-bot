@@ -79,6 +79,7 @@ export class TelegramWorker {
 
         while (usedAccountsIds.length < allAccounts.length) {
             this.telegramClients = []
+            this.logger.info(`Initializing new ${this.maxTelegramAccounts}`)
 
             while (this.telegramClients.length < this.maxTelegramAccounts) {
                 const account = allAccounts[currentAccountIndex]
@@ -88,9 +89,17 @@ export class TelegramWorker {
 
                 if (account &&
                     !isUsed &&
-                    !isLoggedInProxy) {
-                    this.telegramClients.push(await this.initializeNewAccountManager(account))
+                    !isLoggedInProxy
+                ) {
+                    this.logger.info(`Trying to initialize account ${account.id}:: ${account.phoneNumber}`)
+                    const tgClient = await this.initializeNewAccountManager(account)
                     usedAccountsIds.push(account.id)
+
+                    if (tgClient.isInitialized) {
+                        this.telegramClients.push(tgClient)
+                    } else {
+                        await tgClient.destroyDriver()
+                    }
                 } else {
                     this.logger.info(`Skipped Account ${account.id} | Is Used: ${isUsed} | isLoggedInProxy: ${isLoggedInProxy}`)
                 }
