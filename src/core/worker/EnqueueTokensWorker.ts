@@ -211,6 +211,10 @@ export class EnqueueTokensWorker extends AbstractTokenWorker {
 
                 return channel
             } else {
+                if (await this.contactHistoryService.isChannelFailedDueToDmNotEnabled(channelWithoutProtocol)) {
+                    return channel
+                }
+
                 this.logger.warn(`Skipping Channel ${channel} for previous faliure`)
                 continue
             }
