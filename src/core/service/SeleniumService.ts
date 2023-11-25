@@ -95,7 +95,8 @@ export class SeleniumService {
 
     private static async bypassCloudflare(
         webDriver: WebDriver,
-        url: string, solvedCookies: {
+        url: string,
+        solvedCookies: {
             name: string;
             value: string;
         }[] | undefined,
@@ -130,7 +131,8 @@ export class SeleniumService {
                     undefined,
                     firewallService,
                     logger,
-                    ++retries)
+                    ++retries
+                )
             }
 
             throw new Error('Bypassing cloudflare failed for continous 5 retries')
