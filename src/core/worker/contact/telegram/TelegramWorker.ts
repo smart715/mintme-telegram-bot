@@ -106,7 +106,7 @@ export class TelegramWorker {
 
                 currentAccountIndex++
 
-                if (currentAccountIndex > allAccounts.length -1) {
+                if (currentAccountIndex > allAccounts.length - 1) {
                     currentAccountIndex = 0
                 }
 
