@@ -37,15 +37,13 @@ export async function makeRequest<T>(
             params: 'params' === apiKeyLocation ? { ...params, [apiKeyName]: apiKey } : params,
         }
 
-        // try {
-        console.log(config)
-            
+        try {
             const response: AxiosResponse<T> = await axiosInstance(config)
             return response.data
-        // } catch (error) {
+        } catch (error) {
             // If request fails with the current key, try the next one
-            // retries--
-        // }
+            retries--
+        }
     }
 
     throw new Error('All API keys have been exhausted, and the request failed.')
