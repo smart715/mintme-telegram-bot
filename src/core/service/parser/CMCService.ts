@@ -1,34 +1,54 @@
-import axios from 'axios'
+import { AxiosInstance } from 'axios'
 import { singleton } from 'tsyringe'
 import config from 'config'
 import { CMCApiGeneralResponse, CMCCryptocurrency, CMCTokenInfoResponse, CMCWorkerConfig } from '../../types'
+import { makeRequest, RequestOptions } from '../ApiService'
 
 @singleton()
 export class CMCService {
-    private apiKey: string = config.get<CMCWorkerConfig>('cmcWorker')['apiKey']
+    private readonly apiKeys: string[] = config.get<CMCWorkerConfig>('cmcWorker')['apiKeys']
+    private readonly axiosInstance: AxiosInstance
+
+    public constructor(axiosInstance: AxiosInstance) {
+        this.axiosInstance = axiosInstance
+    }
 
     public async getLastTokens(start: number, limit: number): Promise<CMCApiGeneralResponse<CMCCryptocurrency[]>> {
-        const response = await axios.get('https://pro-api.coinmarketcap.com/v1/cryptocurrency/map', {
+        const requestOptions: RequestOptions = {
+            apiKeys: this.apiKeys,
+            method: 'GET',
+            headers: {
+                // eslint-disable-next-line @typescript-eslint/naming-convention
+                'Content-Type': 'application/json',
+            },
             params: {
-                CMC_PRO_API_KEY: this.apiKey,
-                start,
-                limit,
+                start: start,
+                limit: limit,
                 sort: 'id',
             },
-        })
+            apiKeyLocation: 'params',
+            apiKeyName: 'CMC_PRO_API_KEY',
+        }
 
-        return response.data
+        return makeRequest<CMCApiGeneralResponse<CMCCryptocurrency[]>>(this.axiosInstance, 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/map', requestOptions)
     }
 
     public async getTokenInfo(slug: string): Promise<CMCApiGeneralResponse<CMCTokenInfoResponse>> {
-        const response = await axios.get('https://pro-api.coinmarketcap.com/v1/cryptocurrency/info', {
+        const requestOptions: RequestOptions = {
+            apiKeys: this.apiKeys,
+            method: 'GET',
+            headers: {
+                // eslint-disable-next-line @typescript-eslint/naming-convention
+                'Content-Type': 'application/json',
+            },
             params: {
-                CMC_PRO_API_KEY: this.apiKey,
                 slug,
                 aux: 'urls,platform',
             },
-        })
+            apiKeyLocation: 'params',
+            apiKeyName: 'CMC_PRO_API_KEY',
+        }
 
-        return response.data
+        return makeRequest<CMCApiGeneralResponse<CMCTokenInfoResponse>>(this.axiosInstance, 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/info', requestOptions)
     }
 }

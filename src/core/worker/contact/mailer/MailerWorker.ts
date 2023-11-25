@@ -10,6 +10,7 @@ import { sleep, isValidEmail } from '../../../../utils'
 import { ContactHistory, ContactMessage, QueuedContact, Token } from '../../../entity'
 import { singleton } from 'tsyringe'
 import { Logger } from 'winston'
+import dns from 'dns/promises'
 
 @singleton()
 export class MailerWorker {
@@ -48,7 +49,7 @@ export class MailerWorker {
         }
     }
 
-    private async processQueueItem(queueItem: QueuedContact, retries = 0): Promise<void> {
+    private async processQueueItem(queueItem: QueuedContact): Promise<void> {
         const token = await this.tokensService.findByAddress(queueItem.address)
 
         if (!token) {
@@ -80,6 +81,7 @@ export class MailerWorker {
             return
         }
 
+
         this.logger.info(
             `[${this.workerName}] Started processing ${queueItem.address} ${queueItem.blockchain} :: ${queueItem.channel}. `
         )
@@ -101,6 +103,14 @@ export class MailerWorker {
                 await this.handleMaxRetriesReached(queueItem)
             }
         }
+        const contactResult = await this.contact(queueItem.channel, token)
+        await this.contactQueueService.removeFromQueue(queueItem.address, queueItem.blockchain)
+        await this.tokensService.postContactingActions(
+            token,
+            ContactMethod.EMAIL,
+            ContactHistoryStatusType.SENT === contactResult,
+        )
+
 
         this.logger.info(`[${this.workerName}] ` +
             `Proceeding of ${queueItem.address} :: ${queueItem.blockchain} finished`
@@ -165,7 +175,21 @@ export class MailerWorker {
         receiverEmail: string,
         title: string,
         content: string,
-    ): Promise<ContactHistoryStatusType.SENT | ContactHistoryStatusType.ACCOUNT_NOT_EXISTS> {
+    ): Promise<ContactHistoryStatusType.SENT |
+    ContactHistoryStatusType.ACCOUNT_NOT_EXISTS |
+    ContactHistoryStatusType.NO_MX_RECORD> {
+        try {
+            const hostName = receiverEmail.split('@')
+            const emailMxRecords = await dns.resolveMx(hostName[1])
+
+            if (!emailMxRecords.length) {
+                return ContactHistoryStatusType.NO_MX_RECORD
+            }
+        } catch (error) {
+            this.logger.error(error)
+            return ContactHistoryStatusType.NO_MX_RECORD
+        }
+
         return await this.mailer.sendEmail(receiverEmail, title, content)
             ? ContactHistoryStatusType.SENT
             : ContactHistoryStatusType.ACCOUNT_NOT_EXISTS
