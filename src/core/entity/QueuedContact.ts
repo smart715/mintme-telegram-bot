@@ -23,6 +23,9 @@ export class QueuedContact {
     @Column({ default: false })
     public isProcessing: boolean
 
+    @Column()
+    public isError: boolean
+
     @CreateDateColumn()
     public createdAt: Date
 
