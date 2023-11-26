@@ -32,7 +32,7 @@ export async function makeRequest<T>(
             method,
             headers: {
                 ...headers,
-                ['headers' === apiKeyLocation ? apiKeyName : '']: apiKey,
+                ['headers' === apiKeyLocation ? apiKeyName : 'X-API-KEY']: apiKey,
             },
             params: 'params' === apiKeyLocation ? { ...params, [apiKeyName]: apiKey } : params,
         }
