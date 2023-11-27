@@ -56,7 +56,16 @@ export class BSCScanAddressTokensHoldingsWorker extends AbstractTokenWorker {
                     await sleep(this.delayBetweenPages)
                 }
 
-                await webDriver.get(this.buildExplorerUrl(explorerDomain, wallet.walletAddress))
+                const { isNewDriver, newDriver } = await SeleniumService.loadPotentialCfPage(webDriver,
+                    this.buildExplorerUrl(explorerDomain, wallet.walletAddress),
+                    this.firewallService,
+                    this.logger,
+                )
+
+                if (isNewDriver) {
+                    webDriver = newDriver
+                }
+
                 await webDriver.wait(until.elementLocated(By.name('mytable_length')), 60000)
 
                 await webDriver.sleep(this.delayBetweenPages)

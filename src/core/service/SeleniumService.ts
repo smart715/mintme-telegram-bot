@@ -88,13 +88,108 @@ export class SeleniumService {
             throw new Error('Could not pass cloudflare firewall')
         }
 
+        await this.bypassCloudflare(webDriver,
+            url,
+            cookies,
+            firewallService,
+            logger
+        )
+
+        return webDriver
+    }
+
+    private static async bypassCloudflare(
+        webDriver: WebDriver,
+        url: string,
+        solvedCookies: {
+            name: string,
+            value: string,
+        }[] | undefined,
+        firewallService: FirewallService,
+        logger: Logger,
+        retries: number = 0
+    ): Promise<WebDriver> {
+        if (!solvedCookies) {
+            const { cookies, userAgent } = await firewallService.getCloudflareCookies(url)
+            const currentUserAgent = await webDriver.executeScript('return navigator.userAgent')
+
+            if (currentUserAgent !== userAgent) {
+                await webDriver.quit()
+                return this.createCloudFlareByPassedDriver(url, firewallService, logger)
+            }
+
+            return this.bypassCloudflare(webDriver,
+                url,
+                cookies,
+                firewallService,
+                logger
+            )
+        }
+
         await webDriver.get(url)
 
-        for (const cookie of cookies) {
-            await webDriver.manage().addCookie({ name: cookie.name, value: cookie.value })
+        await this.setCookies(webDriver, solvedCookies)
+
+        await webDriver.get(url)
+
+        const isChallengePage = await this.isCloudflarePage(webDriver)
+
+        if (isChallengePage) {
+            if (retries <= 5) {
+                return this.bypassCloudflare(webDriver,
+                    url,
+                    undefined,
+                    firewallService,
+                    logger,
+                    ++retries
+                )
+            }
+
+            throw new Error('Bypassing cloudflare failed for continous 5 retries')
         }
 
         return webDriver
+    }
+
+    public static async isCloudflarePage(webDriver: WebDriver): Promise<boolean> {
+        const pageSrc = await webDriver.getPageSource()
+
+        return pageSrc.toLowerCase().includes('checking if the site connection is secure')
+    }
+
+    public static async loadPotentialCfPage(webDriver: WebDriver,
+        url: string,
+        firewallService: FirewallService,
+        logger: Logger,): Promise<{isNewDriver: boolean,
+        newDriver: WebDriver}> {
+        await webDriver.get(url)
+
+        const isCfChallengePage = await this.isCloudflarePage(webDriver)
+
+        if (!isCfChallengePage) {
+            return { isNewDriver: false, newDriver: webDriver }
+        }
+
+        logger.warn(`Found Cloudflare challenge page, Trying to solve or re-initialize browser`)
+
+        const bypassedWebDriver = await this.bypassCloudflare(webDriver,
+            url,
+            undefined,
+            firewallService,
+            logger
+        )
+
+        return { isNewDriver: true, newDriver: bypassedWebDriver }
+    }
+
+    private static async setCookies(webDriver: WebDriver, cookies: {
+        name: string;
+        value: string;
+    }[]
+    ): Promise<void> {
+        for (const cookie of cookies) {
+            await webDriver.manage().addCookie({ name: cookie.name, value: cookie.value })
+        }
     }
 
     public static async isInternetWorking(driver: WebDriver): Promise<boolean> {
