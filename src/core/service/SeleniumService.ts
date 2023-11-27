@@ -102,8 +102,8 @@ export class SeleniumService {
         webDriver: WebDriver,
         url: string,
         solvedCookies: {
-            name: string;
-            value: string;
+            name: string,
+            value: string,
         }[] | undefined,
         firewallService: FirewallService,
         logger: Logger,
