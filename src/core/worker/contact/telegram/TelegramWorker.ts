@@ -75,14 +75,44 @@ export class TelegramWorker {
         }
 
         let currentAccountIndex: number = 0
-        while (currentAccountIndex < allAccounts.length) {
+        const usedAccountsIds: number[] = []
+
+        while (usedAccountsIds.length < allAccounts.length) {
             this.telegramClients = []
-            for (let i = 0; i < this.maxTelegramAccounts; i++) {
+            this.logger.info(`Initializing new ${this.maxTelegramAccounts}`)
+
+            while (this.telegramClients.length < this.maxTelegramAccounts) {
                 const account = allAccounts[currentAccountIndex]
-                if (account) {
-                    this.telegramClients.push(await this.initializeNewAccountManager(account))
+                const isUsed = usedAccountsIds.includes(account.id)
+                const isLoggedInProxy = account && account.proxy && this.telegramClients.some(tgClient =>
+                    tgClient.telegramAccount.proxy.id === account.proxy.id)
+
+                if (account &&
+                    !isUsed &&
+                    !isLoggedInProxy
+                ) {
+                    this.logger.info(`Trying to initialize account ${account.id}:: ${account.phoneNumber}`)
+                    const tgClient = await this.initializeNewAccountManager(account)
+                    usedAccountsIds.push(account.id)
+
+                    if (tgClient.isInitialized) {
+                        this.telegramClients.push(tgClient)
+                    } else {
+                        await tgClient.destroyDriver()
+                    }
+                } else {
+                    this.logger.info(`Skipped Account ${account.id} | Is Used: ${isUsed} | isLoggedInProxy: ${isLoggedInProxy}`)
                 }
+
                 currentAccountIndex++
+
+                if (currentAccountIndex > allAccounts.length - 1) {
+                    currentAccountIndex = 0
+                }
+
+                if (usedAccountsIds.length === allAccounts.length) {
+                    break
+                }
             }
 
             try {

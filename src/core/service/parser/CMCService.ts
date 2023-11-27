@@ -1,4 +1,4 @@
-import { AxiosInstance } from 'axios'
+import axios, { AxiosInstance } from 'axios'
 import { singleton } from 'tsyringe'
 import config from 'config'
 import { CMCApiGeneralResponse, CMCCryptocurrency, CMCTokenInfoResponse, CMCWorkerConfig } from '../../types'
@@ -9,8 +9,11 @@ export class CMCService {
     private readonly apiKeys: string[] = config.get<CMCWorkerConfig>('cmcWorker')['apiKeys']
     private readonly axiosInstance: AxiosInstance
 
-    public constructor(axiosInstance: AxiosInstance) {
-        this.axiosInstance = axiosInstance
+    public constructor() {
+        this.axiosInstance = axios.create({
+            baseURL: 'https://pro-api.coinmarketcap.com/v1/cryptocurrency',
+            timeout: 5000,
+        })
     }
 
     public async getLastTokens(start: number, limit: number): Promise<CMCApiGeneralResponse<CMCCryptocurrency[]>> {
