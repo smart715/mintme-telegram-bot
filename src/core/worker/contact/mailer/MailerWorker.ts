@@ -49,7 +49,7 @@ export class MailerWorker {
         }
     }
 
-    private async processQueueItem(queueItem: QueuedContact): Promise<void> {
+    private async processQueueItem(queueItem: QueuedContact, retries = 0): Promise<void> {
         const token = await this.tokensService.findByAddress(queueItem.address)
 
         if (!token) {
