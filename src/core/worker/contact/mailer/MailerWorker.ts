@@ -60,17 +60,17 @@ export class MailerWorker {
         }
 
         if (!isValidEmail(queueItem.channel)) {
-            this.logger.info(`[${this.workerName}] Invalid email address: ${queueItem.channel}. Marking it as an error.`)
+            const correctedEmail = this.tokensService.correctEmail(queueItem.channel)
 
-            // Check if there is a link in the email
-            const emailParts = queueItem.channel.split('http')
-
-            if (!isValidEmail(emailParts[0])) {
+            if (correctedEmail !== null && isValidEmail(correctedEmail)) {
+                queueItem.channel = correctedEmail
+            } else {
                 await this.contactQueueService.markEntryAsError(queueItem)
                 await this.mailer.sendFailedWorkerEmail(`Invalid email address: ${queueItem.channel}. Marked as an error.`)
                 return
             }
         }
+
 
         const isValidQueuedContact = await this.contactQueueService.preContactCheckAndCorrect(
             queueItem,
