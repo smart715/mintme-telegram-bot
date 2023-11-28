@@ -150,7 +150,8 @@ export class CoinBuddyWorker extends AbstractParserWorker {
                     [ '' ],
                     otherLinks,
                     this.workerName,
-                    currentBlockchain
+                    currentBlockchain,
+                    this.logger
                 )
 
                 await this.checkedTokenService.saveAsChecked(coinId, this.workerName)

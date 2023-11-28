@@ -124,6 +124,7 @@ export class CoinSniperWorker extends NewestTokenChecker {
                     links,
                     this.workerName,
                     blockchain!,
+                    this.logger
                 )
 
                 this.logger.info(

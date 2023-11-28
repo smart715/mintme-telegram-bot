@@ -76,7 +76,8 @@ export class MyEtherListsWorker extends AbstractParserWorker {
                 [ email ],
                 links,
                 this.workerName,
-                currentBlockchain
+                currentBlockchain,
+                this.logger
             )
 
             this.logger.info(

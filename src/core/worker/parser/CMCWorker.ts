@@ -97,6 +97,7 @@ export class CMCWorker extends AbstractParserWorker {
                 links,
                 this.workerName,
                 blockchain,
+                this.logger
             )
 
             this.logger.info(

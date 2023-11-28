@@ -134,7 +134,8 @@ export class CheckTokenBNBWorker extends AbstractTokenWorker {
             emails,
             links,
             this.workerName,
-            blockchain
+            blockchain,
+            this.logger
         )
     }
 

@@ -142,7 +142,8 @@ export class RecentTokensWorker extends NewestTokenChecker {
             [ '' ],
             links,
             this.workerName,
-            this.blockchain
+            this.blockchain,
+            this.logger
         )
 
         this.logger.info(

@@ -81,7 +81,8 @@ export class Top100TokensWorker extends AbstractParserWorker {
                     [ '' ],
                     links,
                     this.workerName,
-                    currentBlockchain
+                    currentBlockchain,
+                    this.logger
                 )
 
                 this.logger.info(
