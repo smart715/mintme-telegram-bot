@@ -143,7 +143,18 @@ export class TokensService {
     }
 
     public getEmails(token: Token): string[] {
-        return token.emails?.filter(email => isValidEmail(email)) ?? []
+        return (token.emails ?? []).map(email => this.correctEmail(email)).filter(email => email !== null) as string[]
+    }
+
+    public correctEmail(email: string): string | null {
+        if (isValidEmail(email)) {
+            return email
+        }
+
+        const emailParts = email.split('http')
+        const firstPart = emailParts[0].trim()
+
+        return isValidEmail(firstPart) ? firstPart : null
     }
 
     public getTwitterAccounts(token: Token): string[] {
