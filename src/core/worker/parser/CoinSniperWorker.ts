@@ -39,7 +39,7 @@ export class CoinSniperWorker extends NewestTokenChecker {
         )
 
         for (const blockchain of this.supportedBlockchains) {
-            await this.webDriver.get(this.coinSniperService.getBlockchainFilterPageUrl(blockchain))
+            await this.loadPage(this.coinSniperService.getBlockchainFilterPageUrl(blockchain))
 
             await this.runByBlockchain(blockchain)
         }
@@ -77,7 +77,7 @@ export class CoinSniperWorker extends NewestTokenChecker {
     }
 
     protected override async checkPage(page: number, blockchain?: Blockchain): Promise<void> {
-        await this.webDriver.get(this.coinSniperService.getNewTokensPageUrl(page))
+        await this.loadPage(this.coinSniperService.getNewTokensPageUrl(page))
         await this.webDriver.wait(until.elementLocated(By.className('home')), 60000)
 
         const pageDOM = (new JSDOM(await this.webDriver.getPageSource())).window
@@ -96,7 +96,7 @@ export class CoinSniperWorker extends NewestTokenChecker {
                 continue
             }
 
-            await this.webDriver.get(this.coinSniperService.getTokenPageUrl(coinId))
+            await this.loadPage(this.coinSniperService.getTokenPageUrl(coinId))
             await this.webDriver.wait(until.elementLocated(By.className('home')), 60000)
 
             const coinPageDocument = (new JSDOM(await this.webDriver.getPageSource())).window.document
@@ -150,5 +150,18 @@ export class CoinSniperWorker extends NewestTokenChecker {
 
             return link.split('/')[link.split('/').length - 1]
         })
+    }
+
+    private async loadPage(url: string): Promise<void> {
+        const { isNewDriver, newDriver } = await SeleniumService.loadPotentialCfPage(
+            this.webDriver,
+            url,
+            this.firewallService,
+            this.logger
+        )
+
+        if (isNewDriver) {
+            this.webDriver = newDriver
+        }
     }
 }
