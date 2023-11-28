@@ -60,8 +60,8 @@ export class TokensService {
 
         try {
             await this.tokenRepository.insert(token)
-        } catch (error) {
-            logger.warn(`cannot insert token due to error: ${JSON.stringify(error)}`)
+        } catch (error: any) {
+            logger.warn(`cannot insert token due to error: ${error.message}`)
             return undefined
         }
 
