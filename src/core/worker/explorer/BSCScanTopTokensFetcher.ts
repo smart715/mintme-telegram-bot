@@ -1,5 +1,5 @@
 import { AbstractTokenWorker } from '../AbstractTokenWorker'
-import { explorerDomains, Blockchain } from '../../../utils'
+import { explorerDomains, Blockchain, destroyDriver } from '../../../utils'
 import { SeleniumService, BSCScanService, FirewallService } from '../../service'
 import { singleton } from 'tsyringe'
 import { ExplorerEnqueuer } from './ExplorerEnqueuer'
@@ -30,12 +30,17 @@ export class BSCScanTopTokensFetcher extends AbstractTokenWorker {
     public async run(blockchain: Blockchain|null = null): Promise<void> {
         this.logger.info(`[${this.workerName}] started`)
 
-        if (blockchain) {
-            await this.runByBlockchain(blockchain)
-        } else {
-            for (const blockchain of this.supportedBlockchains) {
+        try {
+            if (blockchain) {
                 await this.runByBlockchain(blockchain)
+            } else {
+                for (const blockchain of this.supportedBlockchains) {
+                    await this.runByBlockchain(blockchain)
+                }
             }
+        } catch (error) {
+            await destroyDriver(this.webDriver)
+            throw error
         }
 
         this.logger.info(`[${this.workerName}] finished`)
@@ -68,9 +73,7 @@ export class BSCScanTopTokensFetcher extends AbstractTokenWorker {
             await this.explorerParser.enqueueTokenAddresses(pageSource, blockchain)
         }
 
-        if (this.webDriver) {
-            await this.webDriver.quit()
-        }
+        await destroyDriver(this.webDriver)
 
         this.logger.info(`[${this.workerName}] finished for ${blockchain} blockchain`)
     }

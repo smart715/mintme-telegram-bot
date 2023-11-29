@@ -1,5 +1,5 @@
 import { AbstractTokenWorker } from '../AbstractTokenWorker'
-import { explorerDomains, TokenNamesGenerator, Blockchain } from '../../../utils'
+import { explorerDomains, TokenNamesGenerator, Blockchain, destroyDriver } from '../../../utils'
 import { LastCheckedTokenNameService, SeleniumService } from '../../service'
 import { WebDriver } from 'selenium-webdriver'
 import { singleton } from 'tsyringe'
@@ -45,15 +45,18 @@ export class ExplorerSearchAPIWorker extends AbstractTokenWorker {
         while (this.tokenNamesGenerator.noFurtherCombinations !== currentCombination) {
             currentCombination = this.tokenNamesGenerator.getNextCombination(currentCombination)
 
-            await this.checkConfiguration(webDriver, explorerDomain, blockchain, currentCombination)
-            await this.saveLastCheckedCombination(blockchain, currentCombination)
+            try {
+                await this.checkConfiguration(webDriver, explorerDomain, blockchain, currentCombination)
+                await this.saveLastCheckedCombination(blockchain, currentCombination)
+            } catch (error) {
+                await destroyDriver(webDriver)
+                throw error
+            }
         }
 
         await this.saveLastCheckedCombination(blockchain, currentCombination)
 
-        if (webDriver) {
-            await webDriver.quit()
-        }
+        await destroyDriver(webDriver)
 
         this.logger.info(`[${this.workerName}] all token name configurations for ${blockchain} blockchain are checked`)
     }
@@ -78,6 +81,8 @@ export class ExplorerSearchAPIWorker extends AbstractTokenWorker {
         combination: string
     ): Promise<void> {
         await webDriver.get('https://' + explorerDomain + '/searchHandler?term=' + combination + '&filterby=2')
+        await webDriver.sleep(2000)
+
         const pageSource = await webDriver.getPageSource()
 
         await this.explorerParser.enqueueTokenAddresses(pageSource, blockchain)

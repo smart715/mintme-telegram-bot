@@ -1,3 +1,4 @@
+import { WebDriver } from 'selenium-webdriver'
 import { ContactMethod } from '../core'
 import config from 'config'
 
@@ -41,6 +42,12 @@ export function getMaxAttemptsPerMethod(method: ContactMethod): number {
 
 export async function sleep(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms))
+}
+
+export async function destroyDriver(driver: WebDriver): Promise<void> {
+    if (driver) {
+        await driver.quit()
+    }
 }
 
 export function getRandomNumber(min:number, max:number): number {

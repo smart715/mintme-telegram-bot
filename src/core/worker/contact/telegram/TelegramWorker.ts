@@ -115,10 +115,10 @@ export class TelegramWorker {
                 }
             }
 
-            await this.startAllClients(this.telegramClients)
-
-            for (const client of this.telegramClients) {
-                await client.destroyDriver()
+            try {
+                await this.startAllClients(this.telegramClients)
+            } finally {
+                await this.destroyDrivers()
             }
         }
 
@@ -165,5 +165,11 @@ export class TelegramWorker {
         })
 
         return Promise.all(workerPromises)
+    }
+
+    private async destroyDrivers(): Promise<void> {
+        for (const client of this.telegramClients) {
+            await client.destroyDriver()
+        }
     }
 }
