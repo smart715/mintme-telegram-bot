@@ -62,7 +62,7 @@ export class MailerWorker {
         if (!isValidEmail(queueItem.channel)) {
             const correctedEmail = this.tokensService.correctEmail(queueItem.channel)
 
-            if (correctedEmail !== null && isValidEmail(correctedEmail)) {
+            if (correctedEmail && isValidEmail(correctedEmail)) {
                 queueItem.channel = correctedEmail
             } else {
                 await this.contactQueueService.markEntryAsError(queueItem)

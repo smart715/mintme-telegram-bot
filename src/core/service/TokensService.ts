@@ -143,10 +143,10 @@ export class TokensService {
     }
 
     public getEmails(token: Token): string[] {
-        return (token.emails ?? []).map(email => this.correctEmail(email)).filter(email => email !== null) as string[]
+        return (token.emails ?? []).map(email => this.correctEmail(email)).filter(email => email !== '')
     }
 
-    public correctEmail(email: string): string | null {
+    public correctEmail(email: string): string {
         if (isValidEmail(email)) {
             return email
         }
@@ -154,7 +154,7 @@ export class TokensService {
         const emailParts = email.split('http')
         const firstPart = emailParts[0].trim()
 
-        return isValidEmail(firstPart) ? firstPart : null
+        return isValidEmail(firstPart) ? firstPart : ''
     }
 
     public getTwitterAccounts(token: Token): string[] {
