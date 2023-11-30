@@ -1,6 +1,6 @@
 import { AbstractTokenWorker } from '../AbstractTokenWorker'
 import { SeleniumService, BSCScanService, FirewallService } from '../../service'
-import { explorerDomains, Blockchain } from '../../../utils'
+import { explorerDomains, Blockchain, destroyDriver } from '../../../utils'
 import { singleton } from 'tsyringe'
 import { ExplorerEnqueuer } from './ExplorerEnqueuer'
 import { Logger } from 'winston'
@@ -11,6 +11,7 @@ export class BSCScanTokensTransactionsFetcher extends AbstractTokenWorker {
     private readonly workerName = BSCScanTokensTransactionsFetcher.name
     private webDriver: WebDriver
     private readonly supportedBlockchains = [ Blockchain.ETH, Blockchain.BSC, Blockchain.CRO ]
+    private readonly delayBetweenPages = 5 * 1000
     private readonly pagesCounts = {
         [Blockchain.BSC]: 100,
         [Blockchain.ETH]: 50,
@@ -29,12 +30,17 @@ export class BSCScanTokensTransactionsFetcher extends AbstractTokenWorker {
     public async run(blockchain: Blockchain|null = null): Promise<void> {
         this.logger.info(`[${this.workerName}] started`)
 
-        if (blockchain) {
-            await this.runByBlockchain(blockchain)
-        } else {
-            for (const blockchain of this.supportedBlockchains) {
+        try {
+            if (blockchain) {
                 await this.runByBlockchain(blockchain)
+            } else {
+                for (const blockchain of this.supportedBlockchains) {
+                    await this.runByBlockchain(blockchain)
+                }
             }
+        } catch (error) {
+            await destroyDriver(this.webDriver)
+            throw error
         }
 
         this.logger.info(`[${this.workerName}] finished`)
@@ -59,6 +65,8 @@ export class BSCScanTokensTransactionsFetcher extends AbstractTokenWorker {
                 this.logger
             )
 
+            await this.webDriver.sleep(this.delayBetweenPages)
+
             if (isNewDriver) {
                 this.webDriver = newDriver
             }
@@ -68,6 +76,8 @@ export class BSCScanTokensTransactionsFetcher extends AbstractTokenWorker {
             await this.explorerParser.enqueueTokenAddresses(pageSource, blockchain)
             await this.explorerParser.enqueueWalletAddresses(pageSource, blockchain)
         }
+
+        await destroyDriver(this.webDriver)
 
         this.logger.info(`[${this.workerName}] finished for ${blockchain} blockchain`)
     }
