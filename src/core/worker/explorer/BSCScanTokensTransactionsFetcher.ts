@@ -65,6 +65,8 @@ export class BSCScanTokensTransactionsFetcher extends AbstractTokenWorker {
                 this.logger
             )
 
+            await this.webDriver.sleep(this.delayBetweenPages)
+
             if (isNewDriver) {
                 this.webDriver = newDriver
             }
