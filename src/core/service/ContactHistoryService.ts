@@ -67,26 +67,33 @@ export class ContactHistoryService {
     }
 
     public async isFailedChannel(contactChannel: string): Promise<boolean> {
-        const failsCount = await this.contactHistoryRepository.createQueryBuilder()
+        const lastHistoryEntry = await this.contactHistoryRepository.createQueryBuilder()
             .where(`channel LIKE '%${contactChannel}'`)
-            .andWhere(`is_success = 0`)
             .andWhere(`NOT status ='UNKNOWN'`)
-            .getCount()
-
-        return failsCount > 0
-    }
-
-    public async isChannelFailedDueToDmNotEnabled(contactChannel: string): Promise<boolean> {
-        const dmNotEnabledLimit = parseInt(config.get('dm_not_enabled_time_limit_in_days'))
-
-        const lastFail = await this.contactHistoryRepository.createQueryBuilder()
-            .where(`channel LIKE '%${contactChannel}'`)
-            .andWhere(`is_success = 0`)
-            .andWhere(`status = :dmNotEnabled`, { dmNotEnabled: ContactHistoryStatusType.DM_NOT_ENABLED })
             .orderBy('created_at', 'DESC')
             .getOne()
 
-        return !!lastFail && moment().subtract(dmNotEnabledLimit, 'days').isAfter(moment(lastFail.createdAt))
+        return !!lastHistoryEntry && !lastHistoryEntry.isSuccess
+    }
+
+    public async isFailedDuetoDisabledDm(contactChannel: string,
+        contactMethod: ContactMethod,
+    ): Promise<boolean> {
+        if (ContactMethod.TWITTER !== contactMethod) {
+            return false
+        }
+
+        const dmNotEnabledLimit = parseInt(config.get('dm_not_enabled_time_limit_in_days'))
+
+        const lastFailEntry = await this.contactHistoryRepository.createQueryBuilder()
+            .where(`channel LIKE '%${contactChannel}'`)
+            .andWhere(`is_success = 0`)
+            .orderBy('created_at', 'DESC')
+            .getOne()
+
+        return !!lastFailEntry &&
+            ContactHistoryStatusType.DM_NOT_ENABLED === lastFailEntry.status &&
+            moment().subtract(dmNotEnabledLimit, 'days').isAfter(moment(lastFailEntry.createdAt))
     }
 
     public async isChannelCanBeContacted(contactChannel: string): Promise<boolean> {

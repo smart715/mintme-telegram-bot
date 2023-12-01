@@ -211,7 +211,12 @@ export class EnqueueTokensWorker extends AbstractTokenWorker {
 
                 return channel
             } else {
-                if (await this.contactHistoryService.isChannelFailedDueToDmNotEnabled(channelWithoutProtocol)) {
+                const isFailedDuetoDisabledDm = await this.contactHistoryService.isFailedDuetoDisabledDm(
+                    channelWithoutProtocol,
+                    contactMethod,
+                )
+
+                if (isFailedDuetoDisabledDm) {
                     return channel
                 }
 
