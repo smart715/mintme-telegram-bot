@@ -2,10 +2,6 @@ export function isValidEmail(email: string): boolean {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/i.test(email)
 }
 
-export function getEmailRegex(): RegExp {
-    return /([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/
-}
-
 export function getContactMethodRegex(method: string): RegExp|undefined {
     switch (method) {
         case 'TWITTER':
