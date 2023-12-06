@@ -18,7 +18,7 @@ export {
 export function parseContactMethod(channel: string): ContactMethod|undefined {
     if (channel.includes('@')) {
         return ContactMethod.EMAIL
-    } else if (channel.includes('twitter.com')) {
+    } else if (channel.includes('twitter.com') || channel.includes('x.com')) {
         return ContactMethod.TWITTER
     } else if (channel.includes('t.me')) {
         return ContactMethod.TELEGRAM

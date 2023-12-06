@@ -36,7 +36,7 @@ export class TokenRepository extends Repository<Token> {
                     .orWhere('contact_status = :contactedStatus', { contactedStatus: TokenContactStatusType.CONTACTED })
             }))
             .andWhere('avoid_contacting = 0')
-            .andWhere(`((email_attempts < ${maxEmailAttempts} AND emails LIKE '%@%') OR (twitter_attempts < ${maxTwitterAttempts} AND links LIKE '%twitter.com%') OR (telegram_attempts < ${maxTelegramAttempts} AND links LIKE '%t.me/%'))`)
+            .andWhere(`((email_attempts < ${maxEmailAttempts} AND emails LIKE '%@%') OR (twitter_attempts < ${maxTwitterAttempts} AND (links LIKE '%twitter.com%' OR links LIKE '%x.com%' )) OR (telegram_attempts < ${maxTelegramAttempts} AND links LIKE '%t.me/%'))`)
             .andWhere(
                 '(last_contact_attempt is null or last_contact_attempt < :dateBefore)',
                 { dateBefore: moment().utc().subtract(delayInSeconds, 'second').format() }
@@ -57,6 +57,7 @@ export class TokenRepository extends Repository<Token> {
                 queryBuilder
                     .where(`emails like '%@%'`)
                     .orWhere(`links like '%twitter.com%'`)
+                    .orWhere(`links like '%x.com%'`)
                     .orWhere(`links like '%t.me/%'`)
             }))
             .orderBy('created_at', 'DESC')
