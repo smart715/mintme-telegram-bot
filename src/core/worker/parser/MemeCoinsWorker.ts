@@ -61,6 +61,7 @@ export class MemeCoinsWorker extends NewestTokenChecker {
             [],
             this.workerName,
             blockchain,
+            this.logger
         )
     }
 

@@ -70,7 +70,8 @@ export class CoinLoreWorker extends AbstractParserWorker {
                 [ '' ],
                 links,
                 this.workerName,
-                coinBlockchain
+                coinBlockchain,
+                this.logger
             )
 
             this.logger.info(

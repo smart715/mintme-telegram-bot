@@ -97,7 +97,8 @@ export class CoinBrainWorker extends AbstractParserWorker {
                     [ '' ],
                     links,
                     this.workerName,
-                    currentBlockchain
+                    currentBlockchain,
+                    this.logger
                 )
 
 

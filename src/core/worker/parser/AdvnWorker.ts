@@ -101,6 +101,7 @@ export class AdvnWorker extends AbstractParserWorker {
                     links,
                     this.workerName,
                     blockchain,
+                    this.logger
                 )
 
                 await this.checkedTokenService.saveAsChecked(name, this.workerName)

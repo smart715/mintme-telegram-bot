@@ -113,7 +113,8 @@ export class CoinCatapultWorker extends AbstractParserWorker {
                 [ email ],
                 links,
                 this.workerName,
-                currentBlockchain
+                currentBlockchain,
+                this.logger
             )
 
             await this.checkedTokenService.saveAsChecked(coin.slug, this.workerName)

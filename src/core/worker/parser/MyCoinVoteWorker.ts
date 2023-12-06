@@ -78,6 +78,7 @@ export class MyCoinVoteWorker extends NewestTokenChecker {
             links,
             this.workerName,
             blockchain,
+            this.logger
         )
     }
 

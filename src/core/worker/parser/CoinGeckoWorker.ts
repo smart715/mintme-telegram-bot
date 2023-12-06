@@ -112,7 +112,8 @@ export class CoinGeckoWorker extends AbstractParserWorker {
                 [ '' ],
                 allLinks,
                 this.workerName,
-                currentBlockchain
+                currentBlockchain,
+                this.logger
             )
 
             this.logger.info(

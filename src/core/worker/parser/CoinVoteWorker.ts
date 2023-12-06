@@ -73,6 +73,7 @@ export class CoinVoteWorker extends AbstractParserWorker {
                         links,
                         this.workerName,
                         currentBlockchain,
+                        this.logger
                     )
 
                     this.logger.info(
