@@ -65,6 +65,7 @@ export class MobulaWorker extends AbstractParserWorker {
                 [ tokenInfo.twitter ],
                 this.workerName,
                 blockchain,
+                this.logger
             )
         }
     }

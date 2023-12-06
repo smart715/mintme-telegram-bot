@@ -81,7 +81,8 @@ export class CoinDiscoveryWorker extends AbstractParserWorker {
                     [ '' ],
                     links,
                     this.workerName,
-                    currentBlockchain
+                    currentBlockchain,
+                    this.logger
                 )
 
                 await this.checkedTokenService.saveAsChecked(nameSlug, this.workerName)

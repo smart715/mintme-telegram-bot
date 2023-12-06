@@ -4,6 +4,7 @@ import { QueuedContact, Token } from '../entity'
 import { Blockchain, getValidLinks, isValidEmail, getEmailRegex } from '../../utils'
 import { ContactMethod, TokenContactStatusType, TokensCountGroupedBySourceAndBlockchain } from '../types'
 import moment from 'moment'
+import { Logger } from 'winston'
 
 @singleton()
 export class TokensService {
@@ -38,8 +39,9 @@ export class TokensService {
         emails: string[],
         links: string[],
         workerSource: string,
-        blockchain: Blockchain
-    ): Promise<Token> {
+        blockchain: Blockchain,
+        logger: Logger,
+    ): Promise<Token | undefined> {
         let token = await this.findByAddress(tokenAddress)
 
         if (token) {
@@ -56,7 +58,12 @@ export class TokensService {
         token.links = links
         token.source = workerSource
 
-        await this.tokenRepository.insert(token)
+        try {
+            await this.tokenRepository.insert(token)
+        } catch (error: any) {
+            logger.warn(`cannot insert token due to error: ${error.message}`)
+            return undefined
+        }
 
         return token
     }

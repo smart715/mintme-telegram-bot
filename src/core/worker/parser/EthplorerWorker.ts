@@ -118,6 +118,7 @@ export class EthplorerWorker extends AbstractParserWorker {
                 links,
                 this.workerName,
                 this.blockchain,
+                this.logger
             )
         }
     }

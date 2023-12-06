@@ -67,6 +67,7 @@ export class CryptoVoteListWorker extends NewestTokenChecker {
             [],
             this.workerName,
             blockchain,
+            this.logger
         )
     }
 

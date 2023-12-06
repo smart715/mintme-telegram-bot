@@ -71,6 +71,7 @@ export class CoinsGodsWorker extends AbstractParserWorker {
                     links,
                     this.workerName,
                     blockchain,
+                    this.logger
                 )
 
                 this.logger.info(

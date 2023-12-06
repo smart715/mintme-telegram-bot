@@ -115,7 +115,8 @@ export class TokensInsightWorker extends AbstractParserWorker {
                     [ '' ],
                     links,
                     this.workerName,
-                    currentBlockchain
+                    currentBlockchain,
+                    this.logger
                 )
 
                 this.logger.info(

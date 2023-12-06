@@ -82,6 +82,7 @@ export class GemFinderWorker extends AbstractParserWorker {
             links,
             this.workerName,
             blockchain,
+            this.logger
         )
 
         this.logger.info(

@@ -84,6 +84,7 @@ export class Coin360Worker extends AbstractParserWorker {
                     links,
                     this.workerName,
                     blockchain,
+                    this.logger
                 )
 
                 this.logger.info(

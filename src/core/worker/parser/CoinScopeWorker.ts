@@ -92,6 +92,7 @@ export class CoinScopeWorker extends AbstractParserWorker {
             tokenData.links,
             this.workerName,
             currentBlockchain,
+            this.logger
         )
 
         this.logger.info(
