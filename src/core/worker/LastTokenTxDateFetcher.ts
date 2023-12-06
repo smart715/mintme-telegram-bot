@@ -63,10 +63,10 @@ export class LastTokenTxDateFetcher {
 
             try {
                 const response = await axios.get(this.buildLastTxUrl(tokenAddress, blockchain, apiKey))
-                const lastTxTimestamp = response.data.result[0]?.timeStamp
-                if (lastTxTimestamp) {
-                    return parseInt(lastTxTimestamp) * 1000
-                }
+
+                return response.data.result[0] && response.data.result[0].timeStamp
+                    ? parseInt(response.data.result[0].timeStamp) * 1000
+                    : null
             } catch (error:any) {
                 this.logger.error(`[${this.workerName}] Error with API key ${apiKey}: ${error.message}`)
             }
