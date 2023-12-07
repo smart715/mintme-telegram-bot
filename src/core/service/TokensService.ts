@@ -1,7 +1,7 @@
 import { singleton } from 'tsyringe'
 import { TokenRepository } from '../repository'
 import { QueuedContact, Token } from '../entity'
-import { Blockchain, getValidLinks, isValidEmail, getEmailRegex } from '../../utils'
+import { Blockchain, getValidLinks, isValidEmail } from '../../utils'
 import { ContactMethod, TokenContactStatusType, TokensCountGroupedBySourceAndBlockchain } from '../types'
 import moment from 'moment'
 import { Logger } from 'winston'
@@ -154,9 +154,10 @@ export class TokensService {
     }
 
     public correctEmail(email: string): string {
-        const emailRegex = getEmailRegex()
+        const emailParts = email.split('http')
+        const firstPart = emailParts[0].trim()
 
-        return isValidEmail(email) ? email : (emailRegex.exec(email)?.[0] || '')
+        return isValidEmail(firstPart) ? firstPart : ''
     }
 
     public getTwitterAccounts(token: Token): string[] {
