@@ -5,7 +5,7 @@ export function isValidEmail(email: string): boolean {
 export function getContactMethodRegex(method: string): RegExp|undefined {
     switch (method) {
         case 'TWITTER':
-            return /twitter\.com\/[a-zA-Z0-9_]{4,15}/
+            return /(twitter|x)\.com\/[a-zA-Z0-9_]{4,15}/
         case 'TELEGRAM':
             return /t\.me\/[a-zA-Z0-9_]{5,32}/
     }
@@ -19,6 +19,12 @@ export function getValidLinks(links: string[], method: string): string[] {
         'twitter.com/explore',
         'twitter.com/notifications',
         'twitter.com/settings',
+        'x.com/status',
+        'x.com/search',
+        'x.com/messages',
+        'x.com/explore',
+        'x.com/notifications',
+        'x.com/settings',
     ]
 
     const regex = getContactMethodRegex(method)
