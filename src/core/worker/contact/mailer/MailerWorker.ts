@@ -103,6 +103,7 @@ export class MailerWorker {
                 await this.handleMaxRetriesReached(queueItem)
             }
         }
+
         const contactResult = await this.contact(queueItem.channel, token)
         await this.contactQueueService.removeFromQueue(queueItem.address, queueItem.blockchain)
         await this.tokensService.postContactingActions(
