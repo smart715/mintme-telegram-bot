@@ -31,6 +31,7 @@ export class TelegramClient {
     private runContactingWorker: boolean = false
     private potentialFalsePositiveInRow: number = 0
     private successMessages: number = 0
+    private checkedResponsesChatIds: string[] = []
 
     public constructor(
         private readonly contactHistoryService: ContactHistoryService,
@@ -555,11 +556,15 @@ export class TelegramClient {
         if (this.runResponeseWorker) {
             await this.startResponsesWorker()
 
-            await this.driver.get('https://web.telegram.org/a/')
-            await this.driver.sleep(20000)
+            if (this.runContactingWorker) {
+                this.log(`Navigating to telegram web main page`)
+                await this.driver.get('https://web.telegram.org/a/')
+                await this.driver.sleep(20000)
+            }
         }
 
         if (!this.runContactingWorker) {
+            this.log(`The contact worker limit has been exceeded, Skipping account.`)
             return
         }
 
@@ -639,6 +644,8 @@ export class TelegramClient {
                     if (this.potentialFalsePositiveInRow >= 2 ||
                         TelegramChannelCheckResultType.ACTIVE === checkTelegramChannel
                     ) {
+                        await this.contactQueueService.setProcessing(queuedContact, false)
+
                         this.log(`Account not loading channels properly, Skipping`)
                         return
                     }
@@ -762,13 +769,15 @@ export class TelegramClient {
                 }
             } else {
                 let hasMoreMentions = true
+                let mentionClickCounts:number = 0
 
-                while (hasMoreMentions) {
+                while (hasMoreMentions && mentionClickCounts < 10) {
                     const mentionBtns = await middleColumn.findElements(By.className('icon-mention'))
                     if (mentionBtns.length) {
                         const mentionCount: string = await this.driver.executeScript('return arguments[0].parentElement.parentElement.innerText.trim()', mentionBtns[0])
                         if (mentionCount.length) {
                             await this.driver.actions().click(mentionBtns[0]).perform()
+                            mentionClickCounts++
                             await this.driver.sleep(10000)
                         } else {
                             this.log(`No more mentions`)
@@ -848,9 +857,27 @@ export class TelegramClient {
                     return this.findNotCheckedGroups(chatList)
                 }
 
+                let isCheckedChat = false
+
+                try {
+                    const chatLinkElement = await groupChat.findElement(By.css('a'))
+                    const chatHref = await chatLinkElement.getAttribute('href')
+                    const chatId = chatHref.split('#').pop()
+
+                    if (chatId && !this.checkedResponsesChatIds.includes(chatId)) {
+                        this.checkedResponsesChatIds.push(chatId)
+                    } else {
+                        isCheckedChat = true
+                    }
+                } catch (err) {
+                    if (err instanceof Error) {
+                        this.log(`Couldn't get chat ID, error: ${err.message}`)
+                    }
+                }
+
                 const hasUnreadMentions = (await (groupChat.findElements(By.className('icon-mention')))).length > 0
 
-                if (hasUnreadMentions) {
+                if (hasUnreadMentions && !isCheckedChat) {
                     this.log(`Found a group with mention`)
                     await this.processChatResponses(groupChat, ChatType.GROUP)
                 }
