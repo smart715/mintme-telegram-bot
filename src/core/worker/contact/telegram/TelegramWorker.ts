@@ -74,12 +74,14 @@ export class TelegramWorker {
             return
         }
 
+        this.logger.info(`Found ${allAccounts.length} accounts to use`)
+
         let currentAccountIndex: number = 0
         const usedAccountsIds: number[] = []
 
         while (usedAccountsIds.length < allAccounts.length) {
             this.telegramClients = []
-            this.logger.info(`Initializing new ${this.maxTelegramAccounts}`)
+            this.logger.info(`Initializing new ${this.maxTelegramAccounts} accounts | cursor: ${currentAccountIndex} | Used ${usedAccountsIds.length} of ${allAccounts.length}`)
 
             while (this.telegramClients.length < this.maxTelegramAccounts) {
                 const account = allAccounts[currentAccountIndex]
