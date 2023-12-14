@@ -35,6 +35,7 @@ export enum ContactHistoryStatusType {
     MESSAGES_RESTRICTED_BY_ADMIN = 'MESSAGES_RESTRICTED_BY_ADMIN',
     BOT_USER = 'BOT_USER',
     NO_MX_RECORD = 'NO_MX_RECORD',
+    TELEGRAM_CACHE_BUG = 'TELEGRAM_CACHE_BUG',
 }
 
 export enum ChatType {
