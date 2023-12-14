@@ -460,7 +460,20 @@ export class TelegramClient {
             }
 
             await driver.get('https://web.telegram.org/z/#?tgaddr=' + encodeURIComponent(`tg://resolve?domain=${user}`))
-            await driver.sleep(20000)
+
+            let sleepTimes = 0
+
+            while (sleepTimes <= 40) {
+                const pageSrc = await this.driver.getPageSource()
+
+                if (pageSrc.includes('User does not exist')) {
+                    return ContactHistoryStatusType.TELEGRAM_CACHE_BUG
+                }
+
+                await this.driver.sleep(500)
+
+                sleepTimes++
+            }
 
             if (!await this.isLoggedIn()) {
                 return ContactHistoryStatusType.ACCOUNT_NOT_AUTHORIZED
