@@ -1,5 +1,6 @@
 import { Entity, Column, PrimaryGeneratedColumn, OneToMany } from 'typeorm'
 import { TelegramAccount } from './TelegramAccount'
+import { CoinMarketCapAccount } from './CoinMarketCapAccount'
 
 @Entity()
 export class ProxyServer {
@@ -17,4 +18,7 @@ export class ProxyServer {
 
     @OneToMany(() => TelegramAccount, (tgAccount) => tgAccount.proxy)
     public tgAccounts: TelegramAccount[]
+
+    @OneToMany(() => CoinMarketCapAccount, (cmcAccount) => cmcAccount.proxy)
+    public cmcAccounts: CoinMarketCapAccount[]
 }

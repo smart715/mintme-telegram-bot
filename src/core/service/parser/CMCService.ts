@@ -3,13 +3,15 @@ import { singleton } from 'tsyringe'
 import config from 'config'
 import { CMCApiGeneralResponse, CMCCryptocurrency, CMCTokenInfoResponse, CMCWorkerConfig } from '../../types'
 import { makeRequest, RequestOptions } from '../ApiService'
+import { CoinMarketCapAccount } from '../../entity'
+import { CoinMarketCapAccountRepository } from '../../repository'
 
 @singleton()
 export class CMCService {
     private readonly apiKeys: string[] = config.get<CMCWorkerConfig>('cmcWorker')['apiKeys']
     private readonly axiosInstance: AxiosInstance
 
-    public constructor() {
+    public constructor(private readonly cmcAccountsRepository: CoinMarketCapAccountRepository) {
         this.axiosInstance = axios.create({
             baseURL: 'https://pro-api.coinmarketcap.com/v1/cryptocurrency',
             timeout: 5000,
@@ -53,5 +55,9 @@ export class CMCService {
         }
 
         return makeRequest<CMCApiGeneralResponse<CMCTokenInfoResponse>>(this.axiosInstance, 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/info', requestOptions)
+    }
+
+    public async getAllAccounts(): Promise<CoinMarketCapAccount[]> {
+        return this.cmcAccountsRepository.getAllAccounts()
     }
 }
