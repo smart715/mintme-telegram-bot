@@ -1,7 +1,7 @@
 import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm'
 
 @Entity()
-export class ContactMessage {
+export class CoinMarketCapComment {
     @PrimaryGeneratedColumn()
     public id: number
 

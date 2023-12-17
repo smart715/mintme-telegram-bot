@@ -1,1 +1,2 @@
-export { MailerWorker } from './MailerWorker'
+export { CoinMarketCommentWorker } from './CoinMarketCapCommentWorker'
+export { CoinMarketCapClient } from './CoinmarketCapClient'

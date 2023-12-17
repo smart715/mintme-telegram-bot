@@ -100,6 +100,8 @@ import {
     DailyStatisticMailWorker,
     TwitterResponseRepository,
     BlacklistRepository,
+    CoinMarketCapAccountRepository,
+    CoinMarketCommentWorker,
 } from '../../core'
 import { Application } from '../'
 import { CliDependency } from './types'
@@ -116,6 +118,8 @@ import {
     RunDailyStatisticMailWorker,
 } from '../command'
 import { RetryAxios, TokenNamesGenerator, createLogger, Environment } from '../../utils'
+import { CoinMarketCapCommentRepository } from '../../core/repository/CoinMarketCapCommentRepository'
+import { CoinMarketCapCommentHistoryRepository } from '../../core/repository/CoinMarketCapCommentHistoryRepository'
 
 // Env
 
@@ -212,6 +216,18 @@ container.register(TwitterResponseRepository, {
 
 container.register(BlacklistRepository, {
     useFactory: instanceCachingFactory(() => getConnection().getCustomRepository(BlacklistRepository)),
+})
+
+container.register(CoinMarketCapAccountRepository, {
+    useFactory: instanceCachingFactory(() => getConnection().getCustomRepository(CoinMarketCapAccountRepository)),
+})
+
+container.register(CoinMarketCapCommentRepository, {
+    useFactory: instanceCachingFactory(() => getConnection().getCustomRepository(CoinMarketCapCommentRepository)),
+})
+
+container.register(CoinMarketCapCommentHistoryRepository, {
+    useFactory: instanceCachingFactory(() => getConnection().getCustomRepository(CoinMarketCapCommentHistoryRepository)),
 })
 
 // Utils
@@ -390,7 +406,9 @@ container.register(CoinLoreService, {
 })
 
 container.register(CMCService, {
-    useFactory: instanceCachingFactory(() => new CMCService()),
+    useFactory: instanceCachingFactory((dependencyContainer) => new CMCService(
+        dependencyContainer.resolve(CoinMarketCapAccountRepository),
+    )),
 })
 
 container.register(CoinScopeService, {
@@ -903,6 +921,16 @@ container.register(DailyStatisticMailWorker, {
             dependencyContainer.resolve(MailerService),
             dependencyContainer.resolve(ContactHistoryService),
             dailyStatisticMailLogger,
+        )
+    ),
+})
+
+container.register(CoinMarketCommentWorker, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new CoinMarketCommentWorker(
+            dependencyContainer.resolve(CMCService),
+            dependencyContainer.resolve(MailerService),
+            createLogger(CMCWorker.name.toLowerCase())
         )
     ),
 })

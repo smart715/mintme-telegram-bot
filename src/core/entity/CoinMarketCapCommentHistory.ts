@@ -1,8 +1,7 @@
-import { Column, CreateDateColumn, Entity, Index, PrimaryGeneratedColumn } from 'typeorm'
+import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn } from 'typeorm'
 
 @Entity()
-@Index('IDX_ADDRESS_BLOCKCHAIN', [ 'address', 'blockchain' ])
-export class ContactHistory {
+export class CoinMarketCapCommentHistory {
     @PrimaryGeneratedColumn()
     public id: number
 

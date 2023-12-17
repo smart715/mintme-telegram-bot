@@ -1,12 +1,12 @@
 import { singleton } from 'tsyringe'
 import { Logger } from 'winston'
-import { CoinMarketCapClient } from './CoinmarketcapClient'
+import { CoinMarketCapClient } from './CoinmarketCapClient'
 import { CMCService, MailerService } from '../../service'
 import { sleep } from '../../../utils'
 import { CoinMarketCapAccount } from '../../entity'
 
 @singleton()
-export class TwitterWorker {
+export class CoinMarketCommentWorker {
     private readonly workerName = 'CMCCWorker'
     private readonly prefixLog = `[${this.workerName}]`
 
