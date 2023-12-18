@@ -22,7 +22,7 @@ export class CoinMarketCapCommentHistoryRepository extends Repository<CoinMarket
     public async getCoinSubmittedComments(coinId: string): Promise<CoinMarketCapCommentHistory[]> {
         return this.find({
             where: {
-                coinId
+                coinId,
             },
             order: {
                 createdAt: 'DESC',

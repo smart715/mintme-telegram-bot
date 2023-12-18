@@ -10,6 +10,8 @@ import { destroyDriver } from '../../../utils'
 export class CoinMarketCapClient {
     private readonly cmcAccount: CoinMarketCapAccount
     private driver: WebDriver
+    private maxCommentsPerDay: number = 30
+    private submittedCommentsPerDay: number = 0
 
     public constructor(
         cmcAccount: CoinMarketCapAccount,
@@ -21,13 +23,21 @@ export class CoinMarketCapClient {
 
     public async init(): Promise<boolean> {
         this.log(`Creating driver instance`)
+
+        this.submittedCommentsPerDay = await this.cmcService.getAccountCommentsCountPerDay(this.cmcAccount)
+
+        if (!this.isBelowLimit()) {
+            this.log(`Account is not below limits, Skipping`)
+            return false
+        }
+
         this.driver = await SeleniumService.createDriver('', undefined, this.logger)
 
         const isLoggedIn = await this.login()
 
         if (!isLoggedIn) {
             this.logger.warn(
-                `[TwitterWorker ID: ${this.cmcAccount.id}] not initialized. Can't login. Skipping...`
+                `[CMC Client ID: ${this.cmcAccount.id}] not initialized. Can't login. Skipping...`
             )
         }
 
@@ -40,7 +50,7 @@ export class CoinMarketCapClient {
         try {
             this.log(`Logging in, Attempt #${retries}`)
 
-            await this.driver.get('https://twitter.com/')
+            await this.driver.get('https://coinmarketcap.com/')
             await this.driver.sleep(10000)
 
             const cookies: object = JSON.parse(this.cmcAccount.cookiesJSON)
@@ -66,7 +76,7 @@ export class CoinMarketCapClient {
                 return await this.login(retries + 1)
             } else {
                 this.logger.warn(
-                    `[TwitterWorker ${this.cmcAccount.id}] ` +
+                    `[CMC Client ${this.cmcAccount.id}] ` +
                     `Account is banned or credentials are wrong, Err: USER_DEACTIVATED. Disabling account`
                 )
                 await this.disableAccount()
@@ -77,6 +87,10 @@ export class CoinMarketCapClient {
             this.logger.error(e)
             return false
         }
+    }
+
+    private isBelowLimit(): boolean {
+        return this.submittedCommentsPerDay < this.maxCommentsPerDay
     }
 
     private log(message: string): void {

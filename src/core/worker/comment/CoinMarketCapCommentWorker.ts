@@ -10,8 +10,8 @@ export class CoinMarketCommentWorker {
     private readonly workerName = 'CMCCWorker'
     private readonly prefixLog = `[${this.workerName}]`
 
-    private twitterClients: CoinMarketCapClient[] = []
-    private maxTwitterAccount: number = 1
+    private cmcClients: CoinMarketCapClient[] = []
+    private maxCMCAccount: number = 1
 
     public constructor(
         private readonly cmcService: CMCService,
@@ -23,28 +23,28 @@ export class CoinMarketCommentWorker {
     public async run(): Promise<void> {
         // eslint-disable-next-line
         while (true) {
-            this.twitterClients = []
+            this.cmcClients = []
 
             const allAccounts = await this.cmcService.getAllAccounts()
 
             if (0 === allAccounts.length) {
                 await this.mailerService
-                    .sendFailedWorkerEmail(`${this.prefixLog} DB doesn't have available twitter accounts.`)
+                    .sendFailedWorkerEmail(`${this.prefixLog} DB doesn't have available cmc accounts.`)
 
-                this.logger.error(`${this.prefixLog} DB doesn't have available twitter accounts. Aborting.`)
+                this.logger.error(`${this.prefixLog} DB doesn't have available cmc accounts. Aborting.`)
 
                 return
             }
 
             let currentAccountIndex = 0
 
-            while (currentAccountIndex < allAccounts.length && currentAccountIndex < this.maxTwitterAccount) {
+            while (currentAccountIndex < allAccounts.length && currentAccountIndex < this.maxCMCAccount) {
                 const account = allAccounts[currentAccountIndex]
 
-                const twitterClient = await this.initNewClient(account)
+                const cmcClient = await this.initNewClient(account)
 
-                if (twitterClient) {
-                    this.twitterClients.push(twitterClient)
+                if (cmcClient) {
+                    this.cmcClients.push(cmcClient)
                 }
 
                 currentAccountIndex++
@@ -62,7 +62,7 @@ export class CoinMarketCommentWorker {
     }
 
     private async initNewClient(cmcAccount: CoinMarketCapAccount): Promise<CoinMarketCapClient|null> {
-        this.logger.info(`${this.prefixLog} Initializing new client for ${cmcAccount.id} twitter id account`)
+        this.logger.info(`${this.prefixLog} Initializing new client for ${cmcAccount.id} cmc id account`)
 
         const cmcClient = await new CoinMarketCapClient(cmcAccount, this.cmcService, this.logger)
 
@@ -78,7 +78,7 @@ export class CoinMarketCommentWorker {
     private startAllClients(): Promise<void[]> {
         const contactingPromises: Promise<void>[] = []
 
-        for (const client of this.twitterClients) {
+        for (const client of this.cmcClients) {
             contactingPromises.push(client.startWorker())
         }
 
@@ -86,7 +86,7 @@ export class CoinMarketCommentWorker {
     }
 
     private async destroyDrivers(): Promise<void> {
-        for (const client of this.twitterClients) {
+        for (const client of this.cmcClients) {
             await client.destroyDriver()
         }
     }

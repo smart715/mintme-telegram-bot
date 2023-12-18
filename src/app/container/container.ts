@@ -116,6 +116,7 @@ import {
     RunMailerWorker,
     RunTwitterWorker,
     RunDailyStatisticMailWorker,
+    RunCMCCommentsWorker,
 } from '../command'
 import { RetryAxios, TokenNamesGenerator, createLogger, Environment } from '../../utils'
 import { CoinMarketCapCommentRepository } from '../../core/repository/CoinMarketCapCommentRepository'
@@ -408,6 +409,8 @@ container.register(CoinLoreService, {
 container.register(CMCService, {
     useFactory: instanceCachingFactory((dependencyContainer) => new CMCService(
         dependencyContainer.resolve(CoinMarketCapAccountRepository),
+        dependencyContainer.resolve(CoinMarketCapCommentRepository),
+        dependencyContainer.resolve(CoinMarketCapCommentHistoryRepository),
     )),
 })
 
@@ -1052,6 +1055,16 @@ container.register(CliDependency.COMMAND, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new RunDailyStatisticMailWorker(
             dependencyContainer.resolve(DailyStatisticMailWorker),
+            dependencyContainer.resolve(MailerService),
+            dailyStatisticMailLogger,
+        )
+    ),
+})
+
+container.register(CliDependency.COMMAND, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new RunCMCCommentsWorker(
+            dependencyContainer.resolve(CoinMarketCommentWorker),
             dependencyContainer.resolve(MailerService),
             dailyStatisticMailLogger,
         )
