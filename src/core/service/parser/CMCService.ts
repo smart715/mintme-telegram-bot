@@ -64,8 +64,8 @@ export class CMCService {
         return this.cmcAccountsRepository.getAllAccounts()
     }
 
-    public async getRandomComment(): Promise<CoinMarketCapComment | undefined> {
-        return this.cmcCommentRepository.getRandomComment()
+    public async getRandomComment(excludedIds: number[]): Promise<CoinMarketCapComment | undefined> {
+        return this.cmcCommentRepository.getRandomComment(excludedIds)
     }
 
     public async getAccountCommentsCountPerDay(cmcAccount: CoinMarketCapAccount): Promise<number> {

@@ -12,6 +12,9 @@ export class CoinMarketCapAccount {
     @Column({ type: 'text', name: 'cookies_json' })
     public cookiesJSON!: string
 
+    @Column({ type: 'text' })
+    public localStorageJSON!: string
+
     @Column()
     public isDisabled!: boolean
 
