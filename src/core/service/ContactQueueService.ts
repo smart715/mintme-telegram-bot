@@ -59,6 +59,7 @@ export class ContactQueueService {
                 .createQueryBuilder('queued_contact')
                 .leftJoin('token', 'token', 'queued_contact.address = token.address AND queued_contact.blockchain = token.blockchain')
                 .where('queued_contact.is_processing = 0')
+                .andWhere('queued_contact.is_error = 0')
                 .andWhere('queued_contact.contact_method = :contactMethod', { contactMethod })
                 .orderBy('token.created_at', 'DESC')
                 .getOne()
@@ -190,5 +191,12 @@ export class ContactQueueService {
             .where('contact_method = :contactMethod', { contactMethod })
             .andWhere('is_processing = 1')
             .execute()
+    }
+
+    public async markEntryAsError(queueItem: QueuedContact): Promise<void> {
+        queueItem.isProcessing = false
+        queueItem.isError = true
+
+        await this.queuedContactRepository.save(queueItem)
     }
 }

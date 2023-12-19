@@ -6,7 +6,7 @@ import {
     TokensService,
 } from '../../../service'
 import { ContactHistoryStatusType, ContactMethod } from '../../../types'
-import { sleep } from '../../../../utils'
+import { sleep, isValidEmail } from '../../../../utils'
 import { ContactHistory, ContactMessage, QueuedContact, Token } from '../../../entity'
 import { singleton } from 'tsyringe'
 import { Logger } from 'winston'
@@ -17,6 +17,7 @@ export class MailerWorker {
     private readonly workerName = MailerWorker.name
     private readonly queueIsEmptySleepTime = 60 * 1000
     private readonly sleepTimeBetweenItems = 5 * 1000
+    private readonly maxRetries = 5
 
     public constructor(
         private readonly contactQueueService: ContactQueueService,
@@ -48,7 +49,7 @@ export class MailerWorker {
         }
     }
 
-    private async processQueueItem(queueItem: QueuedContact): Promise<void> {
+    private async processQueueItem(queueItem: QueuedContact, retries = 0): Promise<void> {
         const token = await this.tokensService.findByAddress(queueItem.address)
 
         if (!token) {
@@ -57,6 +58,19 @@ export class MailerWorker {
 
             return
         }
+
+        if (!isValidEmail(queueItem.channel)) {
+            const correctedEmail = this.tokensService.correctEmail(queueItem.channel)
+
+            if (correctedEmail && isValidEmail(correctedEmail)) {
+                queueItem.channel = correctedEmail
+            } else {
+                await this.contactQueueService.markEntryAsError(queueItem)
+                await this.mailer.sendFailedWorkerEmail(`Invalid email address: ${queueItem.channel}. Marked as an error.`)
+                return
+            }
+        }
+
 
         const isValidQueuedContact = await this.contactQueueService.preContactCheckAndCorrect(
             queueItem,
@@ -72,6 +86,24 @@ export class MailerWorker {
             `[${this.workerName}] Started processing ${queueItem.address} ${queueItem.blockchain} :: ${queueItem.channel}. `
         )
 
+        try {
+            await this.contact(queueItem.channel, token)
+            await this.contactQueueService.removeFromQueue(queueItem.address, queueItem.blockchain)
+            await this.tokensService.postContactingActions(token, ContactMethod.EMAIL, true)
+        } catch (error) {
+            const typedError = error as Error
+            this.logger.error(`[${this.workerName}] Error sending email: ${typedError.message}`)
+
+            if (retries < this.maxRetries) {
+                this.logger.info(`[${this.workerName}] Retrying email sending (Retry ${retries + 1})`)
+                await sleep(this.sleepTimeBetweenItems)
+
+                return this.processQueueItem(queueItem, retries + 1)
+            } else {
+                await this.handleMaxRetriesReached(queueItem)
+            }
+        }
+
         const contactResult = await this.contact(queueItem.channel, token)
         await this.contactQueueService.removeFromQueue(queueItem.address, queueItem.blockchain)
         await this.tokensService.postContactingActions(
@@ -84,6 +116,12 @@ export class MailerWorker {
         this.logger.info(`[${this.workerName}] ` +
             `Proceeding of ${queueItem.address} :: ${queueItem.blockchain} finished`
         )
+    }
+
+    private async handleMaxRetriesReached(queueItem: QueuedContact): Promise<void> {
+        this.logger.info(`[${this.workerName}] Max retries reached. Marking the entry as an error.`)
+        await this.contactQueueService.markEntryAsError(queueItem)
+        await this.mailer.sendFailedWorkerEmail(`Max retries reached. Marking as an error: ${queueItem.channel}.`)
     }
 
     private async contact(email: string, token: Token): Promise<ContactHistoryStatusType> {
