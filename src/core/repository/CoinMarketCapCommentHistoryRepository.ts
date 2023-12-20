@@ -29,4 +29,17 @@ export class CoinMarketCapCommentHistoryRepository extends Repository<CoinMarket
             },
         })
     }
+
+    public async newHistory(accountId: number,
+        coinId: string,
+        commentId: number
+    ): Promise<void> {
+        const cmcHistory = this.create({
+            accountId,
+            coinId,
+            commentId,
+        })
+
+        await this.save(cmcHistory)
+    }
 }

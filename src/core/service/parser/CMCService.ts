@@ -75,4 +75,16 @@ export class CMCService {
     public async getCoinSubmittedComments(coinId: string): Promise<CoinMarketCapCommentHistory[]> {
         return this.cmcCommentHistoryRepository.getCoinSubmittedComments(coinId)
     }
+
+    public async addNewHistoryAction(accountId: number,
+        coinId: string,
+        commentId: number
+    ): Promise<void> {
+        return this.cmcCommentHistoryRepository.newHistory(accountId, coinId, commentId)
+    }
+
+    public async setAccountAsDisabled(cmcAccount: CoinMarketCapAccount): Promise<void> {
+        cmcAccount.isDisabled = true
+        await this.cmcAccountsRepository.save(cmcAccount)
+    }
 }

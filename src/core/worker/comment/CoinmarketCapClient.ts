@@ -16,6 +16,7 @@ export class CoinMarketCapClient {
     private maxCommentsPerDay: number = 30
     private submittedCommentsPerDay: number = 0
     private maxCommentsPerCoin: number = 1
+    private commentFrequency: number = 30
 
     public constructor(
         cmcAccount: CoinMarketCapAccount,
@@ -84,8 +85,8 @@ export class CoinMarketCapClient {
 
             await this.driver.navigate().refresh()
 
-            return true
-            /*
+            await this.driver.sleep(5000)
+
             if (await this.isLoggedIn()) {
                 return true
             }
@@ -96,16 +97,27 @@ export class CoinMarketCapClient {
             } else {
                 this.logger.warn(
                     `[CMC Client ${this.cmcAccount.id}] ` +
-                    `Account is banned or credentials are wrong, Err: USER_DEACTIVATED. Disabling account`
+                    `Account is banned or credentials are wrong, Disabling account`
                 )
                 await this.disableAccount()
 
                 return false
-            }*/
+            }
         } catch (e) {
             this.logger.error(e)
             return false
         }
+    }
+
+    private async isLoggedIn(): Promise<boolean> {
+        const loginBtn = await this.driver.findElements(By.css(`[data-btnname="Log In"]`))
+
+        return 0 === loginBtn.length
+    }
+
+    private async disableAccount(): Promise<void> {
+        this.cmcAccount.isDisabled = true
+        await this.cmcService.setAccountAsDisabled(this.cmcAccount)
     }
 
     private isBelowLimit(): boolean {
@@ -184,7 +196,10 @@ export class CoinMarketCapClient {
             const postBtn = await postButtonContainer.findElement(By.css('button'))
 
             await postBtn.click()
-            //return CMCCommentingResult.SUCCESS
+
+            await this.cmcService.addNewHistoryAction(this.cmcAccount.id,
+                coin.slug,
+                this.cmcAccount.id)
 
             await this.driver.sleep(200000)
         }
