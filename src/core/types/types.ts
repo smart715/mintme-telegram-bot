@@ -62,3 +62,8 @@ export enum TelegramChannelCheckResultType {
     ERROR = 'ERROR',
     FREQUENCY_LIMIT = 'FREQUENCY_LIMIT',
 }
+
+export enum CMCCommentingResult {
+    SUCCESS = 'SUCCESS',
+    NO_COMMENTS = 'NO_COMMENTS',
+}

@@ -1,6 +1,6 @@
 import { Logger } from 'winston'
-import { By, WebDriver } from 'selenium-webdriver'
-import { CoinMarketCapAccount, CoinMarketCapComment } from '../../entity'
+import { By, Key, WebDriver, WebElement } from 'selenium-webdriver'
+import { CoinMarketCapAccount } from '../../entity'
 import {
     CMCService,
     SeleniumService,
@@ -84,8 +84,6 @@ export class CoinMarketCapClient {
 
             await this.driver.navigate().refresh()
 
-            await this.driver.sleep(300000)
-
             return true
             /*
             if (await this.isLoggedIn()) {
@@ -144,33 +142,77 @@ export class CoinMarketCapClient {
 
     private async processTokens(coins: CMCCryptocurrency[]): Promise<void> {
         for (const coin of coins) {
-            this.driver.get(`https://coinmarketcap.com/currencies/${coin.slug}`)
+            this.driver.get(`https://coinmarketcap.com/community/`)
 
             const coinCommentHistory = await this.cmcService.getCoinSubmittedComments(coin.slug)
 
-            if (this.maxCommentsPerCoin >= coinCommentHistory.length) {
+            if (this.maxCommentsPerCoin <= coinCommentHistory.length) {
                 this.log(`Coin ${coin.name} was contacted ${coinCommentHistory.length} times, Skipping`)
                 continue
             }
 
             const submittedCommentsIds = coinCommentHistory.map(entry => entry.commentId)
             const commentToSend = await this.cmcService.getRandomComment(submittedCommentsIds)
-            
+
             if (!commentToSend) {
                 this.log(`No available comment to send.`)
+                return
             }
 
-            await this.driver.sleep(2000)
+            const splittedComment = commentToSend.content.split(' ')
+
+            const inputField = await this.driver.findElement(By.css(`[role="textbox"]`))
+
+            await this.driver.sleep(1000)
+
+            for (const part of splittedComment) {
+                if (part.toLowerCase().includes('$mintme')) {
+                    await this.inputAndSelectCoinMention('MINTME', 'MintMe.com Coin', inputField)
+                }
+
+                if (part.toLowerCase().includes('$coin')) {
+                    await this.inputAndSelectCoinMention(coin.symbol, coin.name, inputField)
+                }
+
+                await inputField.sendKeys(part.replace('$coin', '').replace('$mintme', '') + ' ')
+                await this.driver.sleep(100)
+            }
+
+            await this.driver.sleep(10000)
+
+            const postButtonContainer = await this.driver.findElement(By.className('editor-post-button'))
+            const postBtn = await postButtonContainer.findElement(By.css('button'))
+
+            await postBtn.click()
+            //return CMCCommentingResult.SUCCESS
+
+            await this.driver.sleep(200000)
         }
     }
 
-    private async getSelectedMentionText(): Promise<string | undefined> {
+    private async inputAndSelectCoinMention(symbol: string, name:string, inputField: WebElement): Promise<void> {
         try {
+            await inputField.sendKeys(`$${symbol}`)
+
+            await this.driver.sleep(1000)
+
             const mentionPortalElement = await this.driver.findElement(By.css(`[data-cy="mentions-portal"]`))
 
-            const selectedMention = await mentionPortalElement.findElement(By.className('selecrted'))
+            let isSelectedCorrectMention = false
 
-            return selectedMention.getText()
+            while (!isSelectedCorrectMention) {
+                const selectedMention = await mentionPortalElement.findElement(By.className('selected'))?.getText()
+                console.log(selectedMention)
+
+                if (selectedMention.includes(name)) {
+                    await inputField.sendKeys(Key.ENTER)
+                    await inputField.sendKeys(` `)
+
+                    isSelectedCorrectMention = true
+                } else {
+                    await inputField.sendKeys(Key.ARROW_DOWN)
+                }
+            }
         } catch (error) {
             this.log(`Couldn't get mention portal or selected item, Error: ${error}`)
             return
