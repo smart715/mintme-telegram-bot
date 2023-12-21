@@ -6,9 +6,13 @@ import { CoinMarketCapComment } from '../entity'
 @EntityRepository(CoinMarketCapComment)
 export class CoinMarketCapCommentRepository extends Repository<CoinMarketCapComment> {
     public async getRandomComment(excludedIds: number[]): Promise<CoinMarketCapComment | undefined> {
-        return this.createQueryBuilder()
-            .where('id NOT IN (:excludedIds)', { excludedIds })
+        const qryBuilder = this.createQueryBuilder()
             .orderBy('RAND()')
-            .getOne()
+
+        if (excludedIds.length) {
+            qryBuilder.where('id NOT IN (:excludedIds)', { excludedIds })
+        }
+
+        return qryBuilder.getOne()
     }
 }

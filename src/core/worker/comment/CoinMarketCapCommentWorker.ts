@@ -64,7 +64,7 @@ export class CoinMarketCommentWorker {
     private async initNewClient(cmcAccount: CoinMarketCapAccount): Promise<CoinMarketCapClient|null> {
         this.logger.info(`${this.prefixLog} Initializing new client for ${cmcAccount.id} cmc id account`)
 
-        const cmcClient = await new CoinMarketCapClient(cmcAccount, this.cmcService, this.logger)
+        const cmcClient = await new CoinMarketCapClient(cmcAccount, this, this.cmcService, this.logger)
 
         const initialized = await cmcClient.init()
 
@@ -89,5 +89,15 @@ export class CoinMarketCommentWorker {
         for (const client of this.cmcClients) {
             await client.destroyDriver()
         }
+    }
+
+    public isProcessingCoin(coinId: string): boolean {
+        for (const client of this.cmcClients) {
+            if (coinId === client.currentlyProcessingCoin) {
+                return true
+            }
+        }
+
+        return false
     }
 }

@@ -102,6 +102,8 @@ import {
     BlacklistRepository,
     CoinMarketCapAccountRepository,
     CoinMarketCommentWorker,
+    CoinMarketCapCommentRepository,
+    CoinMarketCapCommentHistoryRepository,
 } from '../../core'
 import { Application } from '../'
 import { CliDependency } from './types'
@@ -119,8 +121,6 @@ import {
     RunCMCCommentsWorker,
 } from '../command'
 import { RetryAxios, TokenNamesGenerator, createLogger, Environment } from '../../utils'
-import { CoinMarketCapCommentRepository } from '../../core/repository/CoinMarketCapCommentRepository'
-import { CoinMarketCapCommentHistoryRepository } from '../../core/repository/CoinMarketCapCommentHistoryRepository'
 
 // Env
 
@@ -228,7 +228,8 @@ container.register(CoinMarketCapCommentRepository, {
 })
 
 container.register(CoinMarketCapCommentHistoryRepository, {
-    useFactory: instanceCachingFactory(() => getConnection().getCustomRepository(CoinMarketCapCommentHistoryRepository)),
+    useFactory: instanceCachingFactory(() =>
+        getConnection().getCustomRepository(CoinMarketCapCommentHistoryRepository)),
 })
 
 // Utils

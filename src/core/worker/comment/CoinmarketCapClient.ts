@@ -9,21 +9,27 @@ import { destroyDriver } from '../../../utils'
 import moment from 'moment'
 import config from 'config'
 import { CMCCryptocurrency, CMCWorkerConfig } from '../../types'
+import { CoinMarketCommentWorker } from './CoinMarketCapCommentWorker'
 
 export class CoinMarketCapClient {
     private readonly cmcAccount: CoinMarketCapAccount
     private driver: WebDriver
     private maxCommentsPerDay: number = 30
+    private maxPerBatch: number = 8
     private submittedCommentsPerDay: number = 0
     private maxCommentsPerCoin: number = 1
     private commentFrequency: number = 30
+    public currentlyProcessingCoin: string = ''
+    private parentWorker: CoinMarketCommentWorker
 
     public constructor(
         cmcAccount: CoinMarketCapAccount,
+        parentWorker: CoinMarketCommentWorker,
         private readonly cmcService: CMCService,
         private readonly logger: Logger,
     ) {
         this.cmcAccount = cmcAccount
+        this.parentWorker = parentWorker
     }
 
     public async init(): Promise<boolean> {
@@ -154,9 +160,23 @@ export class CoinMarketCapClient {
 
     private async processTokens(coins: CMCCryptocurrency[]): Promise<void> {
         for (const coin of coins) {
-            this.driver.get(`https://coinmarketcap.com/community/`)
+            if (!coin.is_active) {
+                this.log(`Coin ${coin.name} is inactive, Skipping`)
+                continue
+            }
+
+            if (this.parentWorker.isProcessingCoin(coin.slug)) {
+                continue
+            }
+
+            this.currentlyProcessingCoin = coin.slug
 
             const coinCommentHistory = await this.cmcService.getCoinSubmittedComments(coin.slug)
+            if (coinCommentHistory.length &&
+                moment().subtract(this.commentFrequency, 'days').isBefore(coinCommentHistory[0].createdAt)) {
+                this.log(`Coin ${coin.name} was contacted within last ${this.commentFrequency} days, Skipping`)
+                continue
+            }
 
             if (this.maxCommentsPerCoin <= coinCommentHistory.length) {
                 this.log(`Coin ${coin.name} was contacted ${coinCommentHistory.length} times, Skipping`)
@@ -170,6 +190,10 @@ export class CoinMarketCapClient {
                 this.log(`No available comment to send.`)
                 return
             }
+
+            this.driver.get(`https://coinmarketcap.com/community/`)
+
+            await this.driver.sleep(5000)
 
             const splittedComment = commentToSend.content.split(' ')
 
@@ -197,11 +221,25 @@ export class CoinMarketCapClient {
 
             await postBtn.click()
 
+            let sleepTimes = 0
+
+            while (sleepTimes <= 40) {
+                const pageSrc = await this.driver.getPageSource()
+
+                if (pageSrc.toLowerCase().includes('post submitted')) {
+                    return ContactHistoryStatusType.TELEGRAM_CACHE_BUG
+                }
+
+                await this.driver.sleep(500)
+
+                sleepTimes++
+            }
+
             await this.cmcService.addNewHistoryAction(this.cmcAccount.id,
                 coin.slug,
                 this.cmcAccount.id)
 
-            await this.driver.sleep(200000)
+            await this.driver.sleep(20000)
         }
     }
 
@@ -209,7 +247,7 @@ export class CoinMarketCapClient {
         try {
             await inputField.sendKeys(`$${symbol}`)
 
-            await this.driver.sleep(1000)
+            await this.driver.sleep(3000)
 
             const mentionPortalElement = await this.driver.findElement(By.css(`[data-cy="mentions-portal"]`))
 
@@ -217,7 +255,6 @@ export class CoinMarketCapClient {
 
             while (!isSelectedCorrectMention) {
                 const selectedMention = await mentionPortalElement.findElement(By.className('selected'))?.getText()
-                console.log(selectedMention)
 
                 if (selectedMention.includes(name)) {
                     await inputField.sendKeys(Key.ENTER)
