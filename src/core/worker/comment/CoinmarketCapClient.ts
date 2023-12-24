@@ -15,7 +15,8 @@ export class CoinMarketCapClient {
     private readonly cmcAccount: CoinMarketCapAccount
     private driver: WebDriver
     private maxCommentsPerDay: number = 30
-    private maxPerBatch: number = 8
+    private maxPerCycle: number = 8
+    private currentlySubmitted: number = 0
     private submittedCommentsPerDay: number = 0
     private maxCommentsPerCoin: number = 1
     private commentFrequency: number = 30
@@ -148,6 +149,11 @@ export class CoinMarketCapClient {
 
             await this.processTokens(tokens.data)
 
+            if (this.isReachedCycleLimit()) {
+                this.log(`Reached cycle limit`)
+                break
+            }
+
             if (tokens.data.length < requestLimit) {
                 break
             }
@@ -167,6 +173,10 @@ export class CoinMarketCapClient {
 
             if (this.parentWorker.isProcessingCoin(coin.slug)) {
                 continue
+            }
+
+            if (this.isReachedCycleLimit()) {
+                break
             }
 
             this.currentlyProcessingCoin = coin.slug
@@ -191,15 +201,19 @@ export class CoinMarketCapClient {
                 return
             }
 
-            this.driver.get(`https://coinmarketcap.com/community/`)
+            //this.driver.get(`https://coinmarketcap.com/community/`)
+            this.driver.get(`https://coinmarketcap.com/currencies/${coin.slug}`)
 
             await this.driver.sleep(5000)
 
             const splittedComment = commentToSend.content.split(' ')
 
+            const startPostingBtn = this.driver.findElement(By.className('post-button-placeholder'))
+            await startPostingBtn.click()
+
             const inputField = await this.driver.findElement(By.css(`[role="textbox"]`))
 
-            await this.driver.sleep(1000)
+            await this.driver.sleep(10000)
 
             for (const part of splittedComment) {
                 if (part.toLowerCase().includes('$mintme')) {
@@ -222,12 +236,14 @@ export class CoinMarketCapClient {
             await postBtn.click()
 
             let sleepTimes = 0
+            let isSubmitted = false
 
             while (sleepTimes <= 40) {
                 const pageSrc = await this.driver.getPageSource()
 
                 if (pageSrc.toLowerCase().includes('post submitted')) {
-                    return ContactHistoryStatusType.TELEGRAM_CACHE_BUG
+                    isSubmitted = true
+                    break
                 }
 
                 await this.driver.sleep(500)
@@ -235,12 +251,23 @@ export class CoinMarketCapClient {
                 sleepTimes++
             }
 
-            await this.cmcService.addNewHistoryAction(this.cmcAccount.id,
-                coin.slug,
-                this.cmcAccount.id)
+            if (isSubmitted) {
+                this.currentlySubmitted++
+
+                await this.cmcService.addNewHistoryAction(this.cmcAccount.id,
+                    coin.slug,
+                    this.cmcAccount.id)
+            } else {
+                this.log(`Failed to submit comment.`)
+            }
+
 
             await this.driver.sleep(20000)
         }
+    }
+
+    private isReachedCycleLimit(): boolean {
+        return this.currentlySubmitted >= this.maxPerCycle
     }
 
     private async inputAndSelectCoinMention(symbol: string, name:string, inputField: WebElement): Promise<void> {

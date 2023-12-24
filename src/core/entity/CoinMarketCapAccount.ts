@@ -21,4 +21,7 @@ export class CoinMarketCapAccount {
     @ManyToOne(() => ProxyServer, (proxy) => proxy.cmcAccounts, { eager: true })
     @JoinColumn()
     public proxy: ProxyServer
+
+    @Column({ nullable: true })
+    public lastLogin!: Date
 }
