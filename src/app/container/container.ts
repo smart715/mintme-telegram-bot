@@ -412,6 +412,7 @@ container.register(CMCService, {
         dependencyContainer.resolve(CoinMarketCapAccountRepository),
         dependencyContainer.resolve(CoinMarketCapCommentRepository),
         dependencyContainer.resolve(CoinMarketCapCommentHistoryRepository),
+        dependencyContainer.resolve(ProxyService),
     )),
 })
 

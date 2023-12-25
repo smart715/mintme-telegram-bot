@@ -3,9 +3,9 @@ import { singleton } from 'tsyringe'
 import config from 'config'
 import { CMCApiGeneralResponse, CMCCryptocurrency, CMCTokenInfoResponse, CMCWorkerConfig } from '../../types'
 import { makeRequest, RequestOptions } from '../ApiService'
-import { CoinMarketCapAccount, CoinMarketCapComment, CoinMarketCapCommentHistory } from '../../entity'
+import { CoinMarketCapAccount, CoinMarketCapComment, CoinMarketCapCommentHistory, ProxyServer } from '../../entity'
 import { CoinMarketCapAccountRepository, CoinMarketCapCommentHistoryRepository, CoinMarketCapCommentRepository } from '../../repository'
-import moment from 'moment'
+import { ProxyService } from '../ProxyServerService'
 
 @singleton()
 export class CMCService {
@@ -15,6 +15,7 @@ export class CMCService {
     public constructor(private readonly cmcAccountsRepository: CoinMarketCapAccountRepository,
         private readonly cmcCommentRepository: CoinMarketCapCommentRepository,
         private readonly cmcCommentHistoryRepository: CoinMarketCapCommentHistoryRepository,
+        private readonly proxyService: ProxyService,
     ) {
         this.axiosInstance = axios.create({
             baseURL: 'https://pro-api.coinmarketcap.com/v1/cryptocurrency',
@@ -90,8 +91,19 @@ export class CMCService {
     }
 
     public async updateAccountLastLogin(cmcAccount: CoinMarketCapAccount): Promise<CoinMarketCapAccount> {
-        cmcAccount.lastLogin = moment().utc().toDate()
+        cmcAccount.lastLogin = new Date()
 
         return this.cmcAccountsRepository.save(cmcAccount)
+    }
+
+    public async assignNewProxyForAccount(cmcAccount: CoinMarketCapAccount): Promise<ProxyServer|undefined> {
+        const proxy = await this.proxyService.getFirstAvailableProxy()
+
+        if (proxy) {
+            cmcAccount.proxy = proxy
+            await this.cmcAccountsRepository.save(cmcAccount)
+        }
+
+        return proxy
     }
 }

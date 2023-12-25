@@ -43,7 +43,12 @@ export class CoinMarketCapClient {
             return false
         }
 
-        this.driver = await SeleniumService.createDriver('', undefined, this.logger)
+        const isDriverCreated = await this.createDriverWithProxy()
+
+        if (!isDriverCreated) {
+            this.logger.warn(`Couldn't initialize driver with proxy`)
+            return false
+        }
 
         const isLoggedIn = await this.login()
 
@@ -114,6 +119,41 @@ export class CoinMarketCapClient {
         } catch (e) {
             this.logger.error(e)
             return false
+        }
+    }
+
+    private async getNewProxy(): Promise<boolean> {
+        const newProxy = await this.cmcService.assignNewProxyForAccount(this.cmcAccount)
+
+        if (!newProxy) {
+            this.log(`No proxy stock available, Failed to initialize`)
+            return false
+        }
+
+        this.cmcAccount.proxy = newProxy
+
+        return true
+    }
+
+    private async createDriverWithProxy(): Promise<boolean> {
+        if (!this.cmcAccount.proxy || this.cmcAccount.proxy.isDisabled) {
+            this.logger.info(`Proxy is invalid or disabled, Getting new one`)
+            if (!await this.getNewProxy()) {
+                this.logger.warn(`No proxy stock available`)
+
+                return false
+            }
+        }
+
+        this.logger.info(`Creating driver instance`)
+        this.driver = await SeleniumService.createDriver('', this.cmcAccount.proxy, this.logger)
+        this.logger.info(`Testing if proxy working`)
+
+        if (await SeleniumService.isInternetWorking(this.driver)) {
+            return true
+        } else {
+            const retry = await this.createDriverWithProxy()
+            return retry
         }
     }
 

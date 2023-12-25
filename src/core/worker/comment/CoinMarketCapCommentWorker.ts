@@ -42,14 +42,10 @@ export class CoinMarketCommentWorker {
             while (currentAccountIndex < allAccounts.length && currentAccountIndex < this.maxCMCAccount) {
                 const account = allAccounts[currentAccountIndex]
 
-                const lastLogin = moment(account.lastLogin).add(10, 'minutes')
-
-                console.log(moment().utc().isBefore(lastLogin, 'minute'))
-                console.log(lastLogin)
-                console.log(moment().utc())
+                const lastLogin = moment(account.lastLogin)
 
                 if (lastLogin.isValid() &&
-                moment().utc().isBefore(lastLogin)) {
+                moment().subtract(10, 'minutes').isBefore(lastLogin)) {
                     this.logger.info(`Skipping account ${account.userName}, logged in within last 10 minutes`)
                     currentAccountIndex++
                     continue
