@@ -5,6 +5,7 @@ import { CMCApiGeneralResponse, CMCCryptocurrency, CMCTokenInfoResponse, CMCWork
 import { makeRequest, RequestOptions } from '../ApiService'
 import { CoinMarketCapAccount, CoinMarketCapComment, CoinMarketCapCommentHistory } from '../../entity'
 import { CoinMarketCapAccountRepository, CoinMarketCapCommentHistoryRepository, CoinMarketCapCommentRepository } from '../../repository'
+import moment from 'moment'
 
 @singleton()
 export class CMCService {
@@ -86,5 +87,11 @@ export class CMCService {
     public async setAccountAsDisabled(cmcAccount: CoinMarketCapAccount): Promise<void> {
         cmcAccount.isDisabled = true
         await this.cmcAccountsRepository.save(cmcAccount)
+    }
+
+    public async updateAccountLastLogin(cmcAccount: CoinMarketCapAccount): Promise<CoinMarketCapAccount> {
+        cmcAccount.lastLogin = moment().utc().toDate()
+
+        return this.cmcAccountsRepository.save(cmcAccount)
     }
 }

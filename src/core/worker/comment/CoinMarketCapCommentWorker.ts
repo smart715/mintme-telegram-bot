@@ -4,6 +4,7 @@ import { CoinMarketCapClient } from './CoinmarketCapClient'
 import { CMCService, MailerService } from '../../service'
 import { sleep } from '../../../utils'
 import { CoinMarketCapAccount } from '../../entity'
+import moment from 'moment'
 
 @singleton()
 export class CoinMarketCommentWorker {
@@ -40,6 +41,19 @@ export class CoinMarketCommentWorker {
 
             while (currentAccountIndex < allAccounts.length && currentAccountIndex < this.maxCMCAccount) {
                 const account = allAccounts[currentAccountIndex]
+
+                const lastLogin = moment(account.lastLogin).add(10, 'minutes')
+
+                console.log(moment().utc().isBefore(lastLogin, 'minute'))
+                console.log(lastLogin)
+                console.log(moment().utc())
+
+                if (lastLogin.isValid() &&
+                moment().utc().isBefore(lastLogin)) {
+                    this.logger.info(`Skipping account ${account.userName}, logged in within last 10 minutes`)
+                    currentAccountIndex++
+                    continue
+                }
 
                 const cmcClient = await this.initNewClient(account)
 

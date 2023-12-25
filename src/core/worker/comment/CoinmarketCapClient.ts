@@ -53,6 +53,7 @@ export class CoinMarketCapClient {
             )
         }
 
+        await this.cmcService.updateAccountLastLogin(this.cmcAccount)
         this.log(`Logged in`)
 
         return true
@@ -150,6 +151,8 @@ export class CoinMarketCapClient {
             await this.processTokens(tokens.data)
 
             if (this.isReachedCycleLimit()) {
+                await this.cmcService.updateAccountLastLogin(this.cmcAccount)
+
                 this.log(`Reached cycle limit`)
                 break
             }
