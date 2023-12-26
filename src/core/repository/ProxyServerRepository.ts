@@ -21,7 +21,7 @@ export class ProxyServerRepository extends Repository<ProxyServer> {
             .orderBy('RAND()')
 
         if (isCmcAccount) {
-            queryBuilder.andWhere('NOT id IN (SELECT proxy_id FROM coin_market_cap_account)')
+            queryBuilder.andWhere('id NOT IN (SELECT proxy_id FROM coin_market_cap_account WHERE proxy_id IS NOT NULL)')
         }
 
         return queryBuilder.getOne()
