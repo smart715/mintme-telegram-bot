@@ -15,10 +15,15 @@ export class ProxyServerRepository extends Repository<ProxyServer> {
             .getOne()
     }
 
-    public async getRandomProxy(): Promise<ProxyServer | undefined> {
-        return this.createQueryBuilder()
+    public async getRandomProxy(isCmcAccount: boolean = false): Promise<ProxyServer | undefined> {
+        const queryBuilder = this.createQueryBuilder()
             .where('is_disabled = 0')
             .orderBy('RAND()')
-            .getOne()
+
+        if (isCmcAccount) {
+            queryBuilder.andWhere('NOT id IN (SELECT proxy_id FROM coin_market_cap_account)')
+        }
+
+        return queryBuilder.getOne()
     }
 }

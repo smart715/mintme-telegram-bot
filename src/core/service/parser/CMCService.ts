@@ -97,7 +97,7 @@ export class CMCService {
     }
 
     public async assignNewProxyForAccount(cmcAccount: CoinMarketCapAccount): Promise<ProxyServer|undefined> {
-        const proxy = await this.proxyService.getFirstAvailableProxy()
+        const proxy = await this.proxyService.getRandomProxy(true)
 
         if (proxy) {
             cmcAccount.proxy = proxy

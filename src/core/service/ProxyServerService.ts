@@ -21,7 +21,7 @@ export class ProxyService {
         return this.proxyServerRepository.getFirstAvailableProxy(this.maxTelegramAccountsPerProxy)
     }
 
-    public async getRandomProxy(): Promise<ProxyServer | undefined> {
-        return this.proxyServerRepository.getRandomProxy()
+    public async getRandomProxy(isForCmcAccount: boolean = false): Promise<ProxyServer | undefined> {
+        return this.proxyServerRepository.getRandomProxy(isForCmcAccount)
     }
 }
