@@ -45,7 +45,7 @@ export class CoinMarketCommentWorker {
                 const lastLogin = moment(account.lastLogin)
 
                 if (lastLogin.isValid() &&
-                moment().subtract(10, 'minutes').isBefore(lastLogin)) {
+                moment().subtract(15, 'minutes').isBefore(lastLogin)) {
                     this.logger.info(`Skipping account ${account.userName}, logged in within last 10 minutes`)
                     currentAccountIndex++
                     continue

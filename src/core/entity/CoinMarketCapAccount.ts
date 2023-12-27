@@ -24,4 +24,7 @@ export class CoinMarketCapAccount {
 
     @Column({ nullable: true })
     public lastLogin!: Date
+
+    @Column({ default: 0 })
+    public continousFailed: number
 }

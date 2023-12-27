@@ -90,8 +90,8 @@ export class CMCService {
         await this.cmcAccountsRepository.save(cmcAccount)
     }
 
-    public async updateAccountLastLogin(cmcAccount: CoinMarketCapAccount): Promise<CoinMarketCapAccount> {
-        cmcAccount.lastLogin = new Date()
+    public async updateAccountLastLogin(cmcAccount: CoinMarketCapAccount, date: Date): Promise<CoinMarketCapAccount> {
+        cmcAccount.lastLogin = date
 
         return this.cmcAccountsRepository.save(cmcAccount)
     }
@@ -105,5 +105,13 @@ export class CMCService {
         }
 
         return proxy
+    }
+
+    public async updateContinousFailedSubmits(cmcAccount: CoinMarketCapAccount,
+        contiousFails: number
+    ): Promise<CoinMarketCapAccount> {
+        cmcAccount.continousFailed = contiousFails
+
+        return this.cmcAccountsRepository.save(cmcAccount)
     }
 }

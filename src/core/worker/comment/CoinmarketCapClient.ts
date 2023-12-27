@@ -14,9 +14,10 @@ import { CoinMarketCommentWorker } from './CoinMarketCapCommentWorker'
 export class CoinMarketCapClient {
     private readonly cmcAccount: CoinMarketCapAccount
     private driver: WebDriver
-    private maxCommentsPerDay: number = 30
+    private maxCommentsPerDay: number = 100
     private maxPerCycle: number = 8
     private currentlySubmitted: number = 0
+    private continousFailedSubmits: number = 0
     private submittedCommentsPerDay: number = 0
     private maxCommentsPerCoin: number = 1
     private commentFrequency: number = 30
@@ -58,8 +59,8 @@ export class CoinMarketCapClient {
             )
         }
 
-        await this.cmcService.updateAccountLastLogin(this.cmcAccount)
-        this.log(`Logged in`)
+        await this.cmcService.updateAccountLastLogin(this.cmcAccount, moment().toDate())
+        this.log(`Logged in | Sent last 24H: ${this.submittedCommentsPerDay}`)
 
         return true
     }
@@ -192,7 +193,7 @@ export class CoinMarketCapClient {
             await this.processTokens(tokens.data)
 
             if (this.isReachedCycleLimit()) {
-                await this.cmcService.updateAccountLastLogin(this.cmcAccount)
+                await this.cmcService.updateAccountLastLogin(this.cmcAccount, moment().toDate())
 
                 this.log(`Reached cycle limit`)
                 break
@@ -200,6 +201,12 @@ export class CoinMarketCapClient {
 
             if (tokens.data.length < requestLimit) {
                 break
+            }
+
+            if (this.cmcAccount.continousFailed >= 15) {
+                this.log(`Account failed for ${this.cmcAccount.continousFailed} continous times, Banning account`)
+
+                await this.disableAccount()
             }
 
             requestOffset += requestLimit
@@ -225,6 +232,16 @@ export class CoinMarketCapClient {
             }
 
             if (this.isReachedCycleLimit()) {
+                break
+            }
+
+            if (this.continousFailedSubmits >= 5) {
+                this.log(`Skipping account due to exceeding max continous failed submits`)
+
+                await this.cmcService.updateContinousFailedSubmits(this.cmcAccount,
+                    this.cmcAccount.continousFailed + this.continousFailedSubmits)
+
+                await this.cmcService.updateAccountLastLogin(this.cmcAccount, moment().add(60, 'minutes').toDate())
                 break
             }
 
@@ -307,8 +324,13 @@ export class CoinMarketCapClient {
                 sleepTimes++
             }
 
+            this.continousFailedSubmits++
+
             if (isSubmitted) {
                 this.currentlySubmitted++
+                this.continousFailedSubmits = 0
+
+                await this.cmcService.updateContinousFailedSubmits(this.cmcAccount, 0)
 
                 await this.cmcService.addNewHistoryAction(this.cmcAccount.id,
                     coin.slug,
