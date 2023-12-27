@@ -112,6 +112,7 @@ export class CoinMarketCapClient {
                     `[CMC Client ${this.cmcAccount.id}] ` +
                     `Account is banned or credentials are wrong, Disabling account`
                 )
+
                 await this.disableAccount()
 
                 return false
@@ -214,6 +215,11 @@ export class CoinMarketCapClient {
                 continue
             }
 
+            if (coin.name.toLowerCase().includes('mintme')) {
+                this.log(`Our coin, skipping`)
+                continue
+            }
+
             if (this.parentWorker.isProcessingCoin(coin.slug)) {
                 continue
             }
@@ -227,7 +233,6 @@ export class CoinMarketCapClient {
             const coinCommentHistory = await this.cmcService.getCoinSubmittedComments(coin.slug)
             if (coinCommentHistory.length &&
                 moment().subtract(this.commentFrequency, 'days').isBefore(coinCommentHistory[0].createdAt)) {
-                this.log(`Coin ${coin.name} was contacted within last ${this.commentFrequency} days, Skipping`)
                 continue
             }
 
@@ -244,7 +249,8 @@ export class CoinMarketCapClient {
                 return
             }
 
-            //this.driver.get(`https://coinmarketcap.com/community/`)
+            this.log(`Posting a comment on ${coin.name}`)
+
             this.driver.get(`https://coinmarketcap.com/currencies/${coin.slug}`)
 
             await this.driver.sleep(5000)
@@ -258,30 +264,37 @@ export class CoinMarketCapClient {
 
             await this.driver.sleep(10000)
 
+            this.log(`Typing post on ${coin.name}`)
+            let isFirstWord = true
+
             for (const part of splittedComment) {
                 if (part.toLowerCase().includes('$mintme')) {
                     await this.inputAndSelectCoinMention('MINTME', 'MintMe.com Coin', inputField)
                 }
 
-                if (part.toLowerCase().includes('$coin')) {
+                if (part.toLowerCase().includes('$coin') && !isFirstWord) {
                     await this.inputAndSelectCoinMention(coin.symbol, coin.name, inputField)
                 }
 
                 await inputField.sendKeys(part.replace('$coin', '').replace('$mintme', '') + ' ')
                 await this.driver.sleep(100)
+
+                isFirstWord = false
             }
+
+            this.log(`Finished typing comment, Clicking post button after 10 seconds`)
 
             await this.driver.sleep(10000)
 
             const postButtonContainer = await this.driver.findElement(By.className('editor-post-button'))
             const postBtn = await postButtonContainer.findElement(By.css('button'))
 
-            await postBtn.click()
+            await this.driver.executeScript(`arguments[0].click()`, postBtn)
 
             let sleepTimes = 0
             let isSubmitted = false
 
-            while (sleepTimes <= 40) {
+            while (sleepTimes <= 60) {
                 const pageSrc = await this.driver.getPageSource()
 
                 if (pageSrc.toLowerCase().includes('post submitted')) {
@@ -300,10 +313,9 @@ export class CoinMarketCapClient {
                 await this.cmcService.addNewHistoryAction(this.cmcAccount.id,
                     coin.slug,
                     this.cmcAccount.id)
-            } else {
-                this.log(`Failed to submit comment.`)
             }
 
+            this.log(`Finished posting on ${coin.name} | Is Submitted: ${isSubmitted}`)
 
             await this.driver.sleep(20000)
         }
