@@ -87,9 +87,13 @@ export class MailerWorker {
         )
 
         try {
-            await this.contact(queueItem.channel, token)
+            const contactResult = await this.contact(queueItem.channel, token)
             await this.contactQueueService.removeFromQueue(queueItem.address, queueItem.blockchain)
-            await this.tokensService.postContactingActions(token, ContactMethod.EMAIL, true)
+            await this.tokensService.postContactingActions(
+                token,
+                ContactMethod.EMAIL,
+                ContactHistoryStatusType.SENT === contactResult,
+            )
         } catch (error) {
             const typedError = error as Error
             this.logger.error(`[${this.workerName}] Error sending email: ${typedError.message}`)
@@ -103,15 +107,6 @@ export class MailerWorker {
                 await this.handleMaxRetriesReached(queueItem)
             }
         }
-
-        const contactResult = await this.contact(queueItem.channel, token)
-        await this.contactQueueService.removeFromQueue(queueItem.address, queueItem.blockchain)
-        await this.tokensService.postContactingActions(
-            token,
-            ContactMethod.EMAIL,
-            ContactHistoryStatusType.SENT === contactResult,
-        )
-
 
         this.logger.info(`[${this.workerName}] ` +
             `Proceeding of ${queueItem.address} :: ${queueItem.blockchain} finished`
