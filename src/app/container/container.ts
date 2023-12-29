@@ -100,6 +100,8 @@ import {
     DailyStatisticMailWorker,
     TwitterResponseRepository,
     BlacklistRepository,
+    ServiceRepository,
+    ApiKeyRepository,
 } from '../../core'
 import { Application } from '../'
 import { CliDependency } from './types'
@@ -212,6 +214,14 @@ container.register(TwitterResponseRepository, {
 
 container.register(BlacklistRepository, {
     useFactory: instanceCachingFactory(() => getConnection().getCustomRepository(BlacklistRepository)),
+})
+
+container.register(ServiceRepository, {
+    useFactory: instanceCachingFactory(() => getConnection().getCustomRepository(ServiceRepository)),
+})
+
+container.register(ApiKeyRepository, {
+    useFactory: instanceCachingFactory(() => getConnection().getCustomRepository(ApiKeyRepository)),
 })
 
 // Utils
