@@ -13,6 +13,8 @@ interface ContactingWorkersInfo {
         ETH: number,
         BSC: number,
         CRO: number,
+        MATIC: number,
+        SOL: number,
     },
 }
 
@@ -22,6 +24,8 @@ interface TokenWorkersInfo {
         CRO: number,
         BSC: number,
         ETH: number,
+        MATIC: number,
+        SOL: number,
     },
 }
 
@@ -113,7 +117,7 @@ export class DailyStatisticMailWorker {
             const currentTokenSource = grouped[token.source]
 
             if (!currentTokenSource) {
-                grouped[token.source] = { total: 0, ETH: 0, BSC: 0, CRO: 0 }
+                grouped[token.source] = { total: 0, ETH: 0, BSC: 0, CRO: 0, MATIC: 0, SOL: 0 }
             }
 
             grouped[token.source][token.blockchain] = parseInt(token.tokens)
@@ -130,7 +134,16 @@ export class DailyStatisticMailWorker {
             const currentContactSource = grouped[contact.contact_method]
 
             if (!currentContactSource) {
-                grouped[contact.contact_method] = { total: 0, failed: 0, success: 0, ETH: 0, BSC: 0, CRO: 0 }
+                grouped[contact.contact_method] = {
+                    total: 0,
+                    failed: 0,
+                    success: 0,
+                    ETH: 0,
+                    BSC: 0,
+                    CRO: 0,
+                    MATIC: 0,
+                    SOL: 0,
+                }
             }
 
             grouped[contact.contact_method][contact.blockchain] = parseInt(contact.tokens)
