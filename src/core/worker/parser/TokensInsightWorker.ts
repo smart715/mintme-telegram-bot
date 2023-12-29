@@ -159,6 +159,10 @@ export class TokensInsightWorker extends AbstractParserWorker {
                 return /eth|ethereum/
             case Blockchain.CRO:
                 return /cronos|cro/
+            case Blockchain.MATIC:
+                return /polygon|matic/
+            case Blockchain.SOL:
+                return /solana|sol/
             default:
                 throw new Error('Wrong blockchain provided. Platform regex doesn\'t exists for provided blockchain')
         }

@@ -2,6 +2,8 @@ export enum Blockchain {
     ETH = 'ETH',
     BSC = 'BSC',
     CRO = 'CRO',
+    MATIC = 'MATIC',
+    SOL = 'SOL',
 }
 
 export function parseBlockchainName(name: string): Blockchain {
@@ -15,6 +17,8 @@ export function parseBlockchainName(name: string): Blockchain {
         'bsc',
         'binance',
     ]
+    const maticNames = [ 'polygon', 'matic', 'polygon poS chain' ]
+    const solNames = [ 'solana', 'sol' ]
 
     if (ethNames.includes(name.toLowerCase())) {
         return Blockchain.ETH
@@ -22,6 +26,10 @@ export function parseBlockchainName(name: string): Blockchain {
         return Blockchain.BSC
     } else if (croNames.includes(name.toLowerCase())) {
         return Blockchain.CRO
+    } else if (maticNames.includes(name.toLowerCase())) {
+        return Blockchain.MATIC
+    } else if (solNames.includes(name.toLowerCase())) {
+        return Blockchain.SOL
     }
 
     throw new Error('Unknown blockchain')

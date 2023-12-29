@@ -9,6 +9,8 @@ interface ExplorerApiKeysInterface {
     [Blockchain.BSC]: string[];
     [Blockchain.ETH]: string[];
     [Blockchain.CRO]: string[];
+    [Blockchain.MATIC]: string[];
+    [Blockchain.SOL]: string[];
 }
 
 export class LastTokenTxDateFetcher {
