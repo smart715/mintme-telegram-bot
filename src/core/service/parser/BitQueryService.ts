@@ -1,13 +1,12 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 import axios, { AxiosInstance } from 'axios'
-import config from 'config'
 import { singleton } from 'tsyringe'
 import { BitQueryTransfersResponse } from '../../types'
-import { makeRequest } from '../ApiService'
+import { makeServiceRequest } from '../ApiService'
 
 @singleton()
 export class BitQueryService {
-    private readonly apiKeys: string[] = config.get('bitquery_api_keys') as string[]
+    private readonly serviceName: string = 'bitquery'
 
     private readonly axiosInstance: AxiosInstance
 
@@ -20,8 +19,8 @@ export class BitQueryService {
 
     public async getAddresses(offset: number, limit: number, blockchain: string): Promise<BitQueryTransfersResponse> {
         const apiParameter = ''
-        const response = await makeRequest<BitQueryTransfersResponse>(this.axiosInstance, apiParameter, {
-            apiKeys: this.apiKeys,
+        const response = await makeServiceRequest<BitQueryTransfersResponse>(this.axiosInstance, apiParameter, {
+            serviceName: this.serviceName,
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -48,7 +47,6 @@ export class BitQueryService {
                 },
             } as Record<string, any>,
         })
-
 
         return response
     }
