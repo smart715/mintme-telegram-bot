@@ -16,6 +16,8 @@ export class BSCScanTokensTransactionsFetcher extends AbstractTokenWorker {
         [Blockchain.BSC]: 100,
         [Blockchain.ETH]: 50,
         [Blockchain.CRO]: 100,
+        [Blockchain.MATIC]: 100,
+        [Blockchain.SOL]: 100,
     }
 
     public constructor(
