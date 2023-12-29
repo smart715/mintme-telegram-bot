@@ -1,7 +1,8 @@
-// Import necessary modules from TypeORM
+import { singleton } from 'tsyringe';
 import { Repository, EntityRepository } from 'typeorm'
 import { ApiKey } from '../entity'
 
+@singleton()
 @EntityRepository(ApiKey)
 export class ApiKeyRepository extends Repository<ApiKey> {
     public async findAvailableKey(serviceId: number): Promise<ApiKey | undefined> {
