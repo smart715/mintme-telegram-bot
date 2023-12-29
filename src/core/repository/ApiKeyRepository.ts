@@ -1,4 +1,4 @@
-import { singleton } from 'tsyringe';
+import { singleton } from 'tsyringe'
 import { Repository, EntityRepository } from 'typeorm'
 import { ApiKey } from '../entity'
 

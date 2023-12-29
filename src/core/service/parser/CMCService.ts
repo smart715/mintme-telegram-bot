@@ -1,12 +1,11 @@
 import axios, { AxiosInstance } from 'axios'
 import { singleton } from 'tsyringe'
-import config from 'config'
-import { CMCApiGeneralResponse, CMCCryptocurrency, CMCTokenInfoResponse, CMCWorkerConfig } from '../../types'
-import { makeRequest, RequestOptions } from '../ApiService'
+import { CMCApiGeneralResponse, CMCCryptocurrency, CMCTokenInfoResponse } from '../../types'
+import { makeServiceRequest, RequestOptions } from '../ApiService'
 
 @singleton()
 export class CMCService {
-    private readonly apiKeys: string[] = config.get<CMCWorkerConfig>('cmcWorker')['apiKeys']
+    private readonly serviceName: string = 'cmcWorker'
     private readonly axiosInstance: AxiosInstance
 
     public constructor() {
@@ -18,7 +17,7 @@ export class CMCService {
 
     public async getLastTokens(start: number, limit: number): Promise<CMCApiGeneralResponse<CMCCryptocurrency[]>> {
         const requestOptions: RequestOptions = {
-            apiKeys: this.apiKeys,
+            serviceName: this.serviceName,
             method: 'GET',
             headers: {
                 // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -33,12 +32,12 @@ export class CMCService {
             apiKeyName: 'CMC_PRO_API_KEY',
         }
 
-        return makeRequest<CMCApiGeneralResponse<CMCCryptocurrency[]>>(this.axiosInstance, 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/map', requestOptions)
+        return makeServiceRequest<CMCApiGeneralResponse<CMCCryptocurrency[]>>(this.axiosInstance, 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/map', requestOptions)
     }
 
     public async getTokenInfo(slug: string): Promise<CMCApiGeneralResponse<CMCTokenInfoResponse>> {
         const requestOptions: RequestOptions = {
-            apiKeys: this.apiKeys,
+            serviceName: this.serviceName,
             method: 'GET',
             headers: {
                 // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -52,6 +51,6 @@ export class CMCService {
             apiKeyName: 'CMC_PRO_API_KEY',
         }
 
-        return makeRequest<CMCApiGeneralResponse<CMCTokenInfoResponse>>(this.axiosInstance, 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/info', requestOptions)
+        return makeServiceRequest<CMCApiGeneralResponse<CMCTokenInfoResponse>>(this.axiosInstance, 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/info', requestOptions)
     }
 }
