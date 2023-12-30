@@ -67,7 +67,7 @@ Parses token addresses and wallet addresses from explorers.
 | Parameter  | Notes                                                                                                                                                                                                                                                               |
 |------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | name       | Explorer worker name from [ExplorerWorkerNames](src/app/command/types.ts). Eg: `token-holdings-worker`, `token-transactions-fetcher`                                                                                                                                |
-| blockchain | Optional. If not specified, check all blockchains. Specified Blockchain symbol should be from [Blockchain](src/utils/blockchains.ts). `ETH`, `CRO`, `BSC` or NULL for some workers to check all blockchains. Check [Explorers descriptions](#explorers-description) |
+| blockchain | Optional. If not specified, check all blockchains. Specified Blockchain symbol should be from [Blockchain](src/utils/blockchains.ts). `ETH`, `CRO`, `BSC`, `MATIC`, `SOL` or NULL for some workers to check all blockchains. Check [Explorers descriptions](#explorers-description) |
 
 #### **Explorers description**
 
@@ -91,14 +91,14 @@ Fetches tokens from `token` table and tries to add it to queued_contact to conta
 
 | Parameter  | Notes                                                                              |
 |------------|------------------------------------------------------------------------------------|
-| blockchain | Blockchain symbol from [Blockchain](src/utils/blockchains.ts). `ETH`, `CRO`, `BSC` |
+| blockchain | Blockchain symbol from [Blockchain](src/utils/blockchains.ts). `ETH`, `CRO`, `BSC`, `MATIC`, `SOL` |
 
 #### `run-queue-worker`
 Uses queued_contact table. Fetches row, check if token exists, remove it from queue if doesn't exist or contacts the token via email/twitter
 
 | Parameter  | Notes                                                                              |
 |------------|------------------------------------------------------------------------------------|
-| blockchain | Blockchain symbol from [Blockchain](src/utils/blockchains.ts). `ETH`, `CRO`, `BSC` |
+| blockchain | Blockchain symbol from [Blockchain](src/utils/blockchains.ts). `ETH`, `CRO`, `BSC`, `MATIC`, `SOL` |
 | repeat     | Repeat run in `argument` seconds. Default value is `0`                             |
 
 #### `run-mailer-worker`

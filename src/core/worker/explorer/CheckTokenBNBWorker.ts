@@ -152,6 +152,10 @@ export class CheckTokenBNBWorker extends AbstractTokenWorker {
                 return 'Etherscan'
             case Blockchain.CRO:
                 return 'CronoScan'
+            case Blockchain.MATIC:
+                return 'PolygonScan'
+            case Blockchain.SOL:
+                return 'Solscan'
         }
     }
 
