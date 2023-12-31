@@ -9,7 +9,12 @@ import { AbstractParserWorker } from './AbstractParserWorker'
 export class CoinVoteWorker extends AbstractParserWorker {
     private readonly workerName = 'CoinVote'
     private readonly prefixLog = `[${this.workerName}]`
-    private readonly supportedBlockchains: Blockchain[] = [ Blockchain.ETH, Blockchain.BSC ]
+    private readonly supportedBlockchains: Blockchain[] = [
+        Blockchain.ETH,
+        Blockchain.BSC,
+        Blockchain.MATIC,
+        Blockchain.SOL,
+    ]
 
     private readonly maxItemsOnPage = 20
 

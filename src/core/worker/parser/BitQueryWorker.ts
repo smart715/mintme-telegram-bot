@@ -9,7 +9,14 @@ import { AbstractParserWorker } from './AbstractParserWorker'
 export class BitQueryWorker extends AbstractParserWorker {
     private readonly workerName = 'BitQuery'
     private readonly prefixLog = `[${this.workerName}]`
-    private readonly supportedBlockchains: Blockchain[] = [ Blockchain.ETH, Blockchain.BSC, Blockchain.CRO ]
+    private readonly supportedBlockchains: Blockchain[] =
+        [
+            Blockchain.ETH,
+            Blockchain.BSC,
+            Blockchain.CRO,
+            Blockchain.MATIC,
+            Blockchain.SOL,
+        ]
 
     public constructor(
         private readonly bitQueryService: BitQueryService,
@@ -56,6 +63,7 @@ export class BitQueryWorker extends AbstractParserWorker {
                     currentOffsetRetries = 0
                     offset += 25000
 
+                    this.logger.info(`${this.prefixLog} Checking ${currentBlockchain} blockchain.`)
                     this.logger.warn(`${this.prefixLog} Failed to fetch all addresses for ${blockchainParam} with offset ${offset}. Reason: ${ex.message}. Skipping.`)
                 }
 
@@ -120,8 +128,12 @@ export class BitQueryWorker extends AbstractParserWorker {
                 return 'bsc'
             case Blockchain.CRO:
                 return 'cronos'
+            case Blockchain.MATIC:
+                return 'matic'
+            case Blockchain.SOL:
+                return 'solana'
             default:
-                throw new Error('Wrong blockchain provided. Blockchain param doesn\'t exists for provided blockchain')
+                throw new Error(`Unsupported blockchain provided: ${currentBlockchain}. Blockchain param doesn't exist for the provided blockchain.`)
         }
     }
 }
