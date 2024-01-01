@@ -9,7 +9,13 @@ import { AbstractParserWorker } from './AbstractParserWorker'
 export class CoinBuddyWorker extends AbstractParserWorker {
     private readonly workerName = 'CoinBuddy'
     private readonly prefixLog = `[${this.workerName}]`
-    private readonly supportedBlockchains: Blockchain[] = [ Blockchain.ETH, Blockchain.BSC, Blockchain.CRO ]
+    private readonly supportedBlockchains: Blockchain[] = [
+        Blockchain.ETH,
+        Blockchain.BSC,
+        Blockchain.CRO,
+        Blockchain.MATIC,
+        Blockchain.SOL,
+    ]
 
     public constructor(
         private readonly coinBuddyService: CoinBuddyService,
@@ -183,6 +189,12 @@ export class CoinBuddyWorker extends AbstractParserWorker {
 
             case Blockchain.CRO:
                 return 'cronos'
+
+            case Blockchain.MATIC:
+                return 'polygon'
+
+            case Blockchain.SOL:
+                return 'solana'
 
             default:
                 return null

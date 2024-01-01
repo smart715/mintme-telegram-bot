@@ -10,7 +10,13 @@ export class CoinGeckoWorker extends AbstractParserWorker {
     private readonly workerName = 'CoinGecko'
     private readonly prefixLog = `[${this.workerName}]`
     private readonly sleepDuration = 4 * 1000 // 3 seconds produces 429 http error. So 4-5 is ok
-    private readonly supportedBlockchains: Blockchain[] = [ Blockchain.ETH, Blockchain.BSC, Blockchain.CRO ]
+    private readonly supportedBlockchains: Blockchain[] = [
+        Blockchain.ETH,
+        Blockchain.BSC,
+        Blockchain.CRO,
+        Blockchain.MATIC,
+        Blockchain.SOL,
+    ]
 
     public constructor(
         private readonly tokenService: TokensService,
@@ -138,6 +144,10 @@ export class CoinGeckoWorker extends AbstractParserWorker {
                 return 'https://tokens.coingecko.com/ethereum/all.json'
             case Blockchain.CRO:
                 return 'https://tokens.coingecko.com/cronos/all.json'
+            case Blockchain.MATIC:
+                return 'https://tokens.coingecko.com/polygon-pos/all.json'
+            case Blockchain.SOL:
+                return 'https://tokens.coingecko.com/solana/all.json'
             default:
                 throw new Error(
                     `Wrong blockchain provided. ` +
