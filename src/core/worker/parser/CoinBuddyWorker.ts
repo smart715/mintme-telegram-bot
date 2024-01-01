@@ -192,6 +192,9 @@ export class CoinBuddyWorker extends AbstractParserWorker {
             case Blockchain.MATIC:
                 return 'polygon'
 
+            case Blockchain.SOL:
+                return 'solana'
+
             default:
                 return null
         }
