@@ -14,6 +14,7 @@ export class CoinBuddyWorker extends AbstractParserWorker {
         Blockchain.BSC,
         Blockchain.CRO,
         Blockchain.MATIC,
+        Blockchain.SOL,
     ]
 
     public constructor(
