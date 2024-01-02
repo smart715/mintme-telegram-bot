@@ -13,7 +13,14 @@ import { NewestTokenChecker, StopCheckException } from './NewestTokenChecker'
 export class RecentTokensWorker extends NewestTokenChecker {
     protected readonly workerName = 'RecentTokens'
     private readonly prefixLog = `[${this.workerName}]`
-    private readonly supportedBlockchains: Blockchain[] = [ Blockchain.ETH, Blockchain.BSC ]
+    private readonly supportedBlockchains: Blockchain[] =
+        [
+            Blockchain.ETH,
+            Blockchain.BSC,
+            Blockchain.MATIC,
+            Blockchain.SOL,
+        ]
+
     private blockchain: Blockchain|null
 
     public constructor(
@@ -251,6 +258,10 @@ export class RecentTokensWorker extends NewestTokenChecker {
                 return 'ethereum'
             case Blockchain.BSC:
                 return 'bsc'
+            case Blockchain.MATIC:
+                return 'polygon'
+            case Blockchain.SOL:
+                return 'solana'
             default:
                 throw new Error('Wrong blockchain provided. Target blockchain doesn\'t exists for provided blockchain')
         }
