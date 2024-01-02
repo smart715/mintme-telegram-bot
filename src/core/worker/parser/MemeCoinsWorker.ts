@@ -66,11 +66,15 @@ export class MemeCoinsWorker extends NewestTokenChecker {
     }
 
     private getBlockchain(tokenInfo: string): Blockchain | null {
-        return tokenInfo.includes('BSC')
-            ? Blockchain.BSC
-            : tokenInfo.includes('ETH')
-                ? Blockchain.ETH
-                : null
+        if (tokenInfo.includes('BSC')) {
+            return Blockchain.BSC
+        } else if (tokenInfo.includes('ETH')) {
+            return Blockchain.ETH
+        } else if (tokenInfo.includes('Polygon')) {
+            return Blockchain.MATIC
+        }
+
+        return null
     }
 
     private getTokenAddress(tokenInfo: string): string {
