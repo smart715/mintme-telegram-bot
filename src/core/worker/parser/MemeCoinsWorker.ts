@@ -69,9 +69,9 @@ export class MemeCoinsWorker extends NewestTokenChecker {
         if (tokenInfo.includes('BSC')) {
             return Blockchain.BSC
         } else if (tokenInfo.includes('ETH')) {
-            Blockchain.ETH
+            return Blockchain.ETH
         } else if (tokenInfo.includes('Polygon')) {
-            Blockchain.MATIC
+            return Blockchain.MATIC
         }
 
         return null
