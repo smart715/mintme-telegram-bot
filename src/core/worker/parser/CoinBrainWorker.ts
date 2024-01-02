@@ -125,6 +125,8 @@ export class CoinBrainWorker extends AbstractParserWorker {
                 return Blockchain.BSC
             case 1:
                 return Blockchain.ETH
+            case 137:
+                return Blockchain.MATIC
             default:
                 return null
         }
@@ -136,6 +138,8 @@ export class CoinBrainWorker extends AbstractParserWorker {
                 return 'bnb'
             case Blockchain.ETH:
                 return 'eth'
+            case Blockchain.MATIC:
+                return 'poly'
             default:
                 this.logger.error(
                     `${this.prefixLog} current blockchain ${currentBlockchain} doesn't have crypto ` +
