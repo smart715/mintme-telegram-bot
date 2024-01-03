@@ -235,6 +235,11 @@ export class CoinMarketCapClient {
                 break
             }
 
+            if (coin.slug.toLowerCase().includes('mintme')) {
+                this.log(`Skipping our coin MintMe`)
+                continue
+            }
+
             if (this.continousFailedSubmits >= 5) {
                 this.log(`Skipping account due to exceeding max continous failed submits`)
 
