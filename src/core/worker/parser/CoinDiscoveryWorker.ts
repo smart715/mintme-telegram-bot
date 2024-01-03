@@ -112,6 +112,10 @@ export class CoinDiscoveryWorker extends AbstractParserWorker {
                 return Blockchain.BSC
             case '2':
                 return Blockchain.ETH
+            case '3':
+                return Blockchain.MATIC
+            case '5':
+                return Blockchain.SOL
             default:
                 return null
         }
