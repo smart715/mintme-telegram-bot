@@ -1,6 +1,6 @@
 import { singleton } from 'tsyringe'
 import { Coins360Service, CheckedTokenService, TokensService } from '../../service'
-import { Blockchain, sleep } from '../../../utils'
+import { Blockchain, getBlockchainFromContent, sleep } from '../../../utils'
 import { JSDOM } from 'jsdom'
 import { Logger } from 'winston'
 import { AbstractParserWorker } from './AbstractParserWorker'
@@ -59,11 +59,7 @@ export class Coin360Worker extends AbstractParserWorker {
                         const link = el.getElementsByTagName('div')[1].getElementsByTagName('a')[0].href
                         tokenAddress = link.split('/')[link.split('/').length -1].toLowerCase()
 
-                        if (link.includes('etherscan')) {
-                            blockchain = Blockchain.ETH
-                        } else if (link.includes('bscscan')) {
-                            blockchain = Blockchain.BSC
-                        }
+                        blockchain = getBlockchainFromContent(link)
 
                         break
                     }

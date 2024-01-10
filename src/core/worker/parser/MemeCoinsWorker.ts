@@ -1,6 +1,6 @@
 import { singleton } from 'tsyringe'
 import { Logger } from 'winston'
-import { RetryAxios, Blockchain, tokenAddressRegexp } from '../../../utils'
+import { RetryAxios, tokenAddressRegexp, getBlockchainFromContent } from '../../../utils'
 import { NewestCheckedTokenService, TokensService } from '../../service'
 import { NewestTokenChecker, StopCheckException } from './NewestTokenChecker'
 
@@ -42,7 +42,7 @@ export class MemeCoinsWorker extends NewestTokenChecker {
     }
 
     private async processToken(tokenInfo: string): Promise<void> {
-        const blockchain = this.getBlockchain(tokenInfo)
+        const blockchain = getBlockchainFromContent(tokenInfo)
         const tokenAddress = this.getTokenAddress(tokenInfo)
         const tokenName = this.getTokenName(tokenInfo)
         const webSites = this.getWebsites(tokenInfo)
@@ -63,18 +63,6 @@ export class MemeCoinsWorker extends NewestTokenChecker {
             blockchain,
             this.logger
         )
-    }
-
-    private getBlockchain(tokenInfo: string): Blockchain | null {
-        if (tokenInfo.includes('BSC')) {
-            return Blockchain.BSC
-        } else if (tokenInfo.includes('ETH')) {
-            return Blockchain.ETH
-        } else if (tokenInfo.includes('Polygon')) {
-            return Blockchain.MATIC
-        }
-
-        return null
     }
 
     private getTokenAddress(tokenInfo: string): string {

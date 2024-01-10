@@ -1,7 +1,7 @@
 import { singleton } from 'tsyringe'
 import { Logger } from 'winston'
 import { NewestCheckedTokenService, TokensService } from '../../service'
-import { RetryAxios, Blockchain, tokenAddressRegexp } from '../../../utils'
+import { RetryAxios, tokenAddressRegexp, getBlockchainFromContent } from '../../../utils'
 import { NewestTokenChecker, StopCheckException } from './NewestTokenChecker'
 
 @singleton()
@@ -49,7 +49,7 @@ export class CryptoVoteListWorker extends NewestTokenChecker {
     }
 
     private async processToken(tokenInfo: string): Promise<void> {
-        const blockchain = this.getBlockchain(tokenInfo)
+        const blockchain = getBlockchainFromContent(tokenInfo)
         const tokenAddress = this.getTokenAddress(tokenInfo)
         const tokenName = this.getName(tokenInfo)
 
@@ -69,18 +69,6 @@ export class CryptoVoteListWorker extends NewestTokenChecker {
             blockchain,
             this.logger
         )
-    }
-
-    private getBlockchain(tokenInfo: string): Blockchain | null {
-        if (tokenInfo.includes('Binance Smart Chain')) {
-            return Blockchain.BSC
-        }
-
-        if (tokenInfo.includes('Ethereum')) {
-            return Blockchain.ETH
-        }
-
-        return null
     }
 
     private getTokenAddress(tokenInfo: string): string {
