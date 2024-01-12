@@ -2,10 +2,18 @@
 module.exports = {
     apps: [
         {
-            name: 'hourly-apps',
-            script: './pm2/script/hourly_script.sh',
-            autorestart: false, // Prevent automatic restart,
-            cron_restart: '0 * * * *',
+            name: 'coingecko',
+            script: 'npm',
+            args: 'run cli -- run-fetch-token-worker --name=coin-gecko',
+            autorestart: true,
+            restart_delay: 3600000,
+        },
+        {
+            name: 'cmc',
+            script: 'npm',
+            args: 'run cli -- run-fetch-token-worker --name=coinmarketcap',
+            autorestart: true,
+            restart_delay: 3600000,
         },
     ],
 }
