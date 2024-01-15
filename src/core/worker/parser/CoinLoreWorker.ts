@@ -1,6 +1,6 @@
 import { singleton } from 'tsyringe'
 import { CoinLoreService, CheckedTokenService, TokensService } from '../../service'
-import { Blockchain } from '../../../utils'
+import { Blockchain, getBlockchainFromContent } from '../../../utils'
 import config from 'config'
 import { DOMWindow, JSDOM } from 'jsdom'
 import { Logger } from 'winston'
@@ -82,12 +82,10 @@ export class CoinLoreWorker extends AbstractParserWorker {
     }
 
     private parseBlockchain(pageDOM: DOMWindow): Blockchain | null {
-        if (pageDOM.document.querySelector('a[title="Binance Coin (BNB)"')) {
-            return Blockchain.BSC
-        }
+        const tableOverReview = pageDOM.document.getElementsByClassName('table-overview')
 
-        if (pageDOM.document.querySelector('a[title="Ethereum (ETH)"]')) {
-            return Blockchain.ETH
+        if (tableOverReview.length) {
+            return getBlockchainFromContent(tableOverReview[0].innerHTML)
         }
 
         return null
