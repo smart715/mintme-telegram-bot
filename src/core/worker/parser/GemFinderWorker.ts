@@ -1,6 +1,6 @@
 import { singleton } from 'tsyringe'
 import { Logger } from 'winston'
-import { RetryAxios, Blockchain, tokenAddressRegexp } from '../../../utils'
+import { RetryAxios, Blockchain, tokenAddressRegexp, getBlockchainFromContent } from '../../../utils'
 import { CheckedTokenService, TokensService } from '../../service'
 import { AbstractParserWorker } from './AbstractParserWorker'
 import { JSDOM } from 'jsdom'
@@ -102,26 +102,17 @@ export class GemFinderWorker extends AbstractParserWorker {
     }
 
 
-    private getBlockchain(tokenInfo: string): Blockchain|undefined {
+    private getBlockchain(tokenInfo: string): Blockchain|null {
         const pageDOM = (new JSDOM(tokenInfo)).window.document
         const contractSectionSelector = pageDOM.getElementsByClassName('coin_contract')
 
         if (!contractSectionSelector.length) {
-            return undefined
+            return null
         }
 
         const contractSectionSrc = contractSectionSelector[0].innerHTML
 
-        if (contractSectionSrc.includes('binance smart chain')) {
-            return Blockchain.BSC
-        } else if (contractSectionSrc.includes('ethereum')) {
-            return Blockchain.ETH
-        } else if (contractSectionSrc.includes('cronos')) {
-            return Blockchain.CRO
-        }
-
-
-        return undefined
+        return getBlockchainFromContent(contractSectionSrc)
     }
 
     private getTokenAddress(tokenInfo: string): string {

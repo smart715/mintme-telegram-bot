@@ -1,6 +1,6 @@
 import { singleton } from 'tsyringe'
 import { Logger } from 'winston'
-import { Blockchain, explorerDomains, findContractAddress } from '../../../utils'
+import { findContractAddress, getBlockchainByExplorerUrl } from '../../../utils'
 import { CoinCapService, QueuedTokenAddressService } from '../../service'
 import { CoinCapCoinInfoResponse } from '../../types'
 import { AbstractParserWorker } from './AbstractParserWorker'
@@ -52,7 +52,7 @@ export class CoinCapWorker extends AbstractParserWorker {
                     continue
                 }
 
-                const currentBlockchain = this.getBlockchainByExplorerUrl(explorerLink)
+                const currentBlockchain = getBlockchainByExplorerUrl(explorerLink)
 
                 if (!currentBlockchain) {
                     continue
@@ -74,17 +74,5 @@ export class CoinCapWorker extends AbstractParserWorker {
         } while (result > 0)
 
         this.logger.info(`${this.prefixLog} finished`)
-    }
-
-    private getBlockchainByExplorerUrl(link: string): Blockchain|null {
-        if (link.includes(explorerDomains[Blockchain.BSC])) {
-            return Blockchain.BSC
-        }
-
-        if (link.includes(explorerDomains[Blockchain.ETH])) {
-            return Blockchain.ETH
-        }
-
-        return null
     }
 }
