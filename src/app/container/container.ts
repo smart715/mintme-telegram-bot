@@ -385,9 +385,11 @@ container.register(RugFreeCoinsService, {
 container.register(Top100TokensService, {
     useFactory: instanceCachingFactory(() => new Top100TokensService()),
 })
-
 container.register(TokensInsightService, {
-    useFactory: instanceCachingFactory(() => new TokensInsightService()),
+    useFactory: instanceCachingFactory(() => new TokensInsightService(
+        container.resolve(ServiceRepository),
+        container.resolve(ApiKeyRepository)
+    )),
 })
 
 container.register(MyEtherListsService, {
