@@ -6,13 +6,11 @@ import { ApiKey } from '../entity'
 @EntityRepository(ApiKey)
 export class ApiKeyRepository extends Repository<ApiKey> {
     public async findAvailableKey(serviceId: number): Promise<ApiKey | undefined> {
-        return this.findOne({
-            where: {
-                serviceId,
-                nextAttemptDate: null,
-            },
-            order: { updatedAt: 'ASC' },
-        })
+        return this.createQueryBuilder('apiKey')
+            .leftJoinAndSelect('apiKey.service', 'service')
+            .where('service.id = :serviceId', { serviceId })
+            .orderBy('apiKey.updatedAt', 'ASC')
+            .getOne()
     }
 
     public async updateNextAttemptDate(apiKeyId: number, nextAttemptDate: Date): Promise<void> {

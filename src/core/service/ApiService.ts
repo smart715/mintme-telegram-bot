@@ -13,7 +13,9 @@ export interface RequestOptions {
 export async function makeServiceRequest<T>(
     axiosInstance: AxiosInstance,
     url: string,
-    options: RequestOptions
+    options: RequestOptions,
+    serviceRepository: ServiceRepository,
+    apiKeyRepository: ApiKeyRepository
 ): Promise<T> {
     const {
         serviceName,
@@ -25,10 +27,10 @@ export async function makeServiceRequest<T>(
     } = options
 
     let retries = 1
+    const maxRetries = 3
+    const retryDelay = 1000 // 1 second delay between retries
 
-    while (retries > 0) {
-        const serviceRepository = new ServiceRepository()
-        const apiKeyRepository = new ApiKeyRepository()
+    while (retries <= maxRetries) {
         const service = await serviceRepository.findByName(serviceName)
 
         if (service) {
@@ -50,19 +52,17 @@ export async function makeServiceRequest<T>(
                     const response: AxiosResponse<T> = await axiosInstance(config)
                     return response.data
                 } catch (error) {
-                    // If the request fails with the current key, update the next_attempt_date and try the next one
                     await apiKeyRepository.updateNextAttemptDate(apiKeyRecord.id, new Date())
-                    retries--
+                    retries++
+                    await new Promise(resolve => setTimeout(resolve, retryDelay))
                 }
             } else {
-                // No valid API keys found, handle accordingly
                 throw new Error('All API keys have been exhausted, and the request failed.')
             }
         } else {
-            // Service not found, handle accordingly
             throw new Error('Service not found.')
         }
     }
 
-    throw new Error('All API keys have been exhausted, and the request failed.')
+    throw new Error('All API keys have been exhausted, and the request failed after maximum retries.')
 }
