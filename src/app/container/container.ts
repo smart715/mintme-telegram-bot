@@ -405,7 +405,10 @@ container.register(CoinLoreService, {
 })
 
 container.register(CMCService, {
-    useFactory: instanceCachingFactory(() => new CMCService()),
+    useFactory: instanceCachingFactory(() => new CMCService(
+        container.resolve(ServiceRepository),
+        container.resolve(ApiKeyRepository)
+    )),
 })
 
 container.register(CoinScopeService, {
