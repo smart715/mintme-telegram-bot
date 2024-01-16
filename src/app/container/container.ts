@@ -368,7 +368,10 @@ container.register(CoinCodexService, {
 })
 
 container.register(BitQueryService, {
-    useFactory: instanceCachingFactory(() => new BitQueryService()),
+    useFactory: instanceCachingFactory((c) => new BitQueryService(
+        c.resolve(ServiceRepository),
+        c.resolve(ApiKeyRepository)
+    )),
 })
 
 container.register(MailerService, {
