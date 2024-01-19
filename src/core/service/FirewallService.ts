@@ -11,7 +11,7 @@ export class FirewallService {
     ): Promise<{cookies: {name: string, value: string}[], userAgent: string}> {
         const response = await axios.post(this.flaresolverrServerUrl, {
             cmd: 'request.get',
-            maxTimeout: 60000,
+            maxTimeout: 180000,
             url,
         })
 

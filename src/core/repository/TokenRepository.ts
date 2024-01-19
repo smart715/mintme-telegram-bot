@@ -50,9 +50,10 @@ export class TokenRepository extends Repository<Token> {
         return queryBuilder.getMany()
     }
 
-    public async getNextWithoutTxDate(): Promise<Token | undefined> {
+    public async getNextWithoutTxDate(supportedBlockchains: Blockchain[]): Promise<Token | undefined> {
         return this.createQueryBuilder()
             .where('last_tx_date is null')
+            .andWhere('blockchain IN (:supportedBlockchains)', { supportedBlockchains })
             .andWhere(new Brackets(queryBuilder => {
                 queryBuilder
                     .where(`emails like '%@%'`)

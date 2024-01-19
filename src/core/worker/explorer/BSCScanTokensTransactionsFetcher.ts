@@ -10,8 +10,15 @@ import { WebDriver } from 'selenium-webdriver'
 export class BSCScanTokensTransactionsFetcher extends AbstractTokenWorker {
     private readonly workerName = BSCScanTokensTransactionsFetcher.name
     private webDriver: WebDriver
-    private readonly supportedBlockchains = [ Blockchain.ETH, Blockchain.BSC, Blockchain.CRO ]
+    private readonly supportedBlockchains = [
+        Blockchain.ETH,
+        Blockchain.BSC,
+        Blockchain.CRO,
+        Blockchain.MATIC,
+    ]
+
     private readonly delayBetweenPages = 5 * 1000
+
     private readonly pagesCounts = {
         [Blockchain.BSC]: 100,
         [Blockchain.ETH]: 50,
@@ -61,6 +68,8 @@ export class BSCScanTokensTransactionsFetcher extends AbstractTokenWorker {
         this.logger.info(`[${this.workerName}] started for ${blockchain} blockchain`)
 
         for (let page = pagesCount; page >= 1; page--) {
+            this.logger.info(`Loading page ${page} | Blockchain: ${blockchain}`)
+
             const { isNewDriver, newDriver } = await SeleniumService.loadPotentialCfPage(this.webDriver,
                 this.bscscanService.getTokenTxsPageUrl(explorerDomain, page),
                 this.firewallService,
@@ -75,7 +84,10 @@ export class BSCScanTokensTransactionsFetcher extends AbstractTokenWorker {
 
             const pageSource = await this.webDriver.getPageSource()
 
+            this.logger.info(`Checking and enqueueing Tokens Addresses`)
             await this.explorerParser.enqueueTokenAddresses(pageSource, blockchain)
+
+            this.logger.info(`Checking and enqueueing Wallets Addresses`)
             await this.explorerParser.enqueueWalletAddresses(pageSource, blockchain)
         }
 
