@@ -48,6 +48,13 @@ export class TokensService {
             return this.updateTokenLinks(token, websites, emails, links)
         }
 
+        const tokenForbiddenWordsRegexp = /(pancake|binance-peg|wrapped|-lp|swaap governance|tracker|\(\)|cronos chain|uniswap|polygonscan|erc-20 token|erc-1155|nft)/i
+
+        if (tokenForbiddenWordsRegexp.test(tokenName)) {
+            logger.warn(`Ignored token ${tokenName} ${tokenAddress} :: ${blockchain} due to forbidden name.`)
+            return undefined
+        }
+
         token = new Token()
 
         token.address = tokenAddress
@@ -133,8 +140,8 @@ export class TokensService {
         return this.tokenRepository.findGroupedBySourceAndBlockchain(from)
     }
 
-    public async getNextWithoutTxDate(): Promise<Token | undefined> {
-        return this.tokenRepository.getNextWithoutTxDate()
+    public async getNextWithoutTxDate(supportedBlockchains: Blockchain[]): Promise<Token | undefined> {
+        return this.tokenRepository.getNextWithoutTxDate(supportedBlockchains)
     }
 
     public async isChannelOfRespondedToken(

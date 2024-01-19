@@ -9,7 +9,7 @@ import { AbstractParserWorker } from './AbstractParserWorker'
 export class CoinGeckoWorker extends AbstractParserWorker {
     private readonly workerName = 'CoinGecko'
     private readonly prefixLog = `[${this.workerName}]`
-    private readonly sleepDuration = 4 * 1000 // 3 seconds produces 429 http error. So 4-5 is ok
+    private readonly sleepDuration = 10 * 1000
     private readonly supportedBlockchains: Blockchain[] = [
         Blockchain.ETH,
         Blockchain.BSC,
