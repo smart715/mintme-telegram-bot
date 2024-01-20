@@ -2,7 +2,7 @@ import axios, { AxiosInstance } from 'axios'
 import { singleton, inject } from 'tsyringe'
 import { CMCApiGeneralResponse, CMCCryptocurrency, CMCTokenInfoResponse } from '../../types'
 import { makeServiceRequest, RequestOptions } from '../ApiService'
-import { ApiKeyRepository, ServiceRepository } from '../../repository'
+import { ApiKeyRepository, ApiServiceRepository } from '../../repository'
 
 @singleton()
 export class CMCService {
@@ -10,7 +10,7 @@ export class CMCService {
     private readonly axiosInstance: AxiosInstance
 
     public constructor(
-        @inject(ServiceRepository) private readonly serviceRepository: ServiceRepository,
+        @inject(ApiServiceRepository) private readonly serviceRepository: ApiServiceRepository,
         @inject(ApiKeyRepository) private readonly apiKeyRepository: ApiKeyRepository
     ) {
         this.axiosInstance = axios.create({

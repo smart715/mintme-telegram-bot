@@ -1,14 +1,14 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm'
-import { Service } from './Service'
+import { ApiService } from './ApiService'
 
 @Entity({ name: 'api_key' })
 export class ApiKey {
     @PrimaryGeneratedColumn()
     public id: number
 
-    @ManyToOne(() => Service, service => service.apiKeys)
+    @ManyToOne(() => ApiService, service => service.apiKeys)
     @JoinColumn({ name: 'serviceId', referencedColumnName: 'id' })
-    public service: Service
+    public service: ApiService
 
     @Column({ name: 'api_key', length: 255 })
     public apiKey: string

@@ -1,5 +1,5 @@
 import { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios'
-import { ServiceRepository, ApiKeyRepository } from '../repository'
+import { ApiServiceRepository, ApiKeyRepository } from '../repository'
 
 export interface RequestOptions {
     serviceName: string;
@@ -14,7 +14,7 @@ export async function makeServiceRequest<T>(
     axiosInstance: AxiosInstance,
     url: string,
     options: RequestOptions,
-    serviceRepository: ServiceRepository,
+    serviceRepository: ApiServiceRepository,
     apiKeyRepository: ApiKeyRepository
 ): Promise<T> {
     const {

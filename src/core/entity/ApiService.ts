@@ -1,8 +1,8 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm'
 import { ApiKey } from './ApiKey'
 
-@Entity({ name: 'service' })
-export class Service {
+@Entity({ name: 'api_service' })
+export class ApiService {
     @PrimaryGeneratedColumn()
     public id: number
 

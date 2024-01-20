@@ -1,11 +1,11 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
 
-export class CreateServicesTable1703280202809 implements MigrationInterface {
-    public name = 'CreateServicesTable1703280202809'
+export class CreateApiServicesTable1703280202809 implements MigrationInterface {
+    public name = 'CreateApiServicesTable1703280202809'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
-            CREATE TABLE service (
+            CREATE TABLE api_service (
                 id INT PRIMARY KEY AUTO_INCREMENT,
                 name VARCHAR(255) NOT NULL UNIQUE,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -15,6 +15,6 @@ export class CreateServicesTable1703280202809 implements MigrationInterface {
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`DROP TABLE service;`)
+        await queryRunner.query(`DROP TABLE api_service;`)
     }
 }

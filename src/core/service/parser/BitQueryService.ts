@@ -3,7 +3,7 @@ import axios, { AxiosInstance } from 'axios'
 import { singleton, inject } from 'tsyringe'
 import { BitQueryTransfersResponse } from '../../types'
 import { makeServiceRequest } from '../ApiService'
-import { ServiceRepository, ApiKeyRepository } from '../../repository'
+import { ApiServiceRepository, ApiKeyRepository } from '../../repository'
 
 @singleton()
 export class BitQueryService {
@@ -11,7 +11,7 @@ export class BitQueryService {
     private readonly axiosInstance: AxiosInstance
 
     public constructor(
-        @inject(ServiceRepository) private readonly serviceRepository: ServiceRepository,
+        @inject(ApiServiceRepository) private readonly serviceRepository: ApiServiceRepository,
         @inject(ApiKeyRepository) private readonly apiKeyRepository: ApiKeyRepository
     ) {
         this.axiosInstance = axios.create({

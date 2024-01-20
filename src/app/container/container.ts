@@ -100,7 +100,7 @@ import {
     DailyStatisticMailWorker,
     TwitterResponseRepository,
     BlacklistRepository,
-    ServiceRepository,
+    ApiServiceRepository,
     ApiKeyRepository,
 } from '../../core'
 import { Application } from '../'
@@ -216,8 +216,8 @@ container.register(BlacklistRepository, {
     useFactory: instanceCachingFactory(() => getConnection().getCustomRepository(BlacklistRepository)),
 })
 
-container.register(ServiceRepository, {
-    useFactory: instanceCachingFactory(() => getConnection().getCustomRepository(ServiceRepository)),
+container.register(ApiServiceRepository, {
+    useFactory: instanceCachingFactory(() => getConnection().getCustomRepository(ApiServiceRepository)),
 })
 
 container.register(ApiKeyRepository, {
@@ -369,7 +369,7 @@ container.register(CoinCodexService, {
 
 container.register(BitQueryService, {
     useFactory: instanceCachingFactory((dependencyContainer) => new BitQueryService(
-        dependencyContainer.resolve(ServiceRepository),
+        dependencyContainer.resolve(ApiServiceRepository),
         dependencyContainer.resolve(ApiKeyRepository)
     )),
 })
@@ -387,7 +387,7 @@ container.register(Top100TokensService, {
 })
 container.register(TokensInsightService, {
     useFactory: instanceCachingFactory((dependencyContainer) => new TokensInsightService(
-        dependencyContainer.resolve(ServiceRepository),
+        dependencyContainer.resolve(ApiServiceRepository),
         dependencyContainer.resolve(ApiKeyRepository)
     )),
 })
@@ -406,7 +406,7 @@ container.register(CoinLoreService, {
 
 container.register(CMCService, {
     useFactory: instanceCachingFactory((dependencyContainer) => new CMCService(
-        dependencyContainer.resolve(ServiceRepository),
+        dependencyContainer.resolve(ApiServiceRepository),
         dependencyContainer.resolve(ApiKeyRepository)
     )),
 })

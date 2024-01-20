@@ -2,7 +2,7 @@ import axios, { AxiosInstance } from 'axios'
 import { singleton, inject } from 'tsyringe'
 import { makeServiceRequest, RequestOptions } from '../ApiService'
 import { TokensInsightAllCoinsResponse, TokensInsightCoinDataResponse } from '../../types'
-import { ApiKeyRepository, ServiceRepository } from '../../repository'
+import { ApiKeyRepository, ApiServiceRepository } from '../../repository'
 
 @singleton()
 export class TokensInsightService {
@@ -12,7 +12,7 @@ export class TokensInsightService {
     private readonly requestOptions: RequestOptions
 
     public constructor(
-        @inject(ServiceRepository) private readonly serviceRepository: ServiceRepository,
+        @inject(ApiServiceRepository) private readonly serviceRepository: ApiServiceRepository,
         @inject(ApiKeyRepository) private readonly apiKeyRepository: ApiKeyRepository
     ) {
         this.axiosInstance = axios.create({
