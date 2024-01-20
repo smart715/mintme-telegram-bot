@@ -46,7 +46,10 @@ export class BSCScanAddressTokensHoldingsWorker extends AbstractTokenWorker {
             }
 
             for (const wallet of wallets) {
+                this.logger.info(`Loading wallet page ${wallet.walletAddress}`)
                 if (!webDriver) { // by pass cloudflare of first wallet page, do it only once
+                    this.logger.info(`Initializing new webdriver`)
+
                     webDriver = await SeleniumService.createCloudFlareByPassedDriver(
                         this.buildExplorerUrl(explorerDomain, wallet.walletAddress),
                         this.firewallService,
@@ -67,6 +70,19 @@ export class BSCScanAddressTokensHoldingsWorker extends AbstractTokenWorker {
                         webDriver = newDriver
                     }
 
+
+                    await this.queuedWalletAddressService.markAsChecked(wallet)
+
+                    await webDriver.sleep(5000)
+
+                    const tokensDiv = await webDriver.findElements(By.id('assets-wallet'))
+
+                    if (tokensDiv.length &&
+                        (await tokensDiv[0].getText()).includes('No assets found')) {
+                        this.logger.warn(`No tokens on wallet ${wallet.walletAddress}`)
+                        continue
+                    }
+
                     await webDriver.wait(until.elementLocated(By.name('mytable_length')), 60000)
 
                     await webDriver.sleep(this.delayBetweenPages)
@@ -81,11 +97,14 @@ export class BSCScanAddressTokensHoldingsWorker extends AbstractTokenWorker {
 
                         await webDriver.sleep(this.delayBetweenPages)
 
+                        this.logger.info(`Checking and enqueuing tokens`)
                         await this.processTokensOnPage(webDriver)
 
                         const pagesAmount = await this.getPagesAmount(webDriver)
 
                         for (let page = 2; page <= pagesAmount; page++) {
+                            this.logger.info(`Navigating to next Page: ${page}`)
+
                             const nextPage = webDriver.findElement(By.id('mytable_next'))
                             await webDriver.executeScript(`arguments[0].click()`, nextPage)
 
@@ -94,8 +113,6 @@ export class BSCScanAddressTokensHoldingsWorker extends AbstractTokenWorker {
                             await this.processTokensOnPage(webDriver)
                         }
                     }
-
-                    await this.queuedWalletAddressService.markAsChecked(wallet)
 
                     await sleep(this.delayBetweenPages)
                 } catch (error) {

@@ -20,6 +20,13 @@ export class LastTokenTxDateFetcher {
     private readonly explorerApiKeys: ExplorerApiKeysInterface = config.get('explorerApiKeys')
     private readonly defaultTxTimestamp = 962083822000
 
+    private readonly supportedBlockchains = [
+        Blockchain.ETH,
+        Blockchain.BSC,
+        Blockchain.CRO,
+        Blockchain.MATIC,
+    ]
+
     public constructor(
         private readonly tokensService: TokensService,
         private readonly logger: Logger,
@@ -30,7 +37,7 @@ export class LastTokenTxDateFetcher {
 
         // eslint-disable-next-line
         while (true) {
-            const token = await this.tokensService.getNextWithoutTxDate()
+            const token = await this.tokensService.getNextWithoutTxDate(this.supportedBlockchains)
 
             if (!token) {
                 this.logger.info(`[${this.workerName}] No tokens without lastTxDate, sleep`)

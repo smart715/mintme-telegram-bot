@@ -31,8 +31,8 @@ export class QueuedTokenAddressService {
         await this.repository.insert(queuedToken)
     }
 
-    public async getTokensToCheck(blockchain: Blockchain|null, amount: number): Promise<QueuedTokenAddress[]> {
-        return this.repository.getUnchecked(blockchain, amount)
+    public async getTokensToCheck(blockchains: Blockchain[], amount: number): Promise<QueuedTokenAddress[]> {
+        return this.repository.getUnchecked(blockchains, amount)
     }
 
     public async markAsChecked(token: QueuedTokenAddress): Promise<void> {

@@ -86,7 +86,7 @@ export class AdvnWorker extends AbstractParserWorker {
 
                 const tokenAddress = findContractAddress(tokenInfo)
 
-                if (!tokenAddress || !tokenAddress.startsWith('0x')) {
+                if (!tokenAddress) {
                     continue
                 }
 
