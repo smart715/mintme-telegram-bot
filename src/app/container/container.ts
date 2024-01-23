@@ -566,6 +566,7 @@ container.register(CheckTokenBNBWorker, {
         new CheckTokenBNBWorker(
             dependencyContainer.resolve(QueuedTokenAddressService),
             dependencyContainer.resolve(TokensService),
+            dependencyContainer.resolve(FirewallService),
             createLogger(CheckTokenBNBWorker.name.toLowerCase())
         )
     ),

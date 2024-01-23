@@ -53,13 +53,14 @@ export class RunExplorerWorker implements CommandInterface {
             [ExplorerWorkerNames.TOP_ACCOUNTS]: this.bscScanTopAccountsFetcher,
             [ExplorerWorkerNames.TOP_TOKENS]: this.bscScanTopTokensFetcher,
             [ExplorerWorkerNames.VALIDATORS]: this.bscScanValidatorsFetcher,
-            [ExplorerWorkerNames.TOKEN_CHECKER]: this.checkTokenBNBWorker,
             [ExplorerWorkerNames.EXPLORER_SEARCH]: this.explorerSearchAPIWorker,
         }
 
         try {
             if (ExplorerWorkerNames.HOLDINGS === workerName) {
                 await this.runHoldingWorker(blockchain)
+            } else if (ExplorerWorkerNames.TOKEN_CHECKER === workerName) {
+                await this.runTokensCheckerWorker(blockchain)
             } else {
                 if (blockchain) {
                     await notHoldingWorkers[workerName].run(blockchain)
@@ -86,12 +87,38 @@ export class RunExplorerWorker implements CommandInterface {
             const ethWorker = this.bscScanAddressTokensHoldingsWorker.run(Blockchain.ETH)
             const bscWorker = this.bscScanAddressTokensHoldingsWorker.run(Blockchain.BSC)
             const croWorker = this.bscScanAddressTokensHoldingsWorker.run(Blockchain.CRO)
+            const maticWorker = this.bscScanAddressTokensHoldingsWorker.run(Blockchain.MATIC)
 
-            await Promise.all([ ethWorker, bscWorker, croWorker ])
+            await Promise.all([
+                ethWorker,
+                bscWorker,
+                croWorker,
+                maticWorker,
+            ])
 
             return
         }
 
         await this.bscScanAddressTokensHoldingsWorker.run(blockchain)
+    }
+
+    private async runTokensCheckerWorker(blockchain: Blockchain|null): Promise<void> {
+        if (!blockchain) {
+            const ethWorker = this.checkTokenBNBWorker.run(Blockchain.ETH)
+            const bscWorker = this.checkTokenBNBWorker.run(Blockchain.BSC)
+            const croWorker = this.checkTokenBNBWorker.run(Blockchain.CRO)
+            const maticWorker = this.checkTokenBNBWorker.run(Blockchain.MATIC)
+
+            await Promise.all([
+                ethWorker,
+                bscWorker,
+                croWorker,
+                maticWorker,
+            ])
+
+            return
+        }
+
+        await this.checkTokenBNBWorker.run(blockchain)
     }
 }

@@ -9,7 +9,12 @@ import { Logger } from 'winston'
 @singleton()
 export class ExplorerSearchAPIWorker extends AbstractTokenWorker {
     private readonly workerName = ExplorerSearchAPIWorker.name
-    private readonly supportedBlockchains = [ Blockchain.ETH, Blockchain.BSC, Blockchain.CRO ]
+    private readonly supportedBlockchains = [
+        Blockchain.ETH,
+        Blockchain.BSC,
+        Blockchain.CRO,
+        Blockchain.MATIC,
+    ]
 
     public constructor(
         private readonly tokenNamesGenerator: TokenNamesGenerator,

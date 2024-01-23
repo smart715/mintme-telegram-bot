@@ -10,7 +10,12 @@ import { WebDriver } from 'selenium-webdriver'
 export class BSCScanTopAccountsFetcher extends AbstractTokenWorker {
     private readonly workerName = BSCScanTopAccountsFetcher.name
     private webDriver: WebDriver
-    private readonly supportedBlockchains = [ Blockchain.ETH, Blockchain.BSC, Blockchain.CRO ]
+    private readonly supportedBlockchains = [
+        Blockchain.ETH,
+        Blockchain.BSC,
+        Blockchain.CRO,
+        Blockchain.MATIC,
+    ]
 
     public constructor(
         private readonly bscscanService: BSCScanService,

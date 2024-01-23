@@ -1,6 +1,6 @@
 import { AbstractTokenWorker } from '../AbstractTokenWorker'
 import { By, WebDriver, WebElement } from 'selenium-webdriver'
-import { QueuedTokenAddressService, SeleniumService, TokensService } from '../../service'
+import { FirewallService, QueuedTokenAddressService, SeleniumService, TokensService } from '../../service'
 import { Blockchain, destroyDriver, explorerDomains, sleep } from '../../../utils'
 import { QueuedTokenAddress } from '../../entity'
 import { singleton } from 'tsyringe'
@@ -11,23 +11,39 @@ export class CheckTokenBNBWorker extends AbstractTokenWorker {
     private readonly workerName = CheckTokenBNBWorker.name
     private readonly tokensBatch = 50
     private readonly sleepTime = 60 * 1000
-    private readonly tokenForbiddenWordsRegexp = /(pancake|binance-peg|wrapped|-lp|swaap governance|tracker|\(\)|Cronos Chain)/i
+    private readonly newStyleBlockchainExplorers = [ Blockchain.ETH, Blockchain.BSC, Blockchain.MATIC ]
+    private webDriver: WebDriver
+
+    private readonly supportedBlockchains = [
+        Blockchain.ETH,
+        Blockchain.BSC,
+        Blockchain.CRO,
+        Blockchain.MATIC,
+    ]
 
     public constructor(
         private readonly queuedTokenAddressService: QueuedTokenAddressService,
         private readonly tokensService: TokensService,
+        private readonly firewallService: FirewallService,
         private readonly logger: Logger,
     ) {
         super()
     }
 
-    public async run(blockchain: Blockchain|null = null): Promise<void> {
-        const webDriver = await SeleniumService.createDriver('', undefined, this.logger)
-        this.logger.info(`[${this.workerName}] started for ${blockchain ?? 'all'} blockchain`)
+    public async run(blockchain: Blockchain): Promise<void> {
+        this.webDriver = await SeleniumService.createCloudFlareByPassedDriver(`https://${explorerDomains[blockchain]}`,
+            this.firewallService,
+            this.logger)
+
+        this.logger.info(`[${this.workerName}] started for ${blockchain ?? this.supportedBlockchains.join('|')} blockchain`)
 
         // eslint-disable-next-line
         while (true) {
-            const tokensToCheck = await this.queuedTokenAddressService.getTokensToCheck(blockchain, this.tokensBatch)
+            const tokensToCheck = await this.queuedTokenAddressService.getTokensToCheck(
+                blockchain ? [ blockchain ] : this.supportedBlockchains,
+                this.tokensBatch
+            )
+
             if (!tokensToCheck.length) {
                 this.logger.info(`[${this.workerName}] no tokens to check for ${blockchain} blockchain, sleep`)
 
@@ -39,38 +55,46 @@ export class CheckTokenBNBWorker extends AbstractTokenWorker {
 
             try {
                 for (const token of tokensToCheck) {
-                    await this.checkToken(webDriver, token)
+                    await this.checkToken(token)
                     await sleep(2000)
                 }
             } catch (error) {
-                await destroyDriver(webDriver)
+                await destroyDriver(this.webDriver)
                 throw error
             }
         }
     }
 
-    private async checkToken(webDriver: WebDriver, token: QueuedTokenAddress): Promise<void> {
+    private async checkToken(token: QueuedTokenAddress): Promise<void> {
         this.logger.info(`Checking ${token.tokenAddress} :: ${token.blockchain}`)
-        await webDriver.get('https://' + explorerDomains[token.blockchain] + '/token/' + token.tokenAddress)
+        const { isNewDriver, newDriver } = await SeleniumService.loadPotentialCfPage(this.webDriver,
+            'https://' + explorerDomains[token.blockchain] + '/token/' + token.tokenAddress,
+            this.firewallService,
+            this.logger,
+        )
 
-        if (await this.checkLiquidityProvider(webDriver)) {
-            await this.processNewTokens(webDriver, token.blockchain)
+        if (isNewDriver) {
+            this.webDriver = newDriver
+        }
+
+        if (await this.checkLiquidityProvider()) {
+            await this.processNewTokens(token.blockchain)
 
             return
         }
 
-        await this.processTokenInfo(webDriver, token)
+        await this.processTokenInfo(token)
         await this.queuedTokenAddressService.markAsChecked(token)
     }
 
-    private async checkLiquidityProvider(webDriver: WebDriver): Promise<boolean> {
-        const pageSource = await webDriver.getPageSource()
+    private async checkLiquidityProvider(): Promise<boolean> {
+        const pageSource = await this.webDriver.getPageSource()
 
         return pageSource.includes('Liquidity Provider')
     }
 
-    private async processNewTokens(webDriver: WebDriver, blockchain: Blockchain): Promise<void> {
-        const alert = (await webDriver.findElements(By.css('[role="alert"]')))[0]
+    private async processNewTokens(blockchain: Blockchain): Promise<void> {
+        const alert = (await this.webDriver.findElements(By.css('[role="alert"]')))[0]
 
         if (!alert) {
             return
@@ -89,32 +113,24 @@ export class CheckTokenBNBWorker extends AbstractTokenWorker {
         }
 
         tokenAddresses.forEach(tokenAddress => {
-            if (tokenAddress.startsWith('0x')) {
+            if (Blockchain.SOL === blockchain || tokenAddress.startsWith('0x')) {
                 this.queuedTokenAddressService.push(tokenAddress, blockchain)
             }
         })
     }
 
     private async processTokenInfo(
-        webDriver: WebDriver,
         queuedToken: QueuedTokenAddress,
     ): Promise<void> {
-        const tokenName = await this.getTokenName(webDriver, queuedToken.blockchain)
+        const tokenName = await this.getTokenName(queuedToken.blockchain)
 
         if (!tokenName) {
             return
         }
 
-        const website = await this.getWebSite(webDriver, queuedToken.blockchain)
-        const emails = await this.getEmails(webDriver, queuedToken.blockchain)
-        const links = await this.getLinks(webDriver, queuedToken.blockchain)
-
-        const info = tokenName + website + emails.join('') + links.join('')
-
-        if (this.tokenForbiddenWordsRegexp.test(info)) {
-            this.logger.warn(`Ignored token ${tokenName} ${queuedToken.tokenAddress} :: ${queuedToken.blockchain} due to forbidden name.`)
-            return
-        }
+        const website = await this.getWebSite(queuedToken.blockchain)
+        const emails = await this.getEmails(queuedToken.blockchain)
+        const links = await this.getLinks(queuedToken.blockchain)
 
         this.logger.info(`Adding or Updating ${queuedToken.blockchain} token ${queuedToken.tokenAddress} :: ${tokenName}`)
         await this.saveNewToken(queuedToken.blockchain, queuedToken.tokenAddress, tokenName, website, emails, links)
@@ -159,8 +175,8 @@ export class CheckTokenBNBWorker extends AbstractTokenWorker {
         }
     }
 
-    private async getTokenName(webDriver: WebDriver, blockchain: Blockchain): Promise<string> {
-        const title = await webDriver.getTitle()
+    private async getTokenName(blockchain: Blockchain): Promise<string> {
+        const title = await this.webDriver.getTitle()
         const blockchainWord = this.getBlockchainExplorerTitle(blockchain)
 
         return title.startsWith('$')
@@ -175,9 +191,9 @@ export class CheckTokenBNBWorker extends AbstractTokenWorker {
                 .trim()
     }
 
-    private async getWebSite(webDriver: WebDriver, blockchain: Blockchain): Promise<string> {
-        if (Blockchain.ETH === blockchain || Blockchain.BSC === blockchain) {
-            const linkDropdown = (await webDriver.findElements({ id: 'ContentPlaceHolder1_divLinks' }))[0]
+    private async getWebSite(blockchain: Blockchain): Promise<string> {
+        if (this.newStyleBlockchainExplorers.includes(blockchain)) {
+            const linkDropdown = (await this.webDriver.findElements({ id: 'ContentPlaceHolder1_divLinks' }))[0]
 
             if (linkDropdown) {
                 const dropdownItem = (await linkDropdown.findElements(By.className('dropdown-item text-truncate')))[0]
@@ -189,7 +205,7 @@ export class CheckTokenBNBWorker extends AbstractTokenWorker {
             return ''
         }
 
-        const placeHolderSelector = await webDriver.findElements(By.id('ContentPlaceHolder1_tr_officialsite_1'))
+        const placeHolderSelector = await this.webDriver.findElements(By.id('ContentPlaceHolder1_tr_officialsite_1'))
 
         if (placeHolderSelector.length) {
             return (await placeHolderSelector[0].getText()).replace('Official Site:\n', '').toLowerCase()
@@ -198,9 +214,9 @@ export class CheckTokenBNBWorker extends AbstractTokenWorker {
         return ''
     }
 
-    private async getEmails(webDriver: WebDriver, blockchain: Blockchain): Promise<string[]> {
+    private async getEmails(blockchain: Blockchain): Promise<string[]> {
         const emails: string[] = []
-        const rawLinks = await this.getRawLinks(webDriver, blockchain)
+        const rawLinks = await this.getRawLinks(blockchain)
 
         for (const rawLink of rawLinks) {
             if (rawLink.includes('mailto:')) {
@@ -211,9 +227,9 @@ export class CheckTokenBNBWorker extends AbstractTokenWorker {
         return emails
     }
 
-    private async getLinks(webDriver: WebDriver, blockchain: Blockchain): Promise<string[]> {
+    private async getLinks(blockchain: Blockchain): Promise<string[]> {
         const links: string[] = []
-        const rawLinks = await this.getRawLinks(webDriver, blockchain)
+        const rawLinks = await this.getRawLinks(blockchain)
 
         for (const rawLink of rawLinks) {
             if (!rawLink.includes('mailto:')) {
@@ -224,14 +240,14 @@ export class CheckTokenBNBWorker extends AbstractTokenWorker {
         return links
     }
 
-    private async getRawLinks(webDriver: WebDriver, blockchain: Blockchain): Promise<string[]> {
+    private async getRawLinks(blockchain: Blockchain): Promise<string[]> {
         let linkElements: WebElement[]
 
-        if (Blockchain.ETH === blockchain || Blockchain.BSC === blockchain) {
-            const placeholder = (await webDriver.findElements(By.id('ContentPlaceHolder1_divLinks')))[0]
+        if (this.newStyleBlockchainExplorers.includes(blockchain)) {
+            const placeholder = (await this.webDriver.findElements(By.id('ContentPlaceHolder1_divLinks')))[0]
             linkElements = await placeholder?.findElements(By.css('a')) ?? []
         } else {
-            linkElements = await webDriver.findElements(By.className('link-hover-secondary'))
+            linkElements = await this.webDriver.findElements(By.className('link-hover-secondary'))
         }
 
         const rawLinks: string[] = []
