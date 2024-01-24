@@ -80,7 +80,7 @@ export class SeleniumService {
         firewallService: FirewallService,
         logger: Logger,
     ): Promise<WebDriver> {
-        const { cookies, userAgent } = await firewallService.getCloudflareCookies(url)
+        const { cookies, userAgent } = await firewallService.getCloudflareCookies(url, logger)
 
         const webDriver = await SeleniumService.createDriver('', undefined, logger, userAgent, true)
 
@@ -110,7 +110,7 @@ export class SeleniumService {
         retries: number = 0
     ): Promise<WebDriver> {
         if (!solvedCookies) {
-            const { cookies, userAgent } = await firewallService.getCloudflareCookies(url)
+            const { cookies, userAgent } = await firewallService.getCloudflareCookies(url, logger)
             const currentUserAgent = await webDriver.executeScript('return navigator.userAgent')
 
             if (currentUserAgent !== userAgent) {
