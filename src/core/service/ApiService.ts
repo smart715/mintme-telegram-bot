@@ -31,36 +31,37 @@ export async function makeServiceRequest<T>(
     const retryDelay = 1000 // 1 second delay between retries
 
     while (retries <= maxRetries) {
-        const service = await serviceRepository.findByName(serviceName)
+        let service = await serviceRepository.findByName(serviceName)
 
-        if (service) {
-            const apiKeyRecord = await apiKeyRepository.findAvailableKey(service.id)
+        if (!service) {
+            service = await serviceRepository.save({ name: serviceName })
+            throw new Error(`Service not found. Service name: ${serviceName}`)
+        }
 
-            if (apiKeyRecord) {
-                const apiKey = apiKeyRecord.apiKey
-                const config: AxiosRequestConfig = {
-                    url,
-                    method,
-                    headers: {
-                        ...headers,
-                        ['headers' === apiKeyLocation ? apiKeyName : 'X-API-KEY']: apiKey,
-                    },
-                    params: 'params' === apiKeyLocation ? { ...params, [apiKeyName]: apiKey } : params,
-                }
+        const apiKeyRecord = await apiKeyRepository.findAvailableKey(service.id)
 
-                try {
-                    const response: AxiosResponse<T> = await axiosInstance(config)
-                    return response.data
-                } catch (error) {
-                    await apiKeyRepository.updateNextAttemptDate(apiKeyRecord.id, new Date())
-                    retries++
-                    await new Promise(resolve => setTimeout(resolve, retryDelay))
-                }
-            } else {
-                throw new Error('All API keys have been exhausted, and the request failed.')
+        if (apiKeyRecord) {
+            const apiKey = apiKeyRecord.apiKey
+            const config: AxiosRequestConfig = {
+                url,
+                method,
+                headers: {
+                    ...headers,
+                    ['headers' === apiKeyLocation ? apiKeyName : 'X-API-KEY']: apiKey,
+                },
+                params: 'params' === apiKeyLocation ? { ...params, [apiKeyName]: apiKey } : params,
+            }
+
+            try {
+                const response: AxiosResponse<T> = await axiosInstance(config)
+                return response.data
+            } catch (error) {
+                await apiKeyRepository.updateNextAttemptDate(apiKeyRecord.id, new Date())
+                retries++
+                await new Promise(resolve => setTimeout(resolve, retryDelay))
             }
         } else {
-            throw new Error('Service not found.')
+            throw new Error('All API keys have been exhausted, and the request failed.')
         }
     }
 
