@@ -20,7 +20,7 @@ export class CoinMarketCapClient {
     private continousFailedSubmits: number = 0
     private submittedCommentsPerDay: number = 0
     private maxCommentsPerCoin: number = 1
-    private commentFrequency: number = 30
+    private commentFrequency: number = 60
     public currentlyProcessingCoin: string = ''
     private parentWorker: CoinMarketCommentWorker
 
