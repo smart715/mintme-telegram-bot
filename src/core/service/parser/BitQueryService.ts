@@ -4,6 +4,7 @@ import { singleton, inject } from 'tsyringe'
 import { BitQueryTransfersResponse } from '../../types'
 import { makeServiceRequest } from '../ApiService'
 import { ApiServiceRepository, ApiKeyRepository } from '../../repository'
+import { MailerService } from '../MailerService'
 
 @singleton()
 export class BitQueryService {
@@ -12,7 +13,8 @@ export class BitQueryService {
 
     public constructor(
         @inject(ApiServiceRepository) private readonly serviceRepository: ApiServiceRepository,
-        @inject(ApiKeyRepository) private readonly apiKeyRepository: ApiKeyRepository
+        @inject(ApiKeyRepository) private readonly apiKeyRepository: ApiKeyRepository,
+        @inject(MailerService) private readonly mailerService: MailerService
     ) {
         this.axiosInstance = axios.create({
             baseURL: 'https://graphql.bitquery.io',
@@ -54,7 +56,8 @@ export class BitQueryService {
                 } as Record<string, any>,
             },
             this.serviceRepository,
-            this.apiKeyRepository
+            this.apiKeyRepository,
+            this.mailerService
         )
 
         return response

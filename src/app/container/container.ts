@@ -370,7 +370,8 @@ container.register(CoinCodexService, {
 container.register(BitQueryService, {
     useFactory: instanceCachingFactory((dependencyContainer) => new BitQueryService(
         dependencyContainer.resolve(ApiServiceRepository),
-        dependencyContainer.resolve(ApiKeyRepository)
+        dependencyContainer.resolve(ApiKeyRepository),
+        dependencyContainer.resolve(MailerService)
     )),
 })
 
@@ -385,10 +386,12 @@ container.register(RugFreeCoinsService, {
 container.register(Top100TokensService, {
     useFactory: instanceCachingFactory(() => new Top100TokensService()),
 })
+
 container.register(TokensInsightService, {
     useFactory: instanceCachingFactory((dependencyContainer) => new TokensInsightService(
         dependencyContainer.resolve(ApiServiceRepository),
-        dependencyContainer.resolve(ApiKeyRepository)
+        dependencyContainer.resolve(ApiKeyRepository),
+        dependencyContainer.resolve(MailerService)
     )),
 })
 
@@ -407,7 +410,8 @@ container.register(CoinLoreService, {
 container.register(CMCService, {
     useFactory: instanceCachingFactory((dependencyContainer) => new CMCService(
         dependencyContainer.resolve(ApiServiceRepository),
-        dependencyContainer.resolve(ApiKeyRepository)
+        dependencyContainer.resolve(ApiKeyRepository),
+        dependencyContainer.resolve(MailerService)
     )),
 })
 

@@ -3,6 +3,7 @@ import { singleton, inject } from 'tsyringe'
 import { CMCApiGeneralResponse, CMCCryptocurrency, CMCTokenInfoResponse } from '../../types'
 import { makeServiceRequest, RequestOptions } from '../ApiService'
 import { ApiKeyRepository, ApiServiceRepository } from '../../repository'
+import { MailerService } from '../MailerService'
 
 @singleton()
 export class CMCService {
@@ -11,7 +12,8 @@ export class CMCService {
 
     public constructor(
         @inject(ApiServiceRepository) private readonly serviceRepository: ApiServiceRepository,
-        @inject(ApiKeyRepository) private readonly apiKeyRepository: ApiKeyRepository
+        @inject(ApiKeyRepository) private readonly apiKeyRepository: ApiKeyRepository,
+        @inject(MailerService) private readonly mailerService: MailerService
     ) {
         this.axiosInstance = axios.create({
             baseURL: 'https://pro-api.coinmarketcap.com/v1/cryptocurrency',
@@ -41,7 +43,8 @@ export class CMCService {
             'https://pro-api.coinmarketcap.com/v1/cryptocurrency/map',
             requestOptions,
             this.serviceRepository,
-            this.apiKeyRepository
+            this.apiKeyRepository,
+            this.mailerService
         )
     }
 
@@ -66,7 +69,8 @@ export class CMCService {
             'https://pro-api.coinmarketcap.com/v1/cryptocurrency/info',
             requestOptions,
             this.serviceRepository,
-            this.apiKeyRepository
+            this.apiKeyRepository,
+            this.mailerService
         )
     }
 }

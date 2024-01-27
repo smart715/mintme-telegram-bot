@@ -3,6 +3,7 @@ import { singleton, inject } from 'tsyringe'
 import { makeServiceRequest, RequestOptions } from '../ApiService'
 import { TokensInsightAllCoinsResponse, TokensInsightCoinDataResponse } from '../../types'
 import { ApiKeyRepository, ApiServiceRepository } from '../../repository'
+import { MailerService } from '../MailerService'
 
 @singleton()
 export class TokensInsightService {
@@ -13,7 +14,8 @@ export class TokensInsightService {
 
     public constructor(
         @inject(ApiServiceRepository) private readonly serviceRepository: ApiServiceRepository,
-        @inject(ApiKeyRepository) private readonly apiKeyRepository: ApiKeyRepository
+        @inject(ApiKeyRepository) private readonly apiKeyRepository: ApiKeyRepository,
+        @inject(MailerService) private readonly mailerService: MailerService
     ) {
         this.axiosInstance = axios.create({
             baseURL: 'https://api.tokeninsight.com/api/v1',
@@ -40,7 +42,8 @@ export class TokensInsightService {
             '/coins/list',
             { ...this.requestOptions, serviceName: this.serviceName },
             this.serviceRepository,
-            this.apiKeyRepository
+            this.apiKeyRepository,
+            this.mailerService
         )
     }
 
@@ -50,7 +53,8 @@ export class TokensInsightService {
             `/coins/${id}`,
             { ...this.requestOptions, serviceName: this.serviceName },
             this.serviceRepository,
-            this.apiKeyRepository
+            this.apiKeyRepository,
+            this.mailerService
         )
     }
 }

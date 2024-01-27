@@ -1,5 +1,7 @@
 import { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios'
 import { ApiServiceRepository, ApiKeyRepository } from '../repository'
+import { MailerService } from '../service'
+import config from 'config'
 
 export interface RequestOptions {
     serviceName: string;
@@ -15,7 +17,8 @@ export async function makeServiceRequest<T>(
     url: string,
     options: RequestOptions,
     serviceRepository: ApiServiceRepository,
-    apiKeyRepository: ApiKeyRepository
+    apiKeyRepository: ApiKeyRepository,
+    emailService: MailerService
 ): Promise<T> {
     const {
         serviceName,
@@ -29,6 +32,7 @@ export async function makeServiceRequest<T>(
     let retries = 1
     const maxRetries = 3
     const retryDelay = 1000 // 1 second delay between retries
+    const email: string = config.get('email_daily_statistic')
 
     while (retries <= maxRetries) {
         let service = await serviceRepository.findByName(serviceName)
@@ -61,9 +65,12 @@ export async function makeServiceRequest<T>(
                 await new Promise(resolve => setTimeout(resolve, retryDelay))
             }
         } else {
+            await emailService.sendEmail(email, 'API keys exhausted', `Service name: ${serviceName}`)
             throw new Error('All API keys have been exhausted, and the request failed.')
         }
     }
 
+    await emailService.sendEmail(email, 'API keys exhausted after retries', `Service name: ${serviceName}`)
     throw new Error('All API keys have been exhausted, and the request failed after maximum retries.')
 }
+
