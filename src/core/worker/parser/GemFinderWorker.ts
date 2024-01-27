@@ -1,9 +1,9 @@
 import { singleton } from 'tsyringe'
 import { Logger } from 'winston'
-import { RetryAxios, Blockchain, tokenAddressRegexp, getBlockchainFromContent } from '../../../utils'
-import { CheckedTokenService, TokensService } from '../../service'
+import { Blockchain, tokenAddressRegexp, getBlockchainFromContent } from '../../../utils'
+import { CheckedTokenService, FirewallService, SeleniumService, TokensService } from '../../service'
 import { AbstractParserWorker } from './AbstractParserWorker'
-import { JSDOM } from 'jsdom'
+import { By, WebDriver } from 'selenium-webdriver'
 
 @singleton()
 export class GemFinderWorker extends AbstractParserWorker {
@@ -11,11 +11,12 @@ export class GemFinderWorker extends AbstractParserWorker {
     private readonly prefixLog = `[${this.workerName}]`
     private readonly tokenIdRegexp = new RegExp('gem/[0-9]{1,8}', 'gs')
     private readonly tokenIdPrefix = 'gem/'
+    private webDriver: WebDriver
 
     public constructor(
         private readonly tokensService: TokensService,
-        private readonly retryAxios: RetryAxios,
         private readonly checkedTokenService: CheckedTokenService,
+        private readonly fireWallService: FirewallService,
         protected readonly logger: Logger,
     ) {
         super()
@@ -23,6 +24,12 @@ export class GemFinderWorker extends AbstractParserWorker {
 
     public async run(): Promise<void> {
         this.logger.info(`${this.prefixLog} Worker started`)
+
+        this.webDriver = await SeleniumService.createCloudFlareByPassedDriver(
+            this.buildPageUrl(1),
+            this.fireWallService,
+            this.logger,
+        )
 
         let page = 1
         while (true) { // eslint-disable-line
@@ -43,9 +50,23 @@ export class GemFinderWorker extends AbstractParserWorker {
     }
 
     private async fetchTokenIds(page: number): Promise<string[]> {
-        const response = await this.retryAxios.get(this.buildPageUrl(page), this.logger)
+        await this.loadPage(this.buildPageUrl(page))
+        const pageSrc = await this.webDriver.getPageSource()
 
-        return response.data.toLowerCase().match(this.tokenIdRegexp) ?? []
+        return pageSrc.toLowerCase().match(this.tokenIdRegexp) ?? []
+    }
+
+    private async loadPage(url: string): Promise<void> {
+        const { isNewDriver, newDriver } = await SeleniumService.loadPotentialCfPage(
+            this.webDriver,
+            url,
+            this.fireWallService,
+            this.logger
+        )
+
+        if (isNewDriver) {
+            this.webDriver = newDriver
+        }
     }
 
     private buildPageUrl(page: number): string {
@@ -61,7 +82,7 @@ export class GemFinderWorker extends AbstractParserWorker {
 
         const tokenInfo = await this.fetchTokenInfo(tokenId)
         const tokenAddress = this.getTokenAddress(tokenInfo)
-        const blockchain = this.getBlockchain(tokenInfo)
+        const blockchain = await this.getBlockchain()
         const tokenName = this.getTokenName(tokenInfo)
         const links = this.getLinks(tokenInfo)
         const websites = this.getWebsites(tokenInfo)
@@ -92,9 +113,11 @@ export class GemFinderWorker extends AbstractParserWorker {
     }
 
     private async fetchTokenInfo(tokenId: string): Promise<string> {
-        const response = await this.retryAxios.get(this.buildTokenInfoUrl(tokenId), this.logger)
+        await this.loadPage(this.buildTokenInfoUrl(tokenId))
 
-        return response.data.toLowerCase()
+        const pageSrc = await this.webDriver.getPageSource()
+
+        return pageSrc.toLowerCase()
     }
 
     private buildTokenInfoUrl(tokenId: string): string {
@@ -102,17 +125,16 @@ export class GemFinderWorker extends AbstractParserWorker {
     }
 
 
-    private getBlockchain(tokenInfo: string): Blockchain|null {
-        const pageDOM = (new JSDOM(tokenInfo)).window.document
-        const contractSectionSelector = pageDOM.getElementsByClassName('coin_contract')
+    private async getBlockchain(): Promise<Blockchain | null> {
+        const contractSectionSelector = await this.webDriver.findElements(By.className('coin_contract'))
 
         if (!contractSectionSelector.length) {
             return null
         }
 
-        const contractSectionSrc = contractSectionSelector[0].innerHTML
+        const contractSectionText = await contractSectionSelector[0].getText()
 
-        return getBlockchainFromContent(contractSectionSrc)
+        return getBlockchainFromContent(contractSectionText)
     }
 
     private getTokenAddress(tokenInfo: string): string {
