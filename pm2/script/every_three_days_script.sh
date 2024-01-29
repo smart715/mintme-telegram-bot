@@ -1,6 +1,3 @@
-# Run MyEtherLists
-npm run cli -- run-fetch-token-worker --name=my-ether-lists
-
 # Run CoinsHunter
 npm run cli -- run-fetch-token-worker --name=coins-hunter
 
@@ -24,39 +21,3 @@ npm run cli -- run-fetch-token-worker --name=top-100-tokens
 
 # Run CoinCatapult
 npm run cli -- run-fetch-token-worker --name=coin-catapult
-
-# Run Coinvote
-npm run cli -- run-fetch-token-worker --name=coin-vote
-
-# Run ADVNWorker
-npm run cli -- run-fetch-token-worker --name=advn
-
-# Run MemeCoinsWorker
-npm run cli -- run-fetch-token-worker --name=meme-coin
-
-# Run CoinDiscovery
-npm run cli -- run-fetch-token-worker --name=coin-discovery
-
-# Run MobulaWorker
-npm run cli -- run-fetch-token-worker --name=mobula
-
-# Run CoinScope
-npm run cli -- run-fetch-token-worker --name=coin-scope
-
-# Run CoinBuddy
-npm run cli -- run-fetch-token-worker --name=coin-buddy
-
-# Run CoinSniper
-npm run cli -- run-fetch-token-worker --name=coin-sniper
-
-# Run Coinbrain
-npm run cli -- run-fetch-token-worker --name=coin-brain
-
-# Run TokenInsight
-npm run cli -- run-fetch-token-worker --name=tokens-insight
-
-# Run CryptoVoteListWorker
-npm run cli -- run-fetch-token-worker --name=crypto-vote-list
-
-# Run MyCoinVoteWorker
-npm run cli -- run-fetch-token-worker --name=my-coin-vote
