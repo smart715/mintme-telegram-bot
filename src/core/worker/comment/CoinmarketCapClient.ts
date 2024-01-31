@@ -337,9 +337,11 @@ export class CoinMarketCapClient {
 
                 await this.cmcService.updateContinousFailedSubmits(this.cmcAccount, 0)
 
-                await this.cmcService.addNewHistoryAction(this.cmcAccount.id,
+                await this.cmcService.addNewHistoryAction(
+                    this.cmcAccount.id,
                     coin.slug,
-                    this.cmcAccount.id)
+                    this.cmcAccount.id
+                )
             }
 
             this.log(`Finished posting on ${coin.name} | Is Submitted: ${isSubmitted}`)

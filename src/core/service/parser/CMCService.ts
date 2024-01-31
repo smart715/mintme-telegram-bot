@@ -12,7 +12,8 @@ export class CMCService {
     private readonly apiKeys: string[] = config.get<CMCWorkerConfig>('cmcWorker')['apiKeys']
     private readonly axiosInstance: AxiosInstance
 
-    public constructor(private readonly cmcAccountsRepository: CoinMarketCapAccountRepository,
+    public constructor(
+        private readonly cmcAccountsRepository: CoinMarketCapAccountRepository,
         private readonly cmcCommentRepository: CoinMarketCapCommentRepository,
         private readonly cmcCommentHistoryRepository: CoinMarketCapCommentHistoryRepository,
         private readonly proxyService: ProxyService,

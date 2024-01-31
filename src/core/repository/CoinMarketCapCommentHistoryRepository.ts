@@ -30,7 +30,8 @@ export class CoinMarketCapCommentHistoryRepository extends Repository<CoinMarket
         })
     }
 
-    public async newHistory(accountId: number,
+    public async newHistory(
+        accountId: number,
         coinId: string,
         commentId: number
     ): Promise<void> {
