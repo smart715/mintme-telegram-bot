@@ -109,7 +109,8 @@ export class CMCService {
         return proxy
     }
 
-    public async updateContinousFailedSubmits(cmcAccount: CoinMarketCapAccount,
+    public async updateContinousFailedSubmits(
+        cmcAccount: CoinMarketCapAccount,
         contiousFails: number
     ): Promise<CoinMarketCapAccount> {
         cmcAccount.continousFailed = contiousFails

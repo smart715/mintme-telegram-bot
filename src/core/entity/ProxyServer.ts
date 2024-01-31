@@ -1,6 +1,6 @@
 import { Entity, Column, PrimaryGeneratedColumn, OneToMany } from 'typeorm'
 import { TelegramAccount } from './TelegramAccount'
-import { CoinMarketCapAccount } from './CoinMarketCapAccount'
+import { CoinMarketCapAccount } from './CoinMarketCap'
 
 @Entity()
 export class ProxyServer {

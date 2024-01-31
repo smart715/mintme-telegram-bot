@@ -243,8 +243,10 @@ export class CoinMarketCapClient {
             if (this.continousFailedSubmits >= 5) {
                 this.log(`Skipping account due to exceeding max continous failed submits`)
 
-                await this.cmcService.updateContinousFailedSubmits(this.cmcAccount,
-                    this.cmcAccount.continousFailed + this.continousFailedSubmits)
+                await this.cmcService.updateContinousFailedSubmits(
+                    this.cmcAccount,
+                    this.cmcAccount.continousFailed + this.continousFailedSubmits
+                    )
 
                 await this.cmcService.updateAccountLastLogin(this.cmcAccount, moment().add(60, 'minutes').toDate())
                 break

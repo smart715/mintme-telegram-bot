@@ -1,5 +1,5 @@
 import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm'
-import { ProxyServer } from './ProxyServer'
+import { ProxyServer } from '../ProxyServer'
 
 @Entity()
 export class CoinMarketCapAccount {
