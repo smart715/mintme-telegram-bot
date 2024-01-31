@@ -12,7 +12,7 @@ export class CreateApiKeysTable1703289502542 implements MigrationInterface {
                 next_attempt_date DATETIME,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-                FOREIGN KEY (serviceId) REFERENCES service(id)
+                FOREIGN KEY (serviceId) REFERENCES api_service(id)
             );
         `)
     }
