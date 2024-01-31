@@ -79,7 +79,8 @@ export class CMCService {
         return this.cmcCommentHistoryRepository.getCoinSubmittedComments(coinId)
     }
 
-    public async addNewHistoryAction(accountId: number,
+    public async addNewHistoryAction(
+        accountId: number,
         coinId: string,
         commentId: number
     ): Promise<void> {
