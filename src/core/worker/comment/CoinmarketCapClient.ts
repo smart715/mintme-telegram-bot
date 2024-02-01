@@ -246,7 +246,7 @@ export class CoinMarketCapClient {
                 await this.cmcService.updateContinousFailedSubmits(
                     this.cmcAccount,
                     this.cmcAccount.continousFailed + this.continousFailedSubmits
-                    )
+                )
 
                 await this.cmcService.updateAccountLastLogin(this.cmcAccount, moment().add(60, 'minutes').toDate())
                 break
