@@ -231,7 +231,9 @@ export class TwitterClient {
             if (!queuedContact) {
                 this.log('Queued contact doesn\'t have tokens to contact. Waiting ~5 mins...')
 
-                return
+                await this.driver.sleep(300000)
+
+                continue
             }
 
             const token = await this.tokenService.findByAddress(queuedContact.address)

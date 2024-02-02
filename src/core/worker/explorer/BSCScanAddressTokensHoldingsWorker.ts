@@ -83,7 +83,11 @@ export class BSCScanAddressTokensHoldingsWorker extends AbstractTokenWorker {
                         continue
                     }
 
-                    await webDriver.wait(until.elementLocated(By.name('mytable_length')), 60000)
+                    try {
+                        await webDriver.wait(until.elementLocated(By.name('mytable_length')), 30000)
+                    } catch (error) {
+                        this.logger.warn(`Couldn't find assets table on page of wallet ${blockchain}::${wallet}`)
+                    }
 
                     await webDriver.sleep(this.delayBetweenPages)
 
