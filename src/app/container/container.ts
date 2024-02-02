@@ -102,6 +102,7 @@ import {
     BlacklistRepository,
     ApiServiceRepository,
     ApiKeyRepository,
+    ApiServiceHandler,
 } from '../../core'
 import { Application } from '../'
 import { CliDependency } from './types'
@@ -369,9 +370,7 @@ container.register(CoinCodexService, {
 
 container.register(BitQueryService, {
     useFactory: instanceCachingFactory((dependencyContainer) => new BitQueryService(
-        dependencyContainer.resolve(ApiServiceRepository),
-        dependencyContainer.resolve(ApiKeyRepository),
-        dependencyContainer.resolve(MailerService)
+        dependencyContainer.resolve(ApiServiceHandler),
     )),
 })
 
@@ -389,9 +388,7 @@ container.register(Top100TokensService, {
 
 container.register(TokensInsightService, {
     useFactory: instanceCachingFactory((dependencyContainer) => new TokensInsightService(
-        dependencyContainer.resolve(ApiServiceRepository),
-        dependencyContainer.resolve(ApiKeyRepository),
-        dependencyContainer.resolve(MailerService)
+        dependencyContainer.resolve(ApiServiceHandler),
     )),
 })
 
@@ -409,9 +406,7 @@ container.register(CoinLoreService, {
 
 container.register(CMCService, {
     useFactory: instanceCachingFactory((dependencyContainer) => new CMCService(
-        dependencyContainer.resolve(ApiServiceRepository),
-        dependencyContainer.resolve(ApiKeyRepository),
-        dependencyContainer.resolve(MailerService)
+        dependencyContainer.resolve(ApiServiceHandler),
     )),
 })
 
@@ -452,6 +447,15 @@ container.register(TwitterService, {
     ),
 })
 
+container.register(ApiServiceHandler, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new ApiServiceHandler(
+            dependencyContainer.resolve(ApiServiceRepository),
+            dependencyContainer.resolve(ApiKeyRepository),
+            dependencyContainer.resolve(MailerService),
+        ),
+    ),
+})
 // Workers
 
 container.register(CMCWorker, {
