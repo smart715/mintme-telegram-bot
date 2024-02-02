@@ -1,7 +1,8 @@
 import { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios'
 import { ApiServiceRepository, ApiKeyRepository } from '../repository'
-import { MailerService } from '.'
+import { MailerService } from '../../core'
 import config from 'config'
+import { inject, singleton } from 'tsyringe';
 
 export interface RequestOptions {
     serviceName: string;
@@ -12,15 +13,16 @@ export interface RequestOptions {
     apiKeyName?: string;
 }
 
+@singleton()
 export class ApiServiceHandler<T> {
     private readonly serviceRepository: ApiServiceRepository
     private readonly apiKeyRepository: ApiKeyRepository
     private readonly emailService: MailerService
 
     public constructor(
-        serviceRepository: ApiServiceRepository,
-        apiKeyRepository: ApiKeyRepository,
-        emailService: MailerService
+        @inject(ApiServiceRepository) serviceRepository: ApiServiceRepository,
+        @inject(ApiKeyRepository) apiKeyRepository: ApiKeyRepository,
+        @inject(MailerService) emailService: MailerService
     ) {
         this.serviceRepository = serviceRepository
         this.apiKeyRepository = apiKeyRepository
