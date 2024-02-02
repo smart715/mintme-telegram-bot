@@ -2,7 +2,7 @@ import { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios'
 import { ApiServiceRepository, ApiKeyRepository } from '../repository'
 import { MailerService } from '../../core'
 import config from 'config'
-import { inject, singleton } from 'tsyringe';
+import { inject, singleton } from 'tsyringe'
 
 export interface RequestOptions {
     serviceName: string;
