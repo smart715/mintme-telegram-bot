@@ -1,9 +1,11 @@
 import axios, { AxiosInstance } from 'axios'
 import { singleton, inject } from 'tsyringe'
-import { CMCApiGeneralResponse, CMCCryptocurrency, CMCTokenInfoResponse } from '../../types'
-import { makeServiceRequest, RequestOptions } from '../ApiService'
-import { ApiKeyRepository, ApiServiceRepository } from '../../repository'
-import { MailerService } from '../MailerService'
+import {
+    CMCApiGeneralResponse,
+    CMCCryptocurrency,
+    CMCTokenInfoResponse,
+} from '../../types'
+import { ApiServiceHandler, RequestOptions } from '../ApiServiceHandler'
 
 @singleton()
 export class CMCService {
@@ -11,9 +13,8 @@ export class CMCService {
     private readonly axiosInstance: AxiosInstance
 
     public constructor(
-        @inject(ApiServiceRepository) private readonly serviceRepository: ApiServiceRepository,
-        @inject(ApiKeyRepository) private readonly apiKeyRepository: ApiKeyRepository,
-        @inject(MailerService) private readonly mailerService: MailerService
+        @inject(ApiServiceHandler)
+        private readonly apiServiceHandler: ApiServiceHandler<any>
     ) {
         this.axiosInstance = axios.create({
             baseURL: 'https://pro-api.coinmarketcap.com/v1/cryptocurrency',
@@ -21,7 +22,10 @@ export class CMCService {
         })
     }
 
-    public async getLastTokens(start: number, limit: number): Promise<CMCApiGeneralResponse<CMCCryptocurrency[]>> {
+    public async getLastTokens(
+        start: number,
+        limit: number
+    ): Promise<CMCApiGeneralResponse<CMCCryptocurrency[]>> {
         const requestOptions: RequestOptions = {
             serviceName: this.serviceName,
             method: 'GET',
@@ -38,17 +42,16 @@ export class CMCService {
             apiKeyName: 'CMC_PRO_API_KEY',
         }
 
-        return makeServiceRequest<CMCApiGeneralResponse<CMCCryptocurrency[]>>(
+        return this.apiServiceHandler.makeServiceRequests(
             this.axiosInstance,
             'https://pro-api.coinmarketcap.com/v1/cryptocurrency/map',
-            requestOptions,
-            this.serviceRepository,
-            this.apiKeyRepository,
-            this.mailerService
+            requestOptions
         )
     }
 
-    public async getTokenInfo(slug: string): Promise<CMCApiGeneralResponse<CMCTokenInfoResponse>> {
+    public async getTokenInfo(
+        slug: string
+    ): Promise<CMCApiGeneralResponse<CMCTokenInfoResponse>> {
         const requestOptions: RequestOptions = {
             serviceName: this.serviceName,
             method: 'GET',
@@ -64,13 +67,10 @@ export class CMCService {
             apiKeyName: 'CMC_PRO_API_KEY',
         }
 
-        return makeServiceRequest<CMCApiGeneralResponse<CMCTokenInfoResponse>>(
+        return this.apiServiceHandler.makeServiceRequests(
             this.axiosInstance,
             'https://pro-api.coinmarketcap.com/v1/cryptocurrency/info',
-            requestOptions,
-            this.serviceRepository,
-            this.apiKeyRepository,
-            this.mailerService
+            requestOptions
         )
     }
 }
