@@ -14,7 +14,8 @@ export class CMCService {
 
     public constructor(
         @inject(ApiServiceHandler)
-        private readonly apiServiceHandler: ApiServiceHandler<any>
+        private readonly apiServiceHandler: ApiServiceHandler<
+            CMCApiGeneralResponse<CMCCryptocurrency[] | CMCTokenInfoResponse > >
     ) {
         this.axiosInstance = axios.create({
             baseURL: 'https://pro-api.coinmarketcap.com/v1/cryptocurrency',

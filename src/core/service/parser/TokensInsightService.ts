@@ -1,9 +1,7 @@
 import axios, { AxiosInstance } from 'axios'
 import { singleton, inject } from 'tsyringe'
-import { makeServiceRequest, RequestOptions } from '../ApiService'
+import { ApiServiceHandler, RequestOptions } from '../ApiServiceHandler'
 import { TokensInsightAllCoinsResponse, TokensInsightCoinDataResponse } from '../../types'
-import { ApiKeyRepository, ApiServiceRepository } from '../../repository'
-import { MailerService } from '../MailerService'
 
 @singleton()
 export class TokensInsightService {
@@ -13,9 +11,10 @@ export class TokensInsightService {
     private readonly requestOptions: RequestOptions
 
     public constructor(
-        @inject(ApiServiceRepository) private readonly serviceRepository: ApiServiceRepository,
-        @inject(ApiKeyRepository) private readonly apiKeyRepository: ApiKeyRepository,
-        @inject(MailerService) private readonly mailerService: MailerService
+        @inject(ApiServiceHandler)
+        private readonly apiServiceHandler: ApiServiceHandler<
+            TokensInsightAllCoinsResponse | TokensInsightCoinDataResponse
+        >
     ) {
         this.axiosInstance = axios.create({
             baseURL: 'https://api.tokeninsight.com/api/v1',
@@ -37,24 +36,18 @@ export class TokensInsightService {
     public async getAllCoins(offset: number, limit: number): Promise<TokensInsightAllCoinsResponse> {
         this.requestOptions.params = { offset, limit }
 
-        return makeServiceRequest<TokensInsightAllCoinsResponse>(
+        return this.apiServiceHandler.makeServiceRequests(
             this.axiosInstance,
             '/coins/list',
-            { ...this.requestOptions, serviceName: this.serviceName },
-            this.serviceRepository,
-            this.apiKeyRepository,
-            this.mailerService
+            this.requestOptions
         )
     }
 
     public async getCoinData(id: string): Promise<TokensInsightCoinDataResponse> {
-        return makeServiceRequest<TokensInsightCoinDataResponse>(
+        return this.apiServiceHandler.makeServiceRequests(
             this.axiosInstance,
             `/coins/${id}`,
-            { ...this.requestOptions, serviceName: this.serviceName },
-            this.serviceRepository,
-            this.apiKeyRepository,
-            this.mailerService
+            this.requestOptions
         )
     }
 }
