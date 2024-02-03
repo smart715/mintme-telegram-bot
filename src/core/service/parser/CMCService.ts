@@ -1,5 +1,5 @@
 import axios, { AxiosInstance } from 'axios'
-import { singleton, inject } from 'tsyringe'
+import { singleton } from 'tsyringe'
 import {
     CMCApiGeneralResponse,
     CMCCryptocurrency,
@@ -13,9 +13,7 @@ export class CMCService {
     private readonly axiosInstance: AxiosInstance
 
     public constructor(
-        @inject(ApiServiceHandler)
-        private readonly apiServiceHandler: ApiServiceHandler<
-            CMCApiGeneralResponse<CMCCryptocurrency[] | CMCTokenInfoResponse > >
+        private readonly apiServiceHandler: ApiServiceHandler
     ) {
         this.axiosInstance = axios.create({
             baseURL: 'https://pro-api.coinmarketcap.com/v1/cryptocurrency',

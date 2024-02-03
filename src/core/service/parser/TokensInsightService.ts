@@ -1,5 +1,5 @@
 import axios, { AxiosInstance } from 'axios'
-import { singleton, inject } from 'tsyringe'
+import { singleton } from 'tsyringe'
 import { ApiServiceHandler, RequestOptions } from '../ApiServiceHandler'
 import { TokensInsightAllCoinsResponse, TokensInsightCoinDataResponse } from '../../types'
 
@@ -11,10 +11,7 @@ export class TokensInsightService {
     private readonly requestOptions: RequestOptions
 
     public constructor(
-        @inject(ApiServiceHandler)
-        private readonly apiServiceHandler: ApiServiceHandler<
-            TokensInsightAllCoinsResponse | TokensInsightCoinDataResponse
-        >
+        private readonly apiServiceHandler: ApiServiceHandler
     ) {
         this.axiosInstance = axios.create({
             baseURL: 'https://api.tokeninsight.com/api/v1',

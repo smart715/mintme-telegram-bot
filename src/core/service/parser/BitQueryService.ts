@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 import axios, { AxiosInstance } from 'axios'
-import { singleton, inject } from 'tsyringe'
+import { singleton } from 'tsyringe'
 import { BitQueryTransfersResponse } from '../../types'
 import { ApiServiceHandler, RequestOptions } from '../ApiServiceHandler'
 
@@ -10,7 +10,7 @@ export class BitQueryService {
     private readonly axiosInstance: AxiosInstance
 
     public constructor(
-        @inject(ApiServiceHandler) private readonly apiServiceHandler: ApiServiceHandler<BitQueryTransfersResponse>
+        private readonly apiServiceHandler: ApiServiceHandler
     ) {
         this.axiosInstance = axios.create({
             baseURL: 'https://graphql.bitquery.io',

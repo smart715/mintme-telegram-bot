@@ -2,7 +2,7 @@ import { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios'
 import { ApiServiceRepository, ApiKeyRepository } from '../repository'
 import { MailerService } from '../../core'
 import config from 'config'
-import { inject, singleton } from 'tsyringe'
+import { singleton } from 'tsyringe'
 
 export interface RequestOptions {
     serviceName: string;
@@ -14,26 +14,18 @@ export interface RequestOptions {
 }
 
 @singleton()
-export class ApiServiceHandler<T> {
-    private readonly serviceRepository: ApiServiceRepository
-    private readonly apiKeyRepository: ApiKeyRepository
-    private readonly emailService: MailerService
-
+export class ApiServiceHandler {
     public constructor(
-        @inject(ApiServiceRepository) serviceRepository: ApiServiceRepository,
-        @inject(ApiKeyRepository) apiKeyRepository: ApiKeyRepository,
-        @inject(MailerService) emailService: MailerService
-    ) {
-        this.serviceRepository = serviceRepository
-        this.apiKeyRepository = apiKeyRepository
-        this.emailService = emailService
-    }
+        private readonly apiserviceRepository: ApiServiceRepository,
+        private readonly apiKeyRepository: ApiKeyRepository,
+        private readonly emailService: MailerService
+    ) { }
 
     public async makeServiceRequests(
         axiosInstance: AxiosInstance,
         url: string, options:
             RequestOptions
-    ): Promise<T> {
+    ): Promise<any> {
         const {
             serviceName,
             headers = {},
@@ -49,10 +41,10 @@ export class ApiServiceHandler<T> {
         const email: string = config.get('email_daily_statistic')
 
         while (retries <= maxRetries) {
-            let service = await this.serviceRepository.findByName(serviceName)
+            let service = await this.apiserviceRepository.findByName(serviceName)
 
             if (!service) {
-                service = await this.serviceRepository.save({ name: serviceName })
+                service = await this.apiserviceRepository.save({ name: serviceName })
                 throw new Error(`Service not found. Service name: ${serviceName}`)
             }
 
@@ -71,7 +63,7 @@ export class ApiServiceHandler<T> {
                 }
 
                 try {
-                    const response: AxiosResponse<T> = await axiosInstance(requestConfig)
+                    const response: AxiosResponse<any> = await axiosInstance(requestConfig)
                     return response.data
                 } catch (error) {
                     await this.apiKeyRepository.updateNextAttemptDate(apiKeyRecord.id, new Date())
