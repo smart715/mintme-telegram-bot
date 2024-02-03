@@ -5,7 +5,7 @@ export class CreateApiKeysTable1703289502542 implements MigrationInterface {
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
-            CREATE TABLE api_key (
+            CREATE TABLE IF NOT EXISTS api_key (
                 id INT PRIMARY KEY AUTO_INCREMENT,
                 serviceId INT,
                 api_key VARCHAR(255) NOT NULL,
