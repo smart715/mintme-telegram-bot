@@ -7,12 +7,12 @@ export class CreateApiKeysTable1703289502542 implements MigrationInterface {
         await queryRunner.query(`
             CREATE TABLE IF NOT EXISTS api_key (
                 id INT PRIMARY KEY AUTO_INCREMENT,
-                serviceId INT,
+                service_id  INT,
                 api_key VARCHAR(255) NOT NULL,
                 next_attempt_date DATETIME,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-                FOREIGN KEY (serviceId) REFERENCES api_service(id)
+                FOREIGN KEY (service_id ) REFERENCES api_service(id)
             );
         `)
     }
