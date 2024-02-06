@@ -18,7 +18,7 @@ export class ApiServiceHandler {
     public constructor(
         private readonly apiServiceRepository: ApiServiceRepository,
         private readonly apiKeyRepository: ApiKeyRepository,
-        private readonly emailService: MailerService
+        private readonly mailerService: MailerService
     ) { }
 
     public async makeServiceRequests(
@@ -71,7 +71,7 @@ export class ApiServiceHandler {
                     await new Promise(resolve => setTimeout(resolve, retryDelay))
                 }
             } else {
-                await this.emailService.sendEmail(
+                await this.mailerService.sendEmail(
                     email,
                     'API keys exhausted',
                     `Service name: ${serviceName}`
@@ -80,7 +80,7 @@ export class ApiServiceHandler {
             }
         }
 
-        await this.emailService.sendEmail(
+        await this.mailerService.sendEmail(
             email,
             'API keys exhausted after retries',
             `Service name: ${serviceName}`
