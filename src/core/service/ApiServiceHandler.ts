@@ -16,15 +16,15 @@ export interface RequestOptions {
 @singleton()
 export class ApiServiceHandler {
     public constructor(
-        private readonly apiserviceRepository: ApiServiceRepository,
+        private readonly apiServiceRepository: ApiServiceRepository,
         private readonly apiKeyRepository: ApiKeyRepository,
         private readonly emailService: MailerService
     ) { }
 
     public async makeServiceRequests(
         axiosInstance: AxiosInstance,
-        url: string, options:
-            RequestOptions
+        url: string,
+        options: RequestOptions
     ): Promise<any> {
         const {
             serviceName,
@@ -41,10 +41,10 @@ export class ApiServiceHandler {
         const email: string = config.get('email_daily_statistic')
 
         while (retries <= maxRetries) {
-            let service = await this.apiserviceRepository.findByName(serviceName)
+            let service = await this.apiServiceRepository.findByName(serviceName)
 
             if (!service) {
-                service = await this.apiserviceRepository.save({ name: serviceName })
+                service = await this.apiServiceRepository.save({ name: serviceName })
                 throw new Error(`Service not found. Service name: ${serviceName}`)
             }
 
