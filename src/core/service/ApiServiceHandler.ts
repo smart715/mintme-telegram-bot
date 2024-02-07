@@ -3,6 +3,7 @@ import { ApiServiceRepository, ApiKeyRepository } from '../repository'
 import { MailerService } from '../../core'
 import config from 'config'
 import { singleton } from 'tsyringe'
+import { sleep } from '../../utils'
 
 export interface RequestOptions {
     serviceName: string;
@@ -37,7 +38,6 @@ export class ApiServiceHandler {
 
         let retries = 1
         const maxRetries = 3
-        const retryDelay = 1000 // 1 second delay between retries
         const email: string = config.get('email_daily_statistic')
 
         while (retries <= maxRetries) {
@@ -68,7 +68,7 @@ export class ApiServiceHandler {
                 } catch (error) {
                     await this.apiKeyRepository.updateNextAttemptDate(apiKeyRecord.id, new Date())
                     retries++
-                    await new Promise(resolve => setTimeout(resolve, retryDelay))
+                    await sleep(1000)
                 }
             } else {
                 await this.mailerService.sendEmail(
