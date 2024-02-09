@@ -1,7 +1,7 @@
 import axios, { AxiosInstance } from 'axios'
 import { singleton } from 'tsyringe'
 import config from 'config'
-import { CMCApiGeneralResponse, CMCCryptocurrency, CMCTokenInfoResponse, CMCWorkerConfig } from '../../types'
+import { AccountType, CMCApiGeneralResponse, CMCCryptocurrency, CMCTokenInfoResponse, CMCWorkerConfig } from '../../types'
 import { makeRequest, RequestOptions } from '../ApiService'
 import { CoinMarketCapAccount, CoinMarketCapComment, CoinMarketCapCommentHistory, ProxyServer } from '../../entity'
 import { CoinMarketCapAccountRepository, CoinMarketCapCommentHistoryRepository, CoinMarketCapCommentRepository } from '../../repository'
@@ -99,7 +99,7 @@ export class CMCService {
     }
 
     public async assignNewProxyForAccount(cmcAccount: CoinMarketCapAccount): Promise<ProxyServer|undefined> {
-        const proxy = await this.proxyService.getRandomProxy(true)
+        const proxy = await this.proxyService.getRandomProxy(AccountType.CMC)
 
         if (proxy) {
             cmcAccount.proxy = proxy

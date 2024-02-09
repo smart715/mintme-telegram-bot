@@ -1,6 +1,7 @@
 import { singleton } from 'tsyringe'
 import { EntityRepository, Repository } from 'typeorm'
 import { ProxyServer } from '../entity'
+import { AccountType } from '../types'
 
 @singleton()
 @EntityRepository(ProxyServer)
@@ -15,12 +16,12 @@ export class ProxyServerRepository extends Repository<ProxyServer> {
             .getOne()
     }
 
-    public async getRandomProxy(isCmcAccount: boolean = false): Promise<ProxyServer | undefined> {
+    public async getRandomProxy(accountType: AccountType): Promise<ProxyServer | undefined> {
         const queryBuilder = this.createQueryBuilder()
             .where('is_disabled = 0')
             .orderBy('RAND()')
 
-        if (isCmcAccount) {
+        if (AccountType.CMC === accountType) {
             queryBuilder.andWhere('id NOT IN (SELECT proxy_id FROM coin_market_cap_account WHERE proxy_id IS NOT NULL)')
         }
 
