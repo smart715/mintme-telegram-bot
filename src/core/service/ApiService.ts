@@ -1,6 +1,6 @@
 import { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios'
 import { ApiServiceRepository, ApiKeyRepository } from '../repository'
-import { MailerService } from '../../core'
+import { MailerService } from '..'
 import config from 'config'
 import { singleton } from 'tsyringe'
 import { sleep } from '../../utils'
@@ -15,7 +15,7 @@ export interface RequestOptions {
 }
 
 @singleton()
-export class ApiServiceHandler {
+export class ApiService {
     public constructor(
         private readonly apiServiceRepository: ApiServiceRepository,
         private readonly apiKeyRepository: ApiKeyRepository,

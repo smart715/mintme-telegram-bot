@@ -5,7 +5,7 @@ import {
     CMCCryptocurrency,
     CMCTokenInfoResponse,
 } from '../../types'
-import { ApiServiceHandler, RequestOptions } from '../ApiServiceHandler'
+import { ApiService, RequestOptions } from '../ApiService'
 
 @singleton()
 export class CMCService {
@@ -13,7 +13,7 @@ export class CMCService {
     private readonly axiosInstance: AxiosInstance
 
     public constructor(
-        private readonly apiServiceHandler: ApiServiceHandler
+        private readonly apiService: ApiService
     ) {
         this.axiosInstance = axios.create({
             baseURL: 'https://pro-api.coinmarketcap.com/v1/cryptocurrency',
@@ -41,7 +41,7 @@ export class CMCService {
             apiKeyName: 'CMC_PRO_API_KEY',
         }
 
-        return this.apiServiceHandler.makeServiceRequests(
+        return this.apiService.makeServiceRequests(
             this.axiosInstance,
             'https://pro-api.coinmarketcap.com/v1/cryptocurrency/map',
             requestOptions
@@ -66,7 +66,7 @@ export class CMCService {
             apiKeyName: 'CMC_PRO_API_KEY',
         }
 
-        return this.apiServiceHandler.makeServiceRequests(
+        return this.apiService.makeServiceRequests(
             this.axiosInstance,
             'https://pro-api.coinmarketcap.com/v1/cryptocurrency/info',
             requestOptions

@@ -2,7 +2,7 @@
 import axios, { AxiosInstance } from 'axios'
 import { singleton } from 'tsyringe'
 import { BitQueryTransfersResponse } from '../../types'
-import { ApiServiceHandler, RequestOptions } from '../ApiServiceHandler'
+import { ApiService, RequestOptions } from '../ApiService'
 
 @singleton()
 export class BitQueryService {
@@ -10,7 +10,7 @@ export class BitQueryService {
     private readonly axiosInstance: AxiosInstance
 
     public constructor(
-        private readonly apiServiceHandler: ApiServiceHandler
+        private readonly apiService: ApiService
     ) {
         this.axiosInstance = axios.create({
             baseURL: 'https://graphql.bitquery.io',
@@ -49,6 +49,6 @@ export class BitQueryService {
             } as Record<string, any>,
         }
 
-        return this.apiServiceHandler.makeServiceRequests(this.axiosInstance, apiParameter, requestOptions)
+        return this.apiService.makeServiceRequests(this.axiosInstance, apiParameter, requestOptions)
     }
 }

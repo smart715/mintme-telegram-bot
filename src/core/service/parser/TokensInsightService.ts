@@ -1,6 +1,6 @@
 import axios, { AxiosInstance } from 'axios'
 import { singleton } from 'tsyringe'
-import { ApiServiceHandler, RequestOptions } from '../ApiServiceHandler'
+import { ApiService, RequestOptions } from '../ApiService'
 import { TokensInsightAllCoinsResponse, TokensInsightCoinDataResponse } from '../../types'
 
 @singleton()
@@ -11,7 +11,7 @@ export class TokensInsightService {
     private readonly requestOptions: RequestOptions
 
     public constructor(
-        private readonly apiServiceHandler: ApiServiceHandler
+        private readonly apiService: ApiService
     ) {
         this.axiosInstance = axios.create({
             baseURL: 'https://api.tokeninsight.com/api/v1',
@@ -33,7 +33,7 @@ export class TokensInsightService {
     public async getAllCoins(offset: number, limit: number): Promise<TokensInsightAllCoinsResponse> {
         this.requestOptions.params = { offset, limit }
 
-        return this.apiServiceHandler.makeServiceRequests(
+        return this.apiService.makeServiceRequests(
             this.axiosInstance,
             '/coins/list',
             this.requestOptions
@@ -41,7 +41,7 @@ export class TokensInsightService {
     }
 
     public async getCoinData(id: string): Promise<TokensInsightCoinDataResponse> {
-        return this.apiServiceHandler.makeServiceRequests(
+        return this.apiService.makeServiceRequests(
             this.axiosInstance,
             `/coins/${id}`,
             this.requestOptions
