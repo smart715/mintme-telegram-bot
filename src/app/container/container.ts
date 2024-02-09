@@ -665,8 +665,8 @@ container.register(GemFinderWorker, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new GemFinderWorker(
             dependencyContainer.resolve(TokensService),
-            dependencyContainer.resolve(RetryAxios),
             dependencyContainer.resolve(CheckedTokenService),
+            dependencyContainer.resolve(FirewallService),
             createLogger(GemFinderWorker.name.toLowerCase())
         )
     ),
