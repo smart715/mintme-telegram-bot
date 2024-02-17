@@ -607,6 +607,7 @@ container.register(LastTokenTxDateFetcher, {
         new LastTokenTxDateFetcher(
             dependencyContainer.resolve(TokensService),
             lastTokenTxDateFetcherLogger,
+            dependencyContainer.resolve(ApiService),
         )
     ),
 })
