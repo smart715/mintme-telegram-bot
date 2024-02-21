@@ -48,7 +48,7 @@ export class TokensService {
             return this.updateTokenLinks(token, websites, emails, links)
         }
 
-        const tokenForbiddenWordsRegexp = /(pancake|binance-peg|wrapped|-lp|swaap governance|tracker|\(\)|cronos chain|uniswap|polygonscan|erc-20 token|erc-1155|nft)/i
+        const tokenForbiddenWordsRegexp = /(pancake|binance-peg|wrapped|-lp|swaap governance|tracker|\(\)|cronos chain|uniswap|polygonscan|erc-20 token|erc-1155|nft|usdc|usdt|usd coin|staked)/i
 
         if (tokenForbiddenWordsRegexp.test(tokenName)) {
             logger.warn(`Ignored token ${tokenName} ${tokenAddress} :: ${blockchain} due to forbidden name.`)
