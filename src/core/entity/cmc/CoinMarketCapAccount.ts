@@ -1,22 +1,14 @@
-import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm'
+import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm'
 import { ProxyServer } from '../ProxyServer'
+import { AbstractAccount } from '../AbstractAccount'
 
 @Entity()
-export class CoinMarketCapAccount {
-    @PrimaryGeneratedColumn()
-    public id: number
-
-    @Column()
-    public userName!: string
-
+export class CoinMarketCapAccount extends AbstractAccount {
     @Column({ type: 'text', name: 'cookies_json' })
     public cookiesJSON!: string
 
     @Column({ type: 'text' })
     public localStorageJSON!: string
-
-    @Column()
-    public isDisabled!: boolean
 
     @ManyToOne(() => ProxyServer, (proxy) => proxy.cmcAccounts, { eager: true })
     @JoinColumn()
