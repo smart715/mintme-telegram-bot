@@ -24,7 +24,7 @@ export class QueuedTokenAddressService {
         }
 
         const queuedToken = new QueuedTokenAddress()
-        queuedToken.tokenAddress = tokenAddress.toLowerCase()
+        queuedToken.tokenAddress = Blockchain.SOL === blockchain ? tokenAddress : tokenAddress.toLowerCase()
         queuedToken.blockchain = blockchain
         queuedToken.isChecked = false
 

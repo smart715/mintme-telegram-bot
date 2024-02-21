@@ -19,6 +19,7 @@ export class CheckTokenBNBWorker extends AbstractTokenWorker {
         Blockchain.BSC,
         Blockchain.CRO,
         Blockchain.MATIC,
+        Blockchain.SOL,
     ]
 
     public constructor(
@@ -31,9 +32,11 @@ export class CheckTokenBNBWorker extends AbstractTokenWorker {
     }
 
     public async run(blockchain: Blockchain): Promise<void> {
-        this.webDriver = await SeleniumService.createCloudFlareByPassedDriver(`https://${explorerDomains[blockchain]}`,
+        this.webDriver = await SeleniumService.createCloudFlareByPassedDriver(`https://${explorerDomains[blockchain]}/leaderboard`,
             this.firewallService,
             this.logger)
+        await sleep(10000)
+
 
         this.logger.info(`[${this.workerName}] started for ${blockchain ?? this.supportedBlockchains.join('|')} blockchain`)
 
@@ -67,23 +70,22 @@ export class CheckTokenBNBWorker extends AbstractTokenWorker {
 
     private async checkToken(token: QueuedTokenAddress): Promise<void> {
         this.logger.info(`Checking ${token.tokenAddress} :: ${token.blockchain}`)
-        const { isNewDriver, newDriver } = await SeleniumService.loadPotentialCfPage(this.webDriver,
-            'https://' + explorerDomains[token.blockchain] + '/token/' + token.tokenAddress,
-            this.firewallService,
-            this.logger,
-        )
 
-        if (isNewDriver) {
-            this.webDriver = newDriver
+        await this.loadPage('https://' + explorerDomains[token.blockchain] + '/token/' + token.tokenAddress)
+        await sleep(10000)
+
+
+        if (Blockchain.SOL === token.blockchain) {
+            await this.processTokenSol(token)
+        } else {
+            if (await this.checkLiquidityProvider()) {
+                await this.processNewTokens(token.blockchain)
+
+                return
+            }
+            await this.processTokenInfo(token)
         }
 
-        if (await this.checkLiquidityProvider()) {
-            await this.processNewTokens(token.blockchain)
-
-            return
-        }
-
-        await this.processTokenInfo(token)
         await this.queuedTokenAddressService.markAsChecked(token)
     }
 
@@ -256,5 +258,56 @@ export class CheckTokenBNBWorker extends AbstractTokenWorker {
         }
 
         return rawLinks
+    }
+
+    public async loadPage(url: string): Promise<void> {
+        const { isNewDriver, newDriver } = await SeleniumService.loadPotentialCfPage(this.webDriver,
+            url,
+            this.firewallService,
+            this.logger,
+        )
+
+        if (isNewDriver) {
+            this.webDriver = newDriver
+        }
+    }
+
+    private async processTokenSol(
+        queuedToken: QueuedTokenAddress,
+    ): Promise<void> {
+        try {
+            const pageTitle = await this.webDriver.getTitle()
+            const tokenName = pageTitle.split('|')[0]
+            const overReviewCard = await this.webDriver.findElement(By.className('box-overview'))
+            const hrefLinks = await overReviewCard.findElements(By.css('a'))
+            const links = []
+
+            for (const href of hrefLinks) {
+                const link = await href.getAttribute('href')
+
+                if (link) {
+                    links.push(link)
+                }
+            }
+
+            const overReviewCardContent = await overReviewCard.getText()
+            let website = ''
+
+            if (overReviewCardContent.includes('Website')) {
+                website = links[0]
+                links.shift()
+            }
+
+            await this.saveNewToken(
+                Blockchain.SOL,
+                queuedToken.tokenAddress,
+                tokenName,
+                website,
+                [],
+                links
+            )
+        } catch (error) {
+            this.logger.error(`Couldn't get token info of token ${queuedToken.blockchain}::${queuedToken.tokenAddress}, Error: ${error}`)
+        }
     }
 }

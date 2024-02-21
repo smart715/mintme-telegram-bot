@@ -21,7 +21,7 @@ export class QueuedWalletAddressService {
         }
 
         const wallet = new QueuedWalletAddress()
-        wallet.walletAddress = walletAddress.toLowerCase()
+        wallet.walletAddress = Blockchain.SOL === blockchain ? walletAddress : walletAddress.toLowerCase()
         wallet.blockchain = blockchain
         wallet.isChecked = false
 

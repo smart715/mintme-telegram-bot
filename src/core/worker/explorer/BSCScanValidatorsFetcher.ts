@@ -48,7 +48,7 @@ export class BSCScanValidatorsFetcher extends AbstractTokenWorker {
 
         const pageSource = await this.webDriver.getPageSource()
 
-        await this.explorerParser.enqueueWalletAddresses(pageSource, blockchain)
+        await this.explorerParser.enqueuePageSrcWalletAddresses(pageSource, blockchain)
 
         this.logger.info(`[${this.workerName}] finished for ${blockchain} blockchain`)
 
