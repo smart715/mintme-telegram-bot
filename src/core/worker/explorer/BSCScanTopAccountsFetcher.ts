@@ -67,7 +67,7 @@ export class BSCScanTopAccountsFetcher extends AbstractTokenWorker {
 
             const pageSource = await this.webDriver.getPageSource()
 
-            await this.explorerParser.enqueueWalletAddresses(pageSource, blockchain)
+            await this.explorerParser.enqueuePageSrcWalletAddresses(pageSource, blockchain)
         }
 
         await destroyDriver(this.webDriver)
