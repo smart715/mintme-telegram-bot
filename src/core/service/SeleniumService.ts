@@ -153,8 +153,11 @@ export class SeleniumService {
 
     public static async isCloudflarePage(webDriver: WebDriver): Promise<boolean> {
         const pageSrc = await webDriver.getPageSource()
+        const pageTitle = await webDriver.getTitle()
+        const cloudflareTitles = /(just a moment|ddos-guard|attention required|cloudflare)/i
 
-        return pageSrc.toLowerCase().includes('checking if the site connection is secure')
+        return pageSrc.toLowerCase().includes('checking if the site connection is secure') ||
+        cloudflareTitles.test(pageTitle)
     }
 
     public static async loadPotentialCfPage(webDriver: WebDriver,
