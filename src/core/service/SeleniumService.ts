@@ -8,7 +8,7 @@ import { FirewallService } from './FirewallService'
 
 @singleton()
 export class SeleniumService {
-    private static defaultUserAgent: string = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36'
+    private static defaultUserAgent: string = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36'
 
     public static async createDriver(
         profile: string = '',
@@ -153,8 +153,11 @@ export class SeleniumService {
 
     public static async isCloudflarePage(webDriver: WebDriver): Promise<boolean> {
         const pageSrc = await webDriver.getPageSource()
+        const pageTitle = await webDriver.getTitle()
+        const cloudflareTitles = /(just a moment|ddos-guard|attention required|cloudflare)/i
 
-        return pageSrc.toLowerCase().includes('checking if the site connection is secure')
+        return pageSrc.toLowerCase().includes('checking if the site connection is secure') ||
+        cloudflareTitles.test(pageTitle)
     }
 
     public static async loadPotentialCfPage(webDriver: WebDriver,

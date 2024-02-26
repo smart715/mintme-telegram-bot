@@ -517,6 +517,7 @@ container.register(BSCScanAddressTokensHoldingsWorker, {
             dependencyContainer.resolve(QueuedWalletAddressService),
             dependencyContainer.resolve(ExplorerEnqueuer),
             dependencyContainer.resolve(FirewallService),
+            dependencyContainer.resolve(BSCScanService),
             createLogger(BSCScanAddressTokensHoldingsWorker.name.toLowerCase())
         )
     ),

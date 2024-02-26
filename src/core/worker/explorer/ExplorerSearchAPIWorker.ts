@@ -90,6 +90,6 @@ export class ExplorerSearchAPIWorker extends AbstractTokenWorker {
 
         const pageSource = await webDriver.getPageSource()
 
-        await this.explorerParser.enqueueTokenAddresses(pageSource, blockchain)
+        await this.explorerParser.enqueuePageSrcTokenAddresses(pageSource, blockchain)
     }
 }

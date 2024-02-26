@@ -88,12 +88,14 @@ export class RunExplorerWorker implements CommandInterface {
             const bscWorker = this.bscScanAddressTokensHoldingsWorker.run(Blockchain.BSC)
             const croWorker = this.bscScanAddressTokensHoldingsWorker.run(Blockchain.CRO)
             const maticWorker = this.bscScanAddressTokensHoldingsWorker.run(Blockchain.MATIC)
+            const solWorker = this.bscScanAddressTokensHoldingsWorker.run(Blockchain.SOL)
 
             await Promise.all([
                 ethWorker,
                 bscWorker,
                 croWorker,
                 maticWorker,
+                solWorker,
             ])
 
             return
