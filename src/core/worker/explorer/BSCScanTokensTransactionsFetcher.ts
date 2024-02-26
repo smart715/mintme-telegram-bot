@@ -116,6 +116,8 @@ export class BSCScanTokensTransactionsFetcher extends AbstractTokenWorker {
             let keepFetching = true
 
             while (keepFetching) {
+                this.logger.info(`Searching for tokens and wallets`)
+
                 const walletAddresses = []
                 const tokensAddresses = []
 
@@ -137,6 +139,7 @@ export class BSCScanTokensTransactionsFetcher extends AbstractTokenWorker {
                     }
                 }
 
+                this.logger.info(`Trying to qneueu ${tokensAddresses.length} tokens and ${walletAddresses.length} wallets`)
                 await this.explorerParser.enqueueTokenAddresses(tokensAddresses, Blockchain.SOL)
                 await this.explorerParser.enqueueWalletAddresses(walletAddresses, Blockchain.SOL)
 
@@ -146,6 +149,7 @@ export class BSCScanTokensTransactionsFetcher extends AbstractTokenWorker {
                     const nextBtn = btnsSelector[2]
 
                     if (await nextBtn.isEnabled()) {
+                        this.logger.info(`Clicking next button`)
                         await nextBtn.click()
                         await sleep(10000)
                     } else {
