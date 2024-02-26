@@ -222,7 +222,7 @@ export class CoinMarketCapClient {
                 continue
             }
 
-            if (coin.name.toLowerCase().includes('mintme')) {
+            if (coin.name.toLowerCase().includes('mintme') || coin.slug.toLowerCase().includes('mintme')) {
                 this.log(`Our coin, skipping`)
                 continue
             }
@@ -233,11 +233,6 @@ export class CoinMarketCapClient {
 
             if (this.isReachedCycleLimit()) {
                 break
-            }
-
-            if (coin.slug.toLowerCase().includes('mintme')) {
-                this.log(`Skipping our coin MintMe`)
-                continue
             }
 
             if (this.continousFailedSubmits >= 5) {

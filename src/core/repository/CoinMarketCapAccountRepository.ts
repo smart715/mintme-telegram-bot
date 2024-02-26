@@ -5,7 +5,7 @@ import { CoinMarketCapAccount } from '../entity'
 @singleton()
 @EntityRepository(CoinMarketCapAccount)
 export class CoinMarketCapAccountRepository extends Repository<CoinMarketCapAccount> {
-    public async getAllAccounts(): Promise<CoinMarketCapAccount[]> {
+    public async findAllEnabledAccounts(): Promise<CoinMarketCapAccount[]> {
         return this.find({
             where: {
                 isDisabled: false,

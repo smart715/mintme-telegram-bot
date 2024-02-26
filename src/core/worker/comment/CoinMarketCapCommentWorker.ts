@@ -26,7 +26,7 @@ export class CoinMarketCommentWorker {
         while (true) {
             this.cmcClients = []
 
-            const allAccounts = await this.cmcService.getAllAccounts()
+            const allAccounts = await this.cmcService.findAllEnabledAccounts()
 
             if (0 === allAccounts.length) {
                 await this.mailerService
@@ -39,14 +39,14 @@ export class CoinMarketCommentWorker {
 
             let currentAccountIndex = 0
 
-            while (currentAccountIndex < allAccounts.length && currentAccountIndex < this.maxCMCAccount) {
+            while (currentAccountIndex < allAccounts.length && this.cmcClients.length < this.maxCMCAccount) {
                 const account = allAccounts[currentAccountIndex]
 
                 const lastLogin = moment(account.lastLogin)
 
                 if (lastLogin.isValid() &&
                 moment().subtract(15, 'minutes').isBefore(lastLogin)) {
-                    this.logger.info(`Skipping account ${account.userName}, logged in within last 10 minutes`)
+                    this.logger.info(`Skipping account ${account.userName}, logged in within last 15 minutes`)
                     currentAccountIndex++
                     continue
                 }

@@ -63,8 +63,8 @@ export class CMCService {
         return makeRequest<CMCApiGeneralResponse<CMCTokenInfoResponse>>(this.axiosInstance, 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/info', requestOptions)
     }
 
-    public async getAllAccounts(): Promise<CoinMarketCapAccount[]> {
-        return this.cmcAccountsRepository.getAllAccounts()
+    public async findAllEnabledAccounts(): Promise<CoinMarketCapAccount[]> {
+        return this.cmcAccountsRepository.findAllEnabledAccounts()
     }
 
     public async getRandomComment(excludedIds: number[]): Promise<CoinMarketCapComment | undefined> {
