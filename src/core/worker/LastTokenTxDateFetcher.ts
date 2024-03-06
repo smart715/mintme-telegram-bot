@@ -72,6 +72,7 @@ export class LastTokenTxDateFetcher {
             {
                 serviceName: blockchain,
                 method: 'GET',
+                apiKeyLocation: 'params',
             })
 
         return response.result && response.result[0].timeStamp
