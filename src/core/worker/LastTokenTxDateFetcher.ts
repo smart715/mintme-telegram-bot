@@ -74,8 +74,8 @@ export class LastTokenTxDateFetcher {
                 method: 'GET',
             })
 
-        return response.data.result[0] && response.data.result[0].timeStamp
-            ? parseInt(response.data.result[0].timeStamp) * 1000
+        return response.result && response.result[0].timeStamp
+            ? parseInt(response.result[0].timeStamp) * 1000
             : null
     }
 }
