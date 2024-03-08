@@ -16,6 +16,9 @@ export class ApiKey {
     @Column({ name: 'next_attempt_date', type: 'datetime', nullable: true })
     public nextAttemptDate: Date
 
+    @Column({ name: 'disabled', default: false })
+    public disabled: boolean
+
     @Column({ name: 'created_at', type: 'datetime', default: () => 'CURRENT_TIMESTAMP' })
     public createdAt: Date
 

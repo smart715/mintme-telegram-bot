@@ -17,6 +17,10 @@ export class ApiKeyRepository extends Repository<ApiKey> {
         await this.update(apiKeyId, { nextAttemptDate })
     }
 
+    public async updateApiKeyDisabledStatus(apiKeyId: number, disabled: boolean): Promise<void> {
+        await this.update(apiKeyId, { disabled })
+    }
+
     public async findAllAvailableKeys(serviceId: number): Promise<ApiKey[]> {
         return this.createQueryBuilder('apiKey')
             .leftJoinAndSelect('apiKey.service', 'service')
