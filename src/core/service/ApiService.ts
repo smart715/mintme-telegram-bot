@@ -36,55 +36,52 @@ export class ApiService {
             apiKeyName = 'X-API-KEY',
         } = options
 
-        let retries = 1
-        const maxRetries = 3
         const email: string = config.get('email_daily_statistic')
 
-        while (retries <= maxRetries) {
-            let service = await this.apiServiceRepository.findByName(serviceName)
+        let service = await this.apiServiceRepository.findByName(serviceName)
 
-            if (!service) {
-                service = await this.apiServiceRepository.save({ name: serviceName })
-                throw new Error(`Service not found. Service name: ${serviceName}`)
+        if (!service) {
+            service = await this.apiServiceRepository.save({ name: serviceName })
+            throw new Error(`Service not found. Service name: ${serviceName}`)
+        }
+
+        const apiKeys = await this.apiKeyRepository.findAllAvailableKeys(service.id)
+
+        if (0 === apiKeys.length) {
+            await this.mailerService.sendEmail(
+                email,
+                'API keys exhausted',
+                `Service name: ${serviceName}`
+            )
+            throw new Error('No API keys are available for the service.')
+        }
+
+        for (const apiKeyRecord of apiKeys) {
+            const apiKey = apiKeyRecord.apiKey
+            const requestConfig: AxiosRequestConfig = {
+                url,
+                method,
+                headers: {
+                    ...headers,
+                    ['headers' === apiKeyLocation ? apiKeyName : 'X-API-KEY']: apiKey,
+                },
+                params: 'params' === apiKeyLocation ? { ...params, [apiKeyName]: apiKey } : params,
             }
 
-            const apiKeyRecord = await this.apiKeyRepository.findAvailableKey(service.id)
-
-            if (apiKeyRecord) {
-                const apiKey = apiKeyRecord.apiKey
-                const requestConfig: AxiosRequestConfig = {
-                    url,
-                    method,
-                    headers: {
-                        ...headers,
-                        ['headers' === apiKeyLocation ? apiKeyName : 'X-API-KEY']: apiKey,
-                    },
-                    params: 'params' === apiKeyLocation ? { ...params, [apiKeyName]: apiKey } : params,
-                }
-
-                try {
-                    const response: AxiosResponse<any> = await axiosInstance(requestConfig)
-                    return response.data
-                } catch (error) {
-                    await this.apiKeyRepository.updateNextAttemptDate(apiKeyRecord.id, new Date())
-                    retries++
-                    await sleep(1000)
-                }
-            } else {
-                await this.mailerService.sendEmail(
-                    email,
-                    'API keys exhausted',
-                    `Service name: ${serviceName}`
-                )
-                throw new Error('All API keys have been exhausted, and the request failed.')
+            try {
+                const response: AxiosResponse<any> = await axiosInstance(requestConfig)
+                return response.data
+            } catch (error) {
+                await this.apiKeyRepository.updateNextAttemptDate(apiKeyRecord.id, new Date())
+                await sleep(1000)
             }
         }
 
         await this.mailerService.sendEmail(
             email,
-            'API keys exhausted after retries',
+            'API keys exhausted',
             `Service name: ${serviceName}`
         )
-        throw new Error('All API keys have been exhausted, and the request failed after maximum retries.')
+        throw new Error('All API keys have been exhausted, and the request failed.')
     }
 }

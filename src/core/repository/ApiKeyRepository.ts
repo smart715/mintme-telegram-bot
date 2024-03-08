@@ -16,4 +16,12 @@ export class ApiKeyRepository extends Repository<ApiKey> {
     public async updateNextAttemptDate(apiKeyId: number, nextAttemptDate: Date): Promise<void> {
         await this.update(apiKeyId, { nextAttemptDate })
     }
+
+    public async findAllAvailableKeys(serviceId: number): Promise<ApiKey[]> {
+        return this.createQueryBuilder('apiKey')
+            .leftJoinAndSelect('apiKey.service', 'service')
+            .where('service.id = :serviceId', { serviceId })
+            .orderBy('apiKey.updatedAt', 'ASC')
+            .getMany()
+    }
 }
