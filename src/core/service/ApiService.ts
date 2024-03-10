@@ -4,6 +4,7 @@ import { MailerService } from '..'
 import config from 'config'
 import { singleton } from 'tsyringe'
 import { sleep } from '../../utils'
+import { ApiKey } from '../entity'
 
 export interface RequestOptions {
     serviceName: string;
@@ -27,15 +28,7 @@ export class ApiService {
         url: string,
         options: RequestOptions
     ): Promise<any> {
-        const {
-            serviceName,
-            headers = {},
-            params = {},
-            method = 'GET',
-            apiKeyLocation = 'headers',
-            apiKeyName = 'X-API-KEY',
-        } = options
-
+        const { serviceName, headers = {}, params = {}, method = 'GET', apiKeyLocation = 'headers', apiKeyName = 'X-API-KEY' } = options
         const email: string = config.get('email_daily_statistic')
 
         let service = await this.apiServiceRepository.findByName(serviceName)
@@ -73,6 +66,9 @@ export class ApiService {
                 return response.data
             } catch (error) {
                 await this.apiKeyRepository.updateNextAttemptDate(apiKeyRecord.id, new Date())
+                await this.apiKeyRepository.incrementFailureCount(apiKeyRecord.id)
+                await this.checkAndDisableKey(apiKeyRecord)
+
                 await sleep(1000)
             }
         }
@@ -83,5 +79,32 @@ export class ApiService {
             `Service name: ${serviceName}`
         )
         throw new Error('All API keys have been exhausted, and the request failed.')
+    }
+
+    public async checkAndDisableKey(apiKeyRecord: ApiKey): Promise<void> {
+        const consecutiveFailures = apiKeyRecord.failureCount
+        // Maximum consecutive failures allowed before considering disabling the API key
+        const maxConsecutiveFailures = 3
+
+        if (consecutiveFailures >= maxConsecutiveFailures) {
+            const resetLimitReached = await this.isResetLimitReached(apiKeyRecord)
+            if (resetLimitReached) {
+                await this.apiKeyRepository.updateApiKeyDisabledStatus(apiKeyRecord.id, true)
+            }
+        }
+    }
+
+    public async isResetLimitReached(apiKeyRecord: ApiKey): Promise<boolean> {
+        // Logic to check if the reset limit (1 month) is reached since the last attempt
+        const lastAttemptDate = apiKeyRecord.nextAttemptDate
+        if (!lastAttemptDate) {
+            return false
+        }
+
+        const currentDate = new Date()
+        const resetLimitDate = new Date(lastAttemptDate)
+        resetLimitDate.setMonth(resetLimitDate.getMonth() + 1) // Add 1 month
+
+        return currentDate >= resetLimitDate
     }
 }
