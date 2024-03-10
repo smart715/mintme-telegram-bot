@@ -25,7 +25,16 @@ export class ApiKeyRepository extends Repository<ApiKey> {
         return this.createQueryBuilder('apiKey')
             .leftJoinAndSelect('apiKey.service', 'service')
             .where('service.id = :serviceId', { serviceId })
+            .andWhere('apiKey.disabled = 0')
             .orderBy('apiKey.updatedAt', 'ASC')
             .getMany()
+    }
+
+    public async incrementFailureCount(apiKeyId: number): Promise<void> {
+        await this.createQueryBuilder()
+            .update(ApiKey)
+            .set({ failureCount: () => 'failure_count + 1' })
+            .where('id = :apiKeyId', { apiKeyId })
+            .execute()
     }
 }
