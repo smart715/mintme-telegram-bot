@@ -11,6 +11,7 @@ export class CreateApiKeysTable1703289502542 implements MigrationInterface {
                 api_key VARCHAR(255) NOT NULL,
                 next_attempt_date DATETIME,
                 disabled BOOLEAN NOT NULL DEFAULT FALSE,
+                failure_count INT NOT NULL DEFAULT 0,
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                 FOREIGN KEY (service_id) REFERENCES api_service(id)

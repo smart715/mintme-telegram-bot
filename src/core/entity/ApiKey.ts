@@ -19,6 +19,9 @@ export class ApiKey {
     @Column({ name: 'disabled', default: false })
     public disabled: boolean
 
+    @Column({ name: 'failure_count', default: 0 })
+    public failureCount: number
+
     @Column({ name: 'created_at', type: 'datetime', default: () => 'CURRENT_TIMESTAMP' })
     public createdAt: Date
 
