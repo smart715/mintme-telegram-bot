@@ -2,7 +2,7 @@ import { singleton } from 'tsyringe'
 import { QueuedContactRepository } from '../repository'
 import { QueuedContact, Token } from '../entity'
 import { Blockchain, sleep } from '../../utils'
-import { ContactMethod, TelegramChannelCheckResultType, TokenContactStatusType } from '../types'
+import { AccountType, ContactMethod, TelegramChannelCheckResultType, TokenContactStatusType } from '../types'
 import axios, { AxiosRequestConfig } from 'axios'
 import { Logger } from 'winston'
 import { TokensService } from './TokensService'
@@ -111,7 +111,7 @@ export class ContactQueueService {
                 }
             }
 
-            const proxy = await this.proxyService.getRandomProxy()
+            const proxy = await this.proxyService.getRandomProxy(AccountType.ENQUEUE_WORKER)
             let axiosConfig: AxiosRequestConfig<any> | undefined
 
             if (proxy) {

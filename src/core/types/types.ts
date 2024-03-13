@@ -62,3 +62,10 @@ export enum TelegramChannelCheckResultType {
     ERROR = 'ERROR',
     FREQUENCY_LIMIT = 'FREQUENCY_LIMIT',
 }
+
+export enum AccountType {
+    TELEGRAM = 'TELEGRAM',
+    TWITTER = 'TWITTER',
+    CMC = 'CMC',
+    ENQUEUE_WORKER = 'ENQUEUE_WORKER',
+}
