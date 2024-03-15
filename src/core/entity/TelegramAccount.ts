@@ -1,22 +1,14 @@
-import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, JoinColumn } from 'typeorm'
+import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm'
 import { ProxyServer } from './ProxyServer'
+import { AbstractAccount } from './AbstractAccount'
 
 @Entity()
-export class TelegramAccount {
-    @PrimaryGeneratedColumn()
-    public id: number
-
+export class TelegramAccount extends AbstractAccount {
     @Column()
     public phoneNumber!: string
 
-    @Column()
-    public userName!: string
-
     @Column('text')
     public localStorageJson!: string
-
-    @Column()
-    public isDisabled!: boolean
 
     @Column({ nullable: true })
     public limitHitResetDate!: Date

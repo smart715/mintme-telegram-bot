@@ -64,7 +64,7 @@ export class TwitterWorker {
 
             let currentAccountIndex = 0
 
-            while (currentAccountIndex < allAccounts.length && currentAccountIndex < this.maxTwitterAccount) {
+            while (currentAccountIndex < allAccounts.length && this.twitterClients.length < this.maxTwitterAccount) {
                 const account = allAccounts[currentAccountIndex]
 
                 const twitterClient = await this.initNewClient(account)

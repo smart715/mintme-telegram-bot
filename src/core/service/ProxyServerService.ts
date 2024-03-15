@@ -2,6 +2,7 @@ import { singleton } from 'tsyringe'
 import { ProxyServerRepository } from '../repository'
 import { ProxyServer } from '../entity'
 import config from 'config'
+import { AccountType } from '../types'
 
 @singleton()
 export class ProxyService {
@@ -21,7 +22,7 @@ export class ProxyService {
         return this.proxyServerRepository.getFirstAvailableProxy(this.maxTelegramAccountsPerProxy)
     }
 
-    public async getRandomProxy(): Promise<ProxyServer | undefined> {
-        return this.proxyServerRepository.getRandomProxy()
+    public async getRandomProxy(accountType: AccountType): Promise<ProxyServer | undefined> {
+        return this.proxyServerRepository.getRandomProxy(accountType)
     }
 }
