@@ -51,6 +51,9 @@ export default {
 
     'flaresolverr_server_url': 'http://localhost:8191/v1',
 
+    // Maximum consecutive failures allowed before considering disabling the API key
+    'max_api_consecutive_failures' : 3,
+
     explorerApiKeys: {
         'BSC': [ 'M7KD3A8FB4137CMQZ7VV3C696V6WYHD6UE', 'key2', 'key3' ], // Replace with actual API keys
         'ETH': [ 'XSYS3JRES31D8P4ZY261FNA5VWTWNZ5XVQ', 'key2', 'key3' ], // Replace with actual API keys

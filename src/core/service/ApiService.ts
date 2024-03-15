@@ -3,7 +3,6 @@ import { ApiServiceRepository, ApiKeyRepository } from '../repository'
 import { MailerService } from '..'
 import config from 'config'
 import { singleton } from 'tsyringe'
-import { sleep } from '../../utils'
 import { ApiKey } from '../entity'
 
 export interface RequestOptions {
@@ -17,6 +16,9 @@ export interface RequestOptions {
 
 @singleton()
 export class ApiService {
+    private readonly email: string = config.get('email_daily_statistic')
+    private readonly maxConsecutiveFailures: number = config.get('max_api_consecutive_failures')
+
     public constructor(
         private readonly apiServiceRepository: ApiServiceRepository,
         private readonly apiKeyRepository: ApiKeyRepository,
@@ -29,8 +31,6 @@ export class ApiService {
         options: RequestOptions
     ): Promise<any> {
         const { serviceName, headers = {}, params = {}, method = 'GET', apiKeyLocation = 'headers', apiKeyName = 'X-API-KEY' } = options
-        const email: string = config.get('email_daily_statistic')
-
         let service = await this.apiServiceRepository.findByName(serviceName)
 
         if (!service) {
@@ -42,7 +42,7 @@ export class ApiService {
 
         if (0 === apiKeys.length) {
             await this.mailerService.sendEmail(
-                email,
+                this.email,
                 'API keys exhausted',
                 `Service name: ${serviceName}`
             )
@@ -68,13 +68,11 @@ export class ApiService {
                 await this.apiKeyRepository.updateNextAttemptDate(apiKeyRecord.id, new Date())
                 await this.apiKeyRepository.incrementFailureCount(apiKeyRecord.id)
                 await this.checkAndDisableKey(apiKeyRecord)
-
-                await sleep(1000)
             }
         }
 
         await this.mailerService.sendEmail(
-            email,
+            this.email,
             'API keys exhausted',
             `Service name: ${serviceName}`
         )
@@ -82,11 +80,7 @@ export class ApiService {
     }
 
     public async checkAndDisableKey(apiKeyRecord: ApiKey): Promise<void> {
-        const consecutiveFailures = apiKeyRecord.failureCount
-        // Maximum consecutive failures allowed before considering disabling the API key
-        const maxConsecutiveFailures = 3
-
-        if (consecutiveFailures >= maxConsecutiveFailures) {
+        if (apiKeyRecord.failureCount >= this.maxConsecutiveFailures) {
             const resetLimitReached = await this.isResetLimitReached(apiKeyRecord)
             if (resetLimitReached) {
                 await this.apiKeyRepository.updateApiKeyDisabledStatus(apiKeyRecord.id, true)
@@ -95,7 +89,6 @@ export class ApiService {
     }
 
     public async isResetLimitReached(apiKeyRecord: ApiKey): Promise<boolean> {
-        // Logic to check if the reset limit (1 month) is reached since the last attempt
         const lastAttemptDate = apiKeyRecord.nextAttemptDate
         if (!lastAttemptDate) {
             return false
@@ -103,7 +96,7 @@ export class ApiService {
 
         const currentDate = new Date()
         const resetLimitDate = new Date(lastAttemptDate)
-        resetLimitDate.setMonth(resetLimitDate.getMonth() + 1) // Add 1 month
+        resetLimitDate.setMonth(resetLimitDate.getMonth() + 1)
 
         return currentDate >= resetLimitDate
     }
