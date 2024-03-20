@@ -13,16 +13,12 @@ export default {
 
     // Coinmarketcap worker settings
     cmcWorker: {
-        'apiKeys': [ '0da9b092-fee6-4c91-875a-e93fbb6b78e0', 'key2', 'key3' ], // Replace with actual API keys
         'requestOffset': 5000,
         'requestLimit': 5000,
     },
 
     // coinlore worker settings
     'coinlore_request_batch_size': 100,
-
-    'bitquery_api_keys': [ 'BQYrOBkyfMSCQ6CJChTBQDQbRQhRbXS8', 'BQYzhsnLQfY4s85Gq2QooRcxKUqf9FW7', 'BQYlgCPtB9eCcIlHtdfsnty5o9zbRGTe' ],
-    'tokensinsight_api_keys': [ '637ad09e1d294dfaa69036b6d4e9c526', '34cd797948c445aaa36ffe213199b8cf', 'key3' ], // Replace with actual API keys
 
     // telegram configs
     'telegram_max_accounts_simultaneous': 2,
@@ -53,14 +49,6 @@ export default {
 
     // Maximum consecutive failures allowed before considering disabling the API key
     'max_api_consecutive_failures' : 3,
-
-    explorerApiKeys: {
-        'BSC': [ 'M7KD3A8FB4137CMQZ7VV3C696V6WYHD6UE', 'key2', 'key3' ], // Replace with actual API keys
-        'ETH': [ 'XSYS3JRES31D8P4ZY261FNA5VWTWNZ5XVQ', 'key2', 'key3' ], // Replace with actual API keys
-        'CRO': [ 'N97BBK59XJ5DK9B8AN87NPEH2DYKBGKHTA', 'key2', 'key3' ], // Replace with actual API keys
-        'MATIC': [ 'key1', 'key2', 'key3' ], // Replace with actual API keys
-        'SOL': [ 'key1', 'key2', 'key3' ], // Replace with actual API keys
-    },
 
     mailer: {
         senderName: 'mintme tokens fetcher',
