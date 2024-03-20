@@ -82,6 +82,7 @@ export class ApiService {
     public async checkAndDisableKey(apiKeyRecord: ApiKey): Promise<void> {
         if (apiKeyRecord.failureCount >= this.maxConsecutiveFailures) {
             const resetLimitReached = await this.isResetLimitReached(apiKeyRecord)
+
             if (resetLimitReached) {
                 await this.apiKeyRepository.updateApiKeyDisabledStatus(apiKeyRecord.id, true)
             }
@@ -90,6 +91,7 @@ export class ApiService {
 
     public async isResetLimitReached(apiKeyRecord: ApiKey): Promise<boolean> {
         const lastAttemptDate = apiKeyRecord.nextAttemptDate
+
         if (!lastAttemptDate) {
             return false
         }
