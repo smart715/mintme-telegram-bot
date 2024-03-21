@@ -15,8 +15,9 @@ import { Environment, getRandomNumber } from '../../../../utils'
 import { ChatType, ContactHistoryStatusType, ContactMethod, TelegramChannelCheckResultType } from '../../../types'
 import moment from 'moment'
 import { Logger } from 'winston'
+import { ClientInterface } from '../../ClientInterface'
 
-export class TelegramClient {
+export class TelegramClient implements ClientInterface {
     private readonly maxMessagesPerDay: number = config.get('telegram_account_max_day_messages')
     private readonly messagesDelay: number = config.get('telegram_messages_delay_in_seconds')
     private readonly limitLogginIn: number = config.get('telegram_limit_logging_in_in_mins')

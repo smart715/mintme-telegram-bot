@@ -13,8 +13,9 @@ import {
 import { Environment, getRandomNumber } from '../../../../utils'
 import { ContactHistoryStatusType, ContactMethod } from '../../../types'
 import moment from 'moment'
+import { ClientInterface } from '../../ClientInterface'
 
-export class TwitterClient {
+export class TwitterClient implements ClientInterface {
     private readonly maxMessagesDaily: number = config.get('twitter_dm_limit_daily')
     private readonly maxAttemptsDaily: number = config.get('twitter_total_attempts_daily')
     private readonly messageDelaySec: number = config.get('twitter_messages_delay_in_seconds')
