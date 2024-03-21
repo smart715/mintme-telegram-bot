@@ -4,6 +4,7 @@ import { Blockchain, isForbiddenTokenName } from '../../../utils'
 import config from 'config'
 import { LastBlockService, QueuedTokenAddressService } from '../../service'
 import { TransactionReceipt, Web3 } from 'web3'
+import { LastBlock } from '../../entity'
 
 interface BlockchainRpcHostInterface {
     [Blockchain.BSC]: string;
@@ -57,49 +58,47 @@ export class EthereumBasedBlockWatcher {
     }
 
     public async watch(): Promise<void> {
-        this.updateToLastBlock()
-
-        setInterval(
-            () => this.updateToLastBlock(),
-            3 * 60 * 1000
-        )
+        // eslint-disable-next-line no-constant-condition
+        while (true) {
+            await this.updateToLastBlock()
+        }
     }
 
     public async updateToLastBlock(): Promise<void> {
-        // try {
-        const syncing = await this.web3.eth.isSyncing()
+        try {
+            const syncing = await this.web3.eth.isSyncing()
 
-        if ('boolean' === typeof syncing) {
-            if (!syncing) {
-                if (this.isUpdatingBlocks) {
-                    this.logger.warn(
-                        `Watcher is still updating new blocks,` +
+            if ('boolean' === typeof syncing) {
+                if (!syncing) {
+                    if (this.isUpdatingBlocks) {
+                        this.logger.warn(
+                            `Watcher is still updating new blocks,` +
                             ` skipping regular calling`
-                    )
-                } else {
-                    this.logger.info(`Starting syncing with ${this.currentBlockchain} node`)
-                    await this.sync()
+                        )
+                    } else {
+                        this.logger.info(`Starting syncing with ${this.currentBlockchain} node`)
+                        await this.sync()
+                    }
                 }
-            }
-        } else {
-            this.logger.info(
-                `node is syncing now. 
+            } else {
+                this.logger.info(
+                    `node is syncing now. 
                     ${syncing.currentBlock}/${syncing.highestBlock} blocks`
-            )
-        }
-        /*} catch (error: any) {
+                )
+            }
+        } catch (error: any) {
             this.logger.error(`Error appeared during syncing: ${error}`)
-        }*/
+        }
     }
 
     public async sync(): Promise<void> {
         const lastCheckedBlock = await this.lastBlockService.getOrCreateLastBlock(this.currentBlockchain)
 
-        const lastBlockchainBlock: bigint = await this.web3.eth.getBlockNumber()
-        let currentBlockHash = BigInt(lastCheckedBlock.blockHash)
+        const lastBlockchainBlock: number = Number(await this.web3.eth.getBlockNumber())
+        let currentBlockHash = lastCheckedBlock.blockHash
 
-        if (BigInt(0) === currentBlockHash) {
-            currentBlockHash = lastBlockchainBlock - BigInt(1)
+        if (0 === currentBlockHash) {
+            currentBlockHash = lastBlockchainBlock - 1
         }
 
         this.logger.info(`Updating from block ${currentBlockHash} to block ${lastBlockchainBlock}`)
@@ -108,7 +107,14 @@ export class EthereumBasedBlockWatcher {
 
         try {
             while (currentBlockHash < lastBlockchainBlock) {
-                const block = await this.web3.eth.getBlock(++currentBlockHash, false)
+                const blockToCheck = ++currentBlockHash
+                const block = await this.web3.eth.getBlock(blockToCheck, false)
+
+                if (!block.transactions) {
+                    this.logger.warn(`No transactions in this block, Skipping`)
+                    currentBlockHash++
+                    continue
+                }
 
                 for (let i = 0; i < block.transactions.length; i++) {
                     const transaction = block.transactions[i]
@@ -124,13 +130,18 @@ export class EthereumBasedBlockWatcher {
                     }
                 }
 
-                lastCheckedBlock.blockHash = Number(currentBlockHash)
-                await this.lastBlockService.updateLastBlock(lastCheckedBlock)
+                currentBlockHash++
+                await this.updateBlockHash(lastCheckedBlock, currentBlockHash)
             }
         } finally {
-            this.logger.info(` Last block updated to: ${currentBlockHash}`)
+            this.logger.info(`Last block updated to: ${currentBlockHash}`)
             this.isUpdatingBlocks = false
         }
+    }
+
+    private async updateBlockHash(lastCheckedBlock: LastBlock, newHash: number): Promise<void> {
+        lastCheckedBlock.blockHash = newHash
+        await this.lastBlockService.updateLastBlock(lastCheckedBlock)
     }
 
     private async checkTransaction(txHash: string): Promise<void> {
@@ -138,29 +149,20 @@ export class EthereumBasedBlockWatcher {
 
         try {
             const transaction: TransactionReceipt = await this.web3.eth.getTransactionReceipt(txHash)
-
-            const logs = await transaction.logs
-            const log = await logs.find(i => i.transactionHash === txHash)
+            const logs = transaction.logs
+            const log = logs.find(i => i.transactionHash === txHash)
 
             if (!log) {
                 return
             }
 
-            const abiJson = `[
-                {
-                    'constant': true,
-                    'inputs': [],
-                    'name': 'symbol',
-                    'outputs': [
-                        {
-                            'name': '',
-                            'type': 'string',
-                        },
-                    ],
-                    'payable': false,
-                    'stateMutability': 'view',
-                    'type': 'function',
-                },
+            const abiJson = [
+                { 'constant':true,
+                    'inputs':[],
+                    'name':'symbol',
+                    'outputs':
+                [ { 'name':'', 'type':'string' } ]
+                    , 'payable':false, 'stateMutability':'view', 'type':'function' },
                 {
                     'constant': true,
                     'inputs': [],
@@ -175,7 +177,7 @@ export class EthereumBasedBlockWatcher {
                     'stateMutability': 'view',
                     'type': 'function',
                 },
-            ]`
+            ]
 
             const tokenAddress = log.address
 
@@ -183,7 +185,7 @@ export class EthereumBasedBlockWatcher {
                 return
             }
 
-            const contract = new this.web3.eth.Contract(JSON.parse(abiJson), tokenAddress)
+            const contract = new this.web3.eth.Contract(abiJson, tokenAddress)
             const name = await contract.methods.name().call()
             const symbol = await contract.methods.symbol().call()
             const tokenName = `${name} (${symbol})`
