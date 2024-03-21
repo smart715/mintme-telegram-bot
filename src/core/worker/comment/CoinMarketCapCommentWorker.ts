@@ -5,9 +5,10 @@ import { CMCService, MailerService } from '../../service'
 import { sleep } from '../../../utils'
 import { CoinMarketCapAccount } from '../../entity'
 import moment from 'moment'
+import { WorkerInterface } from '../WorkerInterface'
 
 @singleton()
-export class CoinMarketCommentWorker {
+export class CoinMarketCommentWorker implements WorkerInterface {
     private readonly workerName = 'CMCCWorker'
     private readonly prefixLog = `[${this.workerName}]`
 
@@ -85,7 +86,7 @@ export class CoinMarketCommentWorker {
         return cmcClient
     }
 
-    private startAllClients(): Promise<void[]> {
+    public async startAllClients(): Promise<void[]> {
         const contactingPromises: Promise<void>[] = []
 
         for (const client of this.cmcClients) {
@@ -95,7 +96,7 @@ export class CoinMarketCommentWorker {
         return Promise.all(contactingPromises)
     }
 
-    private async destroyDrivers(): Promise<void> {
+    public async destroyDrivers(): Promise<void> {
         for (const client of this.cmcClients) {
             await client.destroyDriver()
         }
