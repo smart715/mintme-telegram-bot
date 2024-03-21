@@ -100,6 +100,9 @@ import {
     DailyStatisticMailWorker,
     TwitterResponseRepository,
     BlacklistRepository,
+    LastBlockService,
+    LastBlockRepository,
+    EthereumBasedBlockWatcher,
 } from '../../core'
 import { Application } from '../'
 import { CliDependency } from './types'
@@ -114,6 +117,7 @@ import {
     RunMailerWorker,
     RunTwitterWorker,
     RunDailyStatisticMailWorker,
+    RunEthereumBasedBlockchainWatcher,
 } from '../command'
 import { RetryAxios, TokenNamesGenerator, createLogger, Environment } from '../../utils'
 
@@ -212,6 +216,10 @@ container.register(TwitterResponseRepository, {
 
 container.register(BlacklistRepository, {
     useFactory: instanceCachingFactory(() => getConnection().getCustomRepository(BlacklistRepository)),
+})
+
+container.register(LastBlockRepository, {
+    useFactory: instanceCachingFactory(() => getConnection().getCustomRepository(LastBlockRepository)),
 })
 
 // Utils
@@ -426,6 +434,14 @@ container.register(TwitterService, {
         new TwitterService(
             dependencyContainer.resolve(TwitterAccountRepository),
             dependencyContainer.resolve(TwitterResponseRepository),
+        ),
+    ),
+})
+
+container.register(LastBlockService, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new LastBlockService(
+            dependencyContainer.resolve(LastBlockRepository),
         ),
     ),
 })
@@ -909,6 +925,16 @@ container.register(DailyStatisticMailWorker, {
     ),
 })
 
+container.register(EthereumBasedBlockWatcher, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new EthereumBasedBlockWatcher(
+            dependencyContainer.resolve(LastBlockService),
+            dependencyContainer.resolve(QueuedTokenAddressService),
+            createLogger(EthereumBasedBlockWatcher.name.toLowerCase()),
+        )
+    ),
+})
+
 // CLI
 
 container.register(CliDependency.COMMAND, {
@@ -1026,6 +1052,16 @@ container.register(CliDependency.COMMAND, {
     useFactory: instanceCachingFactory((dependencyContainer) =>
         new RunDailyStatisticMailWorker(
             dependencyContainer.resolve(DailyStatisticMailWorker),
+            dependencyContainer.resolve(MailerService),
+            dailyStatisticMailLogger,
+        )
+    ),
+})
+
+container.register(CliDependency.COMMAND, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new RunEthereumBasedBlockchainWatcher(
+            dependencyContainer.resolve(EthereumBasedBlockWatcher),
             dependencyContainer.resolve(MailerService),
             dailyStatisticMailLogger,
         )

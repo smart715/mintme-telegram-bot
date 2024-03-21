@@ -59,6 +59,13 @@ export default {
         'SOL': [ 'key1', 'key2', 'key3' ], // Replace with actual API keys
     },
 
+    blockchainRpcHost: {
+        'BSC': 'https://bsc-dataseed1.binance.org/',
+        'ETH': 'https://ethereum-rpc.publicnode.com/',
+        'CRO': 'https://evm.cronos.org/',
+        'MATIC': 'https://1rpc.io/matic',
+    },
+
     mailer: {
         senderName: 'mintme tokens fetcher',
         senderEmail: 'mintme.token.fetcher@gmail.com',
