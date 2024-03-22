@@ -14,9 +14,10 @@ import {
 } from '../../../service'
 import { Environment, sleep, TelegramWorkerMode } from '../../../../utils'
 import { ContactMethod } from '../../../types'
+import { WorkerInterface } from '../../WorkerInterface'
 
 @singleton()
-export class TelegramWorker {
+export class TelegramWorker implements WorkerInterface {
     private readonly maxTelegramAccounts: number = config.get('telegram_max_accounts_simultaneous')
 
     private telegramClients: TelegramClient[] = []
@@ -132,7 +133,7 @@ export class TelegramWorker {
         return restart
     }
 
-    private async startAllClients(clients: TelegramClient[]): Promise<void[]> {
+    public async startAllClients(clients: TelegramClient[]): Promise<void[]> {
         const workerPromises: Promise<void>[] = []
 
         clients.forEach(async (client) => {
@@ -169,7 +170,7 @@ export class TelegramWorker {
         return Promise.all(workerPromises)
     }
 
-    private async destroyDrivers(): Promise<void> {
+    public async destroyDrivers(): Promise<void> {
         for (const client of this.telegramClients) {
             await client.destroyDriver()
         }

@@ -1,18 +1,10 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm'
+import { Column, Entity } from 'typeorm'
+import { AbstractAccount } from './AbstractAccount'
 
 @Entity()
-export class TwitterAccount {
-    @PrimaryGeneratedColumn()
-    public id: number
-
-    @Column()
-    public userName!: string
-
+export class TwitterAccount extends AbstractAccount {
     @Column({ type: 'text', name: 'cookies_json' })
     public cookiesJSON!: string
-
-    @Column()
-    public isDisabled!: boolean
 
     @Column({ nullable: true })
     public lastResponsesFetchDate!: Date
