@@ -100,7 +100,7 @@ export class TelegramClient implements ClientInterface {
 
     private async createDriverWithProxy(): Promise<boolean> {
         if (!this.telegramAccount.proxy || this.telegramAccount.proxy.isDisabled) {
-            this.logger.info(`Proxy is invalid or disabled, Getting new one`)
+            this.log(`Proxy is invalid or disabled, Getting new one`)
             if (!await this.getNewProxy()) {
                 await this.mailerService.sendFailedWorkerEmail(`[TelegramWorker] Can't create proxy for telegram id:` +
                     ` ${this.telegramAccount.id}. No proxy stock available.`)
@@ -111,9 +111,9 @@ export class TelegramClient implements ClientInterface {
             }
         }
 
-        this.logger.info(`Creating driver instance`)
+        this.log(`Creating driver instance`)
         this.driver = await SeleniumService.createDriver('', this.telegramAccount.proxy, this.logger)
-        this.logger.info(`Testing if proxy working`)
+        this.log(`Testing if proxy working`)
 
         if (await SeleniumService.isInternetWorking(this.driver)) {
             return true
@@ -168,15 +168,17 @@ export class TelegramClient implements ClientInterface {
             Object.keys(localStorage).forEach(async function (key) {
                 await driver.executeScript('localStorage.setItem(arguments[0], arguments[1])', key, localStorage[key])
             })
+
             await driver.sleep(10000)
             await driver.navigate().refresh()
             await driver.sleep(15000)
+
             if (await this.isLoggedIn()) {
                 await this.saveLastLogin()
                 return true
             } else {
                 if (retries < 3) {
-                    this.logger.info(`Retrying to login, Attempt #${retries}`)
+                    this.log(`Retrying to login, Attempt #${retries}`)
                     return await this.login(retries + 1)
                 } else {
                     this.logger.warn(`Account is banned, Err: USER_DEACTIVATED_BAN`)
@@ -222,8 +224,15 @@ export class TelegramClient implements ClientInterface {
     }
 
     private async sendDM(): Promise<ContactHistoryStatusType> {
+        this.log(`Trying to send DM`)
+
         if (this.isLimitHit()) {
             return ContactHistoryStatusType.ACCOUNT_LIMIT_HIT
+        }
+
+        if (await this.isMessagesRestricted()) {
+            this.log('Only accepts messages from premium user')
+            return ContactHistoryStatusType.DM_PREMIUM_ONLY
         }
 
         if (await this.inputAndSendMessage()) {
@@ -379,6 +388,8 @@ export class TelegramClient implements ClientInterface {
     }
 
     private async sendGroupMessage(tgLink: string, verified: boolean = false): Promise<ContactHistoryStatusType> {
+        this.log(`Trying to send group message`)
+
         if (this.isLimitHit()) {
             return ContactHistoryStatusType.ACCOUNT_LIMIT_HIT
         }
@@ -433,7 +444,8 @@ export class TelegramClient implements ClientInterface {
 
             if (disabledMessagingSelector.length) {
                 const reasonStr = await disabledMessagingSelector[0].getText()
-                return 'the admins of this group have restricted your ability to send messages.' === reasonStr.toLowerCase()
+                return 'the admins of this group have restricted your ability to send messages.' === reasonStr.toLowerCase() ||
+                        reasonStr.toLowerCase().includes('only accepts messages from premium user')
             }
 
             return false
@@ -486,25 +498,40 @@ export class TelegramClient implements ClientInterface {
                 return ContactHistoryStatusType.ERROR
             }
 
-            const userStatusSelector = await this.driver.findElements(By.className('user-status'))
+            const groupStatusSelector = await this.driver.findElements(By.className('group-status'))
 
-            if (userStatusSelector.length > 0) {
-                if ((await userStatusSelector[0].getText()).includes('bot')) {
-                    return ContactHistoryStatusType.BOT_USER
-                }
-
-                return await this.sendDM()
-            } else {
-                const groupStatusSelector = await this.driver.findElements(By.className('group-status'))
-                if (0 == groupStatusSelector.length) {
-                    return ContactHistoryStatusType.ACCOUNT_NOT_EXISTS
-                }
-
+            if (groupStatusSelector.length) {
                 if ((await groupStatusSelector[0].getText()).includes('subscriber')) {
                     return ContactHistoryStatusType.ANNOUNCEMENTS_CHANNEL
                 }
 
                 return await this.sendGroupMessage(telegramLink, verified)
+            } else {
+                const userStatusSelector = await this.driver.findElements(By.className('user-status'))
+
+                if (userStatusSelector.length) {
+                    if ((await userStatusSelector[0].getText()).includes('bot')) {
+                        return ContactHistoryStatusType.BOT_USER
+                    }
+
+                    return await this.sendDM()
+                } else {
+                    try {
+                        const chatInfoElement = await this.driver.findElement(By.className('ChatInfo'))
+                        const fullNameElement = await chatInfoElement.findElement(By.className('fullName'))
+                        const fullNameText = await fullNameElement.getText()
+
+                        if (fullNameText.length) {
+                            this.log(`Couldn't find user status but found only name ${fullNameText}, Trying to send message`)
+
+                            return await this.sendDM()
+                        }
+
+                        return ContactHistoryStatusType.ACCOUNT_NOT_EXISTS
+                    } catch (error) {
+                        return ContactHistoryStatusType.ACCOUNT_NOT_EXISTS
+                    }
+                }
             }
         } catch (e) {
             this.logger.error(e)
@@ -607,7 +634,7 @@ export class TelegramClient implements ClientInterface {
             }
 
             this.log(
-                `Contacting token ${queuedContact.address} :: ${queuedContact.blockchain}`
+                `Contacting token ${queuedContact.address} :: ${queuedContact.blockchain} (${queuedContact.channel})`
             )
 
             let result = await this.sendMessage(queuedContact.channel, false)
@@ -681,7 +708,7 @@ export class TelegramClient implements ClientInterface {
             await this.contactQueueService.removeFromQueue(queuedContact.address, queuedContact.blockchain)
 
             this.log(
-                `Finished attempt to send to token ${queuedContact.address} | Result: ${result}`
+                `Finished attempt to send to token ${queuedContact.address} @ ${queuedContact.channel} | Result: ${result}`
             )
 
             await this.contactHistoryService.addRecord(
