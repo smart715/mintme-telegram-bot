@@ -10,9 +10,6 @@ npm run cli -- run-fetch-token-worker --name=coins-gods
 # Run Coins360Worker
 npm run cli -- run-fetch-token-worker --name=coins-360
 
-# Run CoinCap
-npm run cli -- run-fetch-token-worker --name=coin-cap
-
 # Run RugFreeCoins
 npm run cli -- run-fetch-token-worker --name=rug-free-coins
 
