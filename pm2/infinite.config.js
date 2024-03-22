@@ -4,25 +4,25 @@ module.exports = {
         {
             name: 'blockchain-watcher-bsc',
             script: 'npm',
-            args: 'run cli -- run-blockchain-watcher  --blockchain=BSC',
+            args: 'run cli -- run-eth-based-blockchain-watcher  --blockchain=BSC',
             autorestart: true,
         },
         {
             name: 'blockchain-watcher-eth',
             script: 'npm',
-            args: 'run cli -- run-blockchain-watcher  --blockchain=ETH',
+            args: 'run cli -- run-eth-based-blockchain-watcher  --blockchain=ETH',
             autorestart: true,
         },
         {
             name: 'blockchain-watcher-cro',
             script: 'npm',
-            args: 'run cli -- run-blockchain-watcher  --blockchain=CRO',
+            args: 'run cli -- run-eth-based-blockchain-watcher  --blockchain=CRO',
             autorestart: true,
         },
         {
             name: 'blockchain-watcher-matic',
             script: 'npm',
-            args: 'run cli -- run-blockchain-watcher  --blockchain=MATIC',
+            args: 'run cli -- run-eth-based-blockchain-watcher  --blockchain=MATIC',
             autorestart: true,
         },
         {
