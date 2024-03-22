@@ -7,26 +7,28 @@ import moment from 'moment'
 @EntityRepository(TelegramAccount)
 export class TelegramAccountsRepository extends Repository<TelegramAccount> {
     public async getAllAccounts(): Promise<TelegramAccount[]> {
-        return this.createQueryBuilder()
-            .where('is_disabled = 0')
+        return this.createQueryBuilder('t')
+            .leftJoinAndSelect('t.proxy', 'proxy')
+            .where('t.is_disabled = 0')
             .andWhere(new Brackets((qb) => qb
-                .where('last_responses_fetch_date < :dateBefore2Days',
+                .where('t.last_responses_fetch_date < :dateBefore2Days',
                     { dateBefore2Days: moment.utc().subtract(2, 'days').format() })
-                .orWhere('limit_hit_reset_date < :currentDate',
+                .orWhere('t.limit_hit_reset_date < :currentDate',
                     { currentDate: moment.utc().format() })
-                .orWhere('last_responses_fetch_date IS NULL')
-                .orWhere('limit_hit_reset_date IS NULL')
+                .orWhere('t.last_responses_fetch_date IS NULL')
+                .orWhere('t.limit_hit_reset_date IS NULL')
             ))
             .getMany()
     }
 
     public async getAllAccountsForResponseWorker(): Promise<TelegramAccount[]> {
-        return this.createQueryBuilder()
-            .where('is_disabled = 0')
+        return this.createQueryBuilder('t')
+            .leftJoinAndSelect('t.proxy', 'proxy')
+            .where('t.is_disabled = 0')
             .andWhere(new Brackets((qb) => qb
-                .where('last_responses_fetch_date < :dateBefore2Days',
+                .where('t.last_responses_fetch_date < :dateBefore2Days',
                     { dateBefore2Days: moment.utc().subtract(2, 'days').format() })
-                .orWhere('last_responses_fetch_date IS NULL')
+                .orWhere('t.last_responses_fetch_date IS NULL')
             ))
             .getMany()
     }
