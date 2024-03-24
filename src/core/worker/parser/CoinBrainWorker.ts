@@ -1,6 +1,6 @@
 import { singleton } from 'tsyringe'
 import { Logger } from 'winston'
-import { Blockchain } from '../../../utils'
+import { Blockchain, getBlockchainByEvmChainId } from '../../../utils'
 import { CheckedTokenService, CoinBrainService, TokensService } from '../../service'
 import { CoinBrainGetTokensGeneralResponse } from '../../types'
 import { DOMWindow, JSDOM } from 'jsdom'
@@ -51,7 +51,7 @@ export class CoinBrainWorker extends AbstractParserWorker {
             for (const coin of coins) {
                 const address = coin.address.toLowerCase()
 
-                const currentBlockchain = this.getSupportedBlockchainByChainId(Number(coin.chainId))
+                const currentBlockchain = getBlockchainByEvmChainId(Number(coin.chainId))
 
                 if (!currentBlockchain) {
                     continue
@@ -117,19 +117,6 @@ export class CoinBrainWorker extends AbstractParserWorker {
                 )
             }
         } while (hasNextPage)
-    }
-
-    private getSupportedBlockchainByChainId(chainId: number): Blockchain|null {
-        switch (chainId) {
-            case 56:
-                return Blockchain.BSC
-            case 1:
-                return Blockchain.ETH
-            case 137:
-                return Blockchain.MATIC
-            default:
-                return null
-        }
     }
 
     private getCryptoPagePrefix(currentBlockchain: Blockchain): string|null {

@@ -174,6 +174,10 @@ export class CheckTokenBNBWorker extends AbstractTokenWorker {
                 return 'PolygonScan'
             case Blockchain.SOL:
                 return 'Solscan'
+            case Blockchain.AVAX:
+                return 'Snowtrace'
+            case Blockchain.ARB:
+                return 'Arbiscan'
         }
     }
 

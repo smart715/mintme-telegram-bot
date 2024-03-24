@@ -16,6 +16,8 @@ export class CoinGeckoWorker extends AbstractParserWorker {
         Blockchain.CRO,
         Blockchain.MATIC,
         Blockchain.SOL,
+        Blockchain.ARB,
+        Blockchain.AVAX,
     ]
 
     public constructor(
@@ -148,6 +150,10 @@ export class CoinGeckoWorker extends AbstractParserWorker {
                 return 'https://tokens.coingecko.com/polygon-pos/all.json'
             case Blockchain.SOL:
                 return 'https://tokens.coingecko.com/solana/all.json'
+            case Blockchain.AVAX:
+                return 'https://tokens.coingecko.com/avalanche/all.json'
+            case Blockchain.ARB:
+                return 'https://tokens.coingecko.com/arbitrum-one/all.json'
             default:
                 throw new Error(
                     `Wrong blockchain provided. ` +

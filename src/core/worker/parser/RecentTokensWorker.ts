@@ -19,6 +19,7 @@ export class RecentTokensWorker extends NewestTokenChecker {
             Blockchain.BSC,
             Blockchain.MATIC,
             Blockchain.SOL,
+            Blockchain.AVAX,
         ]
 
     private blockchain: Blockchain|null
@@ -262,6 +263,8 @@ export class RecentTokensWorker extends NewestTokenChecker {
                 return 'polygon'
             case Blockchain.SOL:
                 return 'solana'
+            case Blockchain.AVAX:
+                return 'avalanche'
             default:
                 throw new Error('Wrong blockchain provided. Target blockchain doesn\'t exists for provided blockchain')
         }

@@ -57,6 +57,8 @@ export default {
         'CRO': [ 'N97BBK59XJ5DK9B8AN87NPEH2DYKBGKHTA', 'key2', 'key3' ], // Replace with actual API keys
         'MATIC': [ 'key1', 'key2', 'key3' ], // Replace with actual API keys
         'SOL': [ 'key1', 'key2', 'key3' ], // Replace with actual API keys
+        'AVAX': [ 'key1', 'key2', 'key3' ], // Replace with actual API keys
+        'ARB': [ 'key1', 'key2', 'key3' ], // Replace with actual API keys
     },
 
     mailer: {

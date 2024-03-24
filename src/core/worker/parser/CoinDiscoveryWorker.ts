@@ -116,6 +116,8 @@ export class CoinDiscoveryWorker extends AbstractParserWorker {
                 return Blockchain.MATIC
             case '5':
                 return Blockchain.SOL
+            case '8':
+                return Blockchain.AVAX
             default:
                 return null
         }

@@ -11,6 +11,8 @@ interface ExplorerApiKeysInterface {
     [Blockchain.CRO]: string[];
     [Blockchain.MATIC]: string[];
     [Blockchain.SOL]: string[];
+    [Blockchain.AVAX]: string[];
+    [Blockchain.ARB]: string[];
 }
 
 export class LastTokenTxDateFetcher {
