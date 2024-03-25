@@ -8,12 +8,10 @@ export interface CoinGeckoAllCoinsResponse {
 }
 
 export interface AllCoinsTokenResponse {
-    address: string,
-    chainId: number,
-    decimals: number,
-    logoURI: string,
-    name: string,
-    symbol: string,
+    id: string,
+    symbol: number,
+    name: number,
+    platforms: {[key: string]: string},
 }
 
 export interface CoinInfo {

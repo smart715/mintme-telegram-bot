@@ -71,12 +71,15 @@ export class CheckTokenBNBWorker extends AbstractTokenWorker {
     private async checkToken(token: QueuedTokenAddress): Promise<void> {
         this.logger.info(`Checking ${token.tokenAddress} :: ${token.blockchain}`)
 
-        await this.loadPage('https://' + explorerDomains[token.blockchain] + '/token/' + token.tokenAddress)
-        await sleep(10000)
+        const params = (Blockchain.AVAX === token.blockchain) ? '?chainId=43114' : ''
 
+        await this.loadPage('https://' + explorerDomains[token.blockchain] + '/token/' + token.tokenAddress + params)
+        await sleep(10000)
 
         if (Blockchain.SOL === token.blockchain) {
             await this.processTokenSol(token)
+        } else if (Blockchain.AVAX === token.blockchain) {
+            await this.processTokenInfoAvax(token)
         } else {
             if (await this.checkLiquidityProvider()) {
                 await this.processNewTokens(token.blockchain)
@@ -131,8 +134,10 @@ export class CheckTokenBNBWorker extends AbstractTokenWorker {
         }
 
         const website = await this.getWebSite(queuedToken.blockchain)
-        const emails = await this.getEmails(queuedToken.blockchain)
-        const links = await this.getLinks(queuedToken.blockchain)
+
+        const rawLinks = await this.getRawLinks(queuedToken.blockchain)
+        const emails = await this.getEmails(rawLinks)
+        const links = await this.getLinks(rawLinks)
 
         this.logger.info(`Adding or Updating ${queuedToken.blockchain} token ${queuedToken.tokenAddress} :: ${tokenName}`)
         await this.saveNewToken(queuedToken.blockchain, queuedToken.tokenAddress, tokenName, website, emails, links)
@@ -220,9 +225,8 @@ export class CheckTokenBNBWorker extends AbstractTokenWorker {
         return ''
     }
 
-    private async getEmails(blockchain: Blockchain): Promise<string[]> {
+    private async getEmails(rawLinks: string[]): Promise<string[]> {
         const emails: string[] = []
-        const rawLinks = await this.getRawLinks(blockchain)
 
         for (const rawLink of rawLinks) {
             if (rawLink.includes('mailto:')) {
@@ -233,9 +237,8 @@ export class CheckTokenBNBWorker extends AbstractTokenWorker {
         return emails
     }
 
-    private async getLinks(blockchain: Blockchain): Promise<string[]> {
+    private async getLinks(rawLinks: string[]): Promise<string[]> {
         const links: string[] = []
-        const rawLinks = await this.getRawLinks(blockchain)
 
         for (const rawLink of rawLinks) {
             if (!rawLink.includes('mailto:')) {
@@ -251,6 +254,9 @@ export class CheckTokenBNBWorker extends AbstractTokenWorker {
 
         if (this.newStyleBlockchainExplorers.includes(blockchain)) {
             const placeholder = (await this.webDriver.findElements(By.id('ContentPlaceHolder1_divLinks')))[0]
+            linkElements = await placeholder?.findElements(By.css('a')) ?? []
+        } else if (Blockchain.AVAX === blockchain) {
+            const placeholder = (await this.webDriver.findElements(By.className('popover-body')))[0]
             linkElements = await placeholder?.findElements(By.css('a')) ?? []
         } else {
             linkElements = await this.webDriver.findElements(By.className('link-hover-secondary'))
@@ -313,5 +319,41 @@ export class CheckTokenBNBWorker extends AbstractTokenWorker {
         } catch (error) {
             this.logger.error(`Couldn't get token info of token ${queuedToken.blockchain}::${queuedToken.tokenAddress}, Error: ${error}`)
         }
+    }
+
+    private async processTokenInfoAvax(queuedToken: QueuedTokenAddress): Promise<void> {
+        try {
+            const webPageSrc = await this.webDriver.getPageSource()
+
+            if (webPageSrc.includes('invalid Token hash has been entered')) {
+                this.logger.warn('Incorrect token hash')
+                return
+            }
+
+            const breadcrumb = this.webDriver.findElement(By.className('breadcrumb-up'))
+            const tokenNameElement = await breadcrumb.findElement(By.className('ml-1'))
+            const tokenName = await tokenNameElement.getText()
+
+            const linksBtn = breadcrumb.findElement(By.css('button'))
+            await linksBtn.click()
+
+            await sleep(1000)
+
+            const rawLinks = await this.getRawLinks(queuedToken.blockchain)
+            const emails = await this.getEmails(rawLinks)
+            const links = await this.getLinks(rawLinks)
+            const website = links.length ? links[0] : ''
+
+            this.logger.info(`Adding or Updating ${queuedToken.blockchain} token ${queuedToken.tokenAddress} :: ${tokenName}`)
+            await this.saveNewToken(queuedToken.blockchain, queuedToken.tokenAddress, tokenName, website, emails, links)
+        } catch (error) {
+            this.logger.error(`Couldn't get token info of token ${queuedToken.blockchain}::${queuedToken.tokenAddress}, Error: ${error}`)
+        }
+        /*const breadcrumb = document.getElementsByClassName('breadcrumb-up')[0]
+const tokenName = breadcrumb.getElementsByClassName('ml-1')[0].innerText
+const symbol = document.getElementsByClassName('card-body')[0].getElementsByTagName('strong')[0].innerText
+breadcrumb.getElementsByTagName('button')[0].click()
+
+const linksContainer = document.getElementsByClassName('popover-body')[0]*/
     }
 }

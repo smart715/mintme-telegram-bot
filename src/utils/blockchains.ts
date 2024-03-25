@@ -21,10 +21,15 @@ export function parseBlockchainName(name: string): Blockchain {
         'bsc',
         'binance',
     ]
-    const maticNames = [ 'polygon', 'matic', 'polygon poS chain' ]
+    const maticNames = [
+        'polygon',
+        'matic',
+        'polygon poS chain',
+        'polygon-pos',
+    ]
     const solNames = [ 'solana', 'sol' ]
     const avaxNames = [ 'avalanche', 'avax', 'c-chain' ]
-    const arbNames = [ 'arbitrum', 'arb' ]
+    const arbNames = [ 'arbitrum', 'arbitrum-one', 'arb' ]
 
     const tokenNameLowerCase = name.toLowerCase()
 
@@ -60,7 +65,12 @@ export function getBlockchainFromContent(content: string): Blockchain|null {
         ],
         ETH: [ 'eth', 'ethereum', 'etherscan' ],
         CRO: [ 'cro', 'cronos' ],
-        MATIC: [ 'polygon', 'matic', 'polygon poS chain' ],
+        MATIC: [
+            'polygon',
+            'matic',
+            'polygon poS chain',
+            'polygon-pos',
+        ],
         SOL: [ 'solana', 'sol' ],
         AVAX: [ 'avalanche', 'avax', 'c-chain' ],
         ARB: [
