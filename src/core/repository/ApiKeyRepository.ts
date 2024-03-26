@@ -18,10 +18,6 @@ export class ApiKeyRepository extends Repository<ApiKey> {
         await this.update(apiKeyId, { nextAttemptDate })
     }
 
-    public async updateApiKeyDisabledStatus(apiKeyId: number, disabled: boolean): Promise<void> {
-        await this.update(apiKeyId, { disabled })
-    }
-
     public async incrementFailureCount(apiKeyId: number): Promise<void> {
         await this.createQueryBuilder()
             .update(ApiKey)
