@@ -47,8 +47,14 @@ export default {
 
     'flaresolverr_server_url': 'http://localhost:8191/v1',
 
-    // Maximum consecutive failures allowed before considering disabling the API key
-    'max_api_consecutive_failures' : 3,
+    'failure_count_delays': [
+        1,
+        3,
+        7,
+        14,
+        21,
+        28,
+    ],
 
     mailer: {
         senderName: 'mintme tokens fetcher',

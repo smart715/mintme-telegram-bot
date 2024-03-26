@@ -14,28 +14,8 @@ export class ApiKeyRepository extends Repository<ApiKey> {
             .getMany()
     }
 
-    public async updateNextAttemptDate(apiKeyId: number, failureCount: number): Promise<void> {
-        const apiKey = await this.findOne(apiKeyId)
-        if (!apiKey) {
-            throw new Error(`API key with ID ${apiKeyId} not found.`)
-        }
-
-        const nextAttemptDays: number[] = [
-            1,
-            3,
-            7,
-            14,
-            21,
-            28,
-        ]
-        const maxIndex = nextAttemptDays.length - 1
-        const index = Math.min(failureCount, maxIndex)
-        const daysToAdd = nextAttemptDays[index]
-
-        const nextAttemptDate = new Date()
-        nextAttemptDate.setDate(nextAttemptDate.getDate() + daysToAdd)
-
-        await this.update(apiKeyId, { nextAttemptDate, failureCount })
+    public async updateNextAttemptDate(apiKeyId: number, nextAttemptDate: Date): Promise<void> {
+        await this.update(apiKeyId, { nextAttemptDate })
     }
 
     public async updateApiKeyDisabledStatus(apiKeyId: number, disabled: boolean): Promise<void> {

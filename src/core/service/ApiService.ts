@@ -17,7 +17,7 @@ export interface RequestOptions {
 @singleton()
 export class ApiService {
     private readonly email: string = config.get('email_daily_statistic')
-    private readonly maxConsecutiveFailures: number = config.get('max_api_consecutive_failures')
+    private readonly failureCountDelays: number[] = config.get('failure_count_delays')
 
     public constructor(
         private readonly apiServiceRepository: ApiServiceRepository,
@@ -65,9 +65,8 @@ export class ApiService {
                 const response: AxiosResponse<any> = await axiosInstance(requestConfig)
                 return response.data
             } catch (error) {
-                await this.apiKeyRepository.updateNextAttemptDate(apiKeyRecord.id, new Date())
                 await this.apiKeyRepository.incrementFailureCount(apiKeyRecord.id)
-                await this.checkAndDisableKey(apiKeyRecord)
+                await this.updateNextAttemptDate(apiKeyRecord)
             }
         }
 
@@ -79,27 +78,14 @@ export class ApiService {
         throw new Error('All API keys have been exhausted, and the request failed.')
     }
 
-    public async checkAndDisableKey(apiKeyRecord: ApiKey): Promise<void> {
-        if (apiKeyRecord.failureCount >= this.maxConsecutiveFailures) {
-            const resetLimitReached = await this.isResetLimitReached(apiKeyRecord)
+    public async updateNextAttemptDate(apiKeyRecord: ApiKey): Promise<void> {
+        const failureCount = apiKeyRecord.failureCount
+        const delayIndex = Math.min(failureCount, this.failureCountDelays.length - 1)
+        const delay = this.failureCountDelays[delayIndex]
 
-            if (resetLimitReached) {
-                await this.apiKeyRepository.updateApiKeyDisabledStatus(apiKeyRecord.id, true)
-            }
-        }
-    }
+        const nextAttemptDate = new Date()
+        nextAttemptDate.setDate(nextAttemptDate.getDate() + delay)
 
-    public async isResetLimitReached(apiKeyRecord: ApiKey): Promise<boolean> {
-        const lastAttemptDate = apiKeyRecord.nextAttemptDate
-
-        if (!lastAttemptDate) {
-            return false
-        }
-
-        const currentDate = new Date()
-        const resetLimitDate = new Date(lastAttemptDate)
-        resetLimitDate.setMonth(resetLimitDate.getMonth() + 1)
-
-        return currentDate >= resetLimitDate
+        await this.apiKeyRepository.updateNextAttemptDate(apiKeyRecord.id, nextAttemptDate)
     }
 }
