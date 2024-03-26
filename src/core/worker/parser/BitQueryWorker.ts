@@ -5,6 +5,9 @@ import { AddressResponse, BitQueryTransfersResponse } from '../../types'
 import { Blockchain, findContractAddress } from '../../../utils'
 import { AbstractParserWorker } from './AbstractParserWorker'
 
+/**
+ * @deprecated Not any more needed.
+ */
 @singleton()
 export class BitQueryWorker extends AbstractParserWorker {
     private readonly workerName = 'BitQuery'

@@ -5,6 +5,9 @@ import { singleton } from 'tsyringe'
 import { BitQueryTransfersResponse } from '../../types'
 import { makeRequest } from '../ApiService'
 
+/**
+ * @deprecated Not any more needed.
+ */
 @singleton()
 export class BitQueryService {
     private readonly apiKeys: string[] = config.get('bitquery_api_keys') as string[]

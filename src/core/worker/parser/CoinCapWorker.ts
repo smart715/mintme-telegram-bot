@@ -5,6 +5,9 @@ import { CoinCapService, QueuedTokenAddressService } from '../../service'
 import { CoinCapCoinInfoResponse } from '../../types'
 import { AbstractParserWorker } from './AbstractParserWorker'
 
+/**
+ * @deprecated Not any more needed.
+ */
 @singleton()
 export class CoinCapWorker extends AbstractParserWorker {
     private readonly workerName = 'CoinCap'

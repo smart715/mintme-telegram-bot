@@ -1,17 +1,13 @@
 import { singleton } from 'tsyringe'
 import { Logger } from 'winston'
-import { Blockchain, isForbiddenTokenName } from '../../../utils'
+import { Blockchain, isForbiddenTokenName, sleep } from '../../../utils'
 import config from 'config'
 import { LastBlockService, QueuedTokenAddressService } from '../../service'
 import { TransactionReceipt, Web3 } from 'web3'
 import { LastBlock } from '../../entity'
 
 interface BlockchainRpcHostInterface {
-    [Blockchain.BSC]: string;
-    [Blockchain.ETH]: string;
-    [Blockchain.CRO]: string;
-    [Blockchain.MATIC]: string;
-    [Blockchain.SOL]: string;
+    [Blockchain:string]: string
 }
 
 @singleton()
@@ -36,7 +32,7 @@ export class EthereumBasedBlockWatcher {
 
     public async runByBlockchain(currentBlockchain: Blockchain): Promise<void> {
         if (!this.supportedBlockchains.includes(currentBlockchain)) {
-            this.logger.warn('Unsupported Blockchain')
+            this.logger.warn(`Unsupported Blockchain: ${currentBlockchain}`)
             return
         }
 
@@ -61,6 +57,8 @@ export class EthereumBasedBlockWatcher {
         // eslint-disable-next-line no-constant-condition
         while (true) {
             await this.updateToLastBlock()
+
+            await sleep(10000)
         }
     }
 
@@ -123,11 +121,11 @@ export class EthereumBasedBlockWatcher {
                         continue
                     }
 
-                    if ('string' === typeof transaction) {
-                        await this.checkTransaction(transaction)
-                    } else {
-                        await this.checkTransaction(transaction.hash)
-                    }
+                    const txHash = 'string' === typeof transaction
+                        ? transaction
+                        : transaction.hash
+
+                    await this.checkTransaction(txHash)
                 }
 
                 currentBlockHash++
