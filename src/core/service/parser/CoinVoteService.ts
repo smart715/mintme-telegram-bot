@@ -7,7 +7,7 @@ export class CoinVoteService extends AbstractTokenFetcherService {
     public async loadListPage(blockchain: Blockchain, page: number): Promise<string> {
         let blockchainStr = blockchain.toLowerCase()
 
-        if (Blockchain.ARB == blockchain) {
+        if (Blockchain.ARB === blockchain) {
             blockchainStr = 'arbitrum'
         }
 

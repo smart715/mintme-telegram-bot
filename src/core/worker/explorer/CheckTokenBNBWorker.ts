@@ -349,11 +349,5 @@ export class CheckTokenBNBWorker extends AbstractTokenWorker {
         } catch (error) {
             this.logger.error(`Couldn't get token info of token ${queuedToken.blockchain}::${queuedToken.tokenAddress}, Error: ${error}`)
         }
-        /*const breadcrumb = document.getElementsByClassName('breadcrumb-up')[0]
-const tokenName = breadcrumb.getElementsByClassName('ml-1')[0].innerText
-const symbol = document.getElementsByClassName('card-body')[0].getElementsByTagName('strong')[0].innerText
-breadcrumb.getElementsByTagName('button')[0].click()
-
-const linksContainer = document.getElementsByClassName('popover-body')[0]*/
     }
 }

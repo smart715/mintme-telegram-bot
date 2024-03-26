@@ -17,8 +17,8 @@ export class CoinScopeService extends AbstractTokenFetcherService {
     ): Promise<CoinScopeApiResponse> {
         let blockchainStr = blockchain.toString()
 
-        if (Blockchain.ARB == blockchain) {
-            blockchainStr = 'arbitrum'
+        if (Blockchain.ARB === blockchain) {
+            blockchainStr = 'ARBITRUM'
         }
 
         const response = await axios.get(`https://www.coinscope.co/_next/data/${buildFolder}/alltime.json`, {

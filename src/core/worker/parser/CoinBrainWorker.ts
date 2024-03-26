@@ -127,6 +127,10 @@ export class CoinBrainWorker extends AbstractParserWorker {
                 return 'eth'
             case Blockchain.MATIC:
                 return 'poly'
+            case Blockchain.AVAX:
+                return 'aval'
+            case Blockchain.ARB:
+                return 'arbi'
             default:
                 this.logger.error(
                     `${this.prefixLog} current blockchain ${currentBlockchain} doesn't have crypto ` +
