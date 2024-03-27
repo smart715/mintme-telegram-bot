@@ -1,17 +1,17 @@
 import { singleton } from 'tsyringe'
 import { Logger } from 'winston'
-import { CommandInterface, BlockchainWorkerCmdArgv } from './types'
+import { BlockchainWorkerCmdArgv, CommandInterface } from './types'
 import { Arguments, Argv } from 'yargs'
 import { sleep } from '../../utils'
-import { EnqueueTokensWorker, MailerService } from '../../core'
+import { EthereumBasedBlockWatcher, MailerService } from '../../core'
 
 @singleton()
-export class RunEnqueueTokenWorker implements CommandInterface {
-    public readonly command = 'run-enqueue-tokens-worker'
-    public readonly description = 'Runs Enqueue tokens Worker'
+export class RunEthereumBasedBlockchainWatcher implements CommandInterface {
+    public readonly command = 'run-eth-based-blockchain-watcher'
+    public readonly description = 'Runs Ethereum Based Blockchain Watcher'
 
     public constructor(
-        private readonly enqueueTokensWorker: EnqueueTokensWorker,
+        private readonly ethereumBasedBlockWatcher: EthereumBasedBlockWatcher,
         private readonly mailService: MailerService,
         private readonly logger: Logger,
     ) { }
@@ -20,8 +20,7 @@ export class RunEnqueueTokenWorker implements CommandInterface {
         yargs.option('blockchain', {
             type: 'string',
             describe: 'Blockchain to check',
-            default: () => undefined,
-            demandOption: false,
+            demandOption: true,
         })
     }
 
@@ -29,7 +28,7 @@ export class RunEnqueueTokenWorker implements CommandInterface {
         this.logger.info(`Started command ${this.command}`)
 
         try {
-            await this.enqueueTokensWorker.run(argv.blockchain)
+            await this.ethereumBasedBlockWatcher.runByBlockchain(argv.blockchain)
         } catch (err) {
             await this.mailService.sendFailedWorkerEmail(`Error while running ${this.constructor.name}`, err)
 

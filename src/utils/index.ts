@@ -54,4 +54,10 @@ export function getRandomNumber(min:number, max:number): number {
     return Math.floor(Math.random() * (max - min + 1)) + min
 }
 
+export function isForbiddenTokenName(tokenName: string): boolean {
+    const tokenForbiddenWordsRegexp = /(pancake|binance-peg|wrapped|-lp|swaap governance|tracker|\(\)|cronos chain|uniswap|polygonscan|erc-20 token|erc-1155|nft|usdc|usdt|usd coin|staked|just a moment|ddos-guard|matic token)/i
+
+    return tokenForbiddenWordsRegexp.test(tokenName)
+}
+
 export { createLogger } from './winstonLogger'

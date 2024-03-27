@@ -6,6 +6,9 @@ import { singleton } from 'tsyringe'
 import { ExplorerEnqueuer } from './ExplorerEnqueuer'
 import { Logger } from 'winston'
 
+/**
+ * @deprecated Not any more needed.
+ */
 @singleton()
 export class ExplorerSearchAPIWorker extends AbstractTokenWorker {
     private readonly workerName = ExplorerSearchAPIWorker.name

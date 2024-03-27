@@ -6,6 +6,9 @@ import { ExplorerEnqueuer } from './ExplorerEnqueuer'
 import { Logger } from 'winston'
 import { WebDriver } from 'selenium-webdriver'
 
+/**
+ * @deprecated Not any more needed.
+ */
 @singleton()
 export class BSCScanValidatorsFetcher extends AbstractTokenWorker {
     private readonly workerName = BSCScanValidatorsFetcher.name

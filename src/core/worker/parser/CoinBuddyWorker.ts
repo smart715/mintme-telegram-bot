@@ -5,6 +5,9 @@ import { Blockchain, findContractAddress } from '../../../utils'
 import { CheckedTokenService, CoinBuddyService, TokensService } from '../../service'
 import { AbstractParserWorker } from './AbstractParserWorker'
 
+/**
+ * @deprecated Not any more needed.
+ */
 @singleton()
 export class CoinBuddyWorker extends AbstractParserWorker {
     private readonly workerName = 'CoinBuddy'
