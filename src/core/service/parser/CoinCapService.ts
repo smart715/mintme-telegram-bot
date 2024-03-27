@@ -2,6 +2,9 @@ import axios from 'axios'
 import { singleton } from 'tsyringe'
 import { CoinCapCoinInfoResponse } from '../../types'
 
+/**
+ * @deprecated Not any more needed.
+ */
 @singleton()
 export class CoinCapService {
     public async getCoinsInfo(page: number, limit: number): Promise<CoinCapCoinInfoResponse> {

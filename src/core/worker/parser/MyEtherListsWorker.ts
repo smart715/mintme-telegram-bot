@@ -5,6 +5,9 @@ import { MyEtherListsService, TokensService } from '../../service'
 import { GitHubFile, GitHubRawTokenSocial } from '../../types'
 import { AbstractParserWorker } from './AbstractParserWorker'
 
+/**
+ * @deprecated Not any more needed.
+ */
 @singleton()
 export class MyEtherListsWorker extends AbstractParserWorker {
     private readonly workerName = 'MyEtherLists'

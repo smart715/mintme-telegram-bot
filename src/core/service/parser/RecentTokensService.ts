@@ -1,6 +1,9 @@
 import { singleton } from 'tsyringe'
 import { AbstractTokenFetcherService } from './AbstractTokenFetcherService'
 
+/**
+ * @deprecated Not any more needed.
+ */
 @singleton()
 export class RecentTokensService extends AbstractTokenFetcherService {
     public async getAllTokensPage(blockchain: string, page: number): Promise<string> {

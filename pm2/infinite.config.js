@@ -2,27 +2,27 @@
 module.exports = {
     apps: [
         {
-            name: 'token-holding-bsc',
+            name: 'blockchain-watcher-bsc',
             script: 'npm',
-            args: 'run cli -- run-explorer-worker --name=token-holdings-worker  --blockchain=BSC',
+            args: 'run cli -- run-eth-based-blockchain-watcher  --blockchain=BSC',
             autorestart: true,
         },
         {
-            name: 'token-holding-eth',
+            name: 'blockchain-watcher-eth',
             script: 'npm',
-            args: 'run cli -- run-explorer-worker --name=token-holdings-worker  --blockchain=ETH',
+            args: 'run cli -- run-eth-based-blockchain-watcher  --blockchain=ETH',
             autorestart: true,
         },
         {
-            name: 'token-holding-cro',
+            name: 'blockchain-watcher-cro',
             script: 'npm',
-            args: 'run cli -- run-explorer-worker --name=token-holdings-worker  --blockchain=CRO',
+            args: 'run cli -- run-eth-based-blockchain-watcher  --blockchain=CRO',
             autorestart: true,
         },
         {
-            name: 'token-holding-matic',
+            name: 'blockchain-watcher-matic',
             script: 'npm',
-            args: 'run cli -- run-explorer-worker --name=token-holdings-worker  --blockchain=MATIC',
+            args: 'run cli -- run-eth-based-blockchain-watcher  --blockchain=MATIC',
             autorestart: true,
         },
         {
@@ -32,39 +32,27 @@ module.exports = {
             autorestart: true,
         },
         {
-            name: 'explorer-search-api',
+            name: 'check-token-worker-bsc',
             script: 'npm',
-            args: 'run cli -- run-explorer-worker --name=explorer-search-api-worker',
+            args: 'run cli -- run-explorer-worker --name=check-token-worker --blockchain=BSC',
             autorestart: true,
         },
         {
-            name: 'check-token-worker',
+            name: 'check-token-worker-eth',
             script: 'npm',
-            args: 'run cli -- run-explorer-worker --name=check-token-worker',
+            args: 'run cli -- run-explorer-worker --name=check-token-worker --blockchain=ETH',
             autorestart: true,
         },
         {
-            name: 'token-transactions-fetcher-bsc',
+            name: 'check-token-worker-cro',
             script: 'npm',
-            args: 'run cli -- run-explorer-worker --name=token-transactions-fetcher --blockchain=BSC',
+            args: 'run cli -- run-explorer-worker --name=check-token-worker --blockchain=CRO',
             autorestart: true,
         },
         {
-            name: 'token-transactions-fetcher-eth',
+            name: 'check-token-worker-matic',
             script: 'npm',
-            args: 'run cli -- run-explorer-worker --name=token-transactions-fetcher --blockchain=ETH',
-            autorestart: true,
-        },
-        {
-            name: 'token-transactions-fetcher-cro',
-            script: 'npm',
-            args: 'run cli -- run-explorer-worker --name=token-transactions-fetcher --blockchain=CRO',
-            autorestart: true,
-        },
-        {
-            name: 'token-transactions-fetcher-matic',
-            script: 'npm',
-            args: 'run cli -- run-explorer-worker --name=token-transactions-fetcher --blockchain=MATIC',
+            args: 'run cli -- run-explorer-worker --name=check-token-worker --blockchain=MATIC',
             autorestart: true,
         },
         {

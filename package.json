@@ -55,6 +55,7 @@
     "tsyringe": "^4.8.0",
     "typeorm": "^0.2.41",
     "typeorm-naming-strategies": "^4.1.0",
+    "web3": "^4.6.0",
     "winston": "^3.10.0",
     "yargs": "^17.7.2"
   }

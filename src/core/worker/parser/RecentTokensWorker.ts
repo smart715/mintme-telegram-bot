@@ -10,6 +10,9 @@ import {
 import { NewestCheckedTokenService, RecentTokensService, TokensService } from '../../service'
 import { NewestTokenChecker, StopCheckException } from './NewestTokenChecker'
 
+/**
+ * @deprecated Not any more needed.
+ */
 export class RecentTokensWorker extends NewestTokenChecker {
     protected readonly workerName = 'RecentTokens'
     private readonly prefixLog = `[${this.workerName}]`
