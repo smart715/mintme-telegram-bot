@@ -21,6 +21,8 @@ export class EthereumBasedBlockWatcher {
         Blockchain.BSC,
         Blockchain.CRO,
         Blockchain.MATIC,
+        Blockchain.ARB,
+        Blockchain.AVAX,
     ]
 
     public constructor(
