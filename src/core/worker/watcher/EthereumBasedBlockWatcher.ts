@@ -191,7 +191,7 @@ export class EthereumBasedBlockWatcher {
             const tokenName = `${name} (${symbol})`
 
             if (!isForbiddenTokenName(tokenName)) {
-                this.queuedTokenAddressService.push(tokenAddress, this.currentBlockchain)
+                await this.queuedTokenAddressService.push(tokenAddress, this.currentBlockchain)
             }
         } catch (error) {
             this.logger.warn(`Couldn't get contract info, E: ${error}`)
