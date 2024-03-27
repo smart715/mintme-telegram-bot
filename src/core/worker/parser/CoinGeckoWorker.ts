@@ -26,8 +26,7 @@ export class CoinGeckoWorker extends AbstractParserWorker {
         let tokens: AllCoinsTokenResponse[]
 
         try {
-            const response = await this.coinGeckoService.getAll('https://api.coingecko.com/api/v3/coins/list?include_platform=true')
-            tokens = response
+            tokens = await this.coinGeckoService.getAll('https://api.coingecko.com/api/v3/coins/list?include_platform=true')
         } catch (ex: any) {
             this.logger.error(
                 `${this.prefixLog} Aborting. Failed to fetch all tokens. Reason: ${ex.message}`
