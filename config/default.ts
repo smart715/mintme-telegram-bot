@@ -56,6 +56,13 @@ export default {
         28,
     ],
 
+    blockchainRpcHost: {
+        'BSC': 'https://bsc-dataseed1.binance.org/',
+        'ETH': 'https://ethereum-rpc.publicnode.com/',
+        'CRO': 'https://evm.cronos.org/',
+        'MATIC': 'https://1rpc.io/matic',
+    },
+
     mailer: {
         senderName: 'mintme tokens fetcher',
         senderEmail: 'mintme.token.fetcher@gmail.com',

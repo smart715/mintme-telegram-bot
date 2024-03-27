@@ -5,6 +5,9 @@ import { EthprolerTokenInfoResponse } from '../../types'
 import { Logger } from 'winston'
 import { AbstractParserWorker } from './AbstractParserWorker'
 
+/**
+ * @deprecated Not any more needed.
+ */
 export class EthplorerWorker extends AbstractParserWorker {
     private readonly workerName = EthplorerWorker.name
     private readonly blockchain = Blockchain.ETH

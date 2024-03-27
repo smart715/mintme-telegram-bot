@@ -2,6 +2,9 @@ import axios from 'axios'
 import { singleton } from 'tsyringe'
 import { AbstractTokenFetcherService } from './AbstractTokenFetcherService'
 
+/**
+ * @deprecated Not any more needed.
+ */
 @singleton()
 export class CoinBuddyService extends AbstractTokenFetcherService {
     public async getAllCoins(tag: string, page: number): Promise<string> {

@@ -10,8 +10,9 @@ import moment from 'moment'
 import config from 'config'
 import { CMCCryptocurrency, CMCWorkerConfig } from '../../types'
 import { CoinMarketCommentWorker } from './CoinMarketCapCommentWorker'
+import { ClientInterface } from '../ClientInterface'
 
-export class CoinMarketCapClient {
+export class CoinMarketCapClient implements ClientInterface {
     private readonly cmcAccount: CoinMarketCapAccount
     private driver: WebDriver
     private maxCommentsPerDay: number = 100

@@ -4,6 +4,9 @@ import { singleton } from 'tsyringe'
 import { BitQueryTransfersResponse } from '../../types'
 import { ApiService, RequestOptions } from '../ApiService'
 
+/**
+ * @deprecated Not any more needed.
+ */
 @singleton()
 export class BitQueryService {
     private readonly serviceName: string = 'bitquery'

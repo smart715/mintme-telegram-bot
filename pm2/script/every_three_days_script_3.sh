@@ -1,9 +1,6 @@
 # Run CoinScope
 npm run cli -- run-fetch-token-worker --name=coin-scope
 
-# Run CoinBuddy
-npm run cli -- run-fetch-token-worker --name=coin-buddy
-
 # Run CoinSniper
 npm run cli -- run-fetch-token-worker --name=coin-sniper
 

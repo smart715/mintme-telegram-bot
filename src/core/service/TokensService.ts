@@ -1,7 +1,7 @@
 import { singleton } from 'tsyringe'
 import { TokenRepository } from '../repository'
 import { QueuedContact, Token } from '../entity'
-import { Blockchain, getValidLinks, isValidEmail } from '../../utils'
+import { Blockchain, getValidLinks, isForbiddenTokenName, isValidEmail } from '../../utils'
 import { ContactMethod, TokenContactStatusType, TokensCountGroupedBySourceAndBlockchain } from '../types'
 import moment from 'moment'
 import { Logger } from 'winston'
@@ -48,9 +48,7 @@ export class TokensService {
             return this.updateTokenLinks(token, websites, emails, links)
         }
 
-        const tokenForbiddenWordsRegexp = /(pancake|binance-peg|wrapped|-lp|swaap governance|tracker|\(\)|cronos chain|uniswap|polygonscan|erc-20 token|erc-1155|nft|usdc|usdt|usd coin|staked|just a moment|ddos-guard)/i
-
-        if (tokenForbiddenWordsRegexp.test(tokenName)) {
+        if (isForbiddenTokenName(tokenName)) {
             logger.warn(`Ignored token ${tokenName} ${tokenAddress} :: ${blockchain} due to forbidden name.`)
             return undefined
         }

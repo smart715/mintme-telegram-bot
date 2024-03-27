@@ -13,9 +13,10 @@ import { TwitterAccount } from '../../../entity'
 import { TwitterClient } from './TwitterClient'
 import { Environment, sleep } from '../../../../utils'
 import { ContactMethod } from '../../../types'
+import { WorkerInterface } from '../../WorkerInterface'
 
 @singleton()
-export class TwitterWorker {
+export class TwitterWorker implements WorkerInterface {
     private readonly workerName = 'TwitterWorker'
     private readonly prefixLog = `[${this.workerName}]`
     private readonly maxTwitterAccount: number = config.get('twitter_max_accounts_simultaneous')
@@ -110,7 +111,7 @@ export class TwitterWorker {
         return twitterClient
     }
 
-    private startAllClients(): Promise<void[]> {
+    public async startAllClients(): Promise<void[]> {
         const contactingPromises: Promise<void>[] = []
 
         for (const client of this.twitterClients) {
@@ -120,7 +121,7 @@ export class TwitterWorker {
         return Promise.all(contactingPromises)
     }
 
-    private async destroyDrivers(): Promise<void> {
+    public async destroyDrivers(): Promise<void> {
         for (const client of this.twitterClients) {
             await client.destroyDriver()
         }
