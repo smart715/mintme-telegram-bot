@@ -48,19 +48,29 @@ export class ContactQueueService {
         await this.queuedContactRepository.delete({ address, blockchain })
     }
 
-    public async getFirstFromQueue(contactMethod: ContactMethod, logger: Logger): Promise<QueuedContact | undefined> {
+    public async getFirstFromQueue(
+        contactMethod: ContactMethod,
+        logger: Logger,
+        excludedBlockchains: Blockchain[] = []
+    ): Promise<QueuedContact | undefined> {
         try {
             while (this.isFetchingQueue) {
                 await new Promise(resolve => setTimeout(resolve, 500))
             }
             this.isFetchingQueue = true
 
-            const result = await this.queuedContactRepository
+            const queryBuilder = this.queuedContactRepository
                 .createQueryBuilder('queued_contact')
                 .leftJoin('token', 'token', 'queued_contact.address = token.address AND queued_contact.blockchain = token.blockchain')
                 .where('queued_contact.is_processing = 0')
                 .andWhere('queued_contact.is_error = 0')
                 .andWhere('queued_contact.contact_method = :contactMethod', { contactMethod })
+
+            if (excludedBlockchains.length > 0) {
+                queryBuilder.andWhere('queued_contact.blockchain NOT IN (:...excludedBlockchains)', { excludedBlockchains })
+            }
+
+            const result = await queryBuilder
                 .orderBy('token.created_at', 'DESC')
                 .getOne()
 
