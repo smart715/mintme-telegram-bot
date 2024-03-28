@@ -67,8 +67,7 @@ export class ContactQueueService {
                 .andWhere('queued_contact.contact_method = :contactMethod', { contactMethod })
 
             if (excludedBlockchains.length > 0) {
-                const excludedBlockchainsParameter = excludedBlockchains.join(', ')
-                queryBuilder.andWhere('queued_contact.blockchain NOT IN (:excludedBlockchains)', { excludedBlockchains: excludedBlockchainsParameter })
+                queryBuilder.andWhere('queued_contact.blockchain NOT IN (:...excludedBlockchains)', { excludedBlockchains })
             }
 
             const result = await queryBuilder
