@@ -15,6 +15,8 @@ interface ContactingWorkersInfo {
         CRO: number,
         MATIC: number,
         SOL: number,
+        AVAX: number,
+        ARB: number,
     },
 }
 
@@ -26,6 +28,8 @@ interface TokenWorkersInfo {
         ETH: number,
         MATIC: number,
         SOL: number,
+        ARB: number,
+        AVAX: number,
     },
 }
 
@@ -117,7 +121,7 @@ export class DailyStatisticMailWorker {
             const currentTokenSource = grouped[token.source]
 
             if (!currentTokenSource) {
-                grouped[token.source] = { total: 0, ETH: 0, BSC: 0, CRO: 0, MATIC: 0, SOL: 0 }
+                grouped[token.source] = { total: 0, ETH: 0, BSC: 0, CRO: 0, MATIC: 0, SOL: 0, ARB: 0, AVAX: 0 }
             }
 
             grouped[token.source][token.blockchain] = parseInt(token.tokens)
@@ -143,6 +147,8 @@ export class DailyStatisticMailWorker {
                     CRO: 0,
                     MATIC: 0,
                     SOL: 0,
+                    AVAX: 0,
+                    ARB: 0,
                 }
             }
 

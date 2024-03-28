@@ -18,6 +18,8 @@ export class CoinBuddyWorker extends AbstractParserWorker {
         Blockchain.CRO,
         Blockchain.MATIC,
         Blockchain.SOL,
+        Blockchain.ARB,
+        Blockchain.AVAX,
     ]
 
     public constructor(
@@ -186,19 +188,18 @@ export class CoinBuddyWorker extends AbstractParserWorker {
         switch (currentBlockchain) {
             case Blockchain.BSC:
                 return 'binance-smart-chain'
-
             case Blockchain.ETH:
                 return 'ethereum'
-
             case Blockchain.CRO:
                 return 'cronos'
-
             case Blockchain.MATIC:
                 return 'polygon'
-
             case Blockchain.SOL:
                 return 'solana'
-
+            case Blockchain.AVAX:
+                return 'avalanche'
+            case Blockchain.ARB:
+                return 'arbitrum'
             default:
                 return null
         }

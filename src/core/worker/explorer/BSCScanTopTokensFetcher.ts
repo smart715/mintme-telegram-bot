@@ -15,6 +15,8 @@ export class BSCScanTopTokensFetcher extends AbstractTokenWorker {
         [Blockchain.CRO]: 1,
         [Blockchain.MATIC]: 8,
         [Blockchain.SOL]: 10,
+        [Blockchain.ARB]: 10,
+        [Blockchain.AVAX]: 10,
     }
 
     private readonly supportedBlockchains = [

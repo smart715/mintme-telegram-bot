@@ -163,6 +163,10 @@ export class TokensInsightWorker extends AbstractParserWorker {
                 return /polygon|matic/
             case Blockchain.SOL:
                 return /solana|sol/
+            case Blockchain.ARB:
+                return /arbitrum|arb/
+            case Blockchain.AVAX:
+                return /avalanche|avax/
             default:
                 throw new Error('Wrong blockchain provided. Platform regex doesn\'t exists for provided blockchain')
         }

@@ -26,6 +26,8 @@ export class BSCScanTokensTransactionsFetcher extends AbstractTokenWorker {
         [Blockchain.CRO]: 100,
         [Blockchain.MATIC]: 100,
         [Blockchain.SOL]: 100,
+        [Blockchain.ARB]: 100,
+        [Blockchain.AVAX]: 100,
     }
 
     private readonly isSol90DaysCheck: boolean = true //Only for first time fetch
