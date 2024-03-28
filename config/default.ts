@@ -61,6 +61,8 @@ export default {
         'ETH': 'https://ethereum-rpc.publicnode.com/',
         'CRO': 'https://evm.cronos.org/',
         'MATIC': 'https://1rpc.io/matic',
+        'ARB': 'https://arbitrum.blockpi.network/v1/rpc/public',
+        'AVAX': 'https://avalanche.drpc.org',
     },
 
     mailer: {

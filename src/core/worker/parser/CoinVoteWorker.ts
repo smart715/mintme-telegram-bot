@@ -14,6 +14,8 @@ export class CoinVoteWorker extends AbstractParserWorker {
         Blockchain.BSC,
         Blockchain.MATIC,
         Blockchain.SOL,
+        Blockchain.AVAX,
+        Blockchain.ARB,
     ]
 
     private readonly maxItemsOnPage = 20

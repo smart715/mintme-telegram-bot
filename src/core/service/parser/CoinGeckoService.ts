@@ -1,10 +1,10 @@
 import axios from 'axios'
 import { singleton } from 'tsyringe'
-import { CoinGeckoAllCoinsResponse, CoinInfo } from '../../types'
+import { AllCoinsTokenResponse, CoinInfo } from '../../types'
 
 @singleton()
 export class CoinGeckoService {
-    public async getAll(link: string): Promise<CoinGeckoAllCoinsResponse> {
+    public async getAll(link: string): Promise<AllCoinsTokenResponse[]> {
         const response = await axios.get(link)
 
         return response.data

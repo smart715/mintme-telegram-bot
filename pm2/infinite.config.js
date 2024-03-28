@@ -26,6 +26,18 @@ module.exports = {
             autorestart: true,
         },
         {
+            name: 'blockchain-watcher-arb',
+            script: 'npm',
+            args: 'run cli -- run-eth-based-blockchain-watcher  --blockchain=ARB',
+            autorestart: true,
+        },
+        {
+            name: 'blockchain-watcher-avax',
+            script: 'npm',
+            args: 'run cli -- run-eth-based-blockchain-watcher  --blockchain=AVAX',
+            autorestart: true,
+        },
+        {
             name: 'token-holding-sol',
             script: 'npm',
             args: 'run cli -- run-explorer-worker --name=token-holdings-worker  --blockchain=SOL',
@@ -53,6 +65,24 @@ module.exports = {
             name: 'check-token-worker-matic',
             script: 'npm',
             args: 'run cli -- run-explorer-worker --name=check-token-worker --blockchain=MATIC',
+            autorestart: true,
+        },
+        {
+            name: 'check-token-worker-sol',
+            script: 'npm',
+            args: 'run cli -- run-explorer-worker --name=check-token-worker --blockchain=SOL',
+            autorestart: true,
+        },
+        {
+            name: 'check-token-worker-arb',
+            script: 'npm',
+            args: 'run cli -- run-explorer-worker --name=check-token-worker --blockchain=ARB',
+            autorestart: true,
+        },
+        {
+            name: 'check-token-worker-avax',
+            script: 'npm',
+            args: 'run cli -- run-explorer-worker --name=check-token-worker --blockchain=AVAX',
             autorestart: true,
         },
         {

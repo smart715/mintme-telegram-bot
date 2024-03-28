@@ -1,7 +1,7 @@
 import { singleton } from 'tsyringe'
 import { Logger } from 'winston'
 import { CheckedTokenService, CoinGeckoService, TokensService } from '../../service'
-import { Blockchain, sleep } from '../../../utils'
+import { Blockchain, parseBlockchainName, sleep } from '../../../utils'
 import { AllCoinsTokenResponse, CoinInfo, LinksCoinInfo } from '../../types'
 import { AbstractParserWorker } from './AbstractParserWorker'
 
@@ -9,14 +9,7 @@ import { AbstractParserWorker } from './AbstractParserWorker'
 export class CoinGeckoWorker extends AbstractParserWorker {
     private readonly workerName = 'CoinGecko'
     private readonly prefixLog = `[${this.workerName}]`
-    private readonly sleepDuration = 10 * 1000
-    private readonly supportedBlockchains: Blockchain[] = [
-        Blockchain.ETH,
-        Blockchain.BSC,
-        Blockchain.CRO,
-        Blockchain.MATIC,
-        Blockchain.SOL,
-    ]
+    private readonly sleepDuration = 20 * 1000
 
     public constructor(
         private readonly tokenService: TokensService,
@@ -30,34 +23,20 @@ export class CoinGeckoWorker extends AbstractParserWorker {
     public async run(): Promise<void> {
         this.logger.info(`${this.prefixLog} Worker started`)
 
-        for (const blockchain of this.supportedBlockchains) {
-            await this.runByBlockchain(blockchain)
-        }
-
-        this.logger.info(`${this.prefixLog} Worker finished`)
-    }
-
-    public async runByBlockchain(currentBlockchain: Blockchain): Promise<void> {
-        this.logger.info(`${this.prefixLog} checking ${currentBlockchain} blockchain`)
-
-        const link = this.getAllCoinsLink(currentBlockchain)
-
         let tokens: AllCoinsTokenResponse[]
 
         try {
-            const response = await this.coinGeckoService.getAll(link)
-            tokens = response.tokens
+            tokens = await this.coinGeckoService.getAll('https://api.coingecko.com/api/v3/coins/list?include_platform=true')
         } catch (ex: any) {
             this.logger.error(
-                `${this.prefixLog} Aborting. Failed to fetch all tokens. Link: ${link} Reason: ${ex.message}`
+                `${this.prefixLog} Aborting. Failed to fetch all tokens. Reason: ${ex.message}`
             )
 
             return
         }
 
         for (const token of tokens) {
-            const tokenId: string = token.name.toString().toLowerCase().replace(' ', '-')
-
+            const tokenId: string = token.id
             if (tokenId.length <= 0 || tokenId.startsWith('realt-')) {
                 continue
             }
@@ -68,9 +47,22 @@ export class CoinGeckoWorker extends AbstractParserWorker {
                 continue
             }
 
-            const address: string = token.address
+            let address: string = ''
+            let blockchain: Blockchain|undefined
 
-            if (address.length <= 0) {
+            const platforms = Object.keys(token.platforms)
+
+            for (const platform of platforms) {
+                try {
+                    blockchain = parseBlockchainName(platform)
+                    address = token.platforms[platform]
+                    break
+                } catch (err) {
+                    continue
+                }
+            }
+
+            if (!address.length || !blockchain) {
                 continue
             }
 
@@ -118,7 +110,7 @@ export class CoinGeckoWorker extends AbstractParserWorker {
                 [ '' ],
                 allLinks,
                 this.workerName,
-                currentBlockchain,
+                blockchain,
                 this.logger
             )
 
@@ -130,30 +122,12 @@ export class CoinGeckoWorker extends AbstractParserWorker {
                     websites,
                     allLinks,
                     this.workerName,
-                    currentBlockchain,
+                    blockchain,
                 ]
             )
         }
-    }
 
-    private getAllCoinsLink(currentBlockchain: Blockchain): string {
-        switch (currentBlockchain) {
-            case Blockchain.BSC:
-                return 'https://tokens.coingecko.com/binance-smart-chain/all.json'
-            case Blockchain.ETH:
-                return 'https://tokens.coingecko.com/ethereum/all.json'
-            case Blockchain.CRO:
-                return 'https://tokens.coingecko.com/cronos/all.json'
-            case Blockchain.MATIC:
-                return 'https://tokens.coingecko.com/polygon-pos/all.json'
-            case Blockchain.SOL:
-                return 'https://tokens.coingecko.com/solana/all.json'
-            default:
-                throw new Error(
-                    `Wrong blockchain provided. ` +
-                    `All coins link doesn't exists for provided blockchain ${currentBlockchain}`
-                )
-        }
+        this.logger.info(`${this.prefixLog} Worker finished`)
     }
 
     private getLinks(links: LinksCoinInfo): string[] {
