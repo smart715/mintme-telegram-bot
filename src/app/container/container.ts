@@ -107,6 +107,9 @@ import {
     CoinMarketCommentWorker,
     CoinMarketCapCommentRepository,
     CoinMarketCapCommentHistoryRepository,
+    ApiServiceRepository,
+    ApiKeyRepository,
+    ApiService,
 } from '../../core'
 import { Application } from '../'
 import { CliDependency } from './types'
@@ -221,6 +224,14 @@ container.register(TwitterResponseRepository, {
 
 container.register(BlacklistRepository, {
     useFactory: instanceCachingFactory(() => getConnection().getCustomRepository(BlacklistRepository)),
+})
+
+container.register(ApiServiceRepository, {
+    useFactory: instanceCachingFactory(() => getConnection().getCustomRepository(ApiServiceRepository)),
+})
+
+container.register(ApiKeyRepository, {
+    useFactory: instanceCachingFactory(() => getConnection().getCustomRepository(ApiKeyRepository)),
 })
 
 container.register(LastBlockRepository, {
@@ -384,7 +395,9 @@ container.register(CoinCodexService, {
 })
 
 container.register(BitQueryService, {
-    useFactory: instanceCachingFactory(() => new BitQueryService()),
+    useFactory: instanceCachingFactory((dependencyContainer) => new BitQueryService(
+        dependencyContainer.resolve(ApiService),
+    )),
 })
 
 container.register(MailerService, {
@@ -400,7 +413,9 @@ container.register(Top100TokensService, {
 })
 
 container.register(TokensInsightService, {
-    useFactory: instanceCachingFactory(() => new TokensInsightService()),
+    useFactory: instanceCachingFactory((dependencyContainer) => new TokensInsightService(
+        dependencyContainer.resolve(ApiService),
+    )),
 })
 
 container.register(MyEtherListsService, {
@@ -417,6 +432,7 @@ container.register(CoinLoreService, {
 
 container.register(CMCService, {
     useFactory: instanceCachingFactory((dependencyContainer) => new CMCService(
+        dependencyContainer.resolve(ApiService),
         dependencyContainer.resolve(CoinMarketCapAccountRepository),
         dependencyContainer.resolve(CoinMarketCapCommentRepository),
         dependencyContainer.resolve(CoinMarketCapCommentHistoryRepository),
@@ -469,6 +485,15 @@ container.register(LastBlockService, {
     ),
 })
 
+container.register(ApiService, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new ApiService(
+            dependencyContainer.resolve(ApiServiceRepository),
+            dependencyContainer.resolve(ApiKeyRepository),
+            dependencyContainer.resolve(MailerService),
+        ),
+    ),
+})
 // Workers
 
 container.register(CMCWorker, {
@@ -621,6 +646,7 @@ container.register(LastTokenTxDateFetcher, {
         new LastTokenTxDateFetcher(
             dependencyContainer.resolve(TokensService),
             lastTokenTxDateFetcherLogger,
+            dependencyContainer.resolve(ApiService),
         )
     ),
 })
