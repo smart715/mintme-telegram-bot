@@ -9,6 +9,7 @@ import { TokensService } from './TokensService'
 import { ProxyService } from './ProxyServerService'
 import { HttpsProxyAgent } from 'https-proxy-agent'
 import { ContactHistoryService } from './ContactHistoryService'
+import config from 'config'
 
 @singleton()
 export class ContactQueueService {
@@ -51,7 +52,6 @@ export class ContactQueueService {
     public async getFirstFromQueue(
         contactMethod: ContactMethod,
         logger: Logger,
-        excludedBlockchains: Blockchain[] = []
     ): Promise<QueuedContact | undefined> {
         try {
             while (this.isFetchingQueue) {
@@ -59,6 +59,7 @@ export class ContactQueueService {
             }
             this.isFetchingQueue = true
 
+            const excludedBlockchains: Blockchain[] = config.get('excludedBlockchains') || []
             const queryBuilder = this.queuedContactRepository
                 .createQueryBuilder('queued_contact')
                 .leftJoin('token', 'token', 'queued_contact.address = token.address AND queued_contact.blockchain = token.blockchain')

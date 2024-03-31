@@ -21,6 +21,8 @@ export default {
     // coinlore worker settings
     'coinlore_request_batch_size': 100,
 
+    'excludedBlockchains': [],
+
     'bitquery_api_keys': [ 'BQYrOBkyfMSCQ6CJChTBQDQbRQhRbXS8', 'BQYzhsnLQfY4s85Gq2QooRcxKUqf9FW7', 'BQYlgCPtB9eCcIlHtdfsnty5o9zbRGTe' ],
     'tokensinsight_api_keys': [ '637ad09e1d294dfaa69036b6d4e9c526', '34cd797948c445aaa36ffe213199b8cf', 'key3' ], // Replace with actual API keys
 
