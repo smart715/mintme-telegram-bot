@@ -20,6 +20,7 @@ export default {
     // coinlore worker settings
     'coinlore_request_batch_size': 100,
 
+    // exclude blockchains from getFirstFromQueue
     'excludedBlockchains': [],
 
     // telegram configs
