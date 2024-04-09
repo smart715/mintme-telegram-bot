@@ -21,7 +21,7 @@ export default {
     'coinlore_request_batch_size': 100,
 
     // exclude blockchains from getFirstFromQueue
-    'excludedBlockchains': [],
+    'excluded_blockchains': [ 'BSC' ],
 
     // telegram configs
     'telegram_max_accounts_simultaneous': 2,

@@ -59,7 +59,7 @@ export class ContactQueueService {
             }
             this.isFetchingQueue = true
 
-            const excludedBlockchains: Blockchain[] = config.get('excludedBlockchains') || []
+            const excludedBlockchains: Blockchain[] = config.get('excluded_blockchains') || []
             const queryBuilder = this.queuedContactRepository
                 .createQueryBuilder('queued_contact')
                 .leftJoin('token', 'token', 'queued_contact.address = token.address AND queued_contact.blockchain = token.blockchain')
