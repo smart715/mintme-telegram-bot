@@ -75,7 +75,7 @@ export class LastTokenTxDateFetcher {
                 apiKeyLocation: 'params',
             })
 
-        return response.result && response.result[0].timeStamp
+        return response.result[0] && response.result[0].timeStamp
             ? parseInt(response.result[0].timeStamp) * 1000
             : null
     }
