@@ -20,6 +20,9 @@ export default {
     // coinlore worker settings
     'coinlore_request_batch_size': 100,
 
+    // exclude blockchains from getFirstFromQueue
+    'excluded_blockchains': [ 'BSC' ],
+
     // telegram configs
     'telegram_max_accounts_simultaneous': 2,
     'telegram_messages_delay_in_seconds': 35,
