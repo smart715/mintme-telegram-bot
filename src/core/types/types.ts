@@ -37,6 +37,7 @@ export enum ContactHistoryStatusType {
     NO_MX_RECORD = 'NO_MX_RECORD',
     TELEGRAM_CACHE_BUG = 'TELEGRAM_CACHE_BUG',
     DM_PREMIUM_ONLY = 'DM_PREMIUM_ONLY',
+    GROUP_MAX_USERS_LIMIT = 'GROUP_MAX_USERS_LIMIT',
 }
 
 export enum ChatType {
