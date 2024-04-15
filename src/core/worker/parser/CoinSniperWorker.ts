@@ -12,7 +12,14 @@ export class CoinSniperWorker extends NewestTokenChecker {
     protected override readonly sleepTimeBetweenPages = 2 * 1000
 
     private readonly prefixLog = `[${this.workerName}]`
-    private readonly supportedBlockchains: Blockchain[] = [ Blockchain.ETH, Blockchain.BSC ]
+    private readonly supportedBlockchains: Blockchain[] = [
+        Blockchain.ETH,
+        Blockchain.BSC,
+        Blockchain.ARB,
+        Blockchain.MATIC,
+        Blockchain.SOL,
+    ]
+
     private readonly sleepBetweenTokens = 4 * 1000
     private webDriver: WebDriver
 

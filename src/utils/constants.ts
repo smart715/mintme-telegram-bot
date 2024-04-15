@@ -11,6 +11,7 @@ export const explorerDomains = {
     [Blockchain.SOL]: 'solscan.io',
     [Blockchain.AVAX]: 'snowtrace.io',
     [Blockchain.ARB]: 'arbiscan.io',
+    [Blockchain.BASE]: 'basescan.org',
 }
 
 export const explorerApiUrls = {
@@ -21,6 +22,7 @@ export const explorerApiUrls = {
     [Blockchain.SOL]: 'pro-api.solscan.io/v1.0/',
     [Blockchain.AVAX]: 'api.routescan.io/v2/network/mainnet/evm/43114',
     [Blockchain.ARB]: 'api.arbiscan.io',
+    [Blockchain.BASE]: 'api.basescan.org',
 }
 
 export enum Environment {

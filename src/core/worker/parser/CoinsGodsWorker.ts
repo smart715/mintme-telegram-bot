@@ -1,6 +1,6 @@
 import { singleton } from 'tsyringe'
 import { CoinsGodsService, CheckedTokenService, TokensService } from '../../service'
-import { Blockchain, parseBlockchainName, sleep } from '../../../utils'
+import { parseBlockchainName, sleep } from '../../../utils'
 import { DOMWindow, JSDOM } from 'jsdom'
 import { Logger } from 'winston'
 import { AbstractParserWorker } from './AbstractParserWorker'
@@ -9,7 +9,6 @@ import { AbstractParserWorker } from './AbstractParserWorker'
 export class CoinsGodsWorker extends AbstractParserWorker {
     private readonly workerName = 'CoinsGods'
     private readonly prefixLog = `[${this.workerName}]`
-    private readonly supportedBlockchains: Blockchain[] = [ Blockchain.ETH, Blockchain.BSC ]
 
     public constructor(
         private readonly coinsGodsService: CoinsGodsService,
@@ -62,7 +61,7 @@ export class CoinsGodsWorker extends AbstractParserWorker {
                 continue
             }
 
-            if (this.supportedBlockchains.includes(blockchain) && tokenAddress?.startsWith('0x')) {
+            if (blockchain && tokenAddress) {
                 await this.tokenService.addOrUpdateToken(
                     tokenAddress,
                     tokenName,

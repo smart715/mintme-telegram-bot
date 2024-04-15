@@ -11,7 +11,6 @@ export class CoinLoreWorker extends AbstractParserWorker {
     private readonly workerName = 'coinlore'
     private readonly prefixLog = `[${this.workerName}]`
     private readonly batchSize: number = config.get('coinlore_request_batch_size')
-    private readonly supportedBlockchains: Blockchain[] = [ Blockchain.ETH, Blockchain.BSC ]
 
     public constructor(
         private coinLoreService: CoinLoreService,
@@ -54,7 +53,7 @@ export class CoinLoreWorker extends AbstractParserWorker {
 
             await this.checkedTokenService.saveAsChecked(coin.nameid, this.workerName)
 
-            if (!coinBlockchain || !this.supportedBlockchains.includes(coinBlockchain) || !tokenAddress) {
+            if (!coinBlockchain || !tokenAddress) {
                 this.logger.warn(
                     `${this.prefixLog} Wrong blockchain/address for ${coin.name} (${coin.symbol})` +
                     `(${coinBlockchain}, ${tokenAddress}). Skipping`

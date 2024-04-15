@@ -55,7 +55,31 @@ export function getRandomNumber(min:number, max:number): number {
 }
 
 export function isForbiddenTokenName(tokenName: string): boolean {
-    const tokenForbiddenWordsRegexp = /(pancake|binance-peg|wrapped|-lp|swaap governance|tracker|\(\)|cronos chain|uniswap|polygonscan|erc-20 token|erc-1155|nft|usdc|usdt|usd coin|staked|just a moment|ddos-guard|matic token)/i
+    const forbiddenNames = [
+        'pancake',
+        'binance-peg',
+        'wrapped',
+        '-lp',
+        'swaap governance',
+        'tracker',
+        '\\(\\)',
+        'cronos chain',
+        'uniswap',
+        'polygonscan',
+        'erc-20 token',
+        'erc-1155',
+        'nft',
+        'usdc',
+        'usdt',
+        'usd coin',
+        'staked',
+        'just a moment',
+        'ddos-guard',
+        'matic token',
+        'usdbc',
+        '.com',
+    ]
+    const tokenForbiddenWordsRegexp = new RegExp(forbiddenNames.join('|'), 'i')
 
     return tokenForbiddenWordsRegexp.test(tokenName)
 }
