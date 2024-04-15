@@ -309,7 +309,14 @@ export class TelegramClient implements ClientInterface {
             await this.driver.sleep(10000)
 
             if (await this.getJoinGroupBtn()) {
+                const isUsersLimit = await this.isGroupMaxUsersLimit()
+
+                if (isUsersLimit) {
+                    return
+                }
+
                 this.log(`Group joining limit hit, Attempt ${retries}/2`)
+
                 if (retries < 2) {
                     await this.driver.sleep(5000)
                     const retry = await this.joinAndVerifyGroup(retries + 1)
@@ -397,6 +404,12 @@ export class TelegramClient implements ClientInterface {
         if (!verified) {
             this.log(`Joining ${tgLink}`)
             await this.joinAndVerifyGroup()
+
+            const isUsersLimit = await this.isGroupMaxUsersLimit()
+
+            if (isUsersLimit) {
+                return ContactHistoryStatusType.GROUP_MAX_USERS_LIMIT
+            }
 
             if (this.isLimitHit()) {
                 this.log(`Account join limit hit, skipping account.`)
@@ -999,6 +1012,12 @@ export class TelegramClient implements ClientInterface {
             curentRetries = 0
             await this.driver.sleep(1000)
         }
+    }
+
+    private async isGroupMaxUsersLimit(): Promise<boolean> {
+        const pageSrc = await this.driver.getPageSource()
+
+        return pageSrc.toLowerCase().includes('the maximum number of users has been exceeded')
     }
 
     private isProd(): boolean {
