@@ -1,6 +1,6 @@
 import { singleton } from 'tsyringe'
 import { Logger } from 'winston'
-import { Blockchain, findContractAddress, parseBlockchainName } from '../../../utils'
+import { Blockchain, explorerDomains, findContractAddress, parseBlockchainName } from '../../../utils'
 import { CheckedTokenService, CoinCodexService, TokensService } from '../../service'
 import { CoinCodexCoinResponse, CoinInfoResponse } from '../../types'
 import { AbstractParserWorker } from './AbstractParserWorker'
@@ -9,7 +9,6 @@ import { AbstractParserWorker } from './AbstractParserWorker'
 export class CoinCodexWorker extends AbstractParserWorker {
     private readonly workerName = 'CoinCodex'
     private readonly prefixLog = `[${this.workerName}]`
-    private readonly supportedBlockchains: Blockchain[] = [ Blockchain.ETH, Blockchain.BSC ]
 
     public constructor(
         private readonly coinCodexService: CoinCodexService,
@@ -68,10 +67,6 @@ export class CoinCodexWorker extends AbstractParserWorker {
                 continue
             }
 
-            if (!this.supportedBlockchains.includes(currentBlockchain)) {
-                continue
-            }
-
             const explorerURI = this.getExplorerURI(currentBlockchain)
 
             this.logger.info(`${this.prefixLog} Checking token ${coinName} (${i}/${coins.length})`)
@@ -123,13 +118,8 @@ export class CoinCodexWorker extends AbstractParserWorker {
     }
 
     private getExplorerURI(currentBlockchain: Blockchain): string {
-        switch (currentBlockchain) {
-            case Blockchain.BSC:
-                return 'bscscan'
-            case Blockchain.ETH:
-                return 'etherscan'
-            default:
-                throw new Error('Wrong blockchain provided. Explorer URI doesn\'t exists for provided blockchain')
-        }
+        const explorerDomain = explorerDomains[currentBlockchain]
+
+        return explorerDomain.split('.')[0]
     }
 }

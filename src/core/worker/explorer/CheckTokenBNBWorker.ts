@@ -183,6 +183,8 @@ export class CheckTokenBNBWorker extends AbstractTokenWorker {
                 return 'Snowtrace'
             case Blockchain.ARB:
                 return 'Arbiscan'
+            case Blockchain.BASE:
+                return 'Base'
         }
     }
 

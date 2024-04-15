@@ -8,6 +8,7 @@ export enum Blockchain {
     SOL = 'SOL',
     AVAX = 'AVAX',
     ARB = 'ARB',
+    BASE = 'BASE',
 }
 
 export function parseBlockchainName(name: string): Blockchain {
@@ -30,6 +31,7 @@ export function parseBlockchainName(name: string): Blockchain {
     const solNames = [ 'solana', 'sol' ]
     const avaxNames = [ 'avalanche', 'avax', 'c-chain' ]
     const arbNames = [ 'arbitrum', 'arbitrum-one', 'arb' ]
+    const baseNames = [ 'base' ]
 
     const tokenNameLowerCase = name.toLowerCase()
 
@@ -47,6 +49,8 @@ export function parseBlockchainName(name: string): Blockchain {
         return Blockchain.AVAX
     } else if (arbNames.includes(tokenNameLowerCase)) {
         return Blockchain.ARB
+    } else if (baseNames.includes(tokenNameLowerCase)) {
+        return Blockchain.BASE
     }
 
     throw new Error('Unknown blockchain')
@@ -79,6 +83,7 @@ export function getBlockchainFromContent(content: string): Blockchain|null {
             'arbitrum-ecosystem',
             'arb',
         ],
+        BASE: [ 'base' ],
     }
 
     for (const blockchain in blockchainsKeyWords) {
@@ -119,6 +124,8 @@ export function getBlockchainByEvmChainId(chainId: number): Blockchain|null {
             return Blockchain.ARB
         case 43114:
             return Blockchain.AVAX
+        case 8453:
+            return Blockchain.BASE
         default:
             return null
     }

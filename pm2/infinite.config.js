@@ -38,6 +38,12 @@ module.exports = {
             autorestart: true,
         },
         {
+            name: 'blockchain-watcher-base',
+            script: 'npm',
+            args: 'run cli -- run-eth-based-blockchain-watcher  --blockchain=BASE',
+            autorestart: true,
+        },
+        {
             name: 'token-holding-sol',
             script: 'npm',
             args: 'run cli -- run-explorer-worker --name=token-holdings-worker  --blockchain=SOL',
@@ -83,6 +89,12 @@ module.exports = {
             name: 'check-token-worker-avax',
             script: 'npm',
             args: 'run cli -- run-explorer-worker --name=check-token-worker --blockchain=AVAX',
+            autorestart: true,
+        },
+        {
+            name: 'check-token-worker-base',
+            script: 'npm',
+            args: 'run cli -- run-explorer-worker --name=check-token-worker --blockchain=BASE',
             autorestart: true,
         },
         {

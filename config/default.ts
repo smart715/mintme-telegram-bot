@@ -66,6 +66,7 @@ export default {
         'MATIC': 'https://1rpc.io/matic',
         'ARB': 'https://arbitrum.blockpi.network/v1/rpc/public',
         'AVAX': 'https://avalanche.drpc.org',
+        'BASE': 'https://base-rpc.publicnode.com',
     },
 
     mailer: {
