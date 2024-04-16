@@ -58,6 +58,7 @@ export class CoinMarketCapClient implements ClientInterface {
             this.logger.warn(
                 `[CMC Client ID: ${this.cmcAccount.id}] not initialized. Can't login. Skipping...`
             )
+            return false
         }
 
         await this.cmcService.updateAccountLastLogin(this.cmcAccount, moment().toDate())
