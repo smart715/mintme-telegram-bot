@@ -46,9 +46,15 @@ export enum ChatType {
 }
 
 export interface CMCWorkerConfig {
-    apiKeys: string[],
     requestOffset: number,
     requestLimit: number,
+    maxSimultaneousAccounts: number,
+    maxPerCycle: number,
+    commentFrequency: number,
+    maxCommentsPerDay: number,
+    maxCommentsPerCoin: number,
+    maxCycleContinousFail: number,
+    continousFailsDelays: number[],
 }
 
 export enum BlacklistType {

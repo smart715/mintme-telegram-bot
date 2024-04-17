@@ -15,13 +15,10 @@ import { ClientInterface } from '../ClientInterface'
 export class CoinMarketCapClient implements ClientInterface {
     private readonly cmcAccount: CoinMarketCapAccount
     private driver: WebDriver
-    private maxCommentsPerDay: number = 100
-    private maxPerCycle: number = 8
+    private config: CMCWorkerConfig = config.get<CMCWorkerConfig>('cmcWorker')
     private currentlySubmitted: number = 0
     private continousFailedSubmits: number = 0
     private submittedCommentsPerDay: number = 0
-    private maxCommentsPerCoin: number = 1
-    private commentFrequency: number = 60
     public currentlyProcessingCoin: string = ''
     private parentWorker: CoinMarketCommentWorker
 
@@ -173,7 +170,7 @@ export class CoinMarketCapClient implements ClientInterface {
     }
 
     private isBelowLimit(): boolean {
-        return this.submittedCommentsPerDay < this.maxCommentsPerDay
+        return this.submittedCommentsPerDay < this.config.maxCommentsPerDay
     }
 
     private log(message: string): void {
@@ -186,8 +183,8 @@ export class CoinMarketCapClient implements ClientInterface {
     public async startWorker(): Promise<void> {
         this.log(`Worker started`)
 
-        const requestLimit = config.get<CMCWorkerConfig>('cmcWorker')['requestLimit']
-        let requestOffset = config.get<CMCWorkerConfig>('cmcWorker')['requestOffset']
+        const requestLimit = this.config.requestLimit
+        let requestOffset = this.config.requestOffset
 
         while (true) { // eslint-disable-line
             const tokens = await this.cmcService.getLastTokens(requestOffset, requestLimit)
@@ -205,7 +202,7 @@ export class CoinMarketCapClient implements ClientInterface {
                 break
             }
 
-            if (this.cmcAccount.continousFailed >= 15) {
+            if (this.cmcAccount.continousFailed >= this.config.continousFailsDelays.length) {
                 this.log(`Account failed for ${this.cmcAccount.continousFailed} continous times, Banning account`)
 
                 await this.disableAccount()
@@ -217,6 +214,7 @@ export class CoinMarketCapClient implements ClientInterface {
         this.log(`worker finished`)
     }
 
+    // eslint-disable-next-line complexity
     private async processTokens(coins: CMCCryptocurrency[]): Promise<void> {
         for (const coin of coins) {
             if (!coin.is_active) {
@@ -237,27 +235,30 @@ export class CoinMarketCapClient implements ClientInterface {
                 break
             }
 
-            if (this.continousFailedSubmits >= 5) {
+            if (this.continousFailedSubmits >= this.config.maxCycleContinousFail) {
                 this.log(`Skipping account due to exceeding max continous failed submits`)
 
                 await this.cmcService.updateContinousFailedSubmits(
                     this.cmcAccount,
-                    this.cmcAccount.continousFailed + this.continousFailedSubmits
+                    false
                 )
 
-                await this.cmcService.updateAccountLastLogin(this.cmcAccount, moment().add(60, 'minutes').toDate())
+                const failDelay = this.config.continousFailsDelays[this.cmcAccount.continousFailed] || 1
+                await this.cmcService.updateAccountLastLogin(this.cmcAccount, moment().add(failDelay, 'hours').toDate())
+
                 break
             }
 
             this.currentlyProcessingCoin = coin.slug
 
             const coinCommentHistory = await this.cmcService.getCoinSubmittedComments(coin.slug)
+
             if (coinCommentHistory.length &&
-                moment().subtract(this.commentFrequency, 'days').isBefore(coinCommentHistory[0].createdAt)) {
+                moment().subtract(this.config.commentFrequency, 'days').isBefore(coinCommentHistory[0].createdAt)) {
                 continue
             }
 
-            if (this.maxCommentsPerCoin <= coinCommentHistory.length) {
+            if (this.config.maxCommentsPerCoin <= coinCommentHistory.length) {
                 this.log(`Coin ${coin.name} was contacted ${coinCommentHistory.length} times, Skipping`)
                 continue
             }
@@ -334,7 +335,7 @@ export class CoinMarketCapClient implements ClientInterface {
                 this.currentlySubmitted++
                 this.continousFailedSubmits = 0
 
-                await this.cmcService.updateContinousFailedSubmits(this.cmcAccount, 0)
+                await this.cmcService.updateContinousFailedSubmits(this.cmcAccount, true)
 
                 await this.cmcService.addNewHistoryAction(
                     this.cmcAccount.id,
@@ -350,7 +351,7 @@ export class CoinMarketCapClient implements ClientInterface {
     }
 
     private isReachedCycleLimit(): boolean {
-        return this.currentlySubmitted >= this.maxPerCycle
+        return this.currentlySubmitted >= this.config.maxPerCycle
     }
 
     private async inputAndSelectCoinMention(symbol: string, name:string, inputField: WebElement): Promise<void> {

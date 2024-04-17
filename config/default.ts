@@ -15,6 +15,21 @@ export default {
     cmcWorker: {
         'requestOffset': 5000,
         'requestLimit': 5000,
+        'maxSimultaneousAccounts': 1,
+        'maxPerCycle': 5,
+        'commentFrequency': 60,
+        'maxCommentsPerDay': 50,
+        'maxCommentsPerCoin': 1,
+        'maxCycleContinousFail': 3,
+        'continousFailsDelays': [
+            1,
+            6,
+            12,
+            24,
+            48,
+            96,
+            168,
+        ], //In Hour(s)
     },
 
     // coinlore worker settings

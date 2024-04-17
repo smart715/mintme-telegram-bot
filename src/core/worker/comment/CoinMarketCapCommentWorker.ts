@@ -6,6 +6,8 @@ import { sleep } from '../../../utils'
 import { CoinMarketCapAccount } from '../../entity'
 import moment from 'moment'
 import { WorkerInterface } from '../WorkerInterface'
+import config from 'config'
+import { CMCWorkerConfig } from '../../types'
 
 @singleton()
 export class CoinMarketCommentWorker implements WorkerInterface {
@@ -13,7 +15,7 @@ export class CoinMarketCommentWorker implements WorkerInterface {
     private readonly prefixLog = `[${this.workerName}]`
 
     private cmcClients: CoinMarketCapClient[] = []
-    private maxCMCAccount: number = 1
+    private maxCMCAccount: number = config.get<CMCWorkerConfig>('cmcWorker').maxSimultaneousAccounts
 
     public constructor(
         private readonly cmcService: CMCService,
@@ -23,6 +25,8 @@ export class CoinMarketCommentWorker implements WorkerInterface {
     }
 
     public async run(): Promise<void> {
+        let currentAccountIndex = 0
+
         // eslint-disable-next-line
         while (true) {
             this.cmcClients = []
@@ -38,7 +42,6 @@ export class CoinMarketCommentWorker implements WorkerInterface {
                 return
             }
 
-            let currentAccountIndex = 0
 
             while (currentAccountIndex < allAccounts.length && this.cmcClients.length < this.maxCMCAccount) {
                 const account = allAccounts[currentAccountIndex]
@@ -67,6 +70,9 @@ export class CoinMarketCommentWorker implements WorkerInterface {
                 await this.destroyDrivers()
             }
 
+            if (currentAccountIndex >= allAccounts.length - 1) {
+                currentAccountIndex = 0
+            }
 
             await sleep(60 * 1000)
         }

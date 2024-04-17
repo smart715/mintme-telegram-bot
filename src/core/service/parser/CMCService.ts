@@ -124,9 +124,13 @@ export class CMCService {
 
     public async updateContinousFailedSubmits(
         cmcAccount: CoinMarketCapAccount,
-        contiousFails: number
+        isReset: boolean
     ): Promise<CoinMarketCapAccount> {
-        cmcAccount.continousFailed = contiousFails
+        if (isReset) {
+            cmcAccount.continousFailed = 0
+        } else {
+            cmcAccount.continousFailed += 1
+        }
 
         return this.cmcAccountsRepository.save(cmcAccount)
     }
