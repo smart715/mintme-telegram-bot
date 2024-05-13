@@ -2,10 +2,10 @@ export interface DexToolsAllTokensResponse {
     totalPages: number,
     page: number,
     pageSize: number,
-    results: DexToolsTokenResponse[]
+    tokens: DexToolsTokenInfo[]
 }
 
-export interface DexToolsTokenResponse {
+export interface DexToolsTokenInfo {
     address: string,
     name: string,
     symbol: string,

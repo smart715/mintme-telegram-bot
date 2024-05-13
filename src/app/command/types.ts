@@ -72,4 +72,5 @@ export enum CasualTokenWorkerNames {
     RUG_FREE_COINS = 'rug-free-coins',
     TOKENS_INSIGHT = 'tokens-insight',
     TOP_100_TOKENS = 'top-100-tokens',
+    DEX_TOOLS = 'dex-tools',
 }

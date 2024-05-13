@@ -22,6 +22,7 @@ export class DexToolsWorker extends AbstractParserWorker {
     ]
 
     private readonly daysPerRequest = 5
+    private readonly firstSocialInfoFound = moment('2023-11-30T00:00:00')
 
     public constructor(
         private readonly tokensService: TokensService,
@@ -43,19 +44,34 @@ export class DexToolsWorker extends AbstractParserWorker {
     }
 
     private async runByBlockchain(blockchain: Blockchain): Promise<void> {
-        const keepFetching = true
+        this.logger.info(`[${this.workerName}] Blockchain: ${blockchain}`)
+
+        let keepFetching = true
         const to = moment()
         const from = moment().subtract(this.daysPerRequest, 'days')
         let page = 1
         let pagesCount = 10
 
         while (keepFetching) {
+            const searchRequestId = `${from.format('YYYYMMDD')}${to.format('YYYYMMDD')}`
+            const isCheckedRange = await this.checkedTokenService.isChecked(
+                searchRequestId,
+                this.workerName
+            )
+
+            if (isCheckedRange) {
+                pagesCount = 0
+            }
+
             while (page <= pagesCount) {
+                this.logger.info(`From: ${from.toISOString()}: ${to.toISOString()} | page: ${page}`)
                 const tokensResponse = await this.getTokens(blockchain, from.toISOString(), to.toISOString(), page)
-                pagesCount = tokensResponse.pageSize
+                pagesCount = tokensResponse.totalPages
+                this.logger.info(`Found ${pagesCount} pages`)
+
                 await sleep(2000)
 
-                for (const token of tokensResponse.results) {
+                for (const token of tokensResponse.tokens) {
                     const links = []
 
                     for (const link of Object.values(token.socialInfo)) {
@@ -67,7 +83,7 @@ export class DexToolsWorker extends AbstractParserWorker {
                     await this.tokensService.addOrUpdateToken(
                         token.address,
                         `${token.name}(${token.symbol})`,
-                        [token.socialInfo['website']],
+                        [ token.socialInfo['website'] ],
                         [],
                         links,
                         this.workerName,
@@ -76,11 +92,20 @@ export class DexToolsWorker extends AbstractParserWorker {
                     )
                 }
 
+                this.logger.info(`Finished From: ${from.toISOString()}: ${to.toISOString()} | page: ${page}`)
                 page++
+            }
+
+            if (!isCheckedRange) {
+                await this.checkedTokenService.saveAsChecked(searchRequestId, this.workerName)
             }
 
             to.subtract(this.daysPerRequest, 'days')
             from.subtract(this.daysPerRequest, 'days')
+            page = 1
+            pagesCount = 10
+
+            keepFetching = !this.firstSocialInfoFound.isAfter(to)
         }
     }
 
