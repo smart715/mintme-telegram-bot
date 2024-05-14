@@ -12,17 +12,18 @@ export class DexToolsWorker extends AbstractParserWorker {
     private readonly workerName = DexToolsWorker.name
     private readonly supportedBlockchains = [
         Blockchain.SOL,
+        Blockchain.BASE,
         Blockchain.ETH,
-        Blockchain.BSC,
         Blockchain.ARB,
         Blockchain.AVAX,
-        Blockchain.BASE,
+        Blockchain.BSC,
         Blockchain.CRO,
         Blockchain.MATIC,
     ]
 
     private readonly daysPerRequest = 5
-    private readonly firstSocialInfoFound = moment('2023-11-30T00:00:00')
+    private readonly skipBcAfterEmptyContinousRequests = 18
+    private readonly firstSocialInfoFound = moment('2022-05-01T00:00:00')
 
     public constructor(
         private readonly tokensService: TokensService,
@@ -51,6 +52,7 @@ export class DexToolsWorker extends AbstractParserWorker {
         const from = moment().subtract(this.daysPerRequest, 'days')
         let page = 1
         let pagesCount = 10
+        let continousEmptyRequests = 0
 
         while (keepFetching) {
             const searchRequestId = `${from.format('YYYYMMDD')}${to.format('YYYYMMDD')}`
@@ -92,6 +94,10 @@ export class DexToolsWorker extends AbstractParserWorker {
                     )
                 }
 
+                if (!tokensResponse.tokens.length) {
+                    continousEmptyRequests++
+                }
+
                 this.logger.info(`Finished From: ${from.toISOString()}: ${to.toISOString()} | page: ${page}`)
                 page++
             }
@@ -105,7 +111,9 @@ export class DexToolsWorker extends AbstractParserWorker {
             page = 1
             pagesCount = 10
 
-            keepFetching = !this.firstSocialInfoFound.isAfter(to)
+            keepFetching = this.skipBcAfterEmptyContinousRequests <= continousEmptyRequests
+                ? false
+                :!this.firstSocialInfoFound.isAfter(to)
         }
     }
 
