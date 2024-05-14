@@ -21,8 +21,8 @@ export class DexToolsWorker extends AbstractParserWorker {
         Blockchain.MATIC,
     ]
 
-    private readonly daysPerRequest = 5
-    private readonly skipBcAfterEmptyContinousRequests = 18
+    private readonly daysPerRequest = 1
+    private readonly skipBcAfterEmptyContinousRequests = 30
     private readonly firstSocialInfoFound = moment('2022-05-01T00:00:00')
 
     public constructor(
@@ -48,14 +48,14 @@ export class DexToolsWorker extends AbstractParserWorker {
         this.logger.info(`[${this.workerName}] Blockchain: ${blockchain}`)
 
         let keepFetching = true
-        const to = moment()
-        const from = moment().subtract(this.daysPerRequest, 'days')
-        let page = 1
+        const to = moment().utc().endOf('day')
+        const from = moment().utc().subtract(this.daysPerRequest, 'day').endOf('day')
+        let page = 0
         let pagesCount = 10
         let continousEmptyRequests = 0
 
         while (keepFetching) {
-            const searchRequestId = `${from.format('YYYYMMDD')}${to.format('YYYYMMDD')}`
+            const searchRequestId = `${blockchain}-${to.format('YYYYMMDD')}`
             const isCheckedRange = await this.checkedTokenService.isChecked(
                 searchRequestId,
                 this.workerName
@@ -65,15 +65,17 @@ export class DexToolsWorker extends AbstractParserWorker {
                 pagesCount = 0
             }
 
-            while (page <= pagesCount) {
+            while (page < pagesCount) {
                 this.logger.info(`From: ${from.toISOString()}: ${to.toISOString()} | page: ${page}`)
                 const tokensResponse = await this.getTokens(blockchain, from.toISOString(), to.toISOString(), page)
                 pagesCount = tokensResponse.totalPages
                 this.logger.info(`Found ${pagesCount} pages`)
 
-                await sleep(2000)
+                await sleep(1000)
 
                 for (const token of tokensResponse.tokens) {
+                    continousEmptyRequests = 0
+
                     const links = []
 
                     for (const link of Object.values(token.socialInfo)) {
@@ -102,13 +104,13 @@ export class DexToolsWorker extends AbstractParserWorker {
                 page++
             }
 
-            if (!isCheckedRange) {
+            if (!isCheckedRange && !moment().isSame(to)) {
                 await this.checkedTokenService.saveAsChecked(searchRequestId, this.workerName)
             }
 
-            to.subtract(this.daysPerRequest, 'days')
-            from.subtract(this.daysPerRequest, 'days')
-            page = 1
+            to.subtract(this.daysPerRequest, 'day')
+            from.subtract(this.daysPerRequest, 'day')
+            page = 0
             pagesCount = 10
 
             keepFetching = this.skipBcAfterEmptyContinousRequests <= continousEmptyRequests
