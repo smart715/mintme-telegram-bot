@@ -71,7 +71,7 @@ export class DexToolsWorker extends AbstractParserWorker {
                 pagesCount = tokensResponse.totalPages
                 this.logger.info(`Found ${pagesCount} pages`)
 
-                await sleep(1000)
+                await sleep(2000)
 
                 for (const token of tokensResponse.tokens) {
                     continousEmptyRequests = 0
@@ -104,7 +104,7 @@ export class DexToolsWorker extends AbstractParserWorker {
                 page++
             }
 
-            if (!isCheckedRange && !moment().isSame(to)) {
+            if (!isCheckedRange && !moment().utc().endOf('day').isSame(to)) {
                 await this.checkedTokenService.saveAsChecked(searchRequestId, this.workerName)
             }
 
