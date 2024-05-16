@@ -88,7 +88,7 @@ export class DexToolsWorker extends AbstractParserWorker {
                         token.address,
                         `${token.name}(${token.symbol})`,
                         [ token.socialInfo['website'] ],
-                        [],
+                        [ token.socialInfo['email'] ],
                         links,
                         this.workerName,
                         blockchain,
