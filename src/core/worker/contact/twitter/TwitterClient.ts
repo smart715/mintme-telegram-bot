@@ -258,10 +258,10 @@ export class TwitterClient implements ClientInterface {
                 continue
             }
 
-
             const result = await this.contactWithToken(
                 queuedContact.channel,
-                this.buildMessage(token)
+                this.buildMessage(token),
+                0
             )
 
             if (ContactHistoryStatusType.DM_NOT_ENABLED === result) {
@@ -304,11 +304,22 @@ export class TwitterClient implements ClientInterface {
         }
     }
 
-    private async contactWithToken(link: string, message: string): Promise<ContactHistoryStatusType> {
+    // eslint-disable-next-line complexity
+    private async contactWithToken(link: string, message: string, attempt: number): Promise<ContactHistoryStatusType> {
         this.log(`Trying to contact with ${link}`)
 
         await this.driver.get(link)
         await this.driver.sleep(20000)
+
+        const pageSrc = await this.driver.getPageSource()
+
+        if (pageSrc.toLowerCase().includes('something went wrong')) {
+            if (attempt >= 3) {
+                return ContactHistoryStatusType.ERROR
+            }
+
+            return this.contactWithToken(link, message, ++attempt)
+        }
 
         let mainColumn: WebElement
 
@@ -334,7 +345,7 @@ export class TwitterClient implements ClientInterface {
 
         try {
             element = await this.driver.findElement(
-                By.css(`div[data-testid="sendDMFromProfile"]`)
+                By.css(`[data-testid="sendDMFromProfile"]`)
             )
         } catch (err) {
             if (err instanceof Error && 'NoSuchElementError' === err.name) {
