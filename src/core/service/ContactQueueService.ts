@@ -137,12 +137,23 @@ export class ContactQueueService {
 
             if (200 === request.status && request.data.includes('<title>Telegram: Contact')) {
                 if (request.data.includes(' subscribers')) {
-                    return TelegramChannelCheckResultType.ANNOUNCEMENTS_CHANNEL
-                }
+                    const announcementPinnedReq = await axios.get(link.replace('t.me/', 't.me/s/'), axiosConfig)
+                    const groupJoinTexts = [ 'tap to verify', 'join group' ]
 
-                if (request.data.includes('tgme_page_title')) {
-                    return TelegramChannelCheckResultType.ACTIVE
+                    for (const btnText of groupJoinTexts) {
+                        if (200 === announcementPinnedReq.status &&
+                            announcementPinnedReq.data.toLowerCase().includes(btnText)
+                        ) {
+                            return TelegramChannelCheckResultType.ANNOUNCEMENTS_CHANNEL_WITH_POTENTIAL_GROUP
+                        }
+                    }
+
+                    return TelegramChannelCheckResultType.ANNOUNCEMENTS_CHANNEL_NO_GROUP
                 }
+            }
+
+            if (request.data.includes('tgme_page_title')) {
+                return TelegramChannelCheckResultType.ACTIVE
             }
 
             if (retries >= 2) {

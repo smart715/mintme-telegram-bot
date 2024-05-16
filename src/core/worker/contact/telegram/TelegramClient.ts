@@ -289,12 +289,12 @@ export class TelegramClient implements ClientInterface {
         }
     }
 
-    private async getJoinGroupBtn(): Promise<WebElement|undefined> {
+    private async getBtnWithText(textToFind: string): Promise<WebElement|undefined> {
         const btns = await this.driver.findElements(By.css('button'))
 
         for (const btn of btns) {
             const btnText = await btn.getText()
-            if ('join group' === btnText.toLowerCase()) {
+            if (btnText.toLowerCase().includes(textToFind.toLowerCase())) {
                 return btn
             }
         }
@@ -302,13 +302,13 @@ export class TelegramClient implements ClientInterface {
     }
 
     private async joinAndVerifyGroup(retries: number = 1): Promise<void> {
-        const joinBtn = await this.getJoinGroupBtn()
+        const joinBtn = await this.getBtnWithText('join group')
 
         if (joinBtn) {
             await this.driver.actions().click(joinBtn).perform()
             await this.driver.sleep(10000)
 
-            if (await this.getJoinGroupBtn()) {
+            if (await this.getBtnWithText('join group')) {
                 const isUsersLimit = await this.isGroupMaxUsersLimit()
 
                 if (isUsersLimit) {
@@ -392,6 +392,20 @@ export class TelegramClient implements ClientInterface {
         }
 
         return true
+    }
+
+    private async checkAnnouncementChannel(): Promise<ContactHistoryStatusType> {
+        const groupJoinTexts = [ 'tap to verify', 'join group' ]
+
+        for (const btnText of groupJoinTexts) {
+            const foundBtn = await this.getBtnWithText(btnText)
+
+            if (foundBtn) {
+                return ContactHistoryStatusType.ANNOUNCEMENTS_POTENTIAL_GROUP
+            }
+        }
+
+        return ContactHistoryStatusType.ANNOUNCEMENTS_NO_GROUP
     }
 
     private async sendGroupMessage(tgLink: string, verified: boolean = false): Promise<ContactHistoryStatusType> {
@@ -481,10 +495,6 @@ export class TelegramClient implements ClientInterface {
                 return ContactHistoryStatusType.ACCOUNT_NOT_EXISTS
             }
 
-            if (user.startsWith('+')) {
-                return ContactHistoryStatusType.ANNOUNCEMENTS_CHANNEL
-            }
-
             await driver.get('https://web.telegram.org/z/#?tgaddr=' + encodeURIComponent(`tg://resolve?domain=${user}`))
 
             let sleepTimes = 0
@@ -515,7 +525,8 @@ export class TelegramClient implements ClientInterface {
 
             if (groupStatusSelector.length) {
                 if ((await groupStatusSelector[0].getText()).includes('subscriber')) {
-                    return ContactHistoryStatusType.ANNOUNCEMENTS_CHANNEL
+                    await this.driver.sleep(10000)
+                    return this.checkAnnouncementChannel()
                 }
 
                 return await this.sendGroupMessage(telegramLink, verified)

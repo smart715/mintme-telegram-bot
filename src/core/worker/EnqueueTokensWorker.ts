@@ -181,7 +181,8 @@ export class EnqueueTokensWorker extends AbstractTokenWorker {
                         case TelegramChannelCheckResultType.ERROR:
                         case TelegramChannelCheckResultType.FREQUENCY_LIMIT:
                             return link
-                        case TelegramChannelCheckResultType.ANNOUNCEMENTS_CHANNEL:
+                        case TelegramChannelCheckResultType.ANNOUNCEMENTS_CHANNEL_NO_GROUP:
+                        case TelegramChannelCheckResultType.ANNOUNCEMENTS_CHANNEL_WITH_POTENTIAL_GROUP:
                         case TelegramChannelCheckResultType.NOT_ACTIVE:
                             await this.contactHistoryService.addRecord(token.address,
                                 token.blockchain,
@@ -189,9 +190,7 @@ export class EnqueueTokensWorker extends AbstractTokenWorker {
                                 false,
                                 0,
                                 link,
-                                TelegramChannelCheckResultType.ANNOUNCEMENTS_CHANNEL === tgChannelCheck ?
-                                    ContactHistoryStatusType.ANNOUNCEMENTS_CHANNEL :
-                                    ContactHistoryStatusType.ACCOUNT_NOT_EXISTS
+                                this.getTgContactHistoryType(tgChannelCheck)
                             )
 
                             continue
@@ -225,6 +224,17 @@ export class EnqueueTokensWorker extends AbstractTokenWorker {
             }
         }
         return ''
+    }
+
+    private getTgContactHistoryType(tgChannelCheckResult: TelegramChannelCheckResultType): ContactHistoryStatusType {
+        switch (tgChannelCheckResult) {
+            case TelegramChannelCheckResultType.ANNOUNCEMENTS_CHANNEL_NO_GROUP:
+                return ContactHistoryStatusType.ANNOUNCEMENTS_NO_GROUP
+            case TelegramChannelCheckResultType.ANNOUNCEMENTS_CHANNEL_WITH_POTENTIAL_GROUP:
+                return ContactHistoryStatusType.ANNOUNCEMENTS_POTENTIAL_GROUP
+            default:
+                return ContactHistoryStatusType.ACCOUNT_NOT_EXISTS
+        }
     }
 
     private async getAvailableChannels(token: Token): Promise<string[]> {
