@@ -5,7 +5,7 @@ import { Logger } from 'winston'
 import { AbstractParserWorker } from './AbstractParserWorker'
 import axios from 'axios'
 import moment from 'moment'
-import { DexToolsAllTokensResponse } from '../../types'
+import { DexToolsAllTokensResponse, DexToolsTokenInfo } from '../../types'
 
 @singleton()
 export class DexToolsWorker extends AbstractParserWorker {
@@ -66,34 +66,16 @@ export class DexToolsWorker extends AbstractParserWorker {
             }
 
             while (page < pagesCount) {
-                this.logger.info(`From: ${from.toISOString()}: ${to.toISOString()} | page: ${page}`)
+                this.logger.info(`From: ${from.toISOString()}: ${to.toISOString()} | page: ${page}/${pagesCount}`)
                 const tokensResponse = await this.getTokens(blockchain, from.toISOString(), to.toISOString(), page)
                 pagesCount = tokensResponse.totalPages
-                this.logger.info(`Found ${pagesCount} pages`)
 
                 await sleep(2000)
 
                 for (const token of tokensResponse.tokens) {
                     continousEmptyRequests = 0
 
-                    const links = []
-
-                    for (const link of Object.values(token.socialInfo)) {
-                        if (link.trim().length > 0) {
-                            links.push(link)
-                        }
-                    }
-
-                    await this.tokensService.addOrUpdateToken(
-                        token.address,
-                        `${token.name}(${token.symbol})`,
-                        [ token.socialInfo['website'] ],
-                        [ token.socialInfo['email'] ],
-                        links,
-                        this.workerName,
-                        blockchain,
-                        this.logger
-                    )
+                    await this.addToken(token, blockchain)
                 }
 
                 if (!tokensResponse.tokens.length) {
@@ -117,6 +99,27 @@ export class DexToolsWorker extends AbstractParserWorker {
                 ? false
                 :!this.firstSocialInfoFound.isAfter(to)
         }
+    }
+
+    private async addToken(token: DexToolsTokenInfo, blockchain: Blockchain): Promise<void> {
+        const links = []
+
+        for (const link of Object.values(token.socialInfo)) {
+            if (link.trim().length > 0) {
+                links.push(link)
+            }
+        }
+
+        await this.tokensService.addOrUpdateToken(
+            token.address,
+            `${token.name}(${token.symbol})`,
+            [ token.socialInfo['website'] ],
+            [ token.socialInfo['email'] ],
+            links,
+            this.workerName,
+            blockchain,
+            this.logger
+        )
     }
 
     private async getTokens(
