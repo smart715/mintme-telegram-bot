@@ -128,8 +128,6 @@ export class TwitterClient implements ClientInterface {
             if (attempt >= 3) {
                 return false
             }
-
-
             return this.startResponsesFetcher(++attempt)
         }
 
