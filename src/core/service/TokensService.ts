@@ -45,6 +45,7 @@ export class TokensService {
         let token = await this.findByAddress(tokenAddress)
 
         if (token) {
+            logger.info(`token ${token.name}(${token.address}):${token.blockchain} existing, Updating info.`)
             return this.updateTokenLinks(token, websites, emails, links)
         }
 
@@ -65,6 +66,7 @@ export class TokensService {
 
         try {
             await this.tokenRepository.insert(token)
+            logger.info(`Added token ${token.name}(${token.address}):${token.blockchain} `)
         } catch (error: any) {
             logger.warn(`cannot insert token due to error: ${error.message}`)
             return undefined
