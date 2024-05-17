@@ -117,10 +117,19 @@ export class TwitterClient implements ClientInterface {
         }
     }
 
-    private async startResponsesFetcher(): Promise<boolean> {
+    private async startResponsesFetcher(attempt: number): Promise<boolean> {
         this.log(`Started getting responses`)
         await this.driver.get(`https://twitter.com/messages`)
         await this.driver.sleep(10000)
+
+        if (await this.isSomethingWrong()) {
+            this.log(`Something went wrong while checking for responses, Reloading page.`)
+
+            if (attempt >= 3) {
+                return false
+            }
+            return this.startResponsesFetcher(++attempt)
+        }
 
         const chatListSeelctor = await this.driver.findElements(By.css('[data-viewportview="true"]'))
         if (!chatListSeelctor.length) {
@@ -215,7 +224,7 @@ export class TwitterClient implements ClientInterface {
             await this.driver.sleep(getRandomNumber(1, 10) * 1000)
 
             if (this.canRunResponseWorker()) {
-                const responseWorkerResult = await this.startResponsesFetcher()
+                const responseWorkerResult = await this.startResponsesFetcher(0)
 
                 if (responseWorkerResult) {
                     await this.twitterService.updateResponsesLastChecked(this.twitterAccount)
@@ -258,10 +267,10 @@ export class TwitterClient implements ClientInterface {
                 continue
             }
 
-
             const result = await this.contactWithToken(
                 queuedContact.channel,
-                this.buildMessage(token)
+                this.buildMessage(token),
+                0
             )
 
             if (ContactHistoryStatusType.DM_NOT_ENABLED === result) {
@@ -304,11 +313,28 @@ export class TwitterClient implements ClientInterface {
         }
     }
 
-    private async contactWithToken(link: string, message: string): Promise<ContactHistoryStatusType> {
+    private async isSomethingWrong(): Promise<boolean> {
+        const pageSrc = await this.driver.getPageSource()
+
+        return pageSrc.toLowerCase().includes('something went wrong')
+    }
+
+    // eslint-disable-next-line complexity
+    private async contactWithToken(link: string, message: string, attempt: number): Promise<ContactHistoryStatusType> {
         this.log(`Trying to contact with ${link}`)
 
         await this.driver.get(link)
         await this.driver.sleep(20000)
+
+        if (await this.isSomethingWrong()) {
+            this.log(`Something went wrong while loading ${link}, Attempt #${attempt}`)
+
+            if (attempt >= 3) {
+                return ContactHistoryStatusType.ERROR
+            }
+
+            return this.contactWithToken(link, message, ++attempt)
+        }
 
         let mainColumn: WebElement
 
@@ -334,7 +360,7 @@ export class TwitterClient implements ClientInterface {
 
         try {
             element = await this.driver.findElement(
-                By.css(`div[data-testid="sendDMFromProfile"]`)
+                By.css(`[data-testid="sendDMFromProfile"]`)
             )
         } catch (err) {
             if (err instanceof Error && 'NoSuchElementError' === err.name) {
