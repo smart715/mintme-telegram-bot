@@ -68,6 +68,14 @@ export class DexToolsWorker extends AbstractParserWorker {
             while (page < pagesCount) {
                 this.logger.info(`From: ${from.toISOString()}: ${to.toISOString()} | page: ${page}/${pagesCount}`)
                 const tokensResponse = await this.getTokens(blockchain, from.toISOString(), to.toISOString(), page)
+
+                if (!tokensResponse) {
+                    page++
+                    pagesCount = 0
+
+                    continue
+                }
+
                 pagesCount = tokensResponse.totalPages
 
                 await sleep(2000)
