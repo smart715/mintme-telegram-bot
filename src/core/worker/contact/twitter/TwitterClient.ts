@@ -281,7 +281,9 @@ export class TwitterClient implements ClientInterface {
                 this.log(`${queuedContact.channel} account doesn't exists or suspended`)
             }
 
-            if (ContactHistoryStatusType.ACCOUNT_LIMIT_HIT === result) {
+            if (ContactHistoryStatusType.ACCOUNT_LIMIT_HIT === result
+                || ContactHistoryStatusType.DM_PREMIUM_ONLY === result
+            ) {
                 await this.contactQueueService.setProcessing(queuedContact, false)
 
                 this.log('Client is not allowed to sent messages. Max daily attempts or daily messages reached.')
@@ -375,6 +377,14 @@ export class TwitterClient implements ClientInterface {
         await this.driver.sleep(20000)
 
         this.log(`Dm opened for ${link}. Sending message...`)
+
+        const pageSrc = await this.driver.getPageSource()
+
+        if (pageSrc.includes('Get X Premium to message')) {
+            this.logger.warn(`Please activate premium subscribtion to be able to send.`)
+
+            return ContactHistoryStatusType.DM_PREMIUM_ONLY
+        }
 
         const dmInputSelector = 'div[data-testid="dmComposerTextInput"]'
 
