@@ -19,6 +19,7 @@ export class CoinMarketCapClient implements ClientInterface {
     private currentlySubmitted: number = 0
     private continousFailedSubmits: number = 0
     private submittedCommentsPerDay: number = 0
+    private currentIndex: number = 0
     public currentlyProcessingCoin: string = ''
     private parentWorker: CoinMarketCommentWorker
 
@@ -216,7 +217,11 @@ export class CoinMarketCapClient implements ClientInterface {
 
     // eslint-disable-next-line complexity
     private async processTokens(coins: CMCCryptocurrency[]): Promise<void> {
+        this.currentIndex = 0
+
         for (const coin of coins) {
+            this.currentIndex++
+
             if (!coin.is_active) {
                 this.log(`Coin ${coin.name} is inactive, Skipping`)
                 continue
@@ -271,7 +276,7 @@ export class CoinMarketCapClient implements ClientInterface {
                 return
             }
 
-            this.log(`Posting a comment on ${coin.name}`)
+            this.log(`Posting a comment on ${coin.name} - ${this.currentIndex +1}/${coins.length}`)
 
             this.driver.get(`https://coinmarketcap.com/currencies/${coin.slug}`)
 
