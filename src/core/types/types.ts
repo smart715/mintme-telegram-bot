@@ -56,6 +56,7 @@ export interface CMCWorkerConfig {
     maxCommentsPerCoin: number,
     maxCycleContinousFail: number,
     continousFailsDelays: number[],
+    currentCategoryTargetId: string,
 }
 
 export enum BlacklistType {

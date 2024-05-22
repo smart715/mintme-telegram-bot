@@ -8,7 +8,7 @@ import {
 import { destroyDriver } from '../../../utils'
 import moment from 'moment'
 import config from 'config'
-import { CMCCryptocurrency, CMCWorkerConfig } from '../../types'
+import { CategoryCoin, CMCCryptocurrency, CMCWorkerConfig } from '../../types'
 import { CoinMarketCommentWorker } from './CoinMarketCapCommentWorker'
 import { ClientInterface } from '../ClientInterface'
 
@@ -53,6 +53,8 @@ export class CoinMarketCapClient implements ClientInterface {
         const isLoggedIn = await this.login()
 
         if (!isLoggedIn) {
+            destroyDriver(this.driver)
+
             this.logger.warn(
                 `[CMC Client ID: ${this.cmcAccount.id}] not initialized. Can't login. Skipping...`
             )
@@ -148,7 +150,8 @@ export class CoinMarketCapClient implements ClientInterface {
         }
 
         this.logger.info(`Creating driver instance`)
-        this.driver = await SeleniumService.createDriver('', this.cmcAccount.proxy, this.logger)
+        //this.driver = await SeleniumService.createDriver('', this.cmcAccount.proxy, this.logger)
+        this.driver = await SeleniumService.createDriver('', undefined, this.logger)
         this.logger.info(`Testing if proxy working`)
 
         if (await SeleniumService.isInternetWorking(this.driver)) {
@@ -184,22 +187,38 @@ export class CoinMarketCapClient implements ClientInterface {
     public async startWorker(): Promise<void> {
         this.log(`Worker started`)
 
-        const requestLimit = this.config.requestLimit
-        let requestOffset = this.config.requestOffset
+        const categoryId = this.config.currentCategoryTargetId
+        const requestLimit = categoryId.length ? 1000 : this.config.requestLimit
+        let requestOffset = 1
 
         while (true) { // eslint-disable-line
-            const tokens = await this.cmcService.getLastTokens(requestOffset, requestLimit)
 
-            await this.processTokens(tokens.data)
+            if (categoryId.length) {
+                const tokens = await this.cmcService.getCategoryTokens(
+                    categoryId,
+                    requestOffset,
+                    requestLimit
+                )
+
+                await this.processTokens(tokens.data.coins)
+
+                if (tokens.data.coins.length < requestLimit) {
+                    break
+                }
+            } else {
+                const tokens = await this.cmcService.getLastTokens(requestOffset, requestLimit)
+
+                await this.processTokens(tokens.data)
+
+                if (tokens.data.length < requestLimit) {
+                    break
+                }
+            }
 
             if (this.isReachedCycleLimit()) {
                 await this.cmcService.updateAccountLastLogin(this.cmcAccount, moment().toDate())
 
                 this.log(`Reached cycle limit`)
-                break
-            }
-
-            if (tokens.data.length < requestLimit) {
                 break
             }
 
@@ -216,7 +235,7 @@ export class CoinMarketCapClient implements ClientInterface {
     }
 
     // eslint-disable-next-line complexity
-    private async processTokens(coins: CMCCryptocurrency[]): Promise<void> {
+    private async processTokens(coins: CMCCryptocurrency[] | CategoryCoin[]): Promise<void> {
         this.currentIndex = 0
 
         for (const coin of coins) {
@@ -293,6 +312,9 @@ export class CoinMarketCapClient implements ClientInterface {
 
             this.log(`Typing post on ${coin.name}`)
             let isFirstWord = true
+
+            await inputField.sendKeys(Key.chord(Key.CONTROL, 'a'))
+            await this.driver.sleep(200)
 
             for (const part of splittedComment) {
                 if (part.toLowerCase().includes('$mintme')) {
