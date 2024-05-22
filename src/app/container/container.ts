@@ -110,6 +110,7 @@ import {
     ApiServiceRepository,
     ApiKeyRepository,
     ApiService,
+    DexToolsWorker,
 } from '../../core'
 import { Application } from '../'
 import { CliDependency } from './types'
@@ -152,6 +153,7 @@ const coinCatapultLogger = createLogger(CoinCatapultWorker.name.toLowerCase())
 const coinCodexLogger = createLogger(CoinCodexWorker.name.toLowerCase())
 const coinDiscoveryLogger = createLogger(CoinDiscoveryWorker.name.toLowerCase())
 const coinGeckoLogger = createLogger(CoinGeckoWorker.name.toLowerCase())
+const dexToolsLogger = createLogger(DexToolsWorker.name.toLowerCase())
 const enqueueTokenLogger = createLogger(EnqueueTokensWorker.name.toLowerCase())
 const lastTokenTxDateFetcherLogger = createLogger(LastTokenTxDateFetcher.name.toLowerCase())
 const queueLogger = createLogger(QueueWorker.name.toLowerCase())
@@ -994,6 +996,17 @@ container.register(CoinMarketCommentWorker, {
     ),
 })
 
+container.register(DexToolsWorker, {
+    useFactory: instanceCachingFactory((dependencyContainer) =>
+        new DexToolsWorker(
+            dependencyContainer.resolve(TokensService),
+            dependencyContainer.resolve(CheckedTokenService),
+            dependencyContainer.resolve(ApiService),
+            dexToolsLogger
+        )
+    ),
+})
+
 // CLI
 
 container.register(CliDependency.COMMAND, {
@@ -1082,6 +1095,7 @@ container.register(CliDependency.COMMAND, {
             dependencyContainer.resolve(RugFreeCoinsWorker),
             dependencyContainer.resolve(TokensInsightWorker),
             dependencyContainer.resolve(Top100TokensWorker),
+            dependencyContainer.resolve(DexToolsWorker),
             dependencyContainer.resolve(MailerService),
         )
     ),

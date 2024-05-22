@@ -29,6 +29,7 @@ import {
     TokensInsightWorker,
     Top100TokensWorker,
     MailerService,
+    DexToolsWorker,
 } from '../../core'
 import { Arguments, Argv } from 'yargs'
 import { createLogger, sleep } from '../../utils'
@@ -68,6 +69,7 @@ export class RunFetchTokenWorker implements CommandInterface {
         private readonly rugFreeCoinsWorker: RugFreeCoinsWorker,
         private readonly tokensInsightWorker: TokensInsightWorker,
         private readonly top100TokensWorker: Top100TokensWorker,
+        private readonly dexToolsWorker: DexToolsWorker,
         private readonly mailService: MailerService,
     ) { }
 
@@ -115,6 +117,7 @@ export class RunFetchTokenWorker implements CommandInterface {
             [CasualTokenWorkerNames.RUG_FREE_COINS]: this.rugFreeCoinsWorker,
             [CasualTokenWorkerNames.TOKENS_INSIGHT]: this.tokensInsightWorker,
             [CasualTokenWorkerNames.TOP_100_TOKENS]: this.top100TokensWorker,
+            [CasualTokenWorkerNames.DEX_TOOLS]: this.dexToolsWorker,
         }
 
         const worker = workers[workerName]

@@ -139,7 +139,6 @@ export class CheckTokenBNBWorker extends AbstractTokenWorker {
         const emails = await this.getEmails(rawLinks)
         const links = await this.getLinks(rawLinks)
 
-        this.logger.info(`Adding or Updating ${queuedToken.blockchain} token ${queuedToken.tokenAddress} :: ${tokenName}`)
         await this.saveNewToken(queuedToken.blockchain, queuedToken.tokenAddress, tokenName, website, emails, links)
     }
 
@@ -346,7 +345,6 @@ export class CheckTokenBNBWorker extends AbstractTokenWorker {
             const links = await this.getLinks(rawLinks)
             const website = links.length ? links[0] : ''
 
-            this.logger.info(`Adding or Updating ${queuedToken.blockchain} token ${queuedToken.tokenAddress} :: ${tokenName}`)
             await this.saveNewToken(queuedToken.blockchain, queuedToken.tokenAddress, tokenName, website, emails, links)
         } catch (error) {
             this.logger.error(`Couldn't get token info of token ${queuedToken.blockchain}::${queuedToken.tokenAddress}, Error: ${error}`)
