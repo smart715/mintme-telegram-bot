@@ -353,8 +353,12 @@ export class CoinMarketCapClient implements ClientInterface {
 
         await this.driver.sleep(5000)
 
-        const postButtonContainer = await this.driver.findElement(By.id('editor-post-button'))
-        const postBtn = await postButtonContainer.findElement(By.css('button'))
+        const postBtn = await this.getBtnWithText('Post comment')
+
+        if (!postBtn) {
+            throw new Error('No post button found');
+        }
+
         await this.driver.executeScript(`arguments[0].click()`, postBtn)
 
         let sleepTimes = 0
@@ -389,6 +393,19 @@ export class CoinMarketCapClient implements ClientInterface {
         }
 
         this.log(`Finished posting on ${coin.name} | Is Submitted: ${isSubmitted}`)
+    }
+
+    private async getBtnWithText(textToFind: string): Promise<WebElement|undefined> {
+        const btns = await this.driver.findElements(By.css('button'))
+
+        for (const btn of btns) {
+            const btnText = await btn.getText()
+            if (btnText.toLowerCase().includes(textToFind.toLowerCase())) {
+                return btn
+            }
+        }
+
+        return undefined
     }
 
     private isReachedCycleLimit(): boolean {
