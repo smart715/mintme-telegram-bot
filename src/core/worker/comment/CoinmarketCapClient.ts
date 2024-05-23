@@ -1,6 +1,6 @@
 import { Logger } from 'winston'
 import { By, Key, WebDriver, WebElement } from 'selenium-webdriver'
-import { CoinMarketCapAccount } from '../../entity'
+import { CoinMarketCapAccount, CoinMarketCapComment } from '../../entity'
 import {
     CMCService,
     SeleniumService,
@@ -274,7 +274,6 @@ export class CoinMarketCapClient implements ClientInterface {
             }
 
             this.currentlyProcessingCoin = coin.slug
-
             const coinCommentHistory = await this.cmcService.getCoinSubmittedComments(coin.slug)
 
             if (coinCommentHistory.length &&
@@ -295,86 +294,101 @@ export class CoinMarketCapClient implements ClientInterface {
                 return
             }
 
-            this.log(`Posting a comment on ${coin.name} - ${this.currentIndex +1}/${coins.length}`)
+            let attempt = 0
 
-            this.driver.get(`https://coinmarketcap.com/currencies/${coin.slug}`)
-
-            await this.driver.sleep(5000)
-
-            const splittedComment = commentToSend.content.split(' ')
-
-            const startPostingBtn = this.driver.findElement(By.className('post-button-placeholder'))
-            await startPostingBtn.click()
-
-            const inputField = await this.driver.findElement(By.css(`[role="textbox"]`))
-
-            await this.driver.sleep(10000)
-
-            this.log(`Typing post on ${coin.name}`)
-            let isFirstWord = true
-
-            await inputField.sendKeys(Key.chord(Key.CONTROL, 'a'))
-            await this.driver.sleep(200)
-
-            for (const part of splittedComment) {
-                if (part.toLowerCase().includes('$mintme')) {
-                    await this.inputAndSelectCoinMention('MINTME', 'MintMe.com Coin', inputField)
-                }
-
-                if (part.toLowerCase().includes('$coin') && !isFirstWord) {
-                    await this.inputAndSelectCoinMention(coin.symbol, coin.name, inputField)
-                }
-
-                await inputField.sendKeys(part.replace('$coin', '').replace('$mintme', '') + ' ')
-                await this.driver.sleep(100)
-
-                isFirstWord = false
-            }
-
-            this.log(`Finished typing comment, Clicking post button after 10 seconds`)
-
-            await this.driver.sleep(10000)
-
-            const postButtonContainer = await this.driver.findElement(By.className('editor-post-button'))
-            const postBtn = await postButtonContainer.findElement(By.css('button'))
-
-            await this.driver.executeScript(`arguments[0].click()`, postBtn)
-
-            let sleepTimes = 0
-            let isSubmitted = false
-
-            while (sleepTimes <= 60) {
-                const pageSrc = await this.driver.getPageSource()
-
-                if (pageSrc.toLowerCase().includes('post submitted')) {
-                    isSubmitted = true
+            while (attempt < 3) {
+                try {
+                    this.log(`Posting a comment on ${coin.name} - ${this.currentIndex +1}/${coins.length} | Attempt #${attempt}`)
+                    await this.postComment(coin, commentToSend)
                     break
+                } catch (error) {
+                    attempt++
+                    this.log(`An error happened while posting comment, Error: ${error}`)
                 }
-
-                await this.driver.sleep(500)
-
-                sleepTimes++
             }
-
-            this.continousFailedSubmits++
-
-            if (isSubmitted) {
-                this.currentlySubmitted++
-                this.continousFailedSubmits = 0
-
-                await this.cmcService.updateContinousFailedSubmits(this.cmcAccount, true)
-
-                await this.cmcService.addNewHistoryAction(
-                    this.cmcAccount.id,
-                    coin.slug,
-                    this.cmcAccount.id
-                )
-            }
-
-            this.log(`Finished posting on ${coin.name} | Is Submitted: ${isSubmitted}`)
 
             await this.driver.sleep(20000)
         }
+    }
+
+    private async postComment(
+        coin: CMCCryptocurrency | CategoryCoin,
+        commentToSend: CoinMarketCapComment
+    ): Promise<void> {
+        this.driver.get(`https://coinmarketcap.com/currencies/${coin.slug}`)
+
+        await this.driver.sleep(10000)
+
+        const splittedComment = commentToSend.content.split(' ')
+
+        const startPostingBtn = this.driver.findElement(By.id('cmc-editor'))
+        await startPostingBtn.click()
+
+        const inputField = await this.driver.findElement(By.css(`[role="textbox"]`))
+
+        await this.driver.sleep(5000)
+
+        this.log(`Typing post on ${coin.name}`)
+        let isFirstWord = true
+
+        await inputField.sendKeys(Key.chord(Key.CONTROL, 'a'))
+        await this.driver.sleep(200)
+
+        for (const part of splittedComment) {
+            if (part.toLowerCase().includes('$mintme')) {
+                await this.inputAndSelectCoinMention('MINTME', 'MintMe.com Coin', inputField)
+            }
+
+            if (part.toLowerCase().includes('$coin') && !isFirstWord) {
+                await this.inputAndSelectCoinMention(coin.symbol, coin.name, inputField)
+            }
+
+            await inputField.sendKeys(part.replace('$coin', '').replace('$mintme', '') + ' ')
+            await this.driver.sleep(100)
+
+            isFirstWord = false
+        }
+
+        this.log(`Finished typing comment, Clicking post button after 10 seconds`)
+
+        await this.driver.sleep(5000)
+
+        const postButtonContainer = await this.driver.findElement(By.id('editor-post-button'))
+        const postBtn = await postButtonContainer.findElement(By.css('button'))
+        await this.driver.executeScript(`arguments[0].click()`, postBtn)
+
+        let sleepTimes = 0
+        let isSubmitted = false
+
+        while (sleepTimes <= 60) {
+            const pageSrc = await this.driver.getPageSource()
+
+            if (pageSrc.toLowerCase().includes('post submitted')) {
+                isSubmitted = true
+                break
+            }
+
+            await this.driver.sleep(500)
+
+            sleepTimes++
+        }
+
+        this.continousFailedSubmits++
+
+        if (isSubmitted) {
+            this.currentlySubmitted++
+            this.continousFailedSubmits = 0
+
+            await this.cmcService.updateContinousFailedSubmits(this.cmcAccount, true)
+
+            await this.cmcService.addNewHistoryAction(
+                this.cmcAccount.id,
+                coin.slug,
+                this.cmcAccount.id
+            )
+        }
+
+        this.log(`Finished posting on ${coin.name} | Is Submitted: ${isSubmitted}`)
     }
 
     private isReachedCycleLimit(): boolean {
