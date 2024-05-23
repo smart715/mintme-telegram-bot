@@ -13,7 +13,7 @@ export default {
 
     // Coinmarketcap worker settings
     cmcWorker: {
-        'requestOffset': 0,
+        'requestOffset': 1,
         'requestLimit': 5000,
         'maxSimultaneousAccounts': 1,
         'maxPerCycle': 3,
