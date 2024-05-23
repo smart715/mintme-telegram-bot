@@ -259,6 +259,13 @@ export class CoinMarketCapClient implements ClientInterface {
                 break
             }
 
+            if (!this.isLoggedIn()) {
+                this.log(`Account suspended or session expired, Disabling account`)
+                await this.disableAccount()
+
+                break
+            }
+
             if (this.continousFailedSubmits >= this.config.maxCycleContinousFail) {
                 this.log(`Skipping account due to exceeding max continous failed submits`)
 
@@ -356,7 +363,7 @@ export class CoinMarketCapClient implements ClientInterface {
         const postBtn = await this.getBtnWithText('Post comment')
 
         if (!postBtn) {
-            throw new Error('No post button found');
+            throw new Error('No post button found')
         }
 
         await this.driver.executeScript(`arguments[0].click()`, postBtn)
