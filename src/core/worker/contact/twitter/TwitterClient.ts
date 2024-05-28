@@ -221,7 +221,7 @@ export class TwitterClient implements ClientInterface {
 
     public async startWorker(): Promise<void> {
         while (true) {  // eslint-disable-line
-            await this.driver.sleep(getRandomNumber(1, 10) * 1000)
+            await this.driver.sleep(getRandomNumber(1, 5) * 1000)
 
             if (this.canRunResponseWorker()) {
                 const responseWorkerResult = await this.startResponsesFetcher(0)
@@ -311,7 +311,9 @@ export class TwitterClient implements ClientInterface {
 
             await this.tokenService.postContactingActions(token, ContactMethod.TWITTER, isSuccess)
 
-            await this.driver.sleep(this.messageDelaySec * 1000)
+            const sleepSeconds = isSuccess ? this.messageDelaySec : this.messageDelaySec * 0.5
+
+            await this.driver.sleep(sleepSeconds * 1000)
         }
     }
 
@@ -326,7 +328,7 @@ export class TwitterClient implements ClientInterface {
         this.log(`Trying to contact with ${link}`)
 
         await this.driver.get(link)
-        await this.driver.sleep(20000)
+        await this.driver.sleep(10000)
 
         if (await this.isSomethingWrong()) {
             this.log(`Something went wrong while loading ${link}, Attempt #${attempt}`)
@@ -374,7 +376,7 @@ export class TwitterClient implements ClientInterface {
 
         await element.click()
 
-        await this.driver.sleep(20000)
+        await this.driver.sleep(10000)
 
         this.log(`Dm opened for ${link}. Sending message...`)
 
@@ -409,7 +411,7 @@ export class TwitterClient implements ClientInterface {
             await messageInput.sendKeys(Key.SHIFT, Key.ENTER)
         }
 
-        await this.driver.sleep(5000)
+        await this.driver.sleep(2000)
 
         if (this.isProd()) {
             try {
