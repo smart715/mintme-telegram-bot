@@ -62,7 +62,6 @@ export class ContactQueueService {
             const excludedBlockchains: Blockchain[] = config.get('excluded_blockchains') || []
             const queryBuilder = this.queuedContactRepository
                 .createQueryBuilder('queued_contact')
-                .leftJoin('token', 'token', 'queued_contact.address = token.address AND queued_contact.blockchain = token.blockchain')
                 .where('queued_contact.is_processing = 0')
                 .andWhere('queued_contact.is_error = 0')
                 .andWhere('queued_contact.contact_method = :contactMethod', { contactMethod })
@@ -72,7 +71,7 @@ export class ContactQueueService {
             }
 
             const result = await queryBuilder
-                .orderBy('token.created_at', 'DESC')
+                .orderBy('queued_contact.created_at', 'DESC')
                 .getOne()
 
             if (result) {
