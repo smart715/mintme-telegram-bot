@@ -150,8 +150,7 @@ export class CoinMarketCapClient implements ClientInterface {
         }
 
         this.logger.info(`Creating driver instance`)
-        //this.driver = await SeleniumService.createDriver('', this.cmcAccount.proxy, this.logger)
-        this.driver = await SeleniumService.createDriver('', undefined, this.logger)
+        this.driver = await SeleniumService.createDriver('', this.cmcAccount.proxy, this.logger)
         this.logger.info(`Testing if proxy working`)
 
         if (await SeleniumService.isInternetWorking(this.driver)) {
