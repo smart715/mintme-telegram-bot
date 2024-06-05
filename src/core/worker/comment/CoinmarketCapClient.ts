@@ -179,7 +179,7 @@ export class CoinMarketCapClient implements ClientInterface {
 
     private log(message: string): void {
         this.logger.info(
-            `[CMCC Worker ${this.cmcAccount.id}] ` +
+            `[CMCC Worker ${this.cmcAccount.userName}] ` +
             message
         )
     }
