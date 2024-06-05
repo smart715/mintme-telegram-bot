@@ -369,13 +369,13 @@ export class CoinMarketCapClient implements ClientInterface {
         await this.driver.executeScript(`arguments[0].click()`, postBtn)
 
         let sleepTimes = 0
-        let isSubmitted = false
+        let isSubmitted = true
 
         while (sleepTimes <= 60) {
             const pageSrc = await this.driver.getPageSource()
 
-            if (pageSrc.toLowerCase().includes('post submitted')) {
-                isSubmitted = true
+            if (pageSrc.toLowerCase().includes('please try again later')) {
+                isSubmitted = false
                 break
             }
 
