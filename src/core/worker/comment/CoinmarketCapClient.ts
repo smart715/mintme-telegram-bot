@@ -22,6 +22,7 @@ export class CoinMarketCapClient implements ClientInterface {
     private currentIndex: number = 0
     public currentlyProcessingCoin: string = ''
     private parentWorker: CoinMarketCommentWorker
+    private isDisableAfterCycle: boolean = true
 
     public constructor(
         cmcAccount: CoinMarketCapAccount,
@@ -216,6 +217,11 @@ export class CoinMarketCapClient implements ClientInterface {
 
             if (this.isReachedCycleLimit()) {
                 await this.cmcService.updateAccountLastLogin(this.cmcAccount, moment().toDate())
+
+                if (this.isDisableAfterCycle) {
+                    this.log(`Disabling account.`)
+                    await this.disableAccount()
+                }
 
                 this.log(`Reached cycle limit`)
                 break
