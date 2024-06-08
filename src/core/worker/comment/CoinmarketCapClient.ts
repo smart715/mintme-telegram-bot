@@ -426,6 +426,8 @@ export class CoinMarketCapClient implements ClientInterface {
 
     private async inputAndSelectCoinMention(symbol: string, name:string, inputField: WebElement): Promise<void> {
         try {
+            this.log(`Selecting coin mention ${name}`)
+
             await inputField.sendKeys(`$${symbol}`)
 
             await this.driver.sleep(3000)
@@ -433,6 +435,7 @@ export class CoinMarketCapClient implements ClientInterface {
             const mentionPortalElement = await this.driver.findElement(By.css(`[data-cy="mentions-portal"]`))
 
             let isSelectedCorrectMention = false
+            let navigateTimes = 0
 
             while (!isSelectedCorrectMention) {
                 const selectedMention = await mentionPortalElement.findElement(By.className('selected'))?.getText()
@@ -444,6 +447,14 @@ export class CoinMarketCapClient implements ClientInterface {
                     isSelectedCorrectMention = true
                 } else {
                     await inputField.sendKeys(Key.ARROW_DOWN)
+                    navigateTimes++
+
+                    if (navigateTimes >= 30) {
+                        this.log(`Couldn't find coin in list of mentions`)
+                        await inputField.sendKeys(Key.ESCAPE)
+
+                        break
+                    }
                 }
             }
         } catch (error) {
