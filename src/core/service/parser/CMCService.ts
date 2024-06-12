@@ -130,6 +130,7 @@ export class CMCService {
 
     public async setAccountAsDisabled(cmcAccount: CoinMarketCapAccount): Promise<CoinMarketCapAccount> {
         cmcAccount.isDisabled = true
+        cmcAccount.proxy = null
         return this.cmcAccountsRepository.save(cmcAccount)
     }
 

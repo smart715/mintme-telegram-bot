@@ -151,6 +151,13 @@ export class CoinMarketCapClient implements ClientInterface {
         }
 
         this.logger.info(`Creating driver instance`)
+
+        if (!this.cmcAccount.proxy) {
+            this.logger.warn(`No proxy assigned to account`)
+
+            return false
+        }
+
         this.driver = await SeleniumService.createDriver('', this.cmcAccount.proxy, this.logger)
         this.logger.info(`Testing if proxy working`)
 
@@ -192,7 +199,6 @@ export class CoinMarketCapClient implements ClientInterface {
         let requestOffset = 1
 
         while (true) { // eslint-disable-line
-
             if (categoryId.length) {
                 const tokens = await this.cmcService.getCategoryTokens(
                     categoryId,
@@ -218,11 +224,6 @@ export class CoinMarketCapClient implements ClientInterface {
             if (this.isReachedCycleLimit()) {
                 await this.cmcService.updateAccountLastLogin(this.cmcAccount, moment().toDate())
 
-                if (this.isDisableAfterCycle) {
-                    this.log(`Disabling account.`)
-                    await this.disableAccount()
-                }
-
                 this.log(`Reached cycle limit`)
                 break
             }
@@ -234,6 +235,11 @@ export class CoinMarketCapClient implements ClientInterface {
             }
 
             requestOffset += requestLimit
+        }
+
+        if (this.isDisableAfterCycle) {
+            this.log(`Disabling account.`)
+            await this.disableAccount()
         }
 
         this.log(`worker finished`)
