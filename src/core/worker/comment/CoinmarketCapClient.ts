@@ -347,7 +347,6 @@ export class CoinMarketCapClient implements ClientInterface {
         await this.driver.sleep(5000)
 
         this.log(`Typing post on ${coin.name}`)
-        let isFirstWord = true
 
         await inputField.sendKeys(Key.chord(Key.CONTROL, 'a'))
         await this.driver.sleep(200)
@@ -357,14 +356,12 @@ export class CoinMarketCapClient implements ClientInterface {
                 await this.inputAndSelectCoinMention('MINTME', 'MintMe.com Coin', inputField)
             }
 
-            if (part.toLowerCase().includes('$coin') && !isFirstWord) {
+            if (part.toLowerCase().includes('$coin')) {
                 await this.inputAndSelectCoinMention(coin.symbol, coin.name, inputField)
             }
 
             await inputField.sendKeys(part.replace('$coin', '').replace('$mintme', '') + ' ')
             await this.driver.sleep(100)
-
-            isFirstWord = false
         }
 
         this.log(`Finished typing comment, Clicking post button after 10 seconds`)
