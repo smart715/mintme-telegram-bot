@@ -33,6 +33,7 @@ export class TelegramClient implements ClientInterface {
     private potentialFalsePositiveInRow: number = 0
     private successMessages: number = 0
     private checkedResponsesChatIds: string[] = []
+    private accountFirstName: string
 
     public constructor(
         private readonly contactHistoryService: ContactHistoryService,
@@ -91,6 +92,8 @@ export class TelegramClient implements ClientInterface {
         if (isLoggedIn) {
             await this.updateSentMessages()
             await this.getAccountMessages()
+            this.accountFirstName = await this.driver.executeScript(await this.getScript('GetAccountFirstName'))
+
             this.isInitialized = true
             this.log(`
                 Logged in | 24h Sent messages: ${this.sentMessages} | Account Messages: ${this.accountMessages.length} | Proxy: ${this.telegramAccount.proxy.proxy}`
@@ -212,6 +215,7 @@ export class TelegramClient implements ClientInterface {
         const script = await fs.readFileSync(
             `src/core/worker/contact/telegram/scripts/${scriptFile}.js`, 'utf-8'
         )
+
         return script
     }
 
@@ -800,6 +804,7 @@ export class TelegramClient implements ClientInterface {
         }
     }
 
+    // eslint-disable-next-line complexity
     private async getChatMessages(middleColumn: WebElement, chatType: ChatType): Promise<{
         sender: string;
         message: string;
@@ -856,14 +861,14 @@ export class TelegramClient implements ClientInterface {
                     const chatMessages = await middleColumn.findElements(By.className('message-list-item'))
                     for (const message of chatMessages) {
                         const messageClass = await message.getAttribute('class')
+                        const wholeMessageText = await message.getText()
 
                         if (messageClass.includes('ActionMessage')) {
                             continue
                         }
 
-
+                        const isReplyMessage = wholeMessageText.includes(this.accountFirstName) && !messageClass.includes('own')
                         const sender = await message.findElements(By.className('message-title'))
-
                         const messageContent = await message.findElements(By.className('text-content'))
 
                         if (sender.length && messageContent.length) {
@@ -873,7 +878,16 @@ export class TelegramClient implements ClientInterface {
                                 'sender': senderTxt,
                                 'message': messageContentTxt,
                             }
-                            chatMessagesObj.push(messageObj)
+
+                            const whitelistWordsRegex = /mintme|mint me|/i
+
+                            if (whitelistWordsRegex.test(messageContentTxt.toLowerCase()) ||
+                            messageContentTxt.toLowerCase().includes(this.telegramAccount.userName) ||
+                            isReplyMessage ||
+                            messageClass.includes('own')
+                            ) {
+                                chatMessagesObj.push(messageObj)
+                            }
                         }
                     }
                 }
