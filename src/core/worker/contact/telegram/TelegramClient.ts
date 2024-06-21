@@ -790,7 +790,7 @@ export class TelegramClient implements ClientInterface {
 
 
             for (const info of chatLinksDivs) {
-                const innerHtml = await info.getAttribute('innerHtml')
+                const innerHtml = await info.getAttribute('innerHTML')
                 const innerText = await info.getText()
 
                 if (innerHtml.includes('icon-link') || innerHtml.includes('icon-mention')) {
@@ -880,7 +880,7 @@ export class TelegramClient implements ClientInterface {
                                 'message': messageContentTxt,
                             }
 
-                            const whitelistWordsRegex = /mintme|mint me|/i
+                            const whitelistWordsRegex = /mintme|mint me/i
 
                             if (whitelistWordsRegex.test(messageContentTxt.toLowerCase()) ||
                             messageContentTxt.toLowerCase().includes(this.telegramAccount.userName) ||
