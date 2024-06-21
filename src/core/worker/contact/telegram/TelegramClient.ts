@@ -790,9 +790,10 @@ export class TelegramClient implements ClientInterface {
 
 
             for (const info of chatLinksDivs) {
+                const innerHtml = await info.getAttribute('innerHtml')
                 const innerText = await info.getText()
 
-                if (innerText.includes(infoStr)) {
+                if (innerHtml.includes('icon-link') || innerHtml.includes('icon-mention')) {
                     return innerText.replace(infoStr, '')
                 }
             }
@@ -884,7 +885,7 @@ export class TelegramClient implements ClientInterface {
                             if (whitelistWordsRegex.test(messageContentTxt.toLowerCase()) ||
                             messageContentTxt.toLowerCase().includes(this.telegramAccount.userName) ||
                             isReplyMessage ||
-                            messageClass.includes('own')
+                            messageClass.includes(' own')
                             ) {
                                 chatMessagesObj.push(messageObj)
                             }
