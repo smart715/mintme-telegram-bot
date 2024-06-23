@@ -54,7 +54,7 @@ export class CoinMarketCapClient implements ClientInterface {
         const isLoggedIn = await this.login()
 
         if (!isLoggedIn) {
-            destroyDriver(this.driver)
+            await this.destroyDriver()
 
             this.logger.warn(
                 `[CMC Client ID: ${this.cmcAccount.id}] not initialized. Can't login. Skipping...`
@@ -241,6 +241,8 @@ export class CoinMarketCapClient implements ClientInterface {
             this.log(`Disabling account.`)
             await this.disableAccount()
         }
+
+        await this.destroyDriver()
 
         this.log(`worker finished`)
     }
