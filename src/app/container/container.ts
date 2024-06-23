@@ -111,6 +111,7 @@ import {
     ApiKeyRepository,
     ApiService,
     DexToolsWorker,
+    TelegramAutoDmResponseRepository,
 } from '../../core'
 import { Application } from '../'
 import { CliDependency } from './types'
@@ -251,6 +252,11 @@ container.register(CoinMarketCapCommentRepository, {
 container.register(CoinMarketCapCommentHistoryRepository, {
     useFactory: instanceCachingFactory(() =>
         getConnection().getCustomRepository(CoinMarketCapCommentHistoryRepository)),
+})
+
+container.register(TelegramAutoDmResponseRepository, {
+    useFactory: instanceCachingFactory(() =>
+        getConnection().getCustomRepository(TelegramAutoDmResponseRepository)),
 })
 
 // Utils

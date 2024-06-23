@@ -261,7 +261,7 @@ export class TelegramClient implements ClientInterface {
         return this.accountMessages[this.messageToSendIndex].content
     }
 
-    private async inputAndSendMessage(): Promise<boolean> {
+    private async inputAndSendMessage(message: string = ''): Promise<boolean> {
         try {
             this.log(
                 `[Telegram Worker ${this.telegramAccount.id}] ` +
@@ -269,11 +269,12 @@ export class TelegramClient implements ClientInterface {
             )
 
             const messageInput = await this.driver.findElement(By.id('editable-message-text'))
+            const messageToSend = message.length ? message : this.getMessageTemplate()
 
             if (messageInput) {
                 this.log('Found input box, sending message')
 
-                await messageInput.sendKeys(this.getMessageTemplate())
+                await messageInput.sendKeys(messageToSend)
                 await this.driver.sleep(20000)
 
                 if (!this.isProd()) {
@@ -281,7 +282,6 @@ export class TelegramClient implements ClientInterface {
                 }
 
                 await messageInput.sendKeys(Key.RETURN)
-
 
                 this.sentMessages++
                 return true
@@ -819,11 +819,19 @@ export class TelegramClient implements ClientInterface {
             if (ChatType.DM === chatType) {
                 const chatMessages = await middleColumn.findElements(By.className('message-list-item '))
 
+                let sentMessagesCount = 0
+
                 for (const message of chatMessages) {
                     const messageClass = await message.getAttribute('class')
 
                     if (messageClass.includes('ActionMessage')) {
                         continue
+                    }
+
+                    const isOwnMessage = messageClass.includes(' own')
+
+                    if (isOwnMessage) {
+                        sentMessagesCount++
                     }
 
                     const messageContentTxt = await message.getText()
@@ -833,10 +841,22 @@ export class TelegramClient implements ClientInterface {
                     }
 
                     const messageObj = {
-                        'sender': messageClass.includes(' own') ? 'Me' : 'Other party',
+                        'sender': isOwnMessage ? 'Me' : 'Other party',
                         'message': messageContentTxt,
                     }
+
                     chatMessagesObj.push(messageObj)
+                }
+
+                if (chatMessagesObj.length && 'Other party' === chatMessagesObj[0].sender) {
+                    this.log(`DM discussion not started by us, Previous auto-response sent messages: ${sentMessagesCount}, Checking if there messages to send.`)
+                    const messageToSend = await this.telegramService.getAutoResponderMessage(++sentMessagesCount)
+
+                    if (messageToSend) {
+                        this.log(`Found a message, Sending auto-response`)
+                        const messageSendResult = await this.inputAndSendMessage(messageToSend.message)
+                        this.log(`Finished message sending attempt | Result: ${messageSendResult}`)
+                    }
                 }
             } else {
                 let hasMoreMentions = true
@@ -1006,6 +1026,7 @@ export class TelegramClient implements ClientInterface {
         const keepScrolling = true
         let curentRetries = 0
         let isStartOfChat = true
+
         while (keepScrolling) {
             lastScrollHeight = +(await chatList.getAttribute('scrollHeight'))
 

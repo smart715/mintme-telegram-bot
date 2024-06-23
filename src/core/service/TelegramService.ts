@@ -1,6 +1,6 @@
 import { singleton } from 'tsyringe'
-import { TelegramAccountsRepository, TelegramResponseRepository, BlacklistRepository } from '../repository'
-import { TelegramAccount, ProxyServer } from '../entity'
+import { TelegramAccountsRepository, TelegramResponseRepository, BlacklistRepository, TelegramAutoDmResponseRepository } from '../repository'
+import { TelegramAccount, ProxyServer, TelegramAutoDmResponse } from '../entity'
 import { ProxyService } from './ProxyServerService'
 import { TelegramWorkerMode } from '../../utils'
 import moment from 'moment'
@@ -11,7 +11,8 @@ export class TelegramService {
         private telegramAccountRepository: TelegramAccountsRepository,
         private telegramResponseRepository: TelegramResponseRepository,
         private proxyService: ProxyService,
-        private blacklistRepository: BlacklistRepository
+        private blacklistRepository: BlacklistRepository,
+        private telegramAutoDmResponseRepository: TelegramAutoDmResponseRepository
     ) { }
 
     public async getAllAccounts(mode: TelegramWorkerMode|undefined = undefined): Promise<TelegramAccount[]> {
@@ -85,5 +86,9 @@ export class TelegramService {
         }
 
         return proxy
+    }
+
+    public async getAutoResponderMessage(order: number): Promise<TelegramAutoDmResponse|undefined> {
+        return this.telegramAutoDmResponseRepository.getMessageToSend(order)
     }
 }
