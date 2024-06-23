@@ -190,7 +190,7 @@ export class TelegramClient implements ClientInterface {
                 }
             }
         } catch (e) {
-            this.logger.error(e)
+            this.log(`Error 6969 ${e}`)
             return false
         }
     }
@@ -480,8 +480,8 @@ export class TelegramClient implements ClientInterface {
             }
 
             return false
-        } catch (error) {
-            this.logger.error(error)
+        } catch (e) {
+            this.log(`Error 9584 ${e}`)
             return false
         }
     }
@@ -562,7 +562,7 @@ export class TelegramClient implements ClientInterface {
                 }
             }
         } catch (e) {
-            this.logger.error(e)
+            this.log(`Error 3652 ${e}`)
             return ContactHistoryStatusType.ERROR
         }
     }
@@ -914,7 +914,7 @@ export class TelegramClient implements ClientInterface {
 
                 const chatLink = await this.getExtraChatInfo(middleColumn, chatInfo)
 
-                if (chatMessagesObj.length) {
+                if (chatMessagesObj && chatMessagesObj.length) {
                     await this.telegramService.addNewResponse(
                         chatLink,
                         JSON.stringify(chatMessagesObj),
@@ -962,8 +962,8 @@ export class TelegramClient implements ClientInterface {
                     await this.processChatResponses(groupChat, ChatType.GROUP)
                 }
             }
-        } catch (ex) {
-            this.logger.error(ex)
+        } catch (e) {
+            this.log(`Error 9584 ${e}`)
             return this.findNotCheckedGroups(chatList)
         }
     }
@@ -986,8 +986,8 @@ export class TelegramClient implements ClientInterface {
                     await this.processChatResponses(dm, ChatType.DM)
                 }
             }
-        } catch (error) {
-            this.logger.error(error)
+        } catch (e) {
+            this.log(`Error 4851 ${e}`)
             return this.findNotCheckedDms(chatList)
         }
     }
