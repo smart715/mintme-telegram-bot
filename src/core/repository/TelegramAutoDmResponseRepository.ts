@@ -7,7 +7,7 @@ import { TelegramAutoDmResponse } from '../entity'
 export class TelegramAutoDmResponseRepository extends Repository<TelegramAutoDmResponse> {
     public async getMessageToSend(order: number): Promise<TelegramAutoDmResponse | undefined> {
         const qryBuilder = this.createQueryBuilder()
-            .where('order = :order', { order })
+            .where('`order` = :order', { order })
 
         return qryBuilder.getOne()
     }

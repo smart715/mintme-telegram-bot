@@ -856,6 +856,15 @@ export class TelegramClient implements ClientInterface {
                         this.log(`Found a message, Sending auto-response`)
                         const messageSendResult = await this.inputAndSendMessage(messageToSend.message)
                         this.log(`Finished message sending attempt | Result: ${messageSendResult}`)
+
+                        if (messageSendResult) {
+                            const messageObj = {
+                                'sender': 'Me',
+                                'message': messageToSend.message,
+                            }
+
+                            chatMessagesObj.push(messageObj)
+                        }
                     }
                 }
             } else {
@@ -922,7 +931,7 @@ export class TelegramClient implements ClientInterface {
             if (chatElement) {
                 await this.driver.actions().click(chatElement).perform()
 
-                await this.driver.sleep(5000)
+                await this.driver.sleep(10000)
 
                 const middleColumn = await this.driver.findElement(By.id('MiddleColumn'))
 
