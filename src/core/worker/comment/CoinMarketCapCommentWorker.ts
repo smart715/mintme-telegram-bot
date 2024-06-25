@@ -64,11 +64,7 @@ export class CoinMarketCommentWorker implements WorkerInterface {
                 currentAccountIndex++
             }
 
-            try {
-                await this.startAllClients()
-            } finally {
-                await this.destroyDrivers()
-            }
+            await this.startAllClients()
 
             if (currentAccountIndex >= allAccounts.length - 1) {
                 currentAccountIndex = 0
@@ -100,12 +96,6 @@ export class CoinMarketCommentWorker implements WorkerInterface {
         }
 
         return Promise.all(contactingPromises)
-    }
-
-    public async destroyDrivers(): Promise<void> {
-        for (const client of this.cmcClients) {
-            await client.destroyDriver()
-        }
     }
 
     public isProcessingCoin(coinId: string): boolean {
