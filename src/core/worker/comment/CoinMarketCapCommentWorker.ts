@@ -5,12 +5,11 @@ import { CMCService, MailerService } from '../../service'
 import { sleep } from '../../../utils'
 import { CoinMarketCapAccount } from '../../entity'
 import moment from 'moment'
-import { WorkerInterface } from '../WorkerInterface'
 import config from 'config'
 import { CMCWorkerConfig } from '../../types'
 
 @singleton()
-export class CoinMarketCommentWorker implements WorkerInterface {
+export class CoinMarketCommentWorker {
     private readonly workerName = 'CMCCWorker'
     private readonly prefixLog = `[${this.workerName}]`
 
