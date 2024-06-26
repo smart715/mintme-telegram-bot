@@ -22,6 +22,7 @@ export class TelegramClient implements ClientInterface {
     private readonly messagesDelay: number = config.get('telegram_messages_delay_in_seconds')
     private readonly limitLogginIn: number = config.get('telegram_limit_logging_in_in_mins')
     private readonly maxMessagesPerCycle: number = config.get('telegram_max_sent_messages_per_cycle')
+    private readonly responsesWorkerDelay: number = config.get('telegram_responses_worker_delay')
     private sentMessages: number
     public telegramAccount: TelegramAccount
     private driver: WebDriver
@@ -51,10 +52,10 @@ export class TelegramClient implements ClientInterface {
     }
 
     public async initialize(): Promise<void> {
-        const dateTwoDaysAgo = moment().utc().subtract(2, 'days')
+        const dateDelay = moment().utc().subtract(this.responsesWorkerDelay, 'days')
         const lastResponsesFetchDate = moment(this.telegramAccount.lastResponsesFetchDate)
 
-        if (!lastResponsesFetchDate.isValid() || lastResponsesFetchDate.isBefore(dateTwoDaysAgo)) {
+        if (!lastResponsesFetchDate.isValid() || lastResponsesFetchDate.isBefore(dateDelay)) {
             this.runResponeseWorker = true
         }
 

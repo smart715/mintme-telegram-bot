@@ -31,6 +31,7 @@ export default {
     'telegram_accounts_per_proxy': 2,
     'telegram_limit_logging_in_in_mins': 5,
     'telegram_max_sent_messages_per_cycle': 5,
+    'telegram_responses_worker_delay': 2,
 
     // twitter configs
     'twitter_max_accounts_simultaneous': 1,
