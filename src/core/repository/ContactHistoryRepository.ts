@@ -55,14 +55,14 @@ export class ContactHistoryRepository extends Repository<ContactHistory> {
         tgAccountId: number|undefined
     ): Promise<ContactHistory | undefined> {
         const qryBuilder = this.createQueryBuilder()
-            .where(channel)
+            .where('`channel` = :channel', { channel })
 
         if (tgAccountId) {
-            qryBuilder.andWhere('`tgAccountId` = :tgAccountId', { tgAccountId })
+            qryBuilder.andWhere('`tg_account_id` = :tgAccountId', { tgAccountId })
         }
 
         return qryBuilder
-            .orderBy('createdAt DESC')
+            .orderBy('created_at', 'DESC')
             .getOne()
     }
 }

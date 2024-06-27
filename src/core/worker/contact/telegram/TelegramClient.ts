@@ -54,13 +54,23 @@ export class TelegramClient implements ClientInterface {
         this.telegramAccount = telegramAccount
     }
 
-    public async initialize(): Promise<void> {
-        const dateDelay = moment().utc().subtract(this.responsesWorkerDelay, 'days')
-        const lastResponsesFetchDate = moment(this.telegramAccount.lastResponsesFetchDate)
+    private isRunWorker(delayDays: number, lastRunDate: Date): boolean {
+        const dateDelay = moment().utc().subtract(delayDays, 'days')
+        const dateLastRun = moment(lastRunDate)
 
-        if (!lastResponsesFetchDate.isValid() || lastResponsesFetchDate.isBefore(dateDelay)) {
-            this.runResponeseWorker = true
-        }
+        return !dateLastRun.isValid() || dateLastRun.isBefore(dateDelay)
+    }
+
+    public async initialize(): Promise<void> {
+        this.runResponeseWorker = this.isRunWorker(
+            this.responsesWorkerDelay,
+            this.telegramAccount.lastResponsesFetchDate
+        )
+
+        this.runOldGroupsLeaver = this.isRunWorker(
+            this.groupsLeaverWorkerDelay,
+            this.telegramAccount.lastGroupsLeavingDate
+        )
 
         const limitHitDate = moment(this.telegramAccount.limitHitResetDate)
         const currentDate = moment().utc()
@@ -120,7 +130,8 @@ export class TelegramClient implements ClientInterface {
         }
 
         this.log(`Creating driver instance`)
-        this.driver = await SeleniumService.createDriver('', this.telegramAccount.proxy, this.logger)
+        //this.driver = await SeleniumService.createDriver('', this.telegramAccount.proxy, this.logger)
+        this.driver = await SeleniumService.createDriver('', undefined, this.logger)
         this.log(`Testing if proxy working`)
 
         if (await SeleniumService.isInternetWorking(this.driver)) {
@@ -661,6 +672,10 @@ export class TelegramClient implements ClientInterface {
 
                 if (!isCheckedChat) {
                     this.log(`Found a group to check`)
+
+                    await this.driver.actions().click(groupChat).perform()
+                    await this.driver.sleep(10000)
+
                     const middleColumn = await this.getMiddleColumn()
 
                     if (!middleColumn) {
@@ -693,7 +708,7 @@ export class TelegramClient implements ClientInterface {
         }
     }
 
-    private async startOldChannelsLeavingWorker(): Promise<void> {
+    private async startOldChannelsLeavingWorker(isScrolledToBottom: boolean): Promise<void> {
         this.log(`Started leaving old channels`)
         const chatList = await this.getChatsList()
 
@@ -705,6 +720,7 @@ export class TelegramClient implements ClientInterface {
         let lastScrollHeight = 0
         let curentRetries = 0
         let isFirstOffset = true
+        const scrollPx = isScrolledToBottom ? 900 : -900
 
         // eslint-disable-next-line no-constant-condition
         while (true) {
@@ -712,7 +728,7 @@ export class TelegramClient implements ClientInterface {
 
             if (!isFirstOffset) {
                 this.log(`Scrolling up`)
-                await this.driver.executeScript(`arguments[0].scrollBy(0, -1000)`, chatList)
+                await this.driver.executeScript(`arguments[0].scrollBy(0, ${scrollPx})`, chatList)
                 await this.driver.sleep(5000)
             }
 
@@ -725,8 +741,8 @@ export class TelegramClient implements ClientInterface {
             const currentScrollHeight = +(await chatList.getAttribute('scrollHeight'))
 
             if (currentScrollHeight === lastScrollHeight) {
-                if (curentRetries >= 3) {
-                    return
+                if (curentRetries >= 5) {
+                    break
                 } else {
                     curentRetries++
                     continue
@@ -737,26 +753,34 @@ export class TelegramClient implements ClientInterface {
             await this.driver.sleep(1000)
         }
 
+        await this.telegramService.updateLastGroupsLeaverRunDate(this.telegramAccount)
         this.log(`Finished`)
     }
 
     public async startWorker(): Promise<void> {
         await this.driver.sleep(getRandomNumber(1, 10) * 1000)
 
+        let isScrolledToBottom = false
+
         if (this.runResponeseWorker) {
             await this.startResponsesWorker()
-            await this.startOldChannelsLeavingWorker()
+            isScrolledToBottom = true
+        }
 
-            if (this.runContactingWorker) {
-                this.log(`Navigating to telegram web main page`)
-                await this.driver.get('https://web.telegram.org/a/')
-                await this.driver.sleep(20000)
-            }
+        if (this.runOldGroupsLeaver) {
+            await this.startOldChannelsLeavingWorker(isScrolledToBottom)
+            isScrolledToBottom = !isScrolledToBottom
         }
 
         if (!this.runContactingWorker) {
             this.log(`The contact worker limit has been exceeded, Skipping account.`)
             return
+        }
+
+        if (isScrolledToBottom) {
+            this.log(`Navigating to telegram web main page`)
+            await this.driver.get('https://web.telegram.org/a/')
+            await this.driver.sleep(20000)
         }
 
         const queuedContact = await this.contactQueueService.getFirstFromQueue(ContactMethod.TELEGRAM, this.logger)

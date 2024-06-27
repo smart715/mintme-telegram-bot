@@ -44,6 +44,11 @@ export class TelegramService {
         await this.telegramAccountRepository.save(tgAccount)
     }
 
+    public async updateLastGroupsLeaverRunDate(tgAccount: TelegramAccount): Promise<void> {
+        tgAccount.lastGroupsLeavingDate = moment().utc().toDate()
+        await this.telegramAccountRepository.save(tgAccount)
+    }
+
     public async setAccountLimitHitDate(tgAccount: TelegramAccount, date: Date): Promise<void> {
         tgAccount.limitHitResetDate = date
         await this.telegramAccountRepository.save(tgAccount)
