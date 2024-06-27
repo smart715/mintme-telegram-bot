@@ -33,6 +33,7 @@ export class TelegramClient implements ClientInterface {
     public isInitialized: boolean = false
     private runResponeseWorker: boolean = false
     private runContactingWorker: boolean = false
+    private runOldGroupsLeaver: boolean = false
     private potentialFalsePositiveInRow: number = 0
     private successMessages: number = 0
     private checkedChatIds: string[] = []
@@ -416,6 +417,10 @@ export class TelegramClient implements ClientInterface {
         return ContactHistoryStatusType.ANNOUNCEMENTS_NO_GROUP
     }
 
+    private async leaveGroup(): Promise<void> {
+        return this.driver.executeScript(await this.getScript('LeaveGroup'))
+    }
+
     private async sendGroupMessage(tgLink: string, verified: boolean = false): Promise<ContactHistoryStatusType> {
         this.log(`Trying to send group message`)
 
@@ -467,8 +472,9 @@ export class TelegramClient implements ClientInterface {
                 return ContactHistoryStatusType.SENT_GROUP_BUT_DELETED
             }
         } else {
-            await this.driver.executeScript(await this.getScript('LeaveGroup'))
+            await this.leaveGroup()
             await this.driver.sleep(10000)
+
             return ContactHistoryStatusType.MESSAGES_NOT_ALLOWED
         }
     }
@@ -632,7 +638,7 @@ export class TelegramClient implements ClientInterface {
                 const isGroupBtnVisible = await groupChat.isDisplayed()
 
                 if (!isGroupBtnVisible) {
-                    return this.findNotCheckedGroups(chatList)
+                    return this.processOldGroups(chatList)
                 }
 
                 let isCheckedChat = false
@@ -662,17 +668,28 @@ export class TelegramClient implements ClientInterface {
                     }
 
                     const chatLink = await this.getExtraChatInfo(middleColumn, ChatType.GROUP)
+                    const oldGroupMinimumDate = moment().utc().subtract(this.oldGroupMinimumAge, 'days')
+
                     const lastContactAttempt = await this.contactHistoryService.findLastContactAttempt(
                         chatLink,
                         this.telegramAccount.id
                     )
 
+                    const lastContactDate = moment(lastContactAttempt?.createdAt)
 
+                    if (
+                        !lastContactAttempt ||
+                        !lastContactDate.isValid() ||
+                        lastContactDate.isBefore(oldGroupMinimumDate)
+                    ) {
+                        await this.leaveGroup()
+                        await this.driver.sleep(10000)
+                    }
                 }
             }
         } catch (e) {
-            this.log(`Error 9584 ${e}`)
-            return this.findNotCheckedGroups(chatList)
+            this.log(`Error 6582 ${e}`)
+            return this.processOldGroups(chatList)
         }
     }
 
