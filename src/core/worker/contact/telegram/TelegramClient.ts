@@ -23,6 +23,8 @@ export class TelegramClient implements ClientInterface {
     private readonly limitLogginIn: number = config.get('telegram_limit_logging_in_in_mins')
     private readonly maxMessagesPerCycle: number = config.get('telegram_max_sent_messages_per_cycle')
     private readonly responsesWorkerDelay: number = config.get('telegram_responses_worker_delay')
+    private readonly oldGroupMinimumAge: number = config.get('telegram_min_old_group_age')
+    private readonly groupsLeaverWorkerDelay: number = config.get('telegram_groups_leaver_worker_delay')
     private sentMessages: number
     public telegramAccount: TelegramAccount
     private driver: WebDriver
@@ -33,7 +35,7 @@ export class TelegramClient implements ClientInterface {
     private runContactingWorker: boolean = false
     private potentialFalsePositiveInRow: number = 0
     private successMessages: number = 0
-    private checkedResponsesChatIds: string[] = []
+    private checkedChatIds: string[] = []
     private accountFirstName: string
 
     public constructor(
@@ -90,6 +92,7 @@ export class TelegramClient implements ClientInterface {
         }
 
         const isLoggedIn = await this.login()
+
         if (isLoggedIn) {
             await this.updateSentMessages()
             await this.getAccountMessages()
@@ -614,10 +617,110 @@ export class TelegramClient implements ClientInterface {
 
     public async startResponsesWorker(): Promise<void> {
         this.log(`Started getting responses`)
+        this.checkedChatIds = []
         await this.getResponses()
         await this.telegramService.updateLastResponsesFetchDate(this.telegramAccount)
         this.runResponeseWorker = false
         this.log(`Finished getting responses`)
+    }
+
+    private async processOldGroups(chatList: WebElement): Promise<void> {
+        try {
+            const groups = await chatList.findElements(By.className('group'))
+
+            for (const groupChat of groups) {
+                const isGroupBtnVisible = await groupChat.isDisplayed()
+
+                if (!isGroupBtnVisible) {
+                    return this.findNotCheckedGroups(chatList)
+                }
+
+                let isCheckedChat = false
+
+                try {
+                    const chatLinkElement = await groupChat.findElement(By.css('a'))
+                    const chatHref = await chatLinkElement.getAttribute('href')
+                    const chatId = chatHref.split('#').pop()
+
+                    if (chatId && !this.checkedChatIds.includes(chatId)) {
+                        this.checkedChatIds.push(chatId)
+                    } else {
+                        isCheckedChat = true
+                    }
+                } catch (err) {
+                    if (err instanceof Error) {
+                        this.log(`Couldn't get chat ID, error: ${err.message}`)
+                    }
+                }
+
+                if (!isCheckedChat) {
+                    this.log(`Found a group to check`)
+                    const middleColumn = await this.getMiddleColumn()
+
+                    if (!middleColumn) {
+                        return
+                    }
+
+                    const chatLink = await this.getExtraChatInfo(middleColumn, ChatType.GROUP)
+                    const lastContactAttempt = await this.contactHistoryService.findLastContactAttempt(
+                        chatLink,
+                        this.telegramAccount.id
+                    )
+
+
+                }
+            }
+        } catch (e) {
+            this.log(`Error 9584 ${e}`)
+            return this.findNotCheckedGroups(chatList)
+        }
+    }
+
+    private async startOldChannelsLeavingWorker(): Promise<void> {
+        this.log(`Started leaving old channels`)
+        const chatList = await this.getChatsList()
+
+        if (!chatList) {
+            this.log(`Chat list not found`)
+            return
+        }
+
+        let lastScrollHeight = 0
+        let curentRetries = 0
+        let isFirstOffset = true
+
+        // eslint-disable-next-line no-constant-condition
+        while (true) {
+            lastScrollHeight = +(await chatList.getAttribute('scrollHeight'))
+
+            if (!isFirstOffset) {
+                this.log(`Scrolling up`)
+                await this.driver.executeScript(`arguments[0].scrollBy(0, -1000)`, chatList)
+                await this.driver.sleep(5000)
+            }
+
+            isFirstOffset = false
+
+            await this.processOldGroups(chatList)
+
+            await this.driver.sleep(2000)
+
+            const currentScrollHeight = +(await chatList.getAttribute('scrollHeight'))
+
+            if (currentScrollHeight === lastScrollHeight) {
+                if (curentRetries >= 3) {
+                    return
+                } else {
+                    curentRetries++
+                    continue
+                }
+            }
+
+            curentRetries = 0
+            await this.driver.sleep(1000)
+        }
+
+        this.log(`Finished`)
     }
 
     public async startWorker(): Promise<void> {
@@ -625,6 +728,7 @@ export class TelegramClient implements ClientInterface {
 
         if (this.runResponeseWorker) {
             await this.startResponsesWorker()
+            await this.startOldChannelsLeavingWorker()
 
             if (this.runContactingWorker) {
                 this.log(`Navigating to telegram web main page`)
@@ -774,10 +878,12 @@ export class TelegramClient implements ClientInterface {
         )
     }
 
-    private async getExtraChatInfo(middleColumn: WebElement, infoStr: string): Promise<string> {
+    private async getExtraChatInfo(middleColumn: WebElement, chatType: ChatType): Promise<string> {
         try {
+            const infoStr = (ChatType.DM === chatType) ? '\nUsername' : '\nLink'
             const rightColumn = await this.driver.findElement(By.id('RightColumn'))
             let profileDivs = await rightColumn.findElements(By.className('profile-info'))
+
             if (!profileDivs.length) {
                 const chatTitle = await middleColumn.findElements(By.className('info'))
                 if (chatTitle.length) {
@@ -940,9 +1046,7 @@ export class TelegramClient implements ClientInterface {
 
                 await this.driver.sleep(1000)
 
-                const chatInfo = (ChatType.DM === chatType) ? '\nUsername' : '\nLink'
-
-                const chatLink = await this.getExtraChatInfo(middleColumn, chatInfo)
+                const chatLink = await this.getExtraChatInfo(middleColumn, chatType)
 
                 if (chatMessagesObj && chatMessagesObj.length) {
                     await this.telegramService.addNewResponse(
@@ -974,8 +1078,8 @@ export class TelegramClient implements ClientInterface {
                     const chatHref = await chatLinkElement.getAttribute('href')
                     const chatId = chatHref.split('#').pop()
 
-                    if (chatId && !this.checkedResponsesChatIds.includes(chatId)) {
-                        this.checkedResponsesChatIds.push(chatId)
+                    if (chatId && !this.checkedChatIds.includes(chatId)) {
+                        this.checkedChatIds.push(chatId)
                     } else {
                         isCheckedChat = true
                     }
@@ -997,6 +1101,7 @@ export class TelegramClient implements ClientInterface {
             return this.findNotCheckedGroups(chatList)
         }
     }
+
 
     private async findNotCheckedDms(chatList: WebElement): Promise<void> {
         try {
@@ -1022,22 +1127,30 @@ export class TelegramClient implements ClientInterface {
         }
     }
 
-    private async getResponses(): Promise<void> {
-        const chatListSelector = await this.driver.findElements(By.className('chat-list'))
+    private async getChatsList(): Promise<WebElement|undefined> {
+        try {
+            const chatList = await this.driver.findElement(By.className('chat-list'))
 
-        if (!chatListSelector.length) {
+            return chatList
+        } catch (error) {
+            return undefined
+        }
+    }
+
+    private async getResponses(): Promise<void> {
+        const chatList = await this.getChatsList()
+
+        if (!chatList) {
             this.log(`Chat list not found`)
             return
         }
 
-        const chatList = chatListSelector[0]
-
         let lastScrollHeight = 0
-        const keepScrolling = true
         let curentRetries = 0
         let isStartOfChat = true
 
-        while (keepScrolling) {
+        // eslint-disable-next-line no-constant-condition
+        while (true) {
             lastScrollHeight = +(await chatList.getAttribute('scrollHeight'))
 
             if (!isStartOfChat) {

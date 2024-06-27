@@ -50,14 +50,19 @@ export class ContactHistoryRepository extends Repository<ContactHistory> {
         return result as GroupedContactsCount[]
     }
 
-    public async findLastContactAttempt(channel: string): Promise<ContactHistory | undefined> {
-        return this.findOne({
-            where: {
-                channel,
-            },
-            order: {
-                createdAt: 'DESC',
-            },
-        })
+    public async findLastContactAttempt(
+        channel: string,
+        tgAccountId: number|undefined
+    ): Promise<ContactHistory | undefined> {
+        const qryBuilder = this.createQueryBuilder()
+            .where(channel)
+
+        if (tgAccountId) {
+            qryBuilder.andWhere('`tgAccountId` = :tgAccountId', { tgAccountId })
+        }
+
+        return qryBuilder
+            .orderBy('createdAt DESC')
+            .getOne()
     }
 }
