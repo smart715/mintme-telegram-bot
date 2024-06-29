@@ -640,7 +640,7 @@ export class TelegramClient implements ClientInterface {
         this.log(`Finished getting responses`)
     }
 
-    private async processOldGroups(chatList: WebElement): Promise<void> {
+    private async processOldGroups(chatList: WebElement, retries: number): Promise<void> {
         try {
             const groups = await chatList.findElements(By.className('group'))
 
@@ -648,7 +648,7 @@ export class TelegramClient implements ClientInterface {
                 const isGroupBtnVisible = await groupChat.isDisplayed()
 
                 if (!isGroupBtnVisible) {
-                    return this.processOldGroups(chatList)
+                    return this.processOldGroups(chatList, retries)
                 }
 
                 let isCheckedChat = false
@@ -706,7 +706,10 @@ export class TelegramClient implements ClientInterface {
             }
         } catch (e) {
             this.log(`Error 6582 ${e}`)
-            return this.processOldGroups(chatList)
+
+            if (retries <= 20) {
+                return this.processOldGroups(chatList, ++retries)
+            }
         }
     }
 
@@ -735,7 +738,7 @@ export class TelegramClient implements ClientInterface {
 
             isFirstOffset = false
 
-            await this.processOldGroups(chatList)
+            await this.processOldGroups(chatList, 0)
 
             await this.driver.sleep(2000)
 
