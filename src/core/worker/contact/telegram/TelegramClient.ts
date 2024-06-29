@@ -682,6 +682,11 @@ export class TelegramClient implements ClientInterface {
                     }
 
                     const chatLink = await this.getExtraChatInfo(middleColumn, ChatType.GROUP)
+
+                    if (!chatLink.length) {
+                        continue
+                    }
+
                     const oldGroupMinimumDate = moment().utc().subtract(this.oldGroupMinimumAge, 'days')
 
                     const lastContactAttempt = await this.contactHistoryService.findLastContactAttempt(
