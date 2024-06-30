@@ -553,6 +553,12 @@ export class TelegramClient implements ClientInterface {
                     return this.checkAnnouncementChannel()
                 }
 
+                const btnApplyToJoin = await this.getBtnWithText('APPLY TO JOIN GROUP')
+
+                if (btnApplyToJoin) {
+                    return ContactHistoryStatusType.GROUP_REQUIRES_APPLICATION
+                }
+
                 return await this.sendGroupMessage(telegramLink, verified)
             } else {
                 const userStatusSelector = await this.driver.findElements(By.className('user-status'))
