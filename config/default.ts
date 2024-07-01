@@ -50,9 +50,9 @@ export default {
 
     // twitter configs
     'twitter_max_accounts_simultaneous': 1,
-    'twitter_dm_limit_daily': 300,
+    'twitter_dm_limit_daily': 400,
     'twitter_total_attempts_daily': 1000,
-    'twitter_messages_delay_in_seconds': 40,
+    'twitter_messages_delay_in_seconds': 30,
     'twitter_responses_checker_frequency_hours': 12,
     'twitter_css_unread_dot': 'r-l5o3uw',
 
