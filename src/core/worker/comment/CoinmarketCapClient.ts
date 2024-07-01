@@ -199,6 +199,7 @@ export class CoinMarketCapClient implements ClientInterface {
         let requestOffset = 1
 
         while (true) { // eslint-disable-line
+            this.log(`Offset: ${requestOffset}`)
             if (categoryId.length) {
                 const tokens = await this.cmcService.getCategoryTokens(
                     categoryId,
