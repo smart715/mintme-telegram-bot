@@ -130,7 +130,8 @@ export class TelegramClient implements ClientInterface {
         }
 
         this.log(`Creating driver instance`)
-        this.driver = await SeleniumService.createDriver('', this.telegramAccount.proxy, this.logger)
+        //this.driver = await SeleniumService.createDriver('', this.telegramAccount.proxy, this.logger)
+        this.driver = await SeleniumService.createDriver('', undefined, this.logger) //FOR LOCAL TEST PURPOSE
         this.log(`Testing if proxy working`)
 
         if (await SeleniumService.isInternetWorking(this.driver)) {
@@ -983,6 +984,9 @@ export class TelegramClient implements ClientInterface {
                 let sentMessagesCount = 0
 
                 for (const message of chatMessages) {
+                    const messageDateScript = await this.driver.executeScript(`return arguments[0].closest('.message-date-group').getElementsByClassName('sticky-date interactive')[0].innerText`, message)
+                    const messageDateStr = messageDateScript ? messageDateScript : ''
+
                     const messageClass = await message.getAttribute('class')
 
                     if (messageClass.includes('ActionMessage')) {
@@ -1003,7 +1007,7 @@ export class TelegramClient implements ClientInterface {
 
                     const messageObj = {
                         'sender': isOwnMessage ? 'Me' : 'Other party',
-                        'message': messageContentTxt,
+                        'message': messageContentTxt + ` ${messageDateStr}`,
                     }
 
                     chatMessagesObj.push(messageObj)
