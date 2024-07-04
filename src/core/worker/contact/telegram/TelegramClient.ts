@@ -967,6 +967,12 @@ export class TelegramClient implements ClientInterface {
         }
     }
 
+    private async getMessageDate(chatMessage: WebElement): Promise<string> {
+        const messageDateScript: string = await this.driver.executeScript(`return arguments[0].closest('.message-date-group').getElementsByClassName('sticky-date interactive')[0].innerText`, chatMessage)
+
+        return messageDateScript ? messageDateScript : ''
+    }
+
     // eslint-disable-next-line complexity
     private async getChatMessages(middleColumn: WebElement, chatType: ChatType): Promise<{
         sender: string;
@@ -984,8 +990,7 @@ export class TelegramClient implements ClientInterface {
                 let sentMessagesCount = 0
 
                 for (const message of chatMessages) {
-                    const messageDateScript = await this.driver.executeScript(`return arguments[0].closest('.message-date-group').getElementsByClassName('sticky-date interactive')[0].innerText`, message)
-                    const messageDateStr = messageDateScript ? messageDateScript : ''
+                    const messageDate = await this.getMessageDate(message)
 
                     const messageClass = await message.getAttribute('class')
 
@@ -1007,7 +1012,7 @@ export class TelegramClient implements ClientInterface {
 
                     const messageObj = {
                         'sender': isOwnMessage ? 'Me' : 'Other party',
-                        'message': messageContentTxt + ` ${messageDateStr}`,
+                        'message': `${messageContentTxt} ${messageDate}`,
                     }
 
                     chatMessagesObj.push(messageObj)
@@ -1065,19 +1070,21 @@ export class TelegramClient implements ClientInterface {
                         const isReplyMessage = wholeMessageText.includes(this.accountFirstName) && !messageClass.includes('own')
                         const sender = await message.findElements(By.className('message-title'))
                         const messageContent = await message.findElements(By.className('text-content'))
+                        const messageDate = await this.getMessageDate(message)
 
                         if (sender.length && messageContent.length) {
                             const senderTxt = await sender[0].getText()
                             const messageContentTxt = await messageContent[0].getText()
                             const messageObj = {
                                 'sender': senderTxt,
-                                'message': messageContentTxt,
+                                'message': `${messageContentTxt} ${messageDate}`,
                             }
 
                             const whitelistWordsRegex = /mintme|mint me/i
 
                             if (whitelistWordsRegex.test(messageContentTxt.toLowerCase()) ||
-                            messageContentTxt.toLowerCase().includes(this.telegramAccount.userName) ||
+                            messageContentTxt.toLowerCase().includes(this.telegramAccount.userName.toLowerCase().replace('@', '')) ||
+                            messageContentTxt.toLowerCase().includes(this.accountFirstName.toLowerCase()) ||
                             isReplyMessage ||
                             messageClass.includes(' own')
                             ) {
@@ -1088,6 +1095,7 @@ export class TelegramClient implements ClientInterface {
                 }
             }
         }
+
         return chatMessagesObj
     }
 
