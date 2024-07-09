@@ -18,7 +18,7 @@ export class SeleniumService {
         disableSandboxFlag: boolean = false,
     ): Promise<ThenableWebDriver> {
         const options = new Options()
-            //.addArguments('--headless=new') //TEST PURPOSE
+            .addArguments('--headless=new')
             .addArguments('--window-size=1920,1080')
             .addArguments(`user-agent=${userAgent}`)
 

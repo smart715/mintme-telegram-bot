@@ -130,8 +130,7 @@ export class TelegramClient implements ClientInterface {
         }
 
         this.log(`Creating driver instance`)
-        //this.driver = await SeleniumService.createDriver('', this.telegramAccount.proxy, this.logger)
-        this.driver = await SeleniumService.createDriver('', undefined, this.logger) //FOR LOCAL TEST PURPOSE
+        this.driver = await SeleniumService.createDriver('', this.telegramAccount.proxy, this.logger)
         this.log(`Testing if proxy working`)
 
         if (await SeleniumService.isInternetWorking(this.driver)) {
