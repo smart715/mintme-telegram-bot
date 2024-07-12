@@ -115,5 +115,11 @@ module.exports = {
             args: 'run cli -- run-last-token-tx-date-fetcher',
             autorestart: true,
         },
+        {
+            name: 'cmc-commenting',
+            script: 'npm',
+            args: 'run cli -- run-cmc-commenting-worker',
+            autorestart: true,
+        },
     ],
 }
