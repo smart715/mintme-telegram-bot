@@ -1,6 +1,6 @@
 import { Logger } from 'winston'
 import { By, Key, WebDriver, WebElement } from 'selenium-webdriver'
-import { CoinMarketCapAccount } from '../../entity'
+import { CoinMarketCapAccount, CoinMarketCapComment } from '../../entity'
 import {
     CMCService,
     SeleniumService,
@@ -8,22 +8,21 @@ import {
 import { destroyDriver } from '../../../utils'
 import moment from 'moment'
 import config from 'config'
-import { CMCCryptocurrency, CMCWorkerConfig } from '../../types'
+import { CategoryCoin, CMCCryptocurrency, CMCWorkerConfig } from '../../types'
 import { CoinMarketCommentWorker } from './CoinMarketCapCommentWorker'
 import { ClientInterface } from '../ClientInterface'
 
 export class CoinMarketCapClient implements ClientInterface {
     private readonly cmcAccount: CoinMarketCapAccount
     private driver: WebDriver
-    private maxCommentsPerDay: number = 100
-    private maxPerCycle: number = 8
+    private config: CMCWorkerConfig = config.get<CMCWorkerConfig>('cmcWorker')
     private currentlySubmitted: number = 0
     private continousFailedSubmits: number = 0
     private submittedCommentsPerDay: number = 0
-    private maxCommentsPerCoin: number = 1
-    private commentFrequency: number = 60
+    private currentIndex: number = 0
     public currentlyProcessingCoin: string = ''
     private parentWorker: CoinMarketCommentWorker
+    private isDisableAfterCycle: boolean = true
 
     public constructor(
         cmcAccount: CoinMarketCapAccount,
@@ -55,9 +54,12 @@ export class CoinMarketCapClient implements ClientInterface {
         const isLoggedIn = await this.login()
 
         if (!isLoggedIn) {
+            await this.destroyDriver()
+
             this.logger.warn(
                 `[CMC Client ID: ${this.cmcAccount.id}] not initialized. Can't login. Skipping...`
             )
+            return false
         }
 
         await this.cmcService.updateAccountLastLogin(this.cmcAccount, moment().toDate())
@@ -149,6 +151,13 @@ export class CoinMarketCapClient implements ClientInterface {
         }
 
         this.logger.info(`Creating driver instance`)
+
+        if (!this.cmcAccount.proxy) {
+            this.logger.warn(`No proxy assigned to account`)
+
+            return false
+        }
+
         this.driver = await SeleniumService.createDriver('', this.cmcAccount.proxy, this.logger)
         this.logger.info(`Testing if proxy working`)
 
@@ -172,12 +181,12 @@ export class CoinMarketCapClient implements ClientInterface {
     }
 
     private isBelowLimit(): boolean {
-        return this.submittedCommentsPerDay < this.maxCommentsPerDay
+        return this.submittedCommentsPerDay < this.config.maxCommentsPerDay
     }
 
     private log(message: string): void {
         this.logger.info(
-            `[CMCC Worker ${this.cmcAccount.id}] ` +
+            `[CMCC Worker ${this.cmcAccount.userName}] ` +
             message
         )
     }
@@ -185,13 +194,33 @@ export class CoinMarketCapClient implements ClientInterface {
     public async startWorker(): Promise<void> {
         this.log(`Worker started`)
 
-        const requestLimit = config.get<CMCWorkerConfig>('cmcWorker')['requestLimit']
-        let requestOffset = config.get<CMCWorkerConfig>('cmcWorker')['requestOffset']
+        const categoryId = this.config.currentCategoryTargetId
+        const requestLimit = categoryId.length ? 1000 : this.config.requestLimit
+        let requestOffset = 1
 
         while (true) { // eslint-disable-line
-            const tokens = await this.cmcService.getLastTokens(requestOffset, requestLimit)
+            this.log(`Offset: ${requestOffset}`)
+            if (categoryId.length) {
+                const tokens = await this.cmcService.getCategoryTokens(
+                    categoryId,
+                    requestOffset,
+                    requestLimit
+                )
 
-            await this.processTokens(tokens.data)
+                await this.processTokens(tokens.data.coins)
+
+                if (tokens.data.coins.length < requestLimit) {
+                    break
+                }
+            } else {
+                const tokens = await this.cmcService.getLastTokens(requestOffset, requestLimit)
+
+                await this.processTokens(tokens.data)
+
+                if (tokens.data.length < requestLimit) {
+                    break
+                }
+            }
 
             if (this.isReachedCycleLimit()) {
                 await this.cmcService.updateAccountLastLogin(this.cmcAccount, moment().toDate())
@@ -200,11 +229,7 @@ export class CoinMarketCapClient implements ClientInterface {
                 break
             }
 
-            if (tokens.data.length < requestLimit) {
-                break
-            }
-
-            if (this.cmcAccount.continousFailed >= 15) {
+            if (this.cmcAccount.continousFailed >= this.config.continousFailsDelays.length) {
                 this.log(`Account failed for ${this.cmcAccount.continousFailed} continous times, Banning account`)
 
                 await this.disableAccount()
@@ -213,11 +238,23 @@ export class CoinMarketCapClient implements ClientInterface {
             requestOffset += requestLimit
         }
 
+        if (this.isDisableAfterCycle) {
+            this.log(`Disabling account.`)
+            await this.disableAccount()
+        }
+
+        await this.destroyDriver()
+
         this.log(`worker finished`)
     }
 
-    private async processTokens(coins: CMCCryptocurrency[]): Promise<void> {
+    // eslint-disable-next-line complexity
+    private async processTokens(coins: CMCCryptocurrency[] | CategoryCoin[]): Promise<void> {
+        this.currentIndex = 0
+
         for (const coin of coins) {
+            this.currentIndex++
+
             if (!coin.is_active) {
                 this.log(`Coin ${coin.name} is inactive, Skipping`)
                 continue
@@ -236,27 +273,36 @@ export class CoinMarketCapClient implements ClientInterface {
                 break
             }
 
-            if (this.continousFailedSubmits >= 5) {
+            if (!this.isLoggedIn()) {
+                this.log(`Account suspended or session expired, Disabling account`)
+                await this.disableAccount()
+
+                break
+            }
+
+            if (this.continousFailedSubmits >= this.config.maxCycleContinousFail) {
                 this.log(`Skipping account due to exceeding max continous failed submits`)
 
                 await this.cmcService.updateContinousFailedSubmits(
                     this.cmcAccount,
-                    this.cmcAccount.continousFailed + this.continousFailedSubmits
+                    false
                 )
 
-                await this.cmcService.updateAccountLastLogin(this.cmcAccount, moment().add(60, 'minutes').toDate())
+                const failDelay = this.config.continousFailsDelays[this.cmcAccount.continousFailed] || 1
+                await this.cmcService.updateAccountLastLogin(this.cmcAccount, moment().add(failDelay, 'hours').toDate())
+
                 break
             }
 
             this.currentlyProcessingCoin = coin.slug
-
             const coinCommentHistory = await this.cmcService.getCoinSubmittedComments(coin.slug)
+
             if (coinCommentHistory.length &&
-                moment().subtract(this.commentFrequency, 'days').isBefore(coinCommentHistory[0].createdAt)) {
+                moment().subtract(this.config.commentFrequency, 'days').isBefore(coinCommentHistory[0].createdAt)) {
                 continue
             }
 
-            if (this.maxCommentsPerCoin <= coinCommentHistory.length) {
+            if (this.config.maxCommentsPerCoin <= coinCommentHistory.length) {
                 this.log(`Coin ${coin.name} was contacted ${coinCommentHistory.length} times, Skipping`)
                 continue
             }
@@ -269,91 +315,125 @@ export class CoinMarketCapClient implements ClientInterface {
                 return
             }
 
-            this.log(`Posting a comment on ${coin.name}`)
+            let attempt = 0
 
-            this.driver.get(`https://coinmarketcap.com/currencies/${coin.slug}`)
-
-            await this.driver.sleep(5000)
-
-            const splittedComment = commentToSend.content.split(' ')
-
-            const startPostingBtn = this.driver.findElement(By.className('post-button-placeholder'))
-            await startPostingBtn.click()
-
-            const inputField = await this.driver.findElement(By.css(`[role="textbox"]`))
-
-            await this.driver.sleep(10000)
-
-            this.log(`Typing post on ${coin.name}`)
-            let isFirstWord = true
-
-            for (const part of splittedComment) {
-                if (part.toLowerCase().includes('$mintme')) {
-                    await this.inputAndSelectCoinMention('MINTME', 'MintMe.com Coin', inputField)
-                }
-
-                if (part.toLowerCase().includes('$coin') && !isFirstWord) {
-                    await this.inputAndSelectCoinMention(coin.symbol, coin.name, inputField)
-                }
-
-                await inputField.sendKeys(part.replace('$coin', '').replace('$mintme', '') + ' ')
-                await this.driver.sleep(100)
-
-                isFirstWord = false
-            }
-
-            this.log(`Finished typing comment, Clicking post button after 10 seconds`)
-
-            await this.driver.sleep(10000)
-
-            const postButtonContainer = await this.driver.findElement(By.className('editor-post-button'))
-            const postBtn = await postButtonContainer.findElement(By.css('button'))
-
-            await this.driver.executeScript(`arguments[0].click()`, postBtn)
-
-            let sleepTimes = 0
-            let isSubmitted = false
-
-            while (sleepTimes <= 60) {
-                const pageSrc = await this.driver.getPageSource()
-
-                if (pageSrc.toLowerCase().includes('post submitted')) {
-                    isSubmitted = true
+            while (attempt < 3) {
+                try {
+                    this.log(`Posting a comment on ${coin.name} - ${this.currentIndex +1}/${coins.length} | Attempt #${attempt}`)
+                    await this.postComment(coin, commentToSend)
                     break
+                } catch (error) {
+                    attempt++
+                    this.log(`An error happened while posting comment, Error: ${error}`)
                 }
-
-                await this.driver.sleep(500)
-
-                sleepTimes++
             }
-
-            this.continousFailedSubmits++
-
-            if (isSubmitted) {
-                this.currentlySubmitted++
-                this.continousFailedSubmits = 0
-
-                await this.cmcService.updateContinousFailedSubmits(this.cmcAccount, 0)
-
-                await this.cmcService.addNewHistoryAction(
-                    this.cmcAccount.id,
-                    coin.slug,
-                    this.cmcAccount.id
-                )
-            }
-
-            this.log(`Finished posting on ${coin.name} | Is Submitted: ${isSubmitted}`)
 
             await this.driver.sleep(20000)
         }
     }
 
+    private async postComment(
+        coin: CMCCryptocurrency | CategoryCoin,
+        commentToSend: CoinMarketCapComment
+    ): Promise<void> {
+        this.driver.get(`https://coinmarketcap.com/currencies/${coin.slug}`)
+
+        await this.driver.sleep(10000)
+
+        const splittedComment = commentToSend.content.split(' ')
+
+        const startPostingBtn = this.driver.findElement(By.id('cmc-editor'))
+        await startPostingBtn.click()
+
+        const inputField = await this.driver.findElement(By.css(`[role="textbox"]`))
+
+        await this.driver.sleep(5000)
+
+        this.log(`Typing post on ${coin.name}`)
+
+        await inputField.sendKeys(Key.chord(Key.CONTROL, 'a'))
+        await this.driver.sleep(200)
+
+        for (const part of splittedComment) {
+            if (part.toLowerCase().includes('$mintme')) {
+                await this.inputAndSelectCoinMention('MINTME', 'MintMe.com Coin', inputField)
+            }
+
+            if (part.toLowerCase().includes('$coin')) {
+                await this.inputAndSelectCoinMention(coin.symbol, coin.name, inputField)
+            }
+
+            await inputField.sendKeys(part.replace('$coin', '').replace('$mintme', '') + ' ')
+            await this.driver.sleep(100)
+        }
+
+        this.log(`Finished typing comment, Clicking post button after 10 seconds`)
+
+        await this.driver.sleep(5000)
+
+        const postBtn = await this.getBtnWithText('Post comment')
+
+        if (!postBtn) {
+            throw new Error('No post button found')
+        }
+
+        await this.driver.executeScript(`arguments[0].click()`, postBtn)
+
+        let sleepTimes = 0
+        let isSubmitted = true
+
+        while (sleepTimes <= 60) {
+            const pageSrc = await this.driver.getPageSource()
+
+            if (pageSrc.toLowerCase().includes('please try again later')) {
+                isSubmitted = false
+                break
+            }
+
+            await this.driver.sleep(500)
+
+            sleepTimes++
+        }
+
+        this.continousFailedSubmits++
+
+        if (isSubmitted) {
+            this.currentlySubmitted++
+            this.continousFailedSubmits = 0
+
+            await this.cmcService.updateContinousFailedSubmits(this.cmcAccount, true)
+
+            await this.cmcService.addNewHistoryAction(
+                this.cmcAccount.id,
+                coin.slug,
+                this.cmcAccount.id
+            )
+        }
+
+        this.log(`Finished posting on ${coin.name} | Is Submitted: ${isSubmitted}`)
+    }
+
+    private async getBtnWithText(textToFind: string): Promise<WebElement|undefined> {
+        const btns = await this.driver.findElements(By.css('button'))
+
+        for (const btn of btns) {
+            const btnText = await btn.getText()
+            if (btnText.toLowerCase().includes(textToFind.toLowerCase())) {
+                return btn
+            }
+        }
+
+        return undefined
+    }
+
     private isReachedCycleLimit(): boolean {
-        return this.currentlySubmitted >= this.maxPerCycle
+        return this.currentlySubmitted >= this.config.maxPerCycle
     }
 
     private async inputAndSelectCoinMention(symbol: string, name:string, inputField: WebElement): Promise<void> {
         try {
+            this.log(`Selecting coin mention ${name}`)
+
             await inputField.sendKeys(`$${symbol}`)
 
             await this.driver.sleep(3000)
@@ -361,6 +441,7 @@ export class CoinMarketCapClient implements ClientInterface {
             const mentionPortalElement = await this.driver.findElement(By.css(`[data-cy="mentions-portal"]`))
 
             let isSelectedCorrectMention = false
+            let navigateTimes = 0
 
             while (!isSelectedCorrectMention) {
                 const selectedMention = await mentionPortalElement.findElement(By.className('selected'))?.getText()
@@ -372,6 +453,14 @@ export class CoinMarketCapClient implements ClientInterface {
                     isSelectedCorrectMention = true
                 } else {
                     await inputField.sendKeys(Key.ARROW_DOWN)
+                    navigateTimes++
+
+                    if (navigateTimes >= 30) {
+                        this.log(`Couldn't find coin in list of mentions`)
+                        await inputField.sendKeys(Key.ESCAPE)
+
+                        break
+                    }
                 }
             }
         } catch (error) {

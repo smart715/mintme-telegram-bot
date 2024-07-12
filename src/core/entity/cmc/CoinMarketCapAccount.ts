@@ -12,7 +12,7 @@ export class CoinMarketCapAccount extends AbstractAccount {
 
     @ManyToOne(() => ProxyServer, (proxy) => proxy.cmcAccounts, { eager: true })
     @JoinColumn()
-    public proxy: ProxyServer
+    public proxy: ProxyServer|null
 
     @Column({ nullable: true })
     public lastLogin!: Date

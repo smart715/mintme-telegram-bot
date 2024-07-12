@@ -1,7 +1,7 @@
 import axios, { AxiosInstance } from 'axios'
 import { singleton } from 'tsyringe'
 import { ApiService, RequestOptions } from '../ApiService'
-import { AccountType, CMCApiGeneralResponse, CMCCryptocurrency, CMCTokenInfoResponse } from '../../types'
+import { AccountType, CMCApiGeneralResponse, CmcCategoryResponse, CMCCryptocurrency, CMCTokenInfoResponse } from '../../types'
 import { CoinMarketCapAccount, CoinMarketCapComment, CoinMarketCapCommentHistory, ProxyServer } from '../../entity'
 import { CoinMarketCapAccountRepository, CoinMarketCapCommentHistoryRepository, CoinMarketCapCommentRepository } from '../../repository'
 import { ProxyService } from '../ProxyServerService'
@@ -47,6 +47,34 @@ export class CMCService {
         return this.apiService.makeServiceRequests(
             this.axiosInstance,
             'https://pro-api.coinmarketcap.com/v1/cryptocurrency/map',
+            requestOptions
+        )
+    }
+
+    public async getCategoryTokens(
+        id: string,
+        start: number,
+        limit: number
+    ): Promise<CmcCategoryResponse> {
+        const requestOptions: RequestOptions = {
+            serviceName: this.serviceName,
+            method: 'GET',
+            headers: {
+                // eslint-disable-next-line @typescript-eslint/naming-convention
+                'Content-Type': 'application/json',
+            },
+            params: {
+                id,
+                start,
+                limit,
+            },
+            apiKeyLocation: 'params',
+            apiKeyName: 'CMC_PRO_API_KEY',
+        }
+
+        return this.apiService.makeServiceRequests(
+            this.axiosInstance,
+            'https://pro-api.coinmarketcap.com/v1/cryptocurrency/category',
             requestOptions
         )
     }
@@ -102,6 +130,7 @@ export class CMCService {
 
     public async setAccountAsDisabled(cmcAccount: CoinMarketCapAccount): Promise<CoinMarketCapAccount> {
         cmcAccount.isDisabled = true
+        cmcAccount.proxy = null
         return this.cmcAccountsRepository.save(cmcAccount)
     }
 
@@ -124,9 +153,13 @@ export class CMCService {
 
     public async updateContinousFailedSubmits(
         cmcAccount: CoinMarketCapAccount,
-        contiousFails: number
+        isReset: boolean
     ): Promise<CoinMarketCapAccount> {
-        cmcAccount.continousFailed = contiousFails
+        if (isReset) {
+            cmcAccount.continousFailed = 0
+        } else {
+            cmcAccount.continousFailed += 1
+        }
 
         return this.cmcAccountsRepository.save(cmcAccount)
     }

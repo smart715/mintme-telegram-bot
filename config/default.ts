@@ -13,8 +13,24 @@ export default {
 
     // Coinmarketcap worker settings
     cmcWorker: {
-        'requestOffset': 5000,
+        'requestOffset': 1,
         'requestLimit': 5000,
+        'maxSimultaneousAccounts': 1,
+        'maxPerCycle': 5,
+        'commentFrequency': 60,
+        'maxCommentsPerDay': 3,
+        'maxCommentsPerCoin': 1,
+        'maxCycleContinousFail': 2,
+        'continousFailsDelays': [
+            1,
+            6,
+            12,
+            24,
+            48,
+            96,
+            168,
+        ], //In Hour(s)
+        'currentCategoryTargetId' : '6051a82566fc1b42617d6dc6', //e.g: memes id is 6051a82566fc1b42617d6dc6
     },
 
     // coinlore worker settings
