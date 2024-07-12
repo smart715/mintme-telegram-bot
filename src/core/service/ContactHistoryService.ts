@@ -123,12 +123,19 @@ export class ContactHistoryService {
     }
 
     public async getLastSentMessageId(channel: string): Promise<number | undefined> {
-        const lastContactAttempt = await this.contactHistoryRepository.findLastContactAttempt(channel)
+        const lastContactAttempt = await this.contactHistoryRepository.findLastContactAttempt(channel, undefined)
 
         if (!lastContactAttempt) {
             return undefined
         }
 
         return lastContactAttempt.messageId
+    }
+
+    public async findLastContactAttempt(
+        channel: string,
+        tgAccountId: number|undefined
+    ): Promise<ContactHistory | undefined> {
+        return this.contactHistoryRepository.findLastContactAttempt(channel, tgAccountId)
     }
 }

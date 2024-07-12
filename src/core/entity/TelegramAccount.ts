@@ -22,4 +22,7 @@ export class TelegramAccount extends AbstractAccount {
 
     @Column({ nullable: true })
     public lastResponsesFetchDate!: Date
+
+    @Column({ nullable: true })
+    public lastGroupsLeavingDate!: Date
 }
