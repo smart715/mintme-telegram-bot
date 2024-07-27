@@ -57,6 +57,7 @@ export class TelegramService {
     public async addNewResponse(
         chatLink: string,
         chatMessages: string,
+        chatMessagesFiltered: string,
         tgAccount: TelegramAccount,
         type: string
     ): Promise<void> {
@@ -74,6 +75,7 @@ export class TelegramService {
         const telegramResponse = this.telegramResponseRepository.create({
             chatLink: chatLink,
             chatMessages: chatMessages,
+            chatMessagesFiltered: chatMessagesFiltered,
             isChecked: false,
             telegamAccount: tgAccount,
             type: type,

@@ -976,8 +976,13 @@ export class TelegramClient implements ClientInterface {
     private async getChatMessages(middleColumn: WebElement, chatType: ChatType): Promise<{
         sender: string;
         message: string;
-    }[]> {
-        const chatMessagesObj: {
+    }[][]> {
+        const chatMessagesFilteredObj: {
+            sender: string;
+            message: string;
+        }[] = []
+
+        const chatMessagesNotFilteredObj: {
             sender: string;
             message: string;
         }[] = []
@@ -1014,10 +1019,10 @@ export class TelegramClient implements ClientInterface {
                         'message': `${messageContentTxt} ${messageDate}`,
                     }
 
-                    chatMessagesObj.push(messageObj)
+                    chatMessagesFilteredObj.push(messageObj)
                 }
 
-                if (chatMessagesObj.length && 'Other party' === chatMessagesObj[0].sender) {
+                if (chatMessagesFilteredObj.length && 'Other party' === chatMessagesFilteredObj[0].sender) {
                     this.log(`DM discussion not started by us, Previous auto-response sent messages: ${sentMessagesCount}, Checking if there messages to send.`)
                     const messageToSend = await this.telegramService.getAutoResponderMessage(++sentMessagesCount)
 
@@ -1032,7 +1037,7 @@ export class TelegramClient implements ClientInterface {
                                 'message': messageToSend.message,
                             }
 
-                            chatMessagesObj.push(messageObj)
+                            chatMessagesFilteredObj.push(messageObj)
                         }
                     }
                 }
@@ -1081,13 +1086,15 @@ export class TelegramClient implements ClientInterface {
 
                             const whitelistWordsRegex = /mintme|mint me/i
 
+                            chatMessagesNotFilteredObj.push(messageObj)
+
                             if (whitelistWordsRegex.test(messageContentTxt.toLowerCase()) ||
                             messageContentTxt.toLowerCase().includes(this.telegramAccount.userName.toLowerCase().replace('@', '')) ||
                             messageContentTxt.toLowerCase().includes(this.accountFirstName.toLowerCase()) ||
                             isReplyMessage ||
                             messageClass.includes(' own')
                             ) {
-                                chatMessagesObj.push(messageObj)
+                                chatMessagesFilteredObj.push(messageObj)
                             }
                         }
                     }
@@ -1095,7 +1102,7 @@ export class TelegramClient implements ClientInterface {
             }
         }
 
-        return chatMessagesObj
+        return [ chatMessagesNotFilteredObj, chatMessagesFilteredObj ]
     }
 
     private async processChatResponses(chatElement: WebElement, chatType: ChatType): Promise<void> {
@@ -1113,10 +1120,11 @@ export class TelegramClient implements ClientInterface {
 
                 const chatLink = await this.getExtraChatInfo(middleColumn, chatType)
 
-                if (chatMessagesObj && chatMessagesObj.length) {
+                if (chatMessagesObj && chatMessagesObj[0].length) {
                     await this.telegramService.addNewResponse(
                         chatLink,
-                        JSON.stringify(chatMessagesObj),
+                        JSON.stringify(chatMessagesObj[0]),
+                        JSON.stringify(chatMessagesObj[1]),
                         this.telegramAccount,
                         chatType)
                 }
