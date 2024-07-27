@@ -11,7 +11,7 @@ import {
 } from '../../../service'
 import { By, Key, WebDriver, WebElement } from 'selenium-webdriver'
 import * as fs from 'fs'
-import { Environment, getRandomNumber } from '../../../../utils'
+import { Environment, getRandomNumber, sleep } from '../../../../utils'
 import { ChatType, ContactHistoryStatusType, ContactMethod, TelegramChannelCheckResultType } from '../../../types'
 import moment from 'moment'
 import { Logger } from 'winston'
@@ -501,7 +501,7 @@ export class TelegramClient implements ClientInterface {
 
             return false
         } catch (e) {
-            this.log(`Error 9584 ${e}`)
+            this.log(`Error 9588 ${e}`)
             return false
         }
     }
@@ -1019,6 +1019,7 @@ export class TelegramClient implements ClientInterface {
                         'message': `${messageContentTxt} ${messageDate}`,
                     }
 
+                    chatMessagesNotFilteredObj.push(messageObj)
                     chatMessagesFilteredObj.push(messageObj)
                 }
 
@@ -1140,6 +1141,7 @@ export class TelegramClient implements ClientInterface {
 
             for (const groupChat of mentionGroups) {
                 const isGroupBtnVisible = await groupChat.isDisplayed()
+
                 if (!isGroupBtnVisible) {
                     return this.findNotCheckedGroups(chatList)
                 }
@@ -1157,9 +1159,7 @@ export class TelegramClient implements ClientInterface {
                         isCheckedChat = true
                     }
                 } catch (err) {
-                    if (err instanceof Error) {
-                        this.log(`Couldn't get chat ID, error: ${err.message}`)
-                    }
+                    this.log(`Couldn't get chat ID, error: ${err}`)
                 }
 
                 const hasUnreadMentions = (await (groupChat.findElements(By.className('icon-mention')))).length > 0
@@ -1244,9 +1244,11 @@ export class TelegramClient implements ClientInterface {
             const currentScrollHeight = +(await chatList.getAttribute('scrollHeight'))
 
             if (currentScrollHeight === lastScrollHeight) {
-                if (curentRetries >= 3) {
+                if (curentRetries >= 5) {
                     return
                 } else {
+                    await this.driver.executeScript(`arguments[0].scrollBy(0, -200)`, chatList)
+                    await sleep(500)
                     curentRetries++
                     continue
                 }
