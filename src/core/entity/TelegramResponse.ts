@@ -16,6 +16,9 @@ export class TelegramResponse {
     @Column('longtext')
     public chatMessages!: string
 
+    @Column('longtext')
+    public chatMessagesFiltered!: string
+
     @Column()
     public isChecked!: boolean
 
